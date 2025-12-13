@@ -10,9 +10,53 @@ interface Props {
   width: number;
   height: number;
   depth?: number;
+  isRoot?: boolean; // To know if we should draw global dimensions
 }
 
-export const WindowCanvas = ({ node, selectedId, onSelect, onUpdateNode, width, height, depth = 0 }: Props) => {
+// Helper component for Dimension Lines (Arrows)
+const DimensionLine = ({ length, orientation, label, position }: { length: number, orientation: 'h' | 'v', label: number, position: 'start' | 'end' | 'center' }) => {
+    const isH = orientation === 'h';
+    return (
+        <div className={`absolute flex items-center justify-center pointer-events-none z-40
+            ${isH ? 'h-6' : 'w-6'}
+            ${isH ? 'flex-row' : 'flex-col'}
+        `}
+        style={{
+            [isH ? 'width' : 'height']: '100%',
+            [isH ? (position === 'start' ? 'top' : 'bottom') : (position === 'start' ? 'left' : 'right')]: '-30px',
+            [isH ? 'left' : 'top']: 0
+        }}
+        >
+            {/* The Line */}
+            <div className={`bg-slate-800 ${isH ? 'h-px w-full' : 'w-px h-full'}`}></div>
+            
+            {/* Start Arrow */}
+            <div className={`absolute bg-slate-800
+                ${isH ? 'left-0 h-2 w-px -top-1' : 'top-0 w-2 h-px -left-1'}
+            `}></div>
+             <div className={`absolute border-slate-800
+                ${isH ? 'left-0 border-t-[4px] border-r-[8px] border-b-[4px] border-l-0 border-t-transparent border-b-transparent border-r-slate-800 -ml-1' : 'top-0 border-l-[4px] border-b-[8px] border-r-[4px] border-t-0 border-l-transparent border-r-transparent border-b-slate-800 -mt-1'}
+            `}></div>
+
+            {/* End Arrow */}
+            <div className={`absolute bg-slate-800
+                ${isH ? 'right-0 h-2 w-px -top-1' : 'bottom-0 w-2 h-px -left-1'}
+            `}></div>
+             <div className={`absolute border-slate-800
+                ${isH ? 'right-0 border-t-[4px] border-l-[8px] border-b-[4px] border-r-0 border-t-transparent border-b-transparent border-l-slate-800 -mr-1' : 'bottom-0 border-l-[4px] border-t-[8px] border-r-[4px] border-b-0 border-l-transparent border-r-transparent border-t-slate-800 -mb-1'}
+            `}></div>
+
+            {/* Label */}
+            <div className={`absolute bg-white px-1 text-[10px] font-bold text-slate-900 border border-slate-200 rounded shadow-sm z-50
+                 ${isH ? '-top-3' : '-left-4 -rotate-90'}
+            `}>
+                {toPersianDigits(Math.round(label))}
+            </div>
+        </div>
+    )
+}
+
+export const WindowCanvas = ({ node, selectedId, onSelect, onUpdateNode, width, height, depth = 0, isRoot = false }: Props) => {
   const isSelected = selectedId === node.id;
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -121,72 +165,93 @@ export const WindowCanvas = ({ node, selectedId, onSelect, onUpdateNode, width, 
     }
   };
 
+  const ContainerWrapper = ({ children }: {children: React.ReactNode}) => {
+      if (isRoot) {
+          // If root, add padding for external dimensions
+          return (
+              <div className="relative w-full h-full p-8 bg-transparent">
+                  <div className="absolute top-0 left-8 right-8 h-8">
+                       <DimensionLine length={width} orientation="h" label={width} position="start" />
+                  </div>
+                  <div className="absolute left-0 top-8 bottom-8 w-8">
+                       <DimensionLine length={height} orientation="v" label={height} position="start" />
+                  </div>
+                  {children}
+              </div>
+          )
+      }
+      return <>{children}</>;
+  }
+
   // Render Container (Split)
   if (node.type === 'container' && node.children) {
     return (
-      <div 
-        ref={containerRef}
-        className="flex w-full h-full relative bg-white" 
-        style={{ 
-          flexDirection: node.dir === 'col' ? 'column' : 'row',
-        }}
-        onClick={(e) => {
-             e.stopPropagation();
-             onSelect(node.id);
-        }}
-      >
-        {/* Render Sash Frame Overlay for Containers (e.g., Door with Panel inside) */}
-        {node.openingType && node.openingType !== 'Fixed' && (
-             <div className="absolute inset-0 z-30 pointer-events-none">
-                <div className="absolute inset-0 border-[12px] border-white shadow-[inset_0_0_10px_rgba(0,0,0,0.1)]">
-                   <div className="absolute inset-0 border border-slate-300/50"></div>
-                </div>
-                 <div className="absolute inset-0 flex items-center justify-center">
-                    {renderOpeningSymbol(node.openingType)}
+      <ContainerWrapper>
+          <div 
+            ref={containerRef}
+            className="flex w-full h-full relative bg-white" 
+            style={{ 
+              flexDirection: node.dir === 'col' ? 'column' : 'row',
+            }}
+            onClick={(e) => {
+                e.stopPropagation();
+                onSelect(node.id);
+            }}
+          >
+            {/* Render Sash Frame Overlay for Containers (e.g., Door with Panel inside) */}
+            {node.openingType && node.openingType !== 'Fixed' && (
+                <div className="absolute inset-0 z-30 pointer-events-none">
+                    <div className="absolute inset-0 border-[12px] border-white shadow-[inset_0_0_10px_rgba(0,0,0,0.1)]">
+                       <div className="absolute inset-0 border border-slate-300/50"></div>
+                    </div>
+                     <div className="absolute inset-0 flex items-center justify-center">
+                        {renderOpeningSymbol(node.openingType)}
+                     </div>
                  </div>
-             </div>
-        )}
-
-        {node.children.map((child, index) => (
-          <React.Fragment key={child.id}>
-            <div 
-                className="relative min-w-0 min-h-0 flex flex-col"
-                style={{ flex: child.flex || 1 }}
-            >
-              <WindowCanvas 
-                node={child} 
-                selectedId={selectedId} 
-                onSelect={onSelect}
-                onUpdateNode={onUpdateNode}
-                width={node.dir === 'row' ? width * ((child.flex || 1) / node.children!.reduce((a,b) => a + (b.flex||1), 0)) : width}
-                height={node.dir === 'col' ? height * ((child.flex || 1) / node.children!.reduce((a,b) => a + (b.flex||1), 0)) : height}
-                depth={depth + 1}
-              />
-            </div>
-            
-            {/* Mullion (Divider) */}
-            {index < node.children.length - 1 && (
-              <div 
-                className={`relative z-20 flex items-center justify-center bg-slate-100 border border-slate-300 shadow-sm transition-colors group/resizer
-                  ${node.dir === 'col' ? 'h-3 w-full cursor-row-resize border-y' : 'w-3 h-full cursor-col-resize border-x'}
-                  hover:bg-blue-50 hover:border-blue-300
-                `}
-                onMouseDown={(e) => handleResizeStart(e, index)}
-                onTouchStart={(e) => handleResizeStart(e, index)}
-              >
-                 <div className={`bg-slate-400/50 rounded-full opacity-0 group-hover/resizer:opacity-100 transition-opacity
-                    ${node.dir === 'col' ? 'w-8 h-1' : 'w-1 h-8'}
-                 `} />
-              </div>
             )}
-          </React.Fragment>
-        ))}
-      </div>
+
+            {node.children.map((child, index) => (
+              <React.Fragment key={child.id}>
+                <div 
+                    className="relative min-w-0 min-h-0 flex flex-col"
+                    style={{ flex: child.flex || 1 }}
+                >
+                  <WindowCanvas 
+                    node={child} 
+                    selectedId={selectedId} 
+                    onSelect={onSelect}
+                    onUpdateNode={onUpdateNode}
+                    width={node.dir === 'row' ? width * ((child.flex || 1) / node.children!.reduce((a,b) => a + (b.flex||1), 0)) : width}
+                    height={node.dir === 'col' ? height * ((child.flex || 1) / node.children!.reduce((a,b) => a + (b.flex||1), 0)) : height}
+                    depth={depth + 1}
+                  />
+                </div>
+                
+                {/* Mullion (Divider) */}
+                {index < node.children.length - 1 && (
+                  <div 
+                    className={`relative z-20 flex items-center justify-center bg-slate-100 border border-slate-300 shadow-sm transition-colors group/resizer
+                      ${node.dir === 'col' ? 'h-3 w-full cursor-row-resize border-y' : 'w-3 h-full cursor-col-resize border-x'}
+                      hover:bg-blue-50 hover:border-blue-300
+                    `}
+                    onMouseDown={(e) => handleResizeStart(e, index)}
+                    onTouchStart={(e) => handleResizeStart(e, index)}
+                  >
+                     <div className={`bg-slate-400/50 rounded-full opacity-0 group-hover/resizer:opacity-100 transition-opacity
+                        ${node.dir === 'col' ? 'w-8 h-1' : 'w-1 h-8'}
+                     `} />
+                  </div>
+                )}
+              </React.Fragment>
+            ))}
+          </div>
+      </ContainerWrapper>
     );
   }
 
   // Render Leaf (Actual Window Section)
   return (
+    <ContainerWrapper>
     <div 
       onClick={(e) => {
         e.stopPropagation();
@@ -203,16 +268,20 @@ export const WindowCanvas = ({ node, selectedId, onSelect, onUpdateNode, width, 
     >
       
       {node.openingType === 'Panel' ? (
-        // New Distinct Panel Visual
-        <div className="absolute inset-0 bg-slate-200 border-[8px] border-slate-300 shadow-inner">
-             {/* 3D Molded Look */}
-             <div className="absolute inset-0 border-t-4 border-l-4 border-white/40 border-b-4 border-r-4 border-slate-400/20"></div>
+        // REALISTIC PANEL VISUAL
+        <div className="absolute inset-0 bg-white">
+             {/* 3D Border Effect (Bevel) */}
+             <div className="absolute inset-0 border-t-[8px] border-l-[8px] border-slate-50 border-b-[8px] border-r-[8px] border-slate-200"></div>
              
-             {/* Texture */}
-            <div className="w-full h-full flex justify-around opacity-20">
-                <div className="w-px h-full bg-slate-400"></div>
-                <div className="w-px h-full bg-slate-400"></div>
-            </div>
+             {/* Inner Surface */}
+             <div className="absolute inset-2 bg-gradient-to-br from-slate-100 to-slate-200 shadow-inner">
+                 {/* Grooves Pattern */}
+                 <div className="w-full h-full opacity-30" 
+                      style={{ 
+                          backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(0,0,0,0.1) 40px, transparent 41px)' 
+                      }}>
+                 </div>
+             </div>
         </div>
       ) : (
          // Glass Background
@@ -223,11 +292,9 @@ export const WindowCanvas = ({ node, selectedId, onSelect, onUpdateNode, width, 
       )}
 
       {/* Sash Frame (If not fixed, not panel, and not container) */}
-      {/* Note: If node is a leaf, it only has openingType if it wasn't split. */}
       {node.openingType !== 'Fixed' && node.openingType !== 'Panel' && (
         <div className="absolute inset-0 border-[12px] border-white shadow-[inset_0_0_10px_rgba(0,0,0,0.1)] pointer-events-none">
            <div className="absolute inset-0 border border-slate-300/50"></div>
-           {/* No automatic kickplate here anymore, user adds panel manually */}
         </div>
       )}
 
@@ -236,12 +303,17 @@ export const WindowCanvas = ({ node, selectedId, onSelect, onUpdateNode, width, 
         {renderOpeningSymbol(node.openingType)}
       </div>
 
-      {/* Dimensions Overlay - Always Visible for both Glass and Panel */}
-      {width > 60 && height > 40 && (
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white/80 backdrop-blur-[2px] px-2 py-1 rounded-md border border-slate-300/50 pointer-events-none z-10 whitespace-nowrap flex flex-col items-center justify-center shadow-sm">
-             <span className="text-[11px] font-extrabold text-slate-900 leading-none">{toPersianDigits(Math.round(width))}</span>
-             <div className="w-full h-px bg-slate-400/50 my-0.5"></div>
-             <span className="text-[11px] font-extrabold text-slate-900 leading-none">{toPersianDigits(Math.round(height))}</span>
+      {/* Internal Dimensions Overlay */}
+      {width > 80 && height > 60 && (
+          <div className="absolute inset-0 pointer-events-none z-10 opacity-70">
+             {/* Horizontal Internal Dim */}
+             <div className="absolute top-1/2 left-0 right-0 h-px bg-slate-400/30 flex items-center justify-center">
+                 <span className="bg-white/80 px-1 text-[9px] font-bold text-slate-700">{toPersianDigits(Math.round(width))}</span>
+             </div>
+             {/* Vertical Internal Dim */}
+             <div className="absolute left-1/2 top-0 bottom-0 w-px bg-slate-400/30 flex items-center justify-center">
+                 <span className="bg-white/80 px-1 text-[9px] font-bold text-slate-700 rotate-90">{toPersianDigits(Math.round(height))}</span>
+             </div>
           </div>
       )}
 
@@ -252,10 +324,11 @@ export const WindowCanvas = ({ node, selectedId, onSelect, onUpdateNode, width, 
         </div>
       )}
     </div>
+    </ContainerWrapper>
   );
 };
 
-// Fixed Logic for Opening Indicators - Swapped back to Left (<) for TurnLeft
+// Fixed Logic for Opening Indicators
 const renderOpeningSymbol = (type?: OpeningDirection) => {
   const strokeColor = "stroke-slate-800";
   const strokeWidth = "1.5";

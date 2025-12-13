@@ -1,4 +1,4 @@
-import { ProfileBrand, GlassType, HardwareItem, HardwareBrand, ProfileComponent } from '../types';
+import { ProfileBrand, GlassType, HardwareItem, HardwareBrand, ProfileComponent, AppSettings } from '../types';
 
 // Default Data Initialization
 const DEFAULT_COMPONENTS: ProfileComponent[] = [
@@ -72,11 +72,18 @@ const INITIAL_HARDWARE: HardwareItem[] = [
   { id: 'h0', name: 'ثابت (بدون یراق)', brandId: 'vh', type: 'Fixed', pricePerSet: 0 },
 ];
 
-export interface AppSettings {
-  darkMode: boolean;
-  priceCoefficient: number; // Percentage markup (e.g., 1.1 for 10% profit)
-  currency: string;
-}
+const DEFAULT_SETTINGS: AppSettings = {
+  darkMode: false,
+  priceCoefficient: 0,
+  currency: 'تومان',
+  invoice: {
+    companyName: 'گروه صنعتی لومینا',
+    companyLogo: '',
+    companyAddress: 'تهران، میدان آزادی',
+    companyPhone: '021-12345678',
+    footerNote: 'اعتبار این پیش‌فاکتور ۷۲ ساعت می‌باشد.'
+  }
+};
 
 // Simple in-memory store backed by localStorage
 export const pricingStore = {
@@ -129,7 +136,9 @@ export const pricingStore = {
   // Settings
   getSettings: (): AppSettings => {
     const stored = localStorage.getItem('lumina_settings');
-    return stored ? JSON.parse(stored) : { darkMode: false, priceCoefficient: 0, currency: 'تومان' };
+    const parsed = stored ? JSON.parse(stored) : DEFAULT_SETTINGS;
+    // Merge with defaults to ensure invoice structure exists for legacy users
+    return { ...DEFAULT_SETTINGS, ...parsed, invoice: { ...DEFAULT_SETTINGS.invoice, ...(parsed.invoice || {}) } };
   },
 
   saveSettings: (settings: AppSettings) => {

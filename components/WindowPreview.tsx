@@ -10,19 +10,31 @@ interface Props {
 }
 
 // Recursive Minimal Renderer for Preview
-const PreviewNode = ({ node }: { node: WindowNode }) => {
+const PreviewNode = ({ node, level = 0 }: { node: WindowNode, level?: number }) => {
   if (node.type === 'container' && node.children) {
     return (
-      <div className="flex w-full h-full overflow-hidden" style={{ flexDirection: node.dir === 'col' ? 'column' : 'row' }}>
+      <div className="flex w-full h-full relative" style={{ flexDirection: node.dir === 'col' ? 'column' : 'row' }}>
+         {/* Sash Frame Overlay for Containers */}
+         {node.openingType && node.openingType !== 'Fixed' && (
+             <div className="absolute inset-0 z-30 pointer-events-none">
+                <div className="absolute inset-0 border-[4px] border-white shadow-[inset_0_0_5px_rgba(0,0,0,0.1)]">
+                   <div className="absolute inset-0 border border-slate-300/50"></div>
+                </div>
+                 <div className="absolute inset-0 flex items-center justify-center">
+                    {renderPreviewSymbol(node.openingType)}
+                 </div>
+             </div>
+        )}
+
         {node.children.map((child, idx) => (
           <React.Fragment key={child.id}>
              <div className="relative flex-1 min-w-0 min-h-0">
-               <PreviewNode node={child} />
+               <PreviewNode node={child} level={level + 1} />
              </div>
              {/* Mullion Divider in Preview */}
              {idx < node.children!.length - 1 && (
                <div className={`bg-slate-200 border-slate-300 relative z-10
-                  ${node.dir === 'col' ? 'h-1.5 w-full border-y' : 'w-1.5 h-full border-x'}
+                  ${node.dir === 'col' ? 'h-1 w-full border-y' : 'w-1 h-full border-x'}
                `} />
              )}
           </React.Fragment>
@@ -33,24 +45,32 @@ const PreviewNode = ({ node }: { node: WindowNode }) => {
 
   // Leaf with Directional Visuals
   return (
-    <div className={`w-full h-full relative ${node.openingType === 'Panel' ? 'bg-slate-100' : 'bg-sky-50'}`}>
+    <div className={`w-full h-full relative`}>
+       
+       {node.openingType === 'Panel' ? (
+        // Panel Preview
+        <div className="absolute inset-0 bg-white">
+             <div className="absolute inset-0 border-t-[2px] border-l-[2px] border-slate-50 border-b-[2px] border-r-[2px] border-slate-200"></div>
+             <div className="absolute inset-1 bg-slate-100 shadow-inner">
+                 <div className="w-full h-full opacity-20" 
+                      style={{ 
+                          backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 10px, rgba(0,0,0,0.2) 11px, transparent 12px)' 
+                      }}>
+                 </div>
+             </div>
+        </div>
+      ) : (
+         // Glass Background
+         <div className="absolute inset-0 bg-sky-50">
+             <div className="absolute -inset-full top-0 block h-full w-1/2 -skew-x-12 bg-white opacity-30 transform translate-x-full" />
+         </div>
+      )}
+
        {/* Sash Indication */}
        {node.openingType !== 'Fixed' && node.openingType !== 'Panel' && (
-         <div className="absolute inset-0 border-[4px] border-white shadow-sm pointer-events-none">
+         <div className="absolute inset-0 border-[2px] border-white shadow-sm pointer-events-none">
              <div className="absolute inset-0 border border-slate-300/30"></div>
-             {/* Door Kickplate Preview */}
-             {node.openingType?.includes('Door') && (
-                 <div className="absolute bottom-0 left-0 right-0 h-[15%] bg-slate-100 border-t border-slate-200"></div>
-             )}
          </div>
-       )}
-       
-       {node.openingType === 'Panel' && (
-           <div className="absolute inset-0 flex items-center justify-center opacity-10">
-                {/* Minimal vertical lines for panel */}
-                <div className="h-full w-px bg-black mx-1"></div>
-                <div className="h-full w-px bg-black mx-1"></div>
-           </div>
        )}
 
        {/* Directional Lines */}
@@ -86,9 +106,9 @@ const renderPreviewSymbol = (type?: OpeningDirection) => {
         case 'SlidingRight':
             return <div className="w-full h-full flex items-center justify-center text-slate-500 text-lg">→</div>;
         case 'DoorLeft':
-             return <div className="absolute bottom-1 right-1 text-[8px] bg-white/80 px-1 rounded font-bold">L</div>;
+             return <div className="absolute bottom-1 right-1 text-[6px] bg-white/80 px-1 rounded font-bold">L</div>;
         case 'DoorRight':
-             return <div className="absolute bottom-1 right-1 text-[8px] bg-white/80 px-1 rounded font-bold">R</div>;
+             return <div className="absolute bottom-1 right-1 text-[6px] bg-white/80 px-1 rounded font-bold">R</div>;
         case 'Fixed':
         case 'Panel':
             return null;
@@ -103,19 +123,27 @@ export const WindowPreview = ({ config, width, height, className = '' }: Props) 
 
   return (
     <div 
-      className={`relative bg-white border-2 border-slate-600 shadow-sm overflow-hidden ${className}`}
+      className={`relative bg-white overflow-hidden ${className}`}
       style={{ 
         width: displayWidth, 
         height: displayHeight,
-        borderRadius: '4px'
       }}
     >
-      <div className="absolute inset-0 z-10">
-        {config.layout ? (
-           <PreviewNode node={config.layout} />
-        ) : (
-           <div className="w-full h-full flex items-center justify-center text-xs text-slate-300">Empty</div>
-        )}
+      <div className="absolute inset-0 flex items-center justify-center p-2">
+         {/* Simple Outer Dimension Lines */}
+         <div className="w-full h-full border-l border-t border-black/20 p-1 relative">
+             <div className="absolute -top-3 left-0 w-full text-center text-[8px]">{toPersianDigits(config.width)}</div>
+             <div className="absolute -left-3 top-0 h-full flex items-center text-[8px] -rotate-90">{toPersianDigits(config.height)}</div>
+             
+             {/* Main Window Box */}
+             <div className="w-full h-full border-2 border-slate-600">
+                {config.layout ? (
+                   <PreviewNode node={config.layout} />
+                ) : (
+                   <div className="w-full h-full flex items-center justify-center text-xs text-slate-300">Empty</div>
+                )}
+             </div>
+         </div>
       </div>
     </div>
   );

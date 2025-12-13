@@ -65,7 +65,7 @@ export interface ProjectDetails {
   customerName: string;
   address: string;
   installPercent: number;
-  companyName: string;
+  companyName: string; // Legacy support, prefer settings
   date: string;
   status: 'Draft' | 'Final';
 }
@@ -98,4 +98,19 @@ export interface InvoiceItem {
 export interface SavedProject extends ProjectDetails {
   items: InvoiceItem[];
   totalPrice: number;
+}
+
+export interface InvoiceSettings {
+  companyName: string;
+  companyLogo: string; // URL or Base64
+  companyAddress: string;
+  companyPhone: string;
+  footerNote: string;
+}
+
+export interface AppSettings {
+  darkMode: boolean;
+  priceCoefficient: number;
+  currency: string;
+  invoice: InvoiceSettings; // Added invoice settings
 }

@@ -8,6 +8,125 @@ import { WindowConfig, ProjectDetails, InvoiceItem, ProfileBrand, GlassType, Har
 import { pricingStore } from '../services/pricingStore';
 import { toPersianDigits, formatPrice, toEnglishDigits } from '../utils/formatting';
 
+// --- Helper Components for Toolbar ---
+
+const DraggableIcon = ({ type, value, dir, count, label, icon, isActive, onClick, onDragStart }: any) => {
+  return (
+    <div 
+      className={`
+        flex flex-col items-center justify-center gap-1 p-2 rounded-lg cursor-grab active:cursor-grabbing transition-all select-none
+        ${isActive ? 'bg-orange-500 text-white shadow-lg scale-105' : 'hover:bg-slate-700 text-slate-300'}
+      `}
+      draggable
+      onDragStart={(e) => onDragStart(e, type, value, dir, count)}
+      onClick={() => onClick({ type, value, dir, count })}
+    >
+      <div className="w-8 h-8 flex items-center justify-center">
+        {icon}
+      </div>
+      <span className="text-[9px] font-medium max-w-[50px] text-center leading-tight">{label}</span>
+    </div>
+  );
+};
+
+const ToolBtn = ({ icon: Icon, label, onClick, isActive, color }: any) => (
+  <button 
+    onClick={onClick}
+    className={`
+      flex flex-col items-center justify-center gap-1 p-2 rounded-lg transition-all
+      ${isActive ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-700 text-slate-300'}
+      ${color ? color : ''}
+    `}
+  >
+    <Icon size={24} />
+    <span className="text-[9px] font-medium">{label}</span>
+  </button>
+);
+
+const FixedIcon = () => (
+  <svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="1.5">
+    <rect x="3" y="3" width="18" height="18" rx="2" />
+    <line x1="12" y1="3" x2="12" y2="21" opacity="0.2" />
+    <line x1="3" y1="12" x2="21" y2="12" opacity="0.2" />
+  </svg>
+);
+
+const TurnLeftIcon = () => (
+  <svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="1.5">
+    <rect x="3" y="3" width="18" height="18" rx="2" />
+    <path d="M18 6L6 12L18 18" />
+  </svg>
+);
+
+const TurnRightIcon = () => (
+  <svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="1.5">
+    <rect x="3" y="3" width="18" height="18" rx="2" />
+    <path d="M6 6L18 12L6 18" />
+  </svg>
+);
+
+const TiltTurnLeftIcon = () => (
+  <svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="1.5">
+    <rect x="3" y="3" width="18" height="18" rx="2" />
+    <path d="M18 6L6 12L18 18" />
+    <path d="M6 18L12 6L18 18" strokeDasharray="2 2" opacity="0.6" />
+  </svg>
+);
+
+const TiltTurnRightIcon = () => (
+  <svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="1.5">
+    <rect x="3" y="3" width="18" height="18" rx="2" />
+    <path d="M6 6L18 12L6 18" />
+    <path d="M6 18L12 6L18 18" strokeDasharray="2 2" opacity="0.6" />
+  </svg>
+);
+
+const SlidingIcon = ({ dir }: { dir: 'left' | 'right' }) => (
+  <svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="1.5">
+    <rect x="3" y="3" width="18" height="18" rx="2" />
+    {dir === 'left' ? <path d="M15 12H9M9 12L12 9M9 12L12 15" /> : <path d="M9 12H15M15 12L12 9M15 12L12 15" />}
+  </svg>
+);
+
+const DoorIcon = () => (
+  <svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="1.5">
+    <rect x="5" y="3" width="14" height="18" rx="1" />
+    <circle cx="16" cy="12" r="1.5" fill="currentColor" />
+  </svg>
+);
+
+const SplitVerticalIcon = ({ count }: { count: number }) => (
+  <svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="1.5">
+    <rect x="3" y="3" width="18" height="18" rx="2" />
+    {count === 2 && <line x1="12" y1="3" x2="12" y2="21" />}
+    {count === 3 && (
+      <>
+        <line x1="9" y1="3" x2="9" y2="21" />
+        <line x1="15" y1="3" x2="15" y2="21" />
+      </>
+    )}
+  </svg>
+);
+
+const SplitHorizontalIcon = ({ count }: { count: number }) => (
+  <svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="1.5">
+    <rect x="3" y="3" width="18" height="18" rx="2" />
+    {count === 2 && <line x1="3" y1="12" x2="21" y2="12" />}
+    {count === 3 && (
+      <>
+        <line x1="3" y1="9" x2="21" y2="9" />
+        <line x1="3" y1="15" x2="21" y2="15" />
+      </>
+    )}
+  </svg>
+);
+
+const SquareIcon = () => (
+  <svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="1.5">
+    <rect x="3" y="3" width="18" height="18" rx="2" />
+  </svg>
+);
+
 // --- Default Data ---
 const createDefaultLayout = (): WindowNode => ({
   id: 'root',
@@ -609,7 +728,7 @@ export const UnitDesigner = () => {
       </div>
 
       {/* Canvas Area with Zoom - Min Height to prevent keyboard collapse */}
-      <div className="flex-1 relative bg-slate-200 overflow-hidden flex flex-col min-h-[300px]">
+      <div className="flex-1 relative bg-slate-100 overflow-hidden flex flex-col min-h-[300px]">
         {/* Active Tool Indicator for Mobile */}
         {activeTool && (
            <div className="absolute top-4 left-0 right-0 z-20 flex justify-center pointer-events-none">
@@ -634,7 +753,7 @@ export const UnitDesigner = () => {
                 style={{ transform: `scale(${zoomLevel})` }}
              >
                 <div 
-                  className="relative bg-white shadow-2xl border-[12px] border-white select-none rounded-sm"
+                  className="relative select-none"
                   style={{ 
                     width: Math.min(config.width / 4, window.innerWidth - 60), 
                     height: Math.min(config.height / 4, window.innerHeight - 300),
@@ -642,7 +761,7 @@ export const UnitDesigner = () => {
                     minHeight: '300px'
                   }}
                 >
-                  <div className="absolute inset-[-12px] border border-slate-300 pointer-events-none rounded-sm shadow-sm"></div>
+                  
                   {config.layout && (
                     <WindowCanvas 
                         node={config.layout} 
@@ -652,6 +771,7 @@ export const UnitDesigner = () => {
                         onUpdateNode={handleUpdateNode}
                         width={config.width}
                         height={config.height}
+                        isRoot={true}
                     />
                   )}
                 </div>
@@ -660,7 +780,7 @@ export const UnitDesigner = () => {
         
         {/* Background Grid */}
         <div className="absolute inset-0 opacity-5 pointer-events-none" 
-             style={{ backgroundImage: 'linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)', backgroundSize: '20px 20px' }}>
+             style={{ backgroundImage: 'linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)', backgroundSize: '40px 40px' }}>
         </div>
       </div>
 
@@ -772,115 +892,3 @@ export const UnitDesigner = () => {
     </div>
   );
 };
-
-// --- Icons & Helpers ---
-const ToolBtn = ({ icon: Icon, label, onClick, color = 'text-white', isActive }: any) => (
-  <button onClick={onClick} className={`flex flex-col items-center p-2 rounded-lg hover:bg-slate-700 transition-all ${color} min-w-[60px] ${isActive ? 'bg-slate-700 ring-1 ring-slate-400' : ''}`}>
-    <Icon size={24} strokeWidth={1.5} />
-    <span className="text-[9px] mt-1 whitespace-nowrap">{label}</span>
-  </button>
-);
-
-const DraggableIcon = ({ type, value, dir, count, label, icon, onDragStart, isActive, onClick }: any) => (
-    <div 
-        draggable 
-        onDragStart={(e) => onDragStart(e, type, value, dir, count)}
-        onClick={() => onClick({ type, value, dir, count })}
-        className={`flex flex-col items-center cursor-pointer hover:bg-slate-700 p-2 rounded-lg min-w-[70px] transition-all duration-200
-            ${isActive ? 'bg-orange-600 shadow-lg scale-105 ring-2 ring-orange-300' : ''}
-        `}
-    >
-        <div className="w-8 h-8 mb-1 text-white flex items-center justify-center">{icon}</div>
-        <span className="text-[9px] text-center text-slate-300 whitespace-nowrap">{label}</span>
-    </div>
-);
-
-// --- Custom SVGs - Updated to match new Logic ---
-const FixedIcon = () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full">
-        <rect x="3" y="3" width="18" height="18" rx="2" />
-        <path d="M3 21L21 3" className="opacity-30" />
-    </svg>
-);
-
-const TurnLeftIcon = () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full">
-        <rect x="3" y="3" width="18" height="18" rx="2" />
-        {/* Turn Left -> Points Left < */}
-        <path d="M21 3L3 12L3 21" fill="none" stroke="white" strokeWidth="1.5" />
-        <path d="M21 3L3 12L21 21V3Z" fill="white" fillOpacity="0.2" />
-    </svg>
-);
-
-const TurnRightIcon = () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full">
-        <rect x="3" y="3" width="18" height="18" rx="2" />
-        {/* Turn Right -> Points Right > */}
-        <path d="M3 3L21 12L21 21" fill="none" stroke="white" strokeWidth="1.5" />
-        <path d="M3 3L21 12L3 21V3Z" fill="white" fillOpacity="0.2" />
-    </svg>
-);
-
-const TiltTurnLeftIcon = () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full">
-        <rect x="3" y="3" width="18" height="18" rx="2" />
-        {/* Turn Left < */}
-        <path d="M21 3L3 12L21 21" fill="none" stroke="white" strokeWidth="1.5" />
-        <path d="M3 21L12 3L21 21" fill="none" stroke="white" strokeWidth="1" strokeDasharray="2 2" opacity="0.5" />
-    </svg>
-);
-
-const TiltTurnRightIcon = () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full">
-        <rect x="3" y="3" width="18" height="18" rx="2" />
-        {/* Turn Right > */}
-        <path d="M3 3L21 12L3 21" fill="none" stroke="white" strokeWidth="1.5" />
-        <path d="M3 21L12 3L21 21" fill="none" stroke="white" strokeWidth="1" strokeDasharray="2 2" opacity="0.5" />
-    </svg>
-);
-
-const SlidingIcon = ({ dir }: { dir: 'left' | 'right' }) => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full">
-        <rect x="3" y="3" width="18" height="18" rx="2" />
-        <path d="M8 12H16M16 12L13 9M16 12L13 15" transform={dir === 'left' ? 'rotate(180 12 12)' : ''} />
-    </svg>
-);
-
-const DoorIcon = () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full">
-        <rect x="5" y="3" width="14" height="18" rx="1" />
-        <circle cx="16" cy="12" r="1.5" fill="currentColor" />
-    </svg>
-);
-
-const SplitVerticalIcon = ({ count }: { count: number }) => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full bg-slate-700/50 rounded">
-        <rect x="2" y="2" width="20" height="20" rx="2" />
-        {count === 2 && <line x1="12" y1="2" x2="12" y2="22" />}
-        {count === 3 && (
-            <>
-                <line x1="8" y1="2" x2="8" y2="22" />
-                <line x1="16" y1="2" x2="16" y2="22" />
-            </>
-        )}
-    </svg>
-);
-
-const SplitHorizontalIcon = ({ count }: { count: number }) => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full bg-slate-700/50 rounded">
-        <rect x="2" y="2" width="20" height="20" rx="2" />
-        {count === 2 && <line x1="2" y1="12" x2="22" y2="12" />}
-        {count === 3 && (
-            <>
-                <line x1="2" y1="8" x2="22" y2="8" />
-                <line x1="2" y1="16" x2="22" y2="16" />
-            </>
-        )}
-    </svg>
-);
-
-const SquareIcon = () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full">
-        <rect x="4" y="4" width="16" height="16" rx="2" />
-    </svg>
-);
