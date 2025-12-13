@@ -54,6 +54,7 @@ const INITIAL_GLASS: GlassType[] = [
   { id: 'double_4_4', name: 'دوجداره ۴-۴ ساده', pricePerSqm: 650000 },
   { id: 'double_6_4', name: 'دوجداره ۶-۴ ساده', pricePerSqm: 750000 },
   { id: 'triple', name: 'سه جداره', pricePerSqm: 950000 },
+  { id: 'panel_upvc', name: 'پنل UPVC', pricePerSqm: 1500000 }, // Added Panel
 ];
 
 const HARDWARE_BRANDS: HardwareBrand[] = [

@@ -35,7 +35,7 @@ export interface HardwareItem {
   pricePerSet: number;
 }
 
-export type OpeningDirection = 'Fixed' | 'TurnLeft' | 'TurnRight' | 'TiltTurnLeft' | 'TiltTurnRight' | 'SlidingLeft' | 'SlidingRight' | 'DoorLeft' | 'DoorRight';
+export type OpeningDirection = 'Fixed' | 'TurnLeft' | 'TurnRight' | 'TiltTurnLeft' | 'TiltTurnRight' | 'SlidingLeft' | 'SlidingRight' | 'DoorLeft' | 'DoorRight' | 'Panel';
 
 export interface WindowNode {
   id: string;

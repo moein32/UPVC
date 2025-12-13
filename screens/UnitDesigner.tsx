@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { ArrowRight, Save, Trash2, SplitSquareHorizontal, SplitSquareVertical, PlusCircle, Maximize, ZoomIn, ZoomOut, RefreshCcw, Hand, MousePointer2, Receipt, Check, Edit3, Grid, XCircle, Undo, Redo } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { ArrowRight, Save, Trash2, SplitSquareHorizontal, SplitSquareVertical, PlusCircle, Maximize, ZoomIn, ZoomOut, RefreshCcw, Hand, MousePointer2, Receipt, Check, Edit3, Grid, XCircle, Undo, Redo, LayoutTemplate } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { InputField, SelectField, PrimaryButton } from '../components/UIComponents';
@@ -93,6 +93,9 @@ export const UnitDesigner = () => {
   
   // Selected Node Dimensions Helper
   const [selectedNodeDims, setSelectedNodeDims] = useState<{w: number, h: number, editableW: boolean, editableH: boolean} | null>(null);
+  
+  // LOCAL STATE for Inputs to allow smooth typing without tree re-renders breaking input
+  const [localDims, setLocalDims] = useState<{w: string, h: string, id: string | null}>({ w: '', h: '', id: null });
 
   // Load Edit Data
   useEffect(() => {
@@ -175,18 +178,22 @@ export const UnitDesigner = () => {
           if (!targetNode) return;
 
           if (activeTool.type === 'opening') {
-              // Openings can only be applied to leaves
-               if (targetNode.type === 'leaf') {
-                  handleUpdateNode(id, { openingType: activeTool.value as any });
-               }
+              // Openings can only be applied to leaves OR containers that are sashes
+               handleUpdateNode(id, { openingType: activeTool.value as any });
           } else if (activeTool.type === 'split') {
               // Splits applied to leaves convert them to containers
               if (targetNode.type === 'leaf') {
                   const count = activeTool.count || 2;
+                  
+                  // Preserve the Opening Type on the container (e.g., if it was a Door, it stays a Door, but split inside)
+                  // Use 'as string' to avoid TS error about lack of overlap if type is narrowed
+                  const existingOpening = (targetNode.openingType as string) === 'Panel' ? 'Fixed' : targetNode.openingType;
+
                   const newChildren = Array(count).fill(null).map((_, i) => ({
                       id: Date.now() + `_${i}_${Math.random()}`, 
                       type: 'leaf', 
-                      openingType: targetNode.openingType || 'Fixed', // Inherit or reset
+                      // Children become Fixed (Glass) by default inside the sash
+                      openingType: 'Fixed', 
                       flex: 1 
                   })) as WindowNode[];
 
@@ -194,14 +201,12 @@ export const UnitDesigner = () => {
                       type: 'container', 
                       dir: activeTool.dir as 'row' | 'col', 
                       children: newChildren, 
-                      openingType: undefined 
+                      // If it was Fixed or Panel, remove it from container (container is just a mullion structure)
+                      // If it was an Opening (Door/Turn), keep it on container (Sash frame wraps the split)
+                      openingType: (existingOpening && existingOpening !== 'Fixed' && existingOpening !== 'Panel') ? existingOpening : undefined
                   });
-              } else if (activeTool.value === 'clear') {
-                  // Clear split logic handled by 'delete' usually, but custom cleaner here
-                  // Currently 'square' icon maps to delete/reset logic if implemented
               }
           }
-          // Optionally keep tool active for multi-apply
       } else {
           // Standard Selection
           setSelectedNodeId(id);
@@ -217,23 +222,6 @@ export const UnitDesigner = () => {
   };
 
   // --- Dimension Editing Logic ---
-  useEffect(() => {
-      if(selectedNodeId && config.layout) {
-          const dims = calculateNodeDimensions(config.layout, config.width, config.height, selectedNodeId);
-          if (dims) {
-            const parent = findParent(config.layout, selectedNodeId);
-            const editableW = parent ? parent.dir === 'row' : true; 
-            const editableH = parent ? parent.dir === 'col' : true;
-            
-            setSelectedNodeDims({ ...dims, editableW, editableH });
-          } else {
-            setSelectedNodeDims(null);
-          }
-      } else {
-          setSelectedNodeDims(null);
-      }
-  }, [selectedNodeId, config.layout, config.width, config.height]);
-
   const calculateNodeDimensions = (node: WindowNode, w: number, h: number, targetId: string): {w: number, h: number} | null => {
       if (node.id === targetId) return { w, h };
       if (node.children) {
@@ -249,8 +237,35 @@ export const UnitDesigner = () => {
       return null;
   };
 
+  // Sync Calculated Dims with Local Input State
+  useEffect(() => {
+      if(selectedNodeId && config.layout) {
+          const dims = calculateNodeDimensions(config.layout, config.width, config.height, selectedNodeId);
+          if (dims) {
+            const parent = findParent(config.layout, selectedNodeId);
+            const editableW = parent ? parent.dir === 'row' : true; 
+            const editableH = parent ? parent.dir === 'col' : true;
+            
+            setSelectedNodeDims({ ...dims, editableW, editableH });
+
+            if (localDims.id !== selectedNodeId) {
+                setLocalDims({ 
+                    w: Math.round(dims.w).toString(), 
+                    h: Math.round(dims.h).toString(), 
+                    id: selectedNodeId 
+                });
+            }
+          } else {
+            setSelectedNodeDims(null);
+            setLocalDims({ w: '', h: '', id: null });
+          }
+      } else {
+          setSelectedNodeDims(null);
+          setLocalDims({ w: '', h: '', id: null });
+      }
+  }, [selectedNodeId, config.layout, config.width, config.height]);
+
   const handleGlobalResize = (newValStr: string, dim: 'w' | 'h') => {
-      // Allow empty string for backspace clearing
       const val = toEnglishDigits(newValStr);
       if (val === '') {
           setConfig(prev => ({ ...prev, [dim === 'w' ? 'width' : 'height']: 0 }));
@@ -262,18 +277,15 @@ export const UnitDesigner = () => {
       }
   }
 
-  const handleManualResize = (newValStr: string, dim: 'w' | 'h') => {
+  const handleLocalInputChange = (val: string, dim: 'w' | 'h') => {
+      setLocalDims(prev => ({ ...prev, [dim]: toEnglishDigits(val) }));
+  };
+
+  const commitManualResize = (dim: 'w' | 'h') => {
       if (!selectedNodeId || !config.layout) return;
-      
-      const val = toEnglishDigits(newValStr);
-      const newVal = Number(val);
 
-      if (val === '') {
-          // Can't easily set flex to 0, so we just ignore or set very small?
-          // For UX, better to not do anything if empty, user must type
-          return;
-      }
-
+      const rawVal = dim === 'w' ? localDims.w : localDims.h;
+      const newVal = Number(rawVal);
       if (isNaN(newVal) || newVal <= 0) return;
 
       const parent = findParent(config.layout, selectedNodeId);
@@ -289,7 +301,7 @@ export const UnitDesigner = () => {
       
       const targetRatio = newVal / totalSize;
       
-      if (targetRatio >= 0.95 || targetRatio <= 0.05) return; 
+      if (targetRatio <= 0.05 || targetRatio >= 0.95) return; 
 
       const nodeIndex = parent.children.findIndex(c => c.id === selectedNodeId);
       const node = parent.children[nodeIndex];
@@ -300,50 +312,65 @@ export const UnitDesigner = () => {
       handleUpdateNode(selectedNodeId, { flex: newNodeFlex });
   };
   
-  // --- Drag Handling (Desktop Fallback) ---
+  // --- Drag Handling ---
   const handleDragStart = (e: React.DragEvent, type: 'opening' | 'split', value: string, dir?: string, count?: number) => {
       e.dataTransfer.setData('actionType', type);
       e.dataTransfer.setData('value', value);
       if (dir) e.dataTransfer.setData('dir', dir);
       if (count) e.dataTransfer.setData('count', count.toString());
       e.dataTransfer.effectAllowed = 'copy';
-      // Also set active tool on drag for consistency? No, distinct actions.
       setActiveTool({ type, value, dir, count });
   };
 
-  // --- Comprehensive Price Calculation ---
   const calculateWindowStats = (node: WindowNode, w: number, h: number) => {
     let stats = {
         sashWindowMeters: 0,
         sashDoorMeters: 0,
         mullionMeters: 0,
         glassArea: 0,
+        panelArea: 0,
         sashCount: 0
     };
 
-    if (node.type === 'container' && node.children) {
-        const totalFlex = node.children.reduce((a, b) => a + (b.flex || 1), 0);
-        
-        if (node.dir === 'row') {
-            stats.mullionMeters += (node.children.length - 1) * h;
-        } else {
-            stats.mullionMeters += (node.children.length - 1) * w;
-        }
-
-        node.children.forEach(child => {
-            const ratio = (child.flex || 1) / totalFlex;
-            const childW = node.dir === 'row' ? w * ratio : w;
-            const childH = node.dir === 'col' ? h * ratio : h;
-            
-            const childStats = calculateWindowStats(child, childW, childH);
-            stats.sashWindowMeters += childStats.sashWindowMeters;
-            stats.sashDoorMeters += childStats.sashDoorMeters;
-            stats.mullionMeters += childStats.mullionMeters;
-            stats.glassArea += childStats.glassArea;
-            stats.sashCount += childStats.sashCount;
-        });
-    } else {
+    if (node.type === 'container') {
+        // If the container itself acts as a sash (e.g. split door), add sash meters here
         if (node.openingType && node.openingType !== 'Fixed') {
+             stats.sashCount += 1;
+             const perimeter = (w + h) * 2;
+             if (node.openingType.includes('Door')) {
+                stats.sashDoorMeters += perimeter;
+             } else {
+                stats.sashWindowMeters += perimeter;
+             }
+        }
+    
+        if (node.children) {
+            const totalFlex = node.children.reduce((a, b) => a + (b.flex || 1), 0);
+            
+            // Mullions inside the container
+            if (node.dir === 'row') {
+                stats.mullionMeters += (node.children.length - 1) * h;
+            } else {
+                stats.mullionMeters += (node.children.length - 1) * w;
+            }
+    
+            node.children.forEach(child => {
+                const ratio = (child.flex || 1) / totalFlex;
+                const childW = node.dir === 'row' ? w * ratio : w;
+                const childH = node.dir === 'col' ? h * ratio : h;
+                
+                const childStats = calculateWindowStats(child, childW, childH);
+                stats.sashWindowMeters += childStats.sashWindowMeters;
+                stats.sashDoorMeters += childStats.sashDoorMeters;
+                stats.mullionMeters += childStats.mullionMeters;
+                stats.glassArea += childStats.glassArea;
+                stats.panelArea += childStats.panelArea;
+                stats.sashCount += childStats.sashCount;
+            });
+        }
+    } else {
+        // Leaf Node
+        if (node.openingType && node.openingType !== 'Fixed' && node.openingType !== 'Panel') {
             stats.sashCount += 1;
             const perimeter = (w + h) * 2;
             
@@ -353,7 +380,13 @@ export const UnitDesigner = () => {
                 stats.sashWindowMeters += perimeter;
             }
         }
-        stats.glassArea += w * h;
+        
+        if (node.openingType === 'Panel') {
+            stats.panelArea += w * h;
+        } else {
+            // It is glass if it's 'Fixed' or if it's a sash leaf (the leaf itself is the glass)
+            stats.glassArea += w * h;
+        }
     }
     return stats;
   };
@@ -370,11 +403,16 @@ export const UnitDesigner = () => {
     const sashWindowM = stats.sashWindowMeters / 1000;
     const sashDoorM = stats.sashDoorMeters / 1000;
     const glassA = stats.glassArea / 1000000; 
+    const panelA = stats.panelArea / 1000000;
 
     const galoM = frameM + mullionM + sashWindowM + sashDoorM;
 
     const brand = brands.find(b => b.id === config.profileId);
     const glassType = glassList.find(g => g.id === config.glassId);
+    // Find panel price from glass list or default
+    const panelType = glassList.find(g => g.id === 'panel_upvc');
+    const panelPricePerM2 = panelType?.pricePerSqm || 1500000;
+    
     const hwItem = hardwareList.find(h => h.id === 'h1');
 
     const framePrice = brand?.components.find(c => c.id === 'frame')?.price || 0;
@@ -407,18 +445,21 @@ export const UnitDesigner = () => {
     const glassTotal = glassA * glassPricePerM2;
     if (glassA > 0) details.push({ rowId: rowId++, name: glassType?.name || 'شیشه', unit: 'متر مربع', quantity: Number(glassA.toFixed(2)), unitPrice: glassPricePerM2, totalPrice: Math.round(glassTotal) });
 
+    const panelTotal = panelA * panelPricePerM2;
+    if (panelA > 0) details.push({ rowId: rowId++, name: panelType?.name || 'پنل UPVC', unit: 'متر مربع', quantity: Number(panelA.toFixed(2)), unitPrice: panelPricePerM2, totalPrice: Math.round(panelTotal) });
+
     const hardwareTotal = stats.sashCount * hardwarePricePerSet;
     if (stats.sashCount > 0) details.push({ rowId: rowId++, name: 'یراق آلات', unit: 'دست', quantity: stats.sashCount, unitPrice: hardwarePricePerSet, totalPrice: Math.round(hardwareTotal) });
 
     const totalProfileMeters = frameM + mullionM + sashWindowM + sashDoorM;
     const profileCost = frameTotal + sashWinTotal + sashDoorTotal + mullionTotal + galoTotal;
-    const unitPrice = Math.round(profileCost + glassTotal + hardwareTotal);
+    const unitPrice = Math.round(profileCost + glassTotal + hardwareTotal + panelTotal);
 
     return {
         profileMeters: Number(totalProfileMeters.toFixed(2)),
         profilePrice: Math.round(profileCost),
         glassArea: Number(glassA.toFixed(2)),
-        glassPrice: Math.round(glassTotal),
+        glassPrice: Math.round(glassTotal + panelTotal),
         sashCount: stats.sashCount,
         hardwarePrice: Math.round(hardwareTotal),
         totalPrice: unitPrice,
@@ -512,9 +553,9 @@ export const UnitDesigner = () => {
               <div className="flex items-center gap-4 h-full">
                   {/* Window Section */}
                   <div className="flex items-center gap-2 pr-2 border-r border-slate-600/50 h-full">
-                      {/* Fixed: Rotate text container instead of writing-mode-vertical to prevent floating issue */}
+                      {/* Fixed: Vertical text layout */}
                       <div className="flex items-center justify-center h-full w-6">
-                         <span className="text-[9px] text-slate-500 font-bold -rotate-90 whitespace-nowrap">پنجره</span>
+                         <span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }} className="text-[9px] text-slate-500 font-bold whitespace-nowrap">پنجره</span>
                       </div>
                       <DraggableIcon 
                           type="opening" value="Fixed" label={t('fixed')} icon={<FixedIcon />} 
@@ -532,10 +573,15 @@ export const UnitDesigner = () => {
                   {/* Door Section */}
                   <div className="flex items-center gap-2 pl-2 h-full">
                        <div className="flex items-center justify-center h-full w-6">
-                          <span className="text-[9px] text-slate-500 font-bold -rotate-90 whitespace-nowrap">درب</span>
+                           <span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }} className="text-[9px] text-slate-500 font-bold whitespace-nowrap">درب</span>
                        </div>
                        <DraggableIcon type="opening" value="DoorLeft" label={t('door') + ' چپ'} icon={<DoorIcon />} isActive={activeTool?.value === 'DoorLeft'} onClick={toggleTool} onDragStart={handleDragStart} />
                        <DraggableIcon type="opening" value="DoorRight" label={t('door') + ' راست'} icon={<DoorIcon />} isActive={activeTool?.value === 'DoorRight'} onClick={toggleTool} onDragStart={handleDragStart} />
+                  </div>
+
+                  {/* Panel Section */}
+                  <div className="flex items-center gap-2 pl-2 h-full border-l border-slate-600/50">
+                       <DraggableIcon type="opening" value="Panel" label={t('panel')} icon={<LayoutTemplate size={24} />} isActive={activeTool?.value === 'Panel'} onClick={toggleTool} onDragStart={handleDragStart} />
                   </div>
               </div>
            )}
@@ -665,8 +711,10 @@ export const UnitDesigner = () => {
                              type="text"
                              inputMode="numeric"
                              disabled={!selectedNodeDims?.editableW}
-                             value={selectedNodeDims ? Math.round(selectedNodeDims.w) : ''}
-                             onChange={(e) => handleManualResize(e.target.value, 'w')}
+                             value={localDims.w}
+                             onChange={(e) => handleLocalInputChange(e.target.value, 'w')}
+                             onBlur={() => commitManualResize('w')}
+                             onKeyDown={(e) => e.key === 'Enter' && commitManualResize('w')}
                              className={`w-full pl-8 pr-2 py-2 rounded-lg border text-center font-bold text-sm 
                                 ${!selectedNodeDims?.editableW ? 'bg-slate-100 text-slate-400 border-slate-200' : 'bg-white border-orange-300 text-orange-900'}
                              `}
@@ -681,8 +729,10 @@ export const UnitDesigner = () => {
                              type="text"
                              inputMode="numeric"
                              disabled={!selectedNodeDims?.editableH}
-                             value={selectedNodeDims ? Math.round(selectedNodeDims.h) : ''}
-                             onChange={(e) => handleManualResize(e.target.value, 'h')}
+                             value={localDims.h}
+                             onChange={(e) => handleLocalInputChange(e.target.value, 'h')}
+                             onBlur={() => commitManualResize('h')}
+                             onKeyDown={(e) => e.key === 'Enter' && commitManualResize('h')}
                              className={`w-full pl-8 pr-2 py-2 rounded-lg border text-center font-bold text-sm 
                                 ${!selectedNodeDims?.editableH ? 'bg-slate-100 text-slate-400 border-slate-200' : 'bg-white border-orange-300 text-orange-900'}
                              `}
@@ -756,26 +806,26 @@ const FixedIcon = () => (
 const TurnLeftIcon = () => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full">
         <rect x="3" y="3" width="18" height="18" rx="2" />
-        {/* Triangle points Right > (Handle Right) */}
-        <path d="M3 3L21 12L3 21V3Z" fill="white" fillOpacity="0.2" />
-        <path d="M3 3L21 12L3 21" fill="none" stroke="white" strokeWidth="1.5" />
+        {/* Turn Left -> Points Left < */}
+        <path d="M21 3L3 12L3 21" fill="none" stroke="white" strokeWidth="1.5" />
+        <path d="M21 3L3 12L21 21V3Z" fill="white" fillOpacity="0.2" />
     </svg>
 );
 
 const TurnRightIcon = () => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full">
         <rect x="3" y="3" width="18" height="18" rx="2" />
-        {/* Triangle points Left < (Handle Left) */}
-        <path d="M21 3L3 12L21 21V3Z" fill="white" fillOpacity="0.2" />
-        <path d="M21 3L3 12L21 21" fill="none" stroke="white" strokeWidth="1.5" />
+        {/* Turn Right -> Points Right > */}
+        <path d="M3 3L21 12L21 21" fill="none" stroke="white" strokeWidth="1.5" />
+        <path d="M3 3L21 12L3 21V3Z" fill="white" fillOpacity="0.2" />
     </svg>
 );
 
 const TiltTurnLeftIcon = () => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full">
         <rect x="3" y="3" width="18" height="18" rx="2" />
-        {/* Triangle Right > */}
-        <path d="M3 3L21 12L3 21" fill="none" stroke="white" strokeWidth="1.5" />
+        {/* Turn Left < */}
+        <path d="M21 3L3 12L21 21" fill="none" stroke="white" strokeWidth="1.5" />
         <path d="M3 21L12 3L21 21" fill="none" stroke="white" strokeWidth="1" strokeDasharray="2 2" opacity="0.5" />
     </svg>
 );
@@ -783,8 +833,8 @@ const TiltTurnLeftIcon = () => (
 const TiltTurnRightIcon = () => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full">
         <rect x="3" y="3" width="18" height="18" rx="2" />
-        {/* Triangle Left < */}
-        <path d="M21 3L3 12L21 21" fill="none" stroke="white" strokeWidth="1.5" />
+        {/* Turn Right > */}
+        <path d="M3 3L21 12L3 21" fill="none" stroke="white" strokeWidth="1.5" />
         <path d="M3 21L12 3L21 21" fill="none" stroke="white" strokeWidth="1" strokeDasharray="2 2" opacity="0.5" />
     </svg>
 );

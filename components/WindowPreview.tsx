@@ -33,14 +33,26 @@ const PreviewNode = ({ node }: { node: WindowNode }) => {
 
   // Leaf with Directional Visuals
   return (
-    <div className="w-full h-full relative bg-sky-50">
+    <div className={`w-full h-full relative ${node.openingType === 'Panel' ? 'bg-slate-100' : 'bg-sky-50'}`}>
        {/* Sash Indication */}
-       {node.openingType !== 'Fixed' && (
+       {node.openingType !== 'Fixed' && node.openingType !== 'Panel' && (
          <div className="absolute inset-0 border-[4px] border-white shadow-sm pointer-events-none">
              <div className="absolute inset-0 border border-slate-300/30"></div>
+             {/* Door Kickplate Preview */}
+             {node.openingType?.includes('Door') && (
+                 <div className="absolute bottom-0 left-0 right-0 h-[15%] bg-slate-100 border-t border-slate-200"></div>
+             )}
          </div>
        )}
        
+       {node.openingType === 'Panel' && (
+           <div className="absolute inset-0 flex items-center justify-center opacity-10">
+                {/* Minimal vertical lines for panel */}
+                <div className="h-full w-px bg-black mx-1"></div>
+                <div className="h-full w-px bg-black mx-1"></div>
+           </div>
+       )}
+
        {/* Directional Lines */}
        <div className="absolute inset-0 opacity-60">
            {renderPreviewSymbol(node.openingType)}
@@ -50,23 +62,22 @@ const PreviewNode = ({ node }: { node: WindowNode }) => {
 };
 
 const renderPreviewSymbol = (type?: OpeningDirection) => {
-    // Matching Canvas logic: Triangle Tip points to handle. Base is Hinge.
     switch (type) {
-        case 'TurnLeft': // Hinge Left, Handle Right. Triangle >
-            return <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full"><path d="M0,0 L100,50 L0,100" fill="none" stroke="black" strokeWidth="2" vectorEffect="non-scaling-stroke" /></svg>;
-        case 'TurnRight': // Hinge Right, Handle Left. Triangle <
+        case 'TurnLeft': // Points Left <
             return <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full"><path d="M100,0 L0,50 L100,100" fill="none" stroke="black" strokeWidth="2" vectorEffect="non-scaling-stroke" /></svg>;
-        case 'TiltTurnLeft': // Hinge Left
-            return (
-                <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full">
-                    <path d="M0,0 L100,50 L0,100" fill="none" stroke="black" strokeWidth="2" vectorEffect="non-scaling-stroke" />
-                    <path d="M0,100 L50,0 L100,100" fill="none" stroke="black" strokeWidth="1" strokeDasharray="5,5" vectorEffect="non-scaling-stroke" />
-                </svg>
-            );
-        case 'TiltTurnRight': // Hinge Right
+        case 'TurnRight': // Points Right >
+            return <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full"><path d="M0,0 L100,50 L0,100" fill="none" stroke="black" strokeWidth="2" vectorEffect="non-scaling-stroke" /></svg>;
+        case 'TiltTurnLeft': // Points Left <
             return (
                 <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full">
                     <path d="M100,0 L0,50 L100,100" fill="none" stroke="black" strokeWidth="2" vectorEffect="non-scaling-stroke" />
+                    <path d="M0,100 L50,0 L100,100" fill="none" stroke="black" strokeWidth="1" strokeDasharray="5,5" vectorEffect="non-scaling-stroke" />
+                </svg>
+            );
+        case 'TiltTurnRight': // Points Right >
+            return (
+                <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full">
+                    <path d="M0,0 L100,50 L0,100" fill="none" stroke="black" strokeWidth="2" vectorEffect="non-scaling-stroke" />
                     <path d="M0,100 L50,0 L100,100" fill="none" stroke="black" strokeWidth="1" strokeDasharray="5,5" vectorEffect="non-scaling-stroke" />
                 </svg>
             );
@@ -75,9 +86,11 @@ const renderPreviewSymbol = (type?: OpeningDirection) => {
         case 'SlidingRight':
             return <div className="w-full h-full flex items-center justify-center text-slate-500 text-lg">→</div>;
         case 'DoorLeft':
+             return <div className="absolute bottom-1 right-1 text-[8px] bg-white/80 px-1 rounded font-bold">L</div>;
         case 'DoorRight':
-             return <div className="absolute bottom-1 right-1 text-[8px] bg-white/80 px-1 rounded font-bold">درب</div>;
+             return <div className="absolute bottom-1 right-1 text-[8px] bg-white/80 px-1 rounded font-bold">R</div>;
         case 'Fixed':
+        case 'Panel':
             return null;
         default:
             return null;

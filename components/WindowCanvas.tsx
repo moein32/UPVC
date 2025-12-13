@@ -105,7 +105,7 @@ export const WindowCanvas = ({ node, selectedId, onSelect, onUpdateNode, width, 
             const newChildren = Array(count).fill(null).map((_, i) => ({
                 id: Date.now() + `_${i}_${Math.random()}`, 
                 type: 'leaf', 
-                openingType: node.openingType || 'Fixed', // Inherit or reset? Usually reset or keep Fixed
+                openingType: node.openingType === 'Panel' ? 'Fixed' : node.openingType || 'Fixed', // Reset Panel, otherwise inherit
                 flex: 1 
             })) as WindowNode[];
 
@@ -113,7 +113,8 @@ export const WindowCanvas = ({ node, selectedId, onSelect, onUpdateNode, width, 
                 type: 'container', 
                 dir: dir, 
                 children: newChildren, 
-                openingType: undefined 
+                // If it was a door, keep it on the container
+                openingType: (node.openingType && node.openingType !== 'Fixed' && node.openingType !== 'Panel') ? node.openingType : undefined
             });
             onSelect(node.id); 
         }
@@ -125,7 +126,7 @@ export const WindowCanvas = ({ node, selectedId, onSelect, onUpdateNode, width, 
     return (
       <div 
         ref={containerRef}
-        className="flex w-full h-full relative overflow-hidden bg-white" 
+        className="flex w-full h-full relative bg-white" 
         style={{ 
           flexDirection: node.dir === 'col' ? 'column' : 'row',
         }}
@@ -134,6 +135,18 @@ export const WindowCanvas = ({ node, selectedId, onSelect, onUpdateNode, width, 
              onSelect(node.id);
         }}
       >
+        {/* Render Sash Frame Overlay for Containers (e.g., Door with Panel inside) */}
+        {node.openingType && node.openingType !== 'Fixed' && (
+             <div className="absolute inset-0 z-30 pointer-events-none">
+                <div className="absolute inset-0 border-[12px] border-white shadow-[inset_0_0_10px_rgba(0,0,0,0.1)]">
+                   <div className="absolute inset-0 border border-slate-300/50"></div>
+                </div>
+                 <div className="absolute inset-0 flex items-center justify-center">
+                    {renderOpeningSymbol(node.openingType)}
+                 </div>
+             </div>
+        )}
+
         {node.children.map((child, index) => (
           <React.Fragment key={child.id}>
             <div 
@@ -151,7 +164,7 @@ export const WindowCanvas = ({ node, selectedId, onSelect, onUpdateNode, width, 
               />
             </div>
             
-            {/* Mullion (Divider) - Styled as white UPVC profile */}
+            {/* Mullion (Divider) */}
             {index < node.children.length - 1 && (
               <div 
                 className={`relative z-20 flex items-center justify-center bg-slate-100 border border-slate-300 shadow-sm transition-colors group/resizer
@@ -161,7 +174,6 @@ export const WindowCanvas = ({ node, selectedId, onSelect, onUpdateNode, width, 
                 onMouseDown={(e) => handleResizeStart(e, index)}
                 onTouchStart={(e) => handleResizeStart(e, index)}
               >
-                 {/* Hidden grip, only visible on hover */}
                  <div className={`bg-slate-400/50 rounded-full opacity-0 group-hover/resizer:opacity-100 transition-opacity
                     ${node.dir === 'col' ? 'w-8 h-1' : 'w-1 h-8'}
                  `} />
@@ -189,17 +201,33 @@ export const WindowCanvas = ({ node, selectedId, onSelect, onUpdateNode, width, 
         ${isDragOver ? 'bg-green-100/50 ring-4 ring-inset ring-green-500' : ''}
       `}
     >
-        {/* Glass Effect Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-sky-50 to-sky-100/80">
+      
+      {node.openingType === 'Panel' ? (
+        // New Distinct Panel Visual
+        <div className="absolute inset-0 bg-slate-200 border-[8px] border-slate-300 shadow-inner">
+             {/* 3D Molded Look */}
+             <div className="absolute inset-0 border-t-4 border-l-4 border-white/40 border-b-4 border-r-4 border-slate-400/20"></div>
+             
+             {/* Texture */}
+            <div className="w-full h-full flex justify-around opacity-20">
+                <div className="w-px h-full bg-slate-400"></div>
+                <div className="w-px h-full bg-slate-400"></div>
+            </div>
+        </div>
+      ) : (
+         // Glass Background
+         <div className="absolute inset-0 bg-gradient-to-br from-sky-50 to-sky-100/80">
             {/* Reflection */}
             <div className="absolute -inset-full top-0 block h-full w-1/2 -skew-x-12 bg-gradient-to-r from-transparent to-white opacity-20 transform translate-x-full" />
         </div>
+      )}
 
-      {/* Sash Frame (If not fixed) */}
-      {node.openingType !== 'Fixed' && (
+      {/* Sash Frame (If not fixed, not panel, and not container) */}
+      {/* Note: If node is a leaf, it only has openingType if it wasn't split. */}
+      {node.openingType !== 'Fixed' && node.openingType !== 'Panel' && (
         <div className="absolute inset-0 border-[12px] border-white shadow-[inset_0_0_10px_rgba(0,0,0,0.1)] pointer-events-none">
-           {/* Inner Sash Seal */}
            <div className="absolute inset-0 border border-slate-300/50"></div>
+           {/* No automatic kickplate here anymore, user adds panel manually */}
         </div>
       )}
 
@@ -208,12 +236,12 @@ export const WindowCanvas = ({ node, selectedId, onSelect, onUpdateNode, width, 
         {renderOpeningSymbol(node.openingType)}
       </div>
 
-      {/* Dimensions Overlay - Always Visible if space allows */}
+      {/* Dimensions Overlay - Always Visible for both Glass and Panel */}
       {width > 60 && height > 40 && (
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white/70 backdrop-blur-[2px] px-1.5 py-0.5 rounded border border-slate-300/50 pointer-events-none z-10 whitespace-nowrap flex flex-col items-center justify-center shadow-sm">
-             <span className="text-[10px] font-bold text-slate-800 leading-none">{toPersianDigits(Math.round(width))}</span>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white/80 backdrop-blur-[2px] px-2 py-1 rounded-md border border-slate-300/50 pointer-events-none z-10 whitespace-nowrap flex flex-col items-center justify-center shadow-sm">
+             <span className="text-[11px] font-extrabold text-slate-900 leading-none">{toPersianDigits(Math.round(width))}</span>
              <div className="w-full h-px bg-slate-400/50 my-0.5"></div>
-             <span className="text-[10px] font-bold text-slate-800 leading-none">{toPersianDigits(Math.round(height))}</span>
+             <span className="text-[11px] font-extrabold text-slate-900 leading-none">{toPersianDigits(Math.round(height))}</span>
           </div>
       )}
 
@@ -227,24 +255,15 @@ export const WindowCanvas = ({ node, selectedId, onSelect, onUpdateNode, width, 
   );
 };
 
-// Fixed Logic for Opening Indicators - Swapped based on User Feedback
+// Fixed Logic for Opening Indicators - Swapped back to Left (<) for TurnLeft
 const renderOpeningSymbol = (type?: OpeningDirection) => {
   const strokeColor = "stroke-slate-800";
   const strokeWidth = "1.5";
   const dashedStroke = "3 3";
   
   switch (type) {
-    case 'TurnLeft': // Hinge Left, Handle Right. Triangle Tip points to Handle (Right).
+    case 'TurnLeft': // Turn Left -> Points Left (<). Handle Left.
        return (
-        <div className="relative w-full h-full p-4">
-             <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-                 <path d="M0,0 L100,50 L0,100" fill="none" stroke="black" strokeWidth={strokeWidth} className={strokeColor} />
-            </svg>
-            <ModernHandle position="right" />
-        </div>
-      );
-    case 'TurnRight': // Hinge Right, Handle Left. Triangle Tip points to Handle (Left).
-      return (
         <div className="relative w-full h-full p-4">
             <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
                  <path d="M100,0 L0,50 L100,100" fill="none" stroke="black" strokeWidth={strokeWidth} className={strokeColor} />
@@ -252,24 +271,33 @@ const renderOpeningSymbol = (type?: OpeningDirection) => {
              <ModernHandle position="left" />
         </div>
       );
-    case 'TiltTurnLeft': // Hinge Left, Handle Right.
-        return (
-         <div className="relative w-full h-full p-4">
+    case 'TurnRight': // Turn Right -> Points Right (>). Handle Right.
+      return (
+        <div className="relative w-full h-full p-4">
              <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
                  <path d="M0,0 L100,50 L0,100" fill="none" stroke="black" strokeWidth={strokeWidth} className={strokeColor} />
-                 <path d="M0,100 L50,0 L100,100" fill="none" stroke="black" strokeWidth="1" strokeDasharray={dashedStroke} className="opacity-60" />
-             </svg>
-             <ModernHandle position="right" />
-         </div>
-       );
-    case 'TiltTurnRight': // Hinge Right, Handle Left.
-       return (
-        <div className="relative w-full h-full p-4">
+            </svg>
+            <ModernHandle position="right" />
+        </div>
+      );
+    case 'TiltTurnLeft': // Points Left (<)
+        return (
+         <div className="relative w-full h-full p-4">
             <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
                 <path d="M100,0 L0,50 L100,100" fill="none" stroke="black" strokeWidth={strokeWidth} className={strokeColor} />
                 <path d="M0,100 L50,0 L100,100" fill="none" stroke="black" strokeWidth="1" strokeDasharray={dashedStroke} className="opacity-60" />
             </svg>
             <ModernHandle position="left" />
+         </div>
+       );
+    case 'TiltTurnRight': // Points Right (>)
+       return (
+        <div className="relative w-full h-full p-4">
+             <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                 <path d="M0,0 L100,50 L0,100" fill="none" stroke="black" strokeWidth={strokeWidth} className={strokeColor} />
+                 <path d="M0,100 L50,0 L100,100" fill="none" stroke="black" strokeWidth="1" strokeDasharray={dashedStroke} className="opacity-60" />
+             </svg>
+             <ModernHandle position="right" />
         </div>
       );
     case 'SlidingLeft':
@@ -284,38 +312,40 @@ const renderOpeningSymbol = (type?: OpeningDirection) => {
                 <ArrowIcon dir="right" />
             </div>
         );
-    case 'DoorLeft': // Hinge Left, Handle Right
+    case 'DoorLeft': // Points Left (<)
         return (
-             <div className="relative w-full h-full p-4">
-                 <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-                     <path d="M0,0 L100,50 L0,100" fill="none" stroke="black" strokeWidth={strokeWidth} className={strokeColor} />
-                 </svg>
-                 <ModernHandle position="right" isDoor />
-                 <div className="absolute bottom-2 right-1/2 translate-x-1/2 text-[10px] font-bold bg-white/80 px-1 rounded">درب</div>
-            </div>
-        );
-    case 'DoorRight': // Hinge Right, Handle Left
-        return (
-            <div className="relative w-full h-full p-4">
+             <div className="relative w-full h-full p-4 pb-12">
                  <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
                      <path d="M100,0 L0,50 L100,100" fill="none" stroke="black" strokeWidth={strokeWidth} className={strokeColor} />
                  </svg>
                  <ModernHandle position="left" isDoor />
-                 <div className="absolute bottom-2 right-1/2 translate-x-1/2 text-[10px] font-bold bg-white/80 px-1 rounded">درب</div>
             </div>
         );
+    case 'DoorRight': // Points Right (>)
+        return (
+            <div className="relative w-full h-full p-4 pb-12">
+                 <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                     <path d="M0,0 L100,50 L0,100" fill="none" stroke="black" strokeWidth={strokeWidth} className={strokeColor} />
+                 </svg>
+                 <ModernHandle position="right" isDoor />
+            </div>
+        );
+    case 'Panel':
+      return null;
     default: 
       return null;
   }
 };
 
 const ModernHandle = ({ position, isDoor }: { position: 'left' | 'right', isDoor?: boolean }) => (
-    <div className={`absolute top-1/2 -translate-y-1/2 z-20 drop-shadow-md
+    <div className={`absolute top-1/2 z-20 drop-shadow-md
         ${position === 'left' ? 'left-2' : 'right-2'}
+        ${isDoor ? '-translate-y-4' : '-translate-y-1/2'}
     `}>
-        <div className="w-1.5 h-6 bg-slate-200 rounded-sm border border-slate-300"></div>
-        <div className={`absolute top-2 w-8 h-2 bg-slate-100 border border-slate-300 rounded-sm
+        <div className={`bg-slate-200 rounded-sm border border-slate-300 ${isDoor ? 'w-2 h-10' : 'w-1.5 h-6'}`}></div>
+        <div className={`absolute top-2 bg-slate-100 border border-slate-300 rounded-sm
              ${position === 'left' ? 'left-1' : 'right-1 origin-right'}
+             ${isDoor ? 'w-12 h-3' : 'w-8 h-2'}
         `}></div>
     </div>
 );
