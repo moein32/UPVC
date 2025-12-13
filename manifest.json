@@ -3,8 +3,8 @@
   "name": "Lumina UPVC Designer",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/1048/1048950.png",
-      "type": "image/png",
+      "src": "./logo.svg",
+      "type": "image/svg+xml",
       "sizes": "512x512"
     }
   ],
