@@ -13,6 +13,8 @@ interface Props {
   isRoot?: boolean;
   onDimensionEdit?: (dim: 'w' | 'h', val: number) => void; 
   onChildResize?: (nodeId: string, childIndex: number, newSize: number, totalSize: number) => void;
+  readOnly?: boolean;
+  isThumbnail?: boolean;
 }
 
 // Engineering Style Dimension Line
@@ -73,12 +75,27 @@ const DimensionLine = ({
     )
 }
 
-export const WindowCanvas = ({ node, selectedId, onSelect, onUpdateNode, width, height, depth = 0, isRoot = false, onDimensionEdit, onChildResize }: Props) => {
-  const isSelected = selectedId === node.id;
+export const WindowCanvas = ({ 
+  node, selectedId, onSelect, onUpdateNode, width, height, 
+  depth = 0, isRoot = false, onDimensionEdit, onChildResize, 
+  readOnly = false, isThumbnail = false 
+}: Props) => {
+  const isSelected = !readOnly && selectedId === node.id;
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
 
+  // Determine styles based on mode (Editor vs Thumbnail)
+  const frameBorderWidth = isThumbnail ? '3px' : '12px';
+  const sashBorderWidth = isThumbnail ? '4px' : '14px';
+  const frameBorderColor = isThumbnail ? 'border-slate-700' : 'border-slate-100'; // Darker for print visibility
+  const frameOutline = isThumbnail ? '' : 'outline outline-1 outline-slate-400';
+  const innerBorder = isThumbnail ? 'border-slate-400' : 'border-slate-400';
+  const mullionColor = isThumbnail ? 'bg-slate-700' : 'bg-slate-100';
+  const sashColor = isThumbnail ? 'border-slate-600' : 'border-white';
+  const sashInnerBorder = isThumbnail ? 'border-slate-400' : 'border-gray-300';
+
   const handleResizeStart = (e: React.MouseEvent | React.TouchEvent, index: number) => {
+    if (readOnly) return;
     e.preventDefault();
     e.stopPropagation();
     const container = containerRef.current;
@@ -121,6 +138,7 @@ export const WindowCanvas = ({ node, selectedId, onSelect, onUpdateNode, width, 
   };
 
   const handleDragOver = (e: React.DragEvent) => {
+    if (readOnly) return;
     e.preventDefault();
     if (node.type === 'leaf') {
         setIsDragOver(true);
@@ -132,6 +150,7 @@ export const WindowCanvas = ({ node, selectedId, onSelect, onUpdateNode, width, 
   };
 
   const handleDrop = (e: React.DragEvent) => {
+    if (readOnly) return;
     e.preventDefault();
     setIsDragOver(false);
     e.stopPropagation();
@@ -165,9 +184,22 @@ export const WindowCanvas = ({ node, selectedId, onSelect, onUpdateNode, width, 
 
   const ContainerWrapper = ({ children }: {children?: React.ReactNode}) => {
       if (isRoot) {
+          if (isThumbnail) {
+               // Minimal Wrapper for Invoice/Thumbnail
+               return (
+                  <div className="relative w-full h-full">
+                       <div className={`absolute inset-0 bg-white border-[${frameBorderWidth}] ${frameBorderColor}`}></div>
+                       <div className={`absolute inset-[${frameBorderWidth}] bg-white border ${innerBorder} overflow-hidden`}>
+                          {children}
+                       </div>
+                  </div>
+               )
+          }
+
+          // Full Editor Wrapper with Dimensions
           return (
               <div className="relative w-full h-full p-20 bg-transparent select-none">
-                  {/* Global Dimensions (Furthest Out) */}
+                  {/* Global Dimensions */}
                   <div className="absolute top-0 left-20 right-20 h-20">
                        <DimensionLine 
                             length={width} 
@@ -187,11 +219,10 @@ export const WindowCanvas = ({ node, selectedId, onSelect, onUpdateNode, width, 
                        />
                   </div>
 
-                  {/* Child Segment Dimensions (Closer In) */}
+                  {/* Child Segment Dimensions */}
                   {node.type === 'container' && node.children && (
                       <>
                         {node.dir === 'row' ? (
-                            // Horizontal Segments (Widths)
                             <div className="absolute top-0 left-20 right-20 h-20 flex">
                                 {node.children.map((child, idx) => {
                                     const totalFlex = node.children!.reduce((sum, c) => sum + (c.flex || 1), 0);
@@ -211,7 +242,6 @@ export const WindowCanvas = ({ node, selectedId, onSelect, onUpdateNode, width, 
                                 })}
                             </div>
                         ) : (
-                            // Vertical Segments (Heights)
                              <div className="absolute left-0 top-20 bottom-20 w-20 flex flex-col">
                                 {node.children.map((child, idx) => {
                                     const totalFlex = node.children!.reduce((sum, c) => sum + (c.flex || 1), 0);
@@ -234,13 +264,10 @@ export const WindowCanvas = ({ node, selectedId, onSelect, onUpdateNode, width, 
                       </>
                   )}
                   
-                  {/* Clean Frame Visual */}
+                  {/* Frame Visual */}
                   <div className="relative w-full h-full shadow-xl">
-                      {/* Outer Frame - Clean Solid Border */}
-                      <div className="absolute inset-0 bg-white border-[12px] border-slate-100 outline outline-1 outline-slate-400"></div>
-                      
-                      {/* Inner Area (Content) */}
-                      <div className="absolute inset-[12px] bg-white border border-slate-400 overflow-hidden">
+                      <div className={`absolute inset-0 bg-white border-[${frameBorderWidth}] ${frameBorderColor} ${frameOutline}`}></div>
+                      <div className={`absolute inset-[${frameBorderWidth}] bg-white border ${innerBorder} overflow-hidden`}>
                           {children}
                       </div>
                   </div>
@@ -256,23 +283,23 @@ export const WindowCanvas = ({ node, selectedId, onSelect, onUpdateNode, width, 
       <ContainerWrapper>
           <div 
             ref={containerRef}
-            className="flex w-full h-full relative bg-white border border-gray-400 box-border" 
+            className={`flex w-full h-full relative bg-white border ${innerBorder} box-border`}
             style={{ 
               flexDirection: node.dir === 'col' ? 'column' : 'row',
             }}
             onClick={(e) => {
                 e.stopPropagation();
-                onSelect(node.id);
+                if (!readOnly) onSelect(node.id);
             }}
           >
-            {/* Sash Frame Overlay for Containers (if the whole container is a sash) */}
+            {/* Sash Frame Overlay for Containers */}
             {node.openingType && node.openingType !== 'Fixed' && (
                 <div className="absolute inset-0 z-30 pointer-events-none">
-                    <div className="absolute inset-0 border-[14px] border-white shadow-[inset_0_0_2px_rgba(0,0,0,0.2)]">
-                       <div className="absolute inset-0 border border-gray-300"></div>
+                    <div className={`absolute inset-0 border-[${sashBorderWidth}] ${sashColor} shadow-[inset_0_0_2px_rgba(0,0,0,0.2)]`}>
+                       <div className={`absolute inset-0 border ${sashInnerBorder}`}></div>
                     </div>
                      <div className="absolute inset-0 flex items-center justify-center">
-                        {renderOpeningSymbol(node.openingType)}
+                        {renderOpeningSymbol(node.openingType, isThumbnail)}
                      </div>
                  </div>
             )}
@@ -288,27 +315,34 @@ export const WindowCanvas = ({ node, selectedId, onSelect, onUpdateNode, width, 
                     selectedId={selectedId} 
                     onSelect={onSelect}
                     onUpdateNode={onUpdateNode}
-                    onChildResize={onChildResize} // Pass down prop
+                    onChildResize={onChildResize} 
                     width={node.dir === 'row' ? width * ((child.flex || 1) / node.children!.reduce((a,b) => a + (b.flex||1), 0)) : width}
                     height={node.dir === 'col' ? height * ((child.flex || 1) / node.children!.reduce((a,b) => a + (b.flex||1), 0)) : height}
                     depth={depth + 1}
+                    readOnly={readOnly}
+                    isThumbnail={isThumbnail}
                   />
                 </div>
                 
-                {/* Clean Mullion (Divider) */}
+                {/* Mullion */}
                 {index < node.children.length - 1 && (
                   <div 
-                    className={`relative z-20 flex items-center justify-center bg-slate-100 border-gray-400 transition-colors group/resizer
-                      ${node.dir === 'col' ? 'h-3 w-full cursor-row-resize border-y' : 'w-3 h-full cursor-col-resize border-x'}
-                      hover:bg-blue-100 hover:border-blue-400
+                    className={`relative z-20 flex items-center justify-center ${mullionColor} border-gray-400 transition-colors group/resizer
+                      ${node.dir === 'col' ? 'h-3 w-full border-y' : 'w-3 h-full border-x'}
+                      ${!readOnly ? (node.dir === 'col' ? 'cursor-row-resize' : 'cursor-col-resize') : ''}
+                      ${!readOnly && !isThumbnail ? 'hover:bg-blue-100 hover:border-blue-400' : ''}
+                      ${isThumbnail && node.dir === 'col' ? '!h-[2px] !border-none' : ''}
+                      ${isThumbnail && node.dir === 'row' ? '!w-[2px] !border-none' : ''}
                     `}
-                    onMouseDown={(e) => handleResizeStart(e, index)}
-                    onTouchStart={(e) => handleResizeStart(e, index)}
+                    onMouseDown={(e) => !readOnly && handleResizeStart(e, index)}
+                    onTouchStart={(e) => !readOnly && handleResizeStart(e, index)}
                   >
-                     {/* Subtle grip handle */}
-                     <div className={`bg-gray-300 rounded-full
-                        ${node.dir === 'col' ? 'w-4 h-1' : 'w-1 h-4'}
-                     `} />
+                     {/* Grip handle - Hide in thumbnail */}
+                     {!isThumbnail && (
+                        <div className={`bg-gray-300 rounded-full
+                            ${node.dir === 'col' ? 'w-4 h-1' : 'w-1 h-4'}
+                        `} />
+                     )}
                   </div>
                 )}
               </React.Fragment>
@@ -324,13 +358,14 @@ export const WindowCanvas = ({ node, selectedId, onSelect, onUpdateNode, width, 
     <div 
       onClick={(e) => {
         e.stopPropagation();
-        onSelect(node.id);
+        if (!readOnly) onSelect(node.id);
       }}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       className={`
-        w-full h-full relative cursor-pointer group transition-all duration-200 overflow-hidden border border-gray-400 box-border
+        w-full h-full relative group transition-all duration-200 overflow-hidden border ${innerBorder} box-border
+        ${!readOnly ? 'cursor-pointer' : ''}
         ${isSelected ? 'ring-2 ring-inset ring-orange-500 z-10' : ''}
         ${isDragOver ? 'bg-green-100/50 ring-2 ring-inset ring-green-500' : ''}
       `}
@@ -350,27 +385,30 @@ export const WindowCanvas = ({ node, selectedId, onSelect, onUpdateNode, width, 
              </div>
         </div>
       ) : (
-         // Glass Background - Clean Blue
-         <div className="absolute inset-0 bg-[#e0f7fa]/50">
-             {/* Subtle reflection */}
-            <div className="absolute -inset-full top-0 block h-full w-full -skew-x-12 bg-gradient-to-r from-transparent to-white/40 opacity-40 transform translate-x-full" />
+         // Glass Background
+         <div className={`absolute inset-0 ${isThumbnail ? 'bg-white' : 'bg-[#e0f7fa]/50'}`}>
+             {!isThumbnail && (
+                 <div className="absolute -inset-full top-0 block h-full w-full -skew-x-12 bg-gradient-to-r from-transparent to-white/40 opacity-40 transform translate-x-full" />
+             )}
         </div>
       )}
 
-      {/* Sash Frame (if not fixed) */}
+      {/* Sash Frame */}
       {node.openingType !== 'Fixed' && node.openingType !== 'Panel' && (
-        <div className="absolute inset-0 border-[14px] border-white shadow-[inset_0_0_2px_rgba(0,0,0,0.2)] pointer-events-none">
-           <div className="absolute inset-0 border border-gray-300"></div>
+        <div className="absolute inset-0 pointer-events-none">
+            <div className={`absolute inset-0 border-[${sashBorderWidth}] ${sashColor} shadow-[inset_0_0_2px_rgba(0,0,0,0.2)]`}>
+               <div className={`absolute inset-0 border ${sashInnerBorder}`}></div>
+            </div>
         </div>
       )}
 
       {/* Opening Indicators */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        {renderOpeningSymbol(node.openingType)}
+        {renderOpeningSymbol(node.openingType, isThumbnail)}
       </div>
 
       {/* Selection Label */}
-      {isSelected && (
+      {isSelected && !isThumbnail && (
         <div className="absolute top-1 right-1 bg-orange-500 text-white text-[8px] px-1.5 py-0.5 rounded shadow-sm z-20">
           انتخاب
         </div>
@@ -381,9 +419,9 @@ export const WindowCanvas = ({ node, selectedId, onSelect, onUpdateNode, width, 
 };
 
 // Clean technical opening symbols
-const renderOpeningSymbol = (type?: OpeningDirection) => {
-  const strokeColor = "stroke-blue-600";
-  const strokeWidth = "1";
+const renderOpeningSymbol = (type?: OpeningDirection, isThumbnail?: boolean) => {
+  const strokeColor = isThumbnail ? "stroke-slate-900" : "stroke-blue-600";
+  const strokeWidth = isThumbnail ? "1.5" : "1";
   const dashedStroke = "4 4";
   
   switch (type) {
@@ -393,7 +431,7 @@ const renderOpeningSymbol = (type?: OpeningDirection) => {
             <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
                  <path d="M100,0 L0,50 L100,100" fill="none" stroke="currentColor" strokeWidth={strokeWidth} className={strokeColor} vectorEffect="non-scaling-stroke"/>
              </svg>
-             <ModernHandle position="left" />
+             {!isThumbnail && <ModernHandle position="left" />}
         </div>
       );
     case 'TurnRight':
@@ -402,7 +440,7 @@ const renderOpeningSymbol = (type?: OpeningDirection) => {
              <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
                  <path d="M0,0 L100,50 L0,100" fill="none" stroke="currentColor" strokeWidth={strokeWidth} className={strokeColor} vectorEffect="non-scaling-stroke"/>
             </svg>
-            <ModernHandle position="right" />
+            {!isThumbnail && <ModernHandle position="right" />}
         </div>
       );
     case 'TiltTurnLeft': 
@@ -412,7 +450,7 @@ const renderOpeningSymbol = (type?: OpeningDirection) => {
                 <path d="M100,0 L0,50 L100,100" fill="none" stroke="currentColor" strokeWidth={strokeWidth} className={strokeColor} vectorEffect="non-scaling-stroke"/>
                 <path d="M0,100 L50,0 L100,100" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeDasharray={dashedStroke} className={strokeColor} opacity="0.5" vectorEffect="non-scaling-stroke"/>
             </svg>
-            <ModernHandle position="left" />
+            {!isThumbnail && <ModernHandle position="left" />}
          </div>
        );
     case 'TiltTurnRight': 
@@ -422,20 +460,20 @@ const renderOpeningSymbol = (type?: OpeningDirection) => {
                  <path d="M0,0 L100,50 L0,100" fill="none" stroke="currentColor" strokeWidth={strokeWidth} className={strokeColor} vectorEffect="non-scaling-stroke"/>
                  <path d="M0,100 L50,0 L100,100" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeDasharray={dashedStroke} className={strokeColor} opacity="0.5" vectorEffect="non-scaling-stroke"/>
              </svg>
-             <ModernHandle position="right" />
+             {!isThumbnail && <ModernHandle position="right" />}
         </div>
       );
     case 'SlidingLeft':
-        return <div className="w-full h-full flex items-center justify-center text-slate-800 text-2xl font-bold">←</div>;
+        return <div className={`w-full h-full flex items-center justify-center ${isThumbnail ? 'text-slate-900' : 'text-slate-800'} text-2xl font-bold`}>←</div>;
     case 'SlidingRight':
-        return <div className="w-full h-full flex items-center justify-center text-slate-800 text-2xl font-bold">→</div>;
+        return <div className={`w-full h-full flex items-center justify-center ${isThumbnail ? 'text-slate-900' : 'text-slate-800'} text-2xl font-bold`}>→</div>;
     case 'DoorLeft':
         return (
              <div className="relative w-full h-full p-6 pb-12">
                  <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
                      <path d="M100,0 L0,50 L100,100" fill="none" stroke="currentColor" strokeWidth={strokeWidth} className={strokeColor} vectorEffect="non-scaling-stroke"/>
                  </svg>
-                 <ModernHandle position="left" isDoor />
+                 {!isThumbnail && <ModernHandle position="left" isDoor />}
             </div>
         );
     case 'DoorRight':
@@ -444,7 +482,7 @@ const renderOpeningSymbol = (type?: OpeningDirection) => {
                  <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
                      <path d="M0,0 L100,50 L0,100" fill="none" stroke="currentColor" strokeWidth={strokeWidth} className={strokeColor} vectorEffect="non-scaling-stroke"/>
                  </svg>
-                 <ModernHandle position="right" isDoor />
+                 {!isThumbnail && <ModernHandle position="right" isDoor />}
             </div>
         );
     default: return null;

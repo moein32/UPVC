@@ -10,7 +10,7 @@ import { toPersianDigits, formatPrice, toEnglishDigits } from '../utils/formatti
 
 // --- Helper Components for Toolbar ---
 
-const DraggableIcon = ({ type, value, dir, count, label, icon, isActive, onClick, onDragStart }: any) => {
+const DraggableIcon = ({ type, value, dir, count, label, icon, isActive, onClick, onDragStart, onDragEnd }: any) => {
   return (
     <div 
       className={`
@@ -19,6 +19,7 @@ const DraggableIcon = ({ type, value, dir, count, label, icon, isActive, onClick
       `}
       draggable
       onDragStart={(e) => onDragStart(e, type, value, dir, count)}
+      onDragEnd={onDragEnd} // Add onDragEnd to reset tool
       onClick={() => onClick({ type, value, dir, count })}
     >
       <div className="w-8 h-8 flex items-center justify-center">
@@ -340,6 +341,14 @@ export const UnitDesigner = () => {
       } else {
           setActiveTool(tool);
       }
+  };
+
+  // Drag End handler for Drag-and-Drop usage
+  const handleDragEnd = () => {
+    // We delay this slightly to ensure the onDrop event on canvas fires first if valid
+    setTimeout(() => {
+        setActiveTool(null);
+    }, 100);
   };
 
   // --- Dimension Editing Logic ---
@@ -725,14 +734,14 @@ export const UnitDesigner = () => {
                       <DraggableIcon 
                           type="opening" value="Fixed" label={t('fixed')} icon={<FixedIcon />} 
                           isActive={activeTool?.value === 'Fixed'}
-                          onClick={toggleTool} onDragStart={handleDragStart} 
+                          onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd}
                       />
-                      <DraggableIcon type="opening" value="TurnLeft" label={t('turn_left')} icon={<TurnLeftIcon />} isActive={activeTool?.value === 'TurnLeft'} onClick={toggleTool} onDragStart={handleDragStart} />
-                      <DraggableIcon type="opening" value="TurnRight" label={t('turn_right')} icon={<TurnRightIcon />} isActive={activeTool?.value === 'TurnRight'} onClick={toggleTool} onDragStart={handleDragStart} />
-                      <DraggableIcon type="opening" value="TiltTurnLeft" label={t('tilt_turn_left')} icon={<TiltTurnLeftIcon />} isActive={activeTool?.value === 'TiltTurnLeft'} onClick={toggleTool} onDragStart={handleDragStart} />
-                      <DraggableIcon type="opening" value="TiltTurnRight" label={t('tilt_turn_right')} icon={<TiltTurnRightIcon />} isActive={activeTool?.value === 'TiltTurnRight'} onClick={toggleTool} onDragStart={handleDragStart} />
-                      <DraggableIcon type="opening" value="SlidingLeft" label={t('sliding_left')} icon={<SlidingIcon dir="left"/>} isActive={activeTool?.value === 'SlidingLeft'} onClick={toggleTool} onDragStart={handleDragStart} />
-                      <DraggableIcon type="opening" value="SlidingRight" label={t('sliding_right')} icon={<SlidingIcon dir="right"/>} isActive={activeTool?.value === 'SlidingRight'} onClick={toggleTool} onDragStart={handleDragStart} />
+                      <DraggableIcon type="opening" value="TurnLeft" label={t('turn_left')} icon={<TurnLeftIcon />} isActive={activeTool?.value === 'TurnLeft'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} />
+                      <DraggableIcon type="opening" value="TurnRight" label={t('turn_right')} icon={<TurnRightIcon />} isActive={activeTool?.value === 'TurnRight'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} />
+                      <DraggableIcon type="opening" value="TiltTurnLeft" label={t('tilt_turn_left')} icon={<TiltTurnLeftIcon />} isActive={activeTool?.value === 'TiltTurnLeft'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} />
+                      <DraggableIcon type="opening" value="TiltTurnRight" label={t('tilt_turn_right')} icon={<TiltTurnRightIcon />} isActive={activeTool?.value === 'TiltTurnRight'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} />
+                      <DraggableIcon type="opening" value="SlidingLeft" label={t('sliding_left')} icon={<SlidingIcon dir="left"/>} isActive={activeTool?.value === 'SlidingLeft'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} />
+                      <DraggableIcon type="opening" value="SlidingRight" label={t('sliding_right')} icon={<SlidingIcon dir="right"/>} isActive={activeTool?.value === 'SlidingRight'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} />
                   </div>
                   
                   {/* Door Section */}
@@ -740,26 +749,26 @@ export const UnitDesigner = () => {
                        <div className="flex items-center justify-center h-full w-6">
                            <span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }} className="text-[9px] text-slate-500 font-bold whitespace-nowrap">درب</span>
                        </div>
-                       <DraggableIcon type="opening" value="DoorLeft" label={t('door') + ' چپ'} icon={<DoorIcon />} isActive={activeTool?.value === 'DoorLeft'} onClick={toggleTool} onDragStart={handleDragStart} />
-                       <DraggableIcon type="opening" value="DoorRight" label={t('door') + ' راست'} icon={<DoorIcon />} isActive={activeTool?.value === 'DoorRight'} onClick={toggleTool} onDragStart={handleDragStart} />
+                       <DraggableIcon type="opening" value="DoorLeft" label={t('door') + ' چپ'} icon={<DoorIcon />} isActive={activeTool?.value === 'DoorLeft'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} />
+                       <DraggableIcon type="opening" value="DoorRight" label={t('door') + ' راست'} icon={<DoorIcon />} isActive={activeTool?.value === 'DoorRight'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} />
                   </div>
 
                   {/* Panel Section */}
                   <div className="flex items-center gap-2 pl-2 h-full border-l border-slate-600/50">
-                       <DraggableIcon type="opening" value="Panel" label={t('panel')} icon={<LayoutTemplate size={24} />} isActive={activeTool?.value === 'Panel'} onClick={toggleTool} onDragStart={handleDragStart} />
+                       <DraggableIcon type="opening" value="Panel" label={t('panel')} icon={<LayoutTemplate size={24} />} isActive={activeTool?.value === 'Panel'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} />
                   </div>
               </div>
            )}
 
            {activeTab === 'splits' && (
               <div className="flex items-center gap-4 h-full">
-                  <DraggableIcon type="split" dir="row" count={2} label={t('split_v_2')} icon={<SplitVerticalIcon count={2} />} isActive={activeTool?.dir === 'row' && activeTool.count === 2} onClick={toggleTool} onDragStart={handleDragStart} />
-                  <DraggableIcon type="split" dir="col" count={2} label={t('split_h_2')} icon={<SplitHorizontalIcon count={2} />} isActive={activeTool?.dir === 'col' && activeTool.count === 2} onClick={toggleTool} onDragStart={handleDragStart} />
+                  <DraggableIcon type="split" dir="row" count={2} label={t('split_v_2')} icon={<SplitVerticalIcon count={2} />} isActive={activeTool?.dir === 'row' && activeTool.count === 2} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} />
+                  <DraggableIcon type="split" dir="col" count={2} label={t('split_h_2')} icon={<SplitHorizontalIcon count={2} />} isActive={activeTool?.dir === 'col' && activeTool.count === 2} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} />
                   <div className="w-px h-8 bg-slate-600 opacity-50"></div>
-                  <DraggableIcon type="split" dir="row" count={3} label={t('split_v_3')} icon={<SplitVerticalIcon count={3} />} isActive={activeTool?.dir === 'row' && activeTool.count === 3} onClick={toggleTool} onDragStart={handleDragStart} />
-                  <DraggableIcon type="split" dir="col" count={3} label={t('split_h_3')} icon={<SplitHorizontalIcon count={3} />} isActive={activeTool?.dir === 'col' && activeTool.count === 3} onClick={toggleTool} onDragStart={handleDragStart} />
+                  <DraggableIcon type="split" dir="row" count={3} label={t('split_v_3')} icon={<SplitVerticalIcon count={3} />} isActive={activeTool?.dir === 'row' && activeTool.count === 3} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} />
+                  <DraggableIcon type="split" dir="col" count={3} label={t('split_h_3')} icon={<SplitHorizontalIcon count={3} />} isActive={activeTool?.dir === 'col' && activeTool.count === 3} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} />
                   <div className="w-px h-8 bg-slate-600 opacity-50"></div>
-                  <DraggableIcon type="split" dir="row" count={1} value="clear" label={t('clear_split')} icon={<SquareIcon />} isActive={activeTool?.value === 'clear'} onClick={toggleTool} onDragStart={handleDragStart} />
+                  <DraggableIcon type="split" dir="row" count={1} value="clear" label={t('clear_split')} icon={<SquareIcon />} isActive={activeTool?.value === 'clear'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} />
               </div>
            )}
 
