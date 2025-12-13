@@ -299,6 +299,7 @@ export const UnitDesigner = () => {
           if (activeTool.type === 'opening') {
               // Openings can only be applied to leaves OR containers that are sashes
                handleUpdateNode(id, { openingType: activeTool.value as any });
+               setActiveTool(null); // Reset tool after use
           } else if (activeTool.type === 'split') {
               // Splits applied to leaves convert them to containers
               if (targetNode.type === 'leaf') {
@@ -324,6 +325,7 @@ export const UnitDesigner = () => {
                       // If it was an Opening (Door/Turn), keep it on container (Sash frame wraps the split)
                       openingType: (existingOpening && existingOpening !== 'Fixed' && existingOpening !== 'Panel') ? existingOpening : undefined
                   });
+                  setActiveTool(null); // Reset tool after use
               }
           }
       } else {
