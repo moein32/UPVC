@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Onboarding } from './screens/Onboarding';
 import { Dashboard } from './screens/Dashboard';
 import { ProjectSetup } from './screens/ProjectSetup';
@@ -11,6 +12,15 @@ import { Projects } from './screens/Projects';
 import { Settings } from './screens/Settings';
 
 function App() {
+  const { i18n } = useTranslation();
+
+  useEffect(() => {
+    // Dynamically set direction based on language
+    const dir = i18n.language === 'en' ? 'ltr' : 'rtl';
+    document.documentElement.dir = dir;
+    document.documentElement.lang = i18n.language;
+  }, [i18n.language]);
+
   return (
     <HashRouter>
       <Routes>

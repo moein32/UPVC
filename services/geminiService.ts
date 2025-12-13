@@ -1,7 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 import { WindowConfig, ProfileBrand } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || 'YOUR_API_KEY_HERE' });
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export const getOptimizationSuggestions = async (config: WindowConfig, brandName: string) => {
   try {

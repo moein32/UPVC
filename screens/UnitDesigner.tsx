@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, Save, Trash2, SplitSquareHorizontal, SplitSquareVertical, PlusCircle, Maximize, ZoomIn, ZoomOut, RefreshCcw, Hand, MousePointer2, Receipt, Check, Edit3, Grid } from 'lucide-react';
+import { ArrowRight, Save, Trash2, SplitSquareHorizontal, SplitSquareVertical, PlusCircle, Maximize, ZoomIn, ZoomOut, RefreshCcw, Hand, MousePointer2, Receipt, Check, Edit3, Grid, XCircle } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { InputField, SelectField, PrimaryButton } from '../components/UIComponents';
 import { WindowCanvas } from '../components/WindowCanvas';
 import { WindowConfig, ProjectDetails, InvoiceItem, ProfileBrand, GlassType, HardwareItem, WindowNode, OpeningDirection, InvoiceDetail } from '../types';
@@ -17,6 +18,7 @@ const createDefaultLayout = (): WindowNode => ({
 
 export const UnitDesigner = () => {
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
   const location = useLocation();
   const locationState = (location.state || {}) as { 
     projectDetails?: ProjectDetails, 
@@ -60,6 +62,9 @@ export const UnitDesigner = () => {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>('root');
   const [activeTab, setActiveTab] = useState<'openings' | 'splits' | 'tools'>('openings');
   const [zoomLevel, setZoomLevel] = useState(0.8); 
+  
+  // Mobile Interaction: Active Tool State
+  const [activeTool, setActiveTool] = useState<{type: 'opening' | 'split', value: string, dir?: string, count?: number} | null>(null);
   
   // Selected Node Dimensions Helper
   const [selectedNodeDims, setSelectedNodeDims] = useState<{w: number, h: number, editableW: boolean, editableH: boolean} | null>(null);
@@ -135,15 +140,62 @@ export const UnitDesigner = () => {
      }));
   };
 
+  // --- Mobile Friendly Interaction: Tap to Apply ---
+  const handleCanvasNodeClick = (id: string) => {
+      if (activeTool) {
+          // Find target to ensure validity
+          const targetNode = findNode(config.layout!, id);
+          if (!targetNode) return;
+
+          if (activeTool.type === 'opening') {
+              // Openings can only be applied to leaves
+               if (targetNode.type === 'leaf') {
+                  handleUpdateNode(id, { openingType: activeTool.value as any });
+               }
+          } else if (activeTool.type === 'split') {
+              // Splits applied to leaves convert them to containers
+              if (targetNode.type === 'leaf') {
+                  const count = activeTool.count || 2;
+                  const newChildren = Array(count).fill(null).map((_, i) => ({
+                      id: Date.now() + `_${i}_${Math.random()}`, 
+                      type: 'leaf', 
+                      openingType: targetNode.openingType || 'Fixed', // Inherit or reset
+                      flex: 1 
+                  })) as WindowNode[];
+
+                  handleUpdateNode(id, { 
+                      type: 'container', 
+                      dir: activeTool.dir as 'row' | 'col', 
+                      children: newChildren, 
+                      openingType: undefined 
+                  });
+              } else if (activeTool.value === 'clear') {
+                  // Clear split logic handled by 'delete' usually, but custom cleaner here
+                  // Currently 'square' icon maps to delete/reset logic if implemented
+              }
+          }
+          // Optionally keep tool active for multi-apply
+      } else {
+          // Standard Selection
+          setSelectedNodeId(id);
+      }
+  };
+
+  const toggleTool = (tool: any) => {
+      if (activeTool && activeTool.value === tool.value && activeTool.type === tool.type) {
+          setActiveTool(null);
+      } else {
+          setActiveTool(tool);
+      }
+  };
+
   // --- Dimension Editing Logic ---
-  // We need to calculate real dimensions to show in the editor
   useEffect(() => {
       if(selectedNodeId && config.layout) {
           const dims = calculateNodeDimensions(config.layout, config.width, config.height, selectedNodeId);
           if (dims) {
-            // Determine editability based on parent direction
             const parent = findParent(config.layout, selectedNodeId);
-            const editableW = parent ? parent.dir === 'row' : true; // If root (no parent), effectively both, but handled by global
+            const editableW = parent ? parent.dir === 'row' : true; 
             const editableH = parent ? parent.dir === 'col' : true;
             
             setSelectedNodeDims({ ...dims, editableW, editableH });
@@ -176,7 +228,6 @@ export const UnitDesigner = () => {
       const parent = findParent(config.layout, selectedNodeId);
       if (!parent || !parent.children) return; 
 
-      // Only allow resizing along the flex direction
       if ((parent.dir === 'row' && dim === 'h') || (parent.dir === 'col' && dim === 'w')) return;
 
       const parentDims = calculateNodeDimensions(config.layout, config.width, config.height, parent.id);
@@ -187,7 +238,7 @@ export const UnitDesigner = () => {
       
       const targetRatio = newVal / totalSize;
       
-      if (targetRatio >= 0.95 || targetRatio <= 0.05) return; // Safety limits
+      if (targetRatio >= 0.95 || targetRatio <= 0.05) return; 
 
       const nodeIndex = parent.children.findIndex(c => c.id === selectedNodeId);
       const node = parent.children[nodeIndex];
@@ -198,13 +249,15 @@ export const UnitDesigner = () => {
       handleUpdateNode(selectedNodeId, { flex: newNodeFlex });
   };
   
-  // --- Drag Handling ---
+  // --- Drag Handling (Desktop Fallback) ---
   const handleDragStart = (e: React.DragEvent, type: 'opening' | 'split', value: string, dir?: string, count?: number) => {
       e.dataTransfer.setData('actionType', type);
       e.dataTransfer.setData('value', value);
       if (dir) e.dataTransfer.setData('dir', dir);
       if (count) e.dataTransfer.setData('count', count.toString());
       e.dataTransfer.effectAllowed = 'copy';
+      // Also set active tool on drag for consistency? No, distinct actions.
+      setActiveTool({ type, value, dir, count });
   };
 
   // --- Comprehensive Price Calculation ---
@@ -239,7 +292,6 @@ export const UnitDesigner = () => {
             stats.sashCount += childStats.sashCount;
         });
     } else {
-        // Leaf Node
         if (node.openingType && node.openingType !== 'Fixed') {
             stats.sashCount += 1;
             const perimeter = (w + h) * 2;
@@ -261,19 +313,15 @@ export const UnitDesigner = () => {
     };
 
     const stats = calculateWindowStats(config.layout, config.width, config.height);
-    
-    // 1. Dimensions
     const frameMeters = (config.width + config.height) * 2;
     const frameM = frameMeters / 1000;
     const mullionM = stats.mullionMeters / 1000;
     const sashWindowM = stats.sashWindowMeters / 1000;
     const sashDoorM = stats.sashDoorMeters / 1000;
-    const glassA = stats.glassArea / 1000000; // mm2 to m2
+    const glassA = stats.glassArea / 1000000; 
 
-    // Reinforcement: Approx sum of all profiles
     const galoM = frameM + mullionM + sashWindowM + sashDoorM;
 
-    // 2. Unit Prices
     const brand = brands.find(b => b.id === config.profileId);
     const glassType = glassList.find(g => g.id === config.glassId);
     const hwItem = hardwareList.find(h => h.id === 'h1');
@@ -287,39 +335,30 @@ export const UnitDesigner = () => {
     const glassPricePerM2 = glassType?.pricePerSqm || 0;
     const hardwarePricePerSet = hwItem?.pricePerSet || 450000;
 
-    // 3. Line Items (BOM)
     const details: InvoiceDetail[] = [];
     let rowId = 1;
 
-    // Profile Frame
     const frameTotal = frameM * framePrice;
     if (frameM > 0) details.push({ rowId: rowId++, name: 'پروفیل فریم', unit: 'متر طول', quantity: Number(frameM.toFixed(2)), unitPrice: framePrice, totalPrice: Math.round(frameTotal) });
 
-    // Profile Sash Window
     const sashWinTotal = sashWindowM * sashWindowPrice;
     if (sashWindowM > 0) details.push({ rowId: rowId++, name: 'پروفیل لنگه پنجره', unit: 'متر طول', quantity: Number(sashWindowM.toFixed(2)), unitPrice: sashWindowPrice, totalPrice: Math.round(sashWinTotal) });
 
-    // Profile Sash Door
     const sashDoorTotal = sashDoorM * sashDoorPrice;
     if (sashDoorM > 0) details.push({ rowId: rowId++, name: 'پروفیل لنگه درب', unit: 'متر طول', quantity: Number(sashDoorM.toFixed(2)), unitPrice: sashDoorPrice, totalPrice: Math.round(sashDoorTotal) });
 
-    // Profile Mullion
     const mullionTotal = mullionM * mullionPrice;
     if (mullionM > 0) details.push({ rowId: rowId++, name: 'پروفیل مولیون', unit: 'متر طول', quantity: Number(mullionM.toFixed(2)), unitPrice: mullionPrice, totalPrice: Math.round(mullionTotal) });
 
-    // Reinforcement
     const galoTotal = galoM * galoPrice;
     if (galoM > 0) details.push({ rowId: rowId++, name: 'گالوانیزه تقویتی', unit: 'متر طول', quantity: Number(galoM.toFixed(2)), unitPrice: galoPrice, totalPrice: Math.round(galoTotal) });
 
-    // Glass
     const glassTotal = glassA * glassPricePerM2;
     if (glassA > 0) details.push({ rowId: rowId++, name: glassType?.name || 'شیشه', unit: 'متر مربع', quantity: Number(glassA.toFixed(2)), unitPrice: glassPricePerM2, totalPrice: Math.round(glassTotal) });
 
-    // Hardware
     const hardwareTotal = stats.sashCount * hardwarePricePerSet;
     if (stats.sashCount > 0) details.push({ rowId: rowId++, name: 'یراق آلات', unit: 'دست', quantity: stats.sashCount, unitPrice: hardwarePricePerSet, totalPrice: Math.round(hardwareTotal) });
 
-    // 4. Totals
     const totalProfileMeters = frameM + mullionM + sashWindowM + sashDoorM;
     const profileCost = frameTotal + sashWinTotal + sashDoorTotal + mullionTotal + galoTotal;
     const unitPrice = Math.round(profileCost + glassTotal + hardwareTotal);
@@ -369,7 +408,6 @@ export const UnitDesigner = () => {
       }
   };
 
-  // Determine which properties to show in bottom panel
   const isRootSelected = selectedNodeId === 'root' || selectedNodeId === null;
 
   return (
@@ -377,15 +415,15 @@ export const UnitDesigner = () => {
       {/* Header */}
       <div className="bg-white/90 backdrop-blur-md px-4 py-3 flex justify-between items-center z-30 shadow-sm border-b border-slate-200">
         <button onClick={() => navigate(-1)} className="p-2 bg-slate-100 rounded-lg text-slate-600">
-          <ArrowRight size={20} />
+          <ArrowRight size={20} className={i18n.language === 'en' ? 'rotate-180' : ''} />
         </button>
         <div className="text-center">
-             <h1 className="font-bold text-slate-800 text-lg">طراحی یونیت</h1>
+             <h1 className="font-bold text-slate-800 text-lg">{t('unit_design')}</h1>
              <p className="text-[10px] text-slate-500">{projectDetails.customerName}</p>
         </div>
         <div className="flex gap-2">
              <div className="bg-blue-100 text-blue-700 px-3 py-1 rounded-lg text-xs font-bold flex items-center">
-                {toPersianDigits(projectItems.length)} آیتم
+                {toPersianDigits(projectItems.length)} {t('item')}
              </div>
         </div>
       </div>
@@ -398,19 +436,19 @@ export const UnitDesigner = () => {
             onClick={() => setActiveTab('openings')}
             className={`flex-1 py-3 text-xs font-bold transition-colors ${activeTab === 'openings' ? 'bg-slate-700 text-white border-b-2 border-orange-500' : 'text-slate-400 hover:text-slate-200'}`}
           >
-            بازشو (Opening)
+            {t('opening')}
           </button>
           <button 
             onClick={() => setActiveTab('splits')}
             className={`flex-1 py-3 text-xs font-bold transition-colors ${activeTab === 'splits' ? 'bg-slate-700 text-white border-b-2 border-orange-500' : 'text-slate-400 hover:text-slate-200'}`}
           >
-             تقسیم‌بندی (Splits)
+             {t('splits')}
           </button>
           <button 
             onClick={() => setActiveTab('tools')}
             className={`flex-1 py-3 text-xs font-bold transition-colors ${activeTab === 'tools' ? 'bg-slate-700 text-white border-b-2 border-orange-500' : 'text-slate-400 hover:text-slate-200'}`}
           >
-             ابزارهای ویژه (Tools)
+             {t('tools')}
           </button>
         </div>
 
@@ -418,38 +456,41 @@ export const UnitDesigner = () => {
         <div className="p-3 h-20 overflow-x-auto overflow-y-hidden no-scrollbar bg-slate-800">
            {activeTab === 'openings' && (
               <div className="flex items-center gap-4 h-full">
-                  <DraggableIcon type="opening" value="Fixed" label="فیکس" icon={<FixedIcon />} onDragStart={handleDragStart} />
+                  <DraggableIcon 
+                      type="opening" value="Fixed" label={t('fixed')} icon={<FixedIcon />} 
+                      isActive={activeTool?.value === 'Fixed'}
+                      onClick={toggleTool} onDragStart={handleDragStart} 
+                  />
                   <div className="w-px h-8 bg-slate-600 opacity-50"></div>
-                  <DraggableIcon type="opening" value="TurnRight" label="تک حالته (راست)" icon={<TurnRightIcon />} onDragStart={handleDragStart} />
-                  <DraggableIcon type="opening" value="TurnLeft" label="تک حالته (چپ)" icon={<TurnLeftIcon />} onDragStart={handleDragStart} />
+                  <DraggableIcon type="opening" value="TurnRight" label={t('turn_right')} icon={<TurnRightIcon />} isActive={activeTool?.value === 'TurnRight'} onClick={toggleTool} onDragStart={handleDragStart} />
+                  <DraggableIcon type="opening" value="TurnLeft" label={t('turn_left')} icon={<TurnLeftIcon />} isActive={activeTool?.value === 'TurnLeft'} onClick={toggleTool} onDragStart={handleDragStart} />
                   <div className="w-px h-8 bg-slate-600 opacity-50"></div>
-                  <DraggableIcon type="opening" value="TiltTurnRight" label="دو حالته (راست)" icon={<TiltTurnRightIcon />} onDragStart={handleDragStart} />
-                  <DraggableIcon type="opening" value="TiltTurnLeft" label="دو حالته (چپ)" icon={<TiltTurnLeftIcon />} onDragStart={handleDragStart} />
+                  <DraggableIcon type="opening" value="TiltTurnRight" label={t('tilt_turn_right')} icon={<TiltTurnRightIcon />} isActive={activeTool?.value === 'TiltTurnRight'} onClick={toggleTool} onDragStart={handleDragStart} />
+                  <DraggableIcon type="opening" value="TiltTurnLeft" label={t('tilt_turn_left')} icon={<TiltTurnLeftIcon />} isActive={activeTool?.value === 'TiltTurnLeft'} onClick={toggleTool} onDragStart={handleDragStart} />
                   <div className="w-px h-8 bg-slate-600 opacity-50"></div>
-                  <DraggableIcon type="opening" value="SlidingRight" label="کشویی (راست)" icon={<SlidingIcon dir="right"/>} onDragStart={handleDragStart} />
-                  <DraggableIcon type="opening" value="SlidingLeft" label="کشویی (چپ)" icon={<SlidingIcon dir="left"/>} onDragStart={handleDragStart} />
-                  <DraggableIcon type="opening" value="DoorRight" label="درب" icon={<DoorIcon />} onDragStart={handleDragStart} />
+                  <DraggableIcon type="opening" value="SlidingRight" label={t('sliding_right')} icon={<SlidingIcon dir="right"/>} isActive={activeTool?.value === 'SlidingRight'} onClick={toggleTool} onDragStart={handleDragStart} />
+                  <DraggableIcon type="opening" value="SlidingLeft" label={t('sliding_left')} icon={<SlidingIcon dir="left"/>} isActive={activeTool?.value === 'SlidingLeft'} onClick={toggleTool} onDragStart={handleDragStart} />
+                  <DraggableIcon type="opening" value="DoorRight" label={t('door')} icon={<DoorIcon />} isActive={activeTool?.value === 'DoorRight'} onClick={toggleTool} onDragStart={handleDragStart} />
               </div>
            )}
 
            {activeTab === 'splits' && (
               <div className="flex items-center gap-4 h-full">
-                  <DraggableIcon type="split" dir="row" count={2} label="برش عمودی (۲)" icon={<SplitVerticalIcon count={2} />} onDragStart={handleDragStart} />
-                  <DraggableIcon type="split" dir="col" count={2} label="برش افقی (۲)" icon={<SplitHorizontalIcon count={2} />} onDragStart={handleDragStart} />
+                  <DraggableIcon type="split" dir="row" count={2} label={t('split_v_2')} icon={<SplitVerticalIcon count={2} />} isActive={activeTool?.dir === 'row' && activeTool.count === 2} onClick={toggleTool} onDragStart={handleDragStart} />
+                  <DraggableIcon type="split" dir="col" count={2} label={t('split_h_2')} icon={<SplitHorizontalIcon count={2} />} isActive={activeTool?.dir === 'col' && activeTool.count === 2} onClick={toggleTool} onDragStart={handleDragStart} />
                   <div className="w-px h-8 bg-slate-600 opacity-50"></div>
-                  <DraggableIcon type="split" dir="row" count={3} label="برش عمودی (۳)" icon={<SplitVerticalIcon count={3} />} onDragStart={handleDragStart} />
-                  <DraggableIcon type="split" dir="col" count={3} label="برش افقی (۳)" icon={<SplitHorizontalIcon count={3} />} onDragStart={handleDragStart} />
+                  <DraggableIcon type="split" dir="row" count={3} label={t('split_v_3')} icon={<SplitVerticalIcon count={3} />} isActive={activeTool?.dir === 'row' && activeTool.count === 3} onClick={toggleTool} onDragStart={handleDragStart} />
+                  <DraggableIcon type="split" dir="col" count={3} label={t('split_h_3')} icon={<SplitHorizontalIcon count={3} />} isActive={activeTool?.dir === 'col' && activeTool.count === 3} onClick={toggleTool} onDragStart={handleDragStart} />
                   <div className="w-px h-8 bg-slate-600 opacity-50"></div>
-                  <DraggableIcon type="split" dir="row" count={1} label="پاکسازی برش" icon={<SquareIcon />} onDragStart={handleDragStart} />
+                  <DraggableIcon type="split" dir="row" count={1} value="clear" label={t('clear_split')} icon={<SquareIcon />} isActive={activeTool?.value === 'clear'} onClick={toggleTool} onDragStart={handleDragStart} />
               </div>
            )}
 
             {activeTab === 'tools' && (
               <div className="flex items-center gap-4 h-full">
-                   <ToolBtn icon={Trash2} label="پاک‌کن آیتم" color="text-red-400" onClick={handleDelete} />
+                   <ToolBtn icon={Trash2} label={t('delete_item')} color="text-red-400" onClick={handleDelete} />
                    <div className="w-px h-8 bg-slate-600 opacity-50"></div>
-                   <ToolBtn icon={MousePointer2} label="انتخاب" onClick={() => {}} />
-                   <ToolBtn icon={Hand} label="جابجایی" onClick={() => {}} />
+                   <ToolBtn icon={MousePointer2} label={t('select')} onClick={() => setActiveTool(null)} isActive={activeTool === null} />
               </div>
            )}
         </div>
@@ -457,6 +498,16 @@ export const UnitDesigner = () => {
 
       {/* Canvas Area with Zoom */}
       <div className="flex-1 relative bg-slate-200 overflow-hidden flex flex-col">
+        {/* Active Tool Indicator for Mobile */}
+        {activeTool && (
+           <div className="absolute top-4 left-0 right-0 z-20 flex justify-center">
+                <div className="bg-orange-600 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg flex items-center gap-2 animate-bounce">
+                    <span>{t('active_tool_hint')}</span>
+                    <button onClick={() => setActiveTool(null)} className="ml-2 bg-white/20 rounded-full p-0.5"><XCircle size={16}/></button>
+                </div>
+           </div>
+        )}
+
         {/* Zoom Controls */}
         <div className="absolute top-4 right-4 z-20 flex flex-col gap-2 bg-white rounded-lg shadow-md p-1">
            <button onClick={() => setZoomLevel(z => Math.min(z + 0.1, 2))} className="p-2 text-slate-600 hover:bg-slate-100 rounded"><ZoomIn size={20}/></button>
@@ -464,7 +515,7 @@ export const UnitDesigner = () => {
            <button onClick={() => setZoomLevel(z => Math.max(z - 0.1, 0.4))} className="p-2 text-slate-600 hover:bg-slate-100 rounded"><ZoomOut size={20}/></button>
         </div>
 
-        {/* Scrollable Container for Mobile Responsiveness */}
+        {/* Scrollable Container */}
         <div className="flex-1 overflow-auto flex items-center justify-center p-8 cursor-grab active:cursor-grabbing">
              <div 
                 className="transition-transform duration-200 ease-out origin-center"
@@ -475,7 +526,6 @@ export const UnitDesigner = () => {
                   style={{ 
                     width: Math.min(config.width / 4, window.innerWidth - 60), 
                     height: Math.min(config.height / 4, window.innerHeight - 300),
-                    // Ensure minimum touch size on mobile
                     minWidth: '300px',
                     minHeight: '300px'
                   }}
@@ -485,7 +535,8 @@ export const UnitDesigner = () => {
                     <WindowCanvas 
                         node={config.layout} 
                         selectedId={selectedNodeId} 
-                        onSelect={setSelectedNodeId}
+                        // IMPORTANT: Click now applies tool or selects
+                        onSelect={handleCanvasNodeClick}
                         onUpdateNode={handleUpdateNode}
                         width={config.width}
                         height={config.height}
@@ -506,7 +557,7 @@ export const UnitDesigner = () => {
          {/* Dynamic Dimensions Row */}
          <div className={`flex gap-4 mb-4 items-center p-3 rounded-xl border transition-colors ${!isRootSelected ? 'bg-orange-50 border-orange-200' : 'bg-slate-50 border-slate-100'}`}>
              <span className={`text-xs font-bold whitespace-nowrap ${!isRootSelected ? 'text-orange-600' : 'text-slate-500'}`}>
-                {isRootSelected ? 'ابعاد کل پنجره:' : 'ابعاد بخش انتخاب شده:'}
+                {isRootSelected ? t('global_dims') : t('section_dims')}
              </span>
              
              {isRootSelected ? (
@@ -520,7 +571,7 @@ export const UnitDesigner = () => {
                              className="w-full pl-8 pr-2 py-2 rounded-lg border border-slate-300 text-center font-bold text-sm"
                          />
                          <span className="absolute left-2 top-2 text-[10px] text-slate-400">mm</span>
-                         <span className="absolute right-2 top-2 text-[10px] text-slate-400">عرض</span>
+                         <span className="absolute right-2 top-2 text-[10px] text-slate-400">{t('width')}</span>
                      </div>
                      <span className="self-center text-slate-400">×</span>
                      <div className="relative flex-1">
@@ -531,7 +582,7 @@ export const UnitDesigner = () => {
                              className="w-full pl-8 pr-2 py-2 rounded-lg border border-slate-300 text-center font-bold text-sm"
                          />
                          <span className="absolute left-2 top-2 text-[10px] text-slate-400">mm</span>
-                         <span className="absolute right-2 top-2 text-[10px] text-slate-400">ارتفاع</span>
+                         <span className="absolute right-2 top-2 text-[10px] text-slate-400">{t('height')}</span>
                      </div>
                  </div>
              ) : (
@@ -548,7 +599,7 @@ export const UnitDesigner = () => {
                              `}
                          />
                          <span className="absolute left-2 top-2 text-[10px] text-slate-400">mm</span>
-                         <span className="absolute right-2 top-2 text-[10px] text-slate-400">عرض</span>
+                         <span className="absolute right-2 top-2 text-[10px] text-slate-400">{t('width')}</span>
                      </div>
                      <span className="self-center text-slate-400">×</span>
                      <div className="relative flex-1">
@@ -562,7 +613,7 @@ export const UnitDesigner = () => {
                              `}
                          />
                          <span className="absolute left-2 top-2 text-[10px] text-slate-400">mm</span>
-                         <span className="absolute right-2 top-2 text-[10px] text-slate-400">ارتفاع</span>
+                         <span className="absolute right-2 top-2 text-[10px] text-slate-400">{t('height')}</span>
                      </div>
                      <button onClick={() => setSelectedNodeId('root')} className="p-2 bg-slate-200 rounded-lg text-slate-600 hover:bg-slate-300" title="بازگشت به ابعاد کل">
                         <Grid size={16} />
@@ -578,7 +629,7 @@ export const UnitDesigner = () => {
                 className={`flex-1 ${lastSavedId ? '!bg-green-50 !text-green-600 !border-green-200' : ''}`}
                 icon={lastSavedId ? Check : PlusCircle}
             >
-                {editIndex !== undefined ? 'ذخیره تغییرات' : (lastSavedId ? 'افزوده شد' : 'افزودن به لیست')}
+                {editIndex !== undefined ? t('save_changes') : (lastSavedId ? t('added') : t('add_to_list'))}
              </PrimaryButton>
 
              {(projectItems.length > 0 || lastSavedId) && (
@@ -587,7 +638,7 @@ export const UnitDesigner = () => {
                     className="flex-[1.5] bg-gradient-to-r from-blue-700 to-blue-900"
                     icon={Receipt}
                 >
-                   محاسبه فاکتور ({toPersianDigits(projectItems.length)})
+                   {t('calculate_invoice')} ({toPersianDigits(projectItems.length)})
                 </PrimaryButton>
              )}
          </div>
@@ -597,18 +648,21 @@ export const UnitDesigner = () => {
 };
 
 // --- Icons & Helpers ---
-const ToolBtn = ({ icon: Icon, label, onClick, color = 'text-white' }: any) => (
-  <button onClick={onClick} className={`flex flex-col items-center p-2 rounded-lg hover:bg-slate-700 transition-colors ${color} min-w-[60px]`}>
+const ToolBtn = ({ icon: Icon, label, onClick, color = 'text-white', isActive }: any) => (
+  <button onClick={onClick} className={`flex flex-col items-center p-2 rounded-lg hover:bg-slate-700 transition-all ${color} min-w-[60px] ${isActive ? 'bg-slate-700 ring-1 ring-slate-400' : ''}`}>
     <Icon size={24} strokeWidth={1.5} />
     <span className="text-[9px] mt-1 whitespace-nowrap">{label}</span>
   </button>
 );
 
-const DraggableIcon = ({ type, value, dir, count, label, icon, onDragStart }: any) => (
+const DraggableIcon = ({ type, value, dir, count, label, icon, onDragStart, isActive, onClick }: any) => (
     <div 
         draggable 
         onDragStart={(e) => onDragStart(e, type, value, dir, count)}
-        className="flex flex-col items-center cursor-grab active:cursor-grabbing hover:bg-slate-700 p-2 rounded-lg min-w-[70px]"
+        onClick={() => onClick({ type, value, dir, count })}
+        className={`flex flex-col items-center cursor-pointer hover:bg-slate-700 p-2 rounded-lg min-w-[70px] transition-all duration-200
+            ${isActive ? 'bg-orange-600 shadow-lg scale-105 ring-2 ring-orange-300' : ''}
+        `}
     >
         <div className="w-8 h-8 mb-1 text-white flex items-center justify-center">{icon}</div>
         <span className="text-[9px] text-center text-slate-300 whitespace-nowrap">{label}</span>

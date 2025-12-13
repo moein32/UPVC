@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 
-export const GlassCard = ({ children, className = '', onClick }: { children: React.ReactNode; className?: string; onClick?: () => void }) => (
+export const GlassCard = ({ children, className = '', onClick }: { children?: React.ReactNode; className?: string; onClick?: () => void }) => (
   <motion.div
     whileHover={{ scale: 1.01 }}
     whileTap={{ scale: 0.98 }}
