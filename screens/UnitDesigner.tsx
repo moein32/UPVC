@@ -396,6 +396,50 @@ export const UnitDesigner = () => {
       }
   }
 
+  // Handle direct click edit from canvas
+  const handleDirectDimensionEdit = (dim: 'w' | 'h', val: number) => {
+    const current = dim === 'w' ? config.width : config.height;
+    const newVal = window.prompt(dim === 'w' ? 'عرض را وارد کنید (میلی‌متر):' : 'ارتفاع را وارد کنید (میلی‌متر):', current.toString());
+    if (newVal !== null) {
+        handleGlobalResize(newVal, dim);
+    }
+  };
+
+  // Handle child segment resizing via chain dimensions
+  const handleChildResize = (nodeId: string, childIndex: number, currentSize: number, totalSize: number) => {
+      const newValStr = window.prompt('اندازه جدید را وارد کنید (میلی‌متر):', Math.round(currentSize).toString());
+      if (newValStr === null) return;
+      const newVal = Number(toEnglishDigits(newValStr));
+      if (isNaN(newVal) || newVal <= 50 || newVal >= totalSize - 50) return;
+
+      const node = findNode(config.layout!, nodeId);
+      if (!node || !node.children) return;
+
+      // Logic: Update the specific child's flex.
+      // To keep total consistent, we need to adjust other children proportionally or just one neighbor.
+      // Simple robust approach: Keep total flex constant, redistribute.
+      // But calculating exact pixels requires flex manipulation relative to the NEW ratio.
+      
+      const totalFlex = node.children.reduce((s, c) => s + (c.flex || 1), 0);
+      const targetFlex = (newVal / totalSize) * totalFlex;
+      
+      // We need to remove the difference from the *rest* of the items to maintain the sum (approx).
+      const currentFlex = node.children[childIndex].flex || 1;
+      const flexDiff = targetFlex - currentFlex;
+      
+      const otherChildrenCount = node.children.length - 1;
+      if (otherChildrenCount === 0) return; // Should not happen in split
+      
+      const subPerChild = flexDiff / otherChildrenCount;
+
+      const newChildren = node.children.map((child, idx) => {
+          if (idx === childIndex) return { ...child, flex: targetFlex };
+          return { ...child, flex: Math.max(0.1, (child.flex || 1) - subPerChild) };
+      });
+
+      handleUpdateNode(nodeId, { children: newChildren });
+  };
+
   const handleLocalInputChange = (val: string, dim: 'w' | 'h') => {
       setLocalDims(prev => ({ ...prev, [dim]: toEnglishDigits(val) }));
   };
@@ -769,6 +813,8 @@ export const UnitDesigner = () => {
                         // IMPORTANT: Click now applies tool or selects
                         onSelect={handleCanvasNodeClick}
                         onUpdateNode={handleUpdateNode}
+                        onDimensionEdit={handleDirectDimensionEdit}
+                        onChildResize={handleChildResize}
                         width={config.width}
                         height={config.height}
                         isRoot={true}
