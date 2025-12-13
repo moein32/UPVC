@@ -9,15 +9,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "react": "^19.2.1",
-    "react-dom": "^19.2.1",
-    "@google/genai": "^1.33.0",
-    "lucide-react": "^0.560.0",
-    "recharts": "^3.5.1",
     "react-router-dom": "^7.10.1",
+    "lucide-react": "^0.561.0",
+    "@google/genai": "^1.33.0",
     "framer-motion": "^12.23.26",
-    "i18next": "^23.7.11",
-    "react-i18next": "^13.5.0"
+    "react-dom": "^19.2.3",
+    "react": "^19.2.3",
+    "react-i18next": "^16.5.0",
+    "i18next": "^25.7.2"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
