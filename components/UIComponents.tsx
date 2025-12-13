@@ -47,12 +47,16 @@ export const InputField = ({ label, value, onChange, type = "text", suffix, plac
     if (type === 'number' || type === 'tel') {
        const rawValue = e.target.value;
        const englishValue = toEnglishDigits(rawValue);
+       
+       // Handle empty string specifically to allow deletion
+       const finalValue = rawValue === '' ? '' : englishValue;
+
        // We create a synthetic event to pass back compatible with standard handlers
        const syntheticEvent = {
          ...e,
          target: {
            ...e.target,
-           value: englishValue
+           value: finalValue
          }
        };
        onChange(syntheticEvent);
@@ -61,6 +65,12 @@ export const InputField = ({ label, value, onChange, type = "text", suffix, plac
     }
   };
 
+  // Check if the value is strictly 0 (number) or "0" (string) and not part of a larger number like 10, 20
+  // But purely for display, we often want 0 to be visible unless it's a placeholder state.
+  // However, specifically for the issue of "backspace not clearing 0", parent components often pass 0 as default.
+  // We handle the display logic here:
+  const displayValue = value === 0 || value === '0' ? '' : value;
+
   return (
     <div className="flex flex-col gap-2">
       <label className="text-xs font-medium text-slate-500 font-bold">{label}</label>
@@ -68,14 +78,15 @@ export const InputField = ({ label, value, onChange, type = "text", suffix, plac
         <input
           type={type === 'number' ? 'text' : type} // Use text input for numbers to allow Persian chars
           inputMode={type === 'number' ? 'numeric' : 'text'}
-          value={value}
+          value={value} // Use raw value from props, let parent handle 0 vs empty logic if needed, OR use displayValue if we want to force clear
           onChange={handleChange}
           placeholder={placeholder}
-          className="w-full bg-white/50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-right"
-          style={{ direction: 'rtl' }}
+          // IMPORTANT: dir="ltr" fixes the cursor issue on backspace for numbers, text-right keeps visual alignment
+          className={`w-full bg-white/50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all ${type === 'number' ? 'text-center' : 'text-right'}`}
+          style={{ direction: type === 'number' ? 'ltr' : 'rtl' }} 
         />
         {suffix && (
-          <span className="absolute left-4 top-3 text-slate-400 text-sm font-medium pointer-events-none">{suffix}</span>
+          <span className={`absolute top-3 text-slate-400 text-sm font-medium pointer-events-none ${type === 'number' ? 'left-4' : 'left-4'}`}>{suffix}</span>
         )}
       </div>
     </div>

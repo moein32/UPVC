@@ -227,42 +227,32 @@ export const WindowCanvas = ({ node, selectedId, onSelect, onUpdateNode, width, 
   );
 };
 
-// SWAPPED Logic for Left/Right based on user request
+// Fixed Logic for Opening Indicators - Swapped based on User Feedback
 const renderOpeningSymbol = (type?: OpeningDirection) => {
   const strokeColor = "stroke-slate-800";
   const strokeWidth = "1.5";
   const dashedStroke = "3 3";
   
   switch (type) {
-    case 'TurnLeft': // Logic swapped: Now looks like Right (Vertex to Right)
-      return (
-        <div className="relative w-full h-full p-4">
-             <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-                 <path d="M100,0 L0,50 L100,100" fill="none" stroke="black" strokeWidth={strokeWidth} className={strokeColor} />
-             </svg>
-             <ModernHandle position="left" />
-        </div>
-      );
-    case 'TurnRight': // Logic swapped: Now looks like Left (Vertex to Left)
+    case 'TurnLeft': // Hinge Left, Handle Right. Triangle Tip points to Handle (Right).
        return (
         <div className="relative w-full h-full p-4">
-            <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+             <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
                  <path d="M0,0 L100,50 L0,100" fill="none" stroke="black" strokeWidth={strokeWidth} className={strokeColor} />
             </svg>
             <ModernHandle position="right" />
         </div>
       );
-    case 'TiltTurnLeft': // Logic swapped
-       return (
+    case 'TurnRight': // Hinge Right, Handle Left. Triangle Tip points to Handle (Left).
+      return (
         <div className="relative w-full h-full p-4">
             <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-                <path d="M100,0 L0,50 L100,100" fill="none" stroke="black" strokeWidth={strokeWidth} className={strokeColor} />
-                <path d="M0,100 L50,0 L100,100" fill="none" stroke="black" strokeWidth="1" strokeDasharray={dashedStroke} className="opacity-60" />
-            </svg>
-            <ModernHandle position="left" />
+                 <path d="M100,0 L0,50 L100,100" fill="none" stroke="black" strokeWidth={strokeWidth} className={strokeColor} />
+             </svg>
+             <ModernHandle position="left" />
         </div>
       );
-    case 'TiltTurnRight': // Logic swapped
+    case 'TiltTurnLeft': // Hinge Left, Handle Right.
         return (
          <div className="relative w-full h-full p-4">
              <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
@@ -272,35 +262,45 @@ const renderOpeningSymbol = (type?: OpeningDirection) => {
              <ModernHandle position="right" />
          </div>
        );
-    case 'SlidingLeft': // Swapped
-        return (
-            <div className="flex items-center gap-2 text-slate-700 font-bold opacity-70">
-                <ArrowIcon dir="right" />
-            </div>
-        );
-    case 'SlidingRight': // Swapped
+    case 'TiltTurnRight': // Hinge Right, Handle Left.
+       return (
+        <div className="relative w-full h-full p-4">
+            <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <path d="M100,0 L0,50 L100,100" fill="none" stroke="black" strokeWidth={strokeWidth} className={strokeColor} />
+                <path d="M0,100 L50,0 L100,100" fill="none" stroke="black" strokeWidth="1" strokeDasharray={dashedStroke} className="opacity-60" />
+            </svg>
+            <ModernHandle position="left" />
+        </div>
+      );
+    case 'SlidingLeft':
         return (
             <div className="flex items-center gap-2 text-slate-700 font-bold opacity-70">
                 <ArrowIcon dir="left" />
             </div>
         );
-    case 'DoorLeft': // Swapped
+    case 'SlidingRight':
         return (
-            <div className="relative w-full h-full p-4">
-                 <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-                     <path d="M100,0 L0,50 L100,100" fill="none" stroke="black" strokeWidth={strokeWidth} className={strokeColor} />
-                 </svg>
-                 <ModernHandle position="left" isDoor />
-                 <div className="absolute bottom-2 right-1/2 translate-x-1/2 text-[10px] font-bold bg-white/80 px-1 rounded">درب</div>
+            <div className="flex items-center gap-2 text-slate-700 font-bold opacity-70">
+                <ArrowIcon dir="right" />
             </div>
         );
-    case 'DoorRight': // Swapped
+    case 'DoorLeft': // Hinge Left, Handle Right
         return (
              <div className="relative w-full h-full p-4">
                  <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
                      <path d="M0,0 L100,50 L0,100" fill="none" stroke="black" strokeWidth={strokeWidth} className={strokeColor} />
                  </svg>
                  <ModernHandle position="right" isDoor />
+                 <div className="absolute bottom-2 right-1/2 translate-x-1/2 text-[10px] font-bold bg-white/80 px-1 rounded">درب</div>
+            </div>
+        );
+    case 'DoorRight': // Hinge Right, Handle Left
+        return (
+            <div className="relative w-full h-full p-4">
+                 <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                     <path d="M100,0 L0,50 L100,100" fill="none" stroke="black" strokeWidth={strokeWidth} className={strokeColor} />
+                 </svg>
+                 <ModernHandle position="left" isDoor />
                  <div className="absolute bottom-2 right-1/2 translate-x-1/2 text-[10px] font-bold bg-white/80 px-1 rounded">درب</div>
             </div>
         );

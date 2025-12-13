@@ -50,20 +50,20 @@ const PreviewNode = ({ node }: { node: WindowNode }) => {
 };
 
 const renderPreviewSymbol = (type?: OpeningDirection) => {
-    // Matching Canvas logic: Triangle points to handle
+    // Matching Canvas logic: Triangle Tip points to handle. Base is Hinge.
     switch (type) {
-        case 'TurnLeft':
+        case 'TurnLeft': // Hinge Left, Handle Right. Triangle >
             return <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full"><path d="M0,0 L100,50 L0,100" fill="none" stroke="black" strokeWidth="2" vectorEffect="non-scaling-stroke" /></svg>;
-        case 'TurnRight':
+        case 'TurnRight': // Hinge Right, Handle Left. Triangle <
             return <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full"><path d="M100,0 L0,50 L100,100" fill="none" stroke="black" strokeWidth="2" vectorEffect="non-scaling-stroke" /></svg>;
-        case 'TiltTurnLeft':
+        case 'TiltTurnLeft': // Hinge Left
             return (
                 <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full">
                     <path d="M0,0 L100,50 L0,100" fill="none" stroke="black" strokeWidth="2" vectorEffect="non-scaling-stroke" />
                     <path d="M0,100 L50,0 L100,100" fill="none" stroke="black" strokeWidth="1" strokeDasharray="5,5" vectorEffect="non-scaling-stroke" />
                 </svg>
             );
-        case 'TiltTurnRight':
+        case 'TiltTurnRight': // Hinge Right
             return (
                 <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full">
                     <path d="M100,0 L0,50 L100,100" fill="none" stroke="black" strokeWidth="2" vectorEffect="non-scaling-stroke" />

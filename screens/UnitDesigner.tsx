@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, Save, Trash2, SplitSquareHorizontal, SplitSquareVertical, PlusCircle, Maximize, ZoomIn, ZoomOut, RefreshCcw, Hand, MousePointer2, Receipt, Check, Edit3, Grid, XCircle } from 'lucide-react';
+import { ArrowRight, Save, Trash2, SplitSquareHorizontal, SplitSquareVertical, PlusCircle, Maximize, ZoomIn, ZoomOut, RefreshCcw, Hand, MousePointer2, Receipt, Check, Edit3, Grid, XCircle, Undo, Redo } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { InputField, SelectField, PrimaryButton } from '../components/UIComponents';
@@ -58,6 +58,31 @@ export const UnitDesigner = () => {
     mullions: 0,
     layout: createDefaultLayout()
   });
+
+  // --- Undo/Redo History ---
+  const [history, setHistory] = useState<WindowNode[]>([]);
+  const [future, setFuture] = useState<WindowNode[]>([]);
+
+  const pushToHistory = (newLayout: WindowNode) => {
+    setHistory(prev => [...prev.slice(-10), config.layout!]); // Keep last 10
+    setFuture([]);
+  };
+
+  const handleUndo = () => {
+    if (history.length === 0) return;
+    const previous = history[history.length - 1];
+    setFuture(prev => [config.layout!, ...prev]);
+    setHistory(prev => prev.slice(0, -1));
+    setConfig(prev => ({ ...prev, layout: previous }));
+  };
+
+  const handleRedo = () => {
+    if (future.length === 0) return;
+    const next = future[0];
+    setHistory(prev => [...prev, config.layout!]);
+    setFuture(prev => prev.slice(1));
+    setConfig(prev => ({ ...prev, layout: next }));
+  };
 
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>('root');
   const [activeTab, setActiveTab] = useState<'openings' | 'splits' | 'tools'>('openings');
@@ -124,6 +149,7 @@ export const UnitDesigner = () => {
 
   const handleUpdateNode = (id: string, updates: Partial<WindowNode>) => {
     if (!config.layout) return;
+    pushToHistory(config.layout); // Save state before update
     setConfig(prev => ({
         ...prev,
         layout: updateNodeInTree(prev.layout!, id, (node) => ({ ...node, ...updates }))
@@ -132,6 +158,7 @@ export const UnitDesigner = () => {
 
   const handleDelete = () => {
      if (!selectedNodeId || !config.layout) return;
+     pushToHistory(config.layout);
      setConfig(prev => ({
        ...prev,
        layout: updateNodeInTree(prev.layout!, selectedNodeId, (node) => ({
@@ -222,10 +249,31 @@ export const UnitDesigner = () => {
       return null;
   };
 
+  const handleGlobalResize = (newValStr: string, dim: 'w' | 'h') => {
+      // Allow empty string for backspace clearing
+      const val = toEnglishDigits(newValStr);
+      if (val === '') {
+          setConfig(prev => ({ ...prev, [dim === 'w' ? 'width' : 'height']: 0 }));
+          return;
+      }
+      const num = Number(val);
+      if (!isNaN(num)) {
+          setConfig(prev => ({ ...prev, [dim === 'w' ? 'width' : 'height']: num }));
+      }
+  }
+
   const handleManualResize = (newValStr: string, dim: 'w' | 'h') => {
       if (!selectedNodeId || !config.layout) return;
       
-      const newVal = Number(toEnglishDigits(newValStr));
+      const val = toEnglishDigits(newValStr);
+      const newVal = Number(val);
+
+      if (val === '') {
+          // Can't easily set flex to 0, so we just ignore or set very small?
+          // For UX, better to not do anything if empty, user must type
+          return;
+      }
+
       if (isNaN(newVal) || newVal <= 0) return;
 
       const parent = findParent(config.layout, selectedNodeId);
@@ -425,9 +473,12 @@ export const UnitDesigner = () => {
              <p className="text-[10px] text-slate-500">{projectDetails.customerName}</p>
         </div>
         <div className="flex gap-2">
-             <div className="bg-blue-100 text-blue-700 px-3 py-1 rounded-lg text-xs font-bold flex items-center">
-                {toPersianDigits(projectItems.length)} {t('item')}
-             </div>
+             <button onClick={handleUndo} disabled={history.length === 0} className="p-2 bg-slate-100 rounded text-slate-600 disabled:opacity-30">
+                <Undo size={18} />
+             </button>
+             <button onClick={handleRedo} disabled={future.length === 0} className="p-2 bg-slate-100 rounded text-slate-600 disabled:opacity-30">
+                <Redo size={18} />
+             </button>
         </div>
       </div>
 
@@ -459,22 +510,33 @@ export const UnitDesigner = () => {
         <div className="p-3 h-20 overflow-x-auto overflow-y-hidden no-scrollbar bg-slate-800">
            {activeTab === 'openings' && (
               <div className="flex items-center gap-4 h-full">
-                  <DraggableIcon 
-                      type="opening" value="Fixed" label={t('fixed')} icon={<FixedIcon />} 
-                      isActive={activeTool?.value === 'Fixed'}
-                      onClick={toggleTool} onDragStart={handleDragStart} 
-                  />
-                  <div className="w-px h-8 bg-slate-600 opacity-50"></div>
-                  {/* Swapped Left/Right Icons based on user feedback */}
-                  <DraggableIcon type="opening" value="TurnLeft" label={t('turn_right')} icon={<TurnRightIcon />} isActive={activeTool?.value === 'TurnLeft'} onClick={toggleTool} onDragStart={handleDragStart} />
-                  <DraggableIcon type="opening" value="TurnRight" label={t('turn_left')} icon={<TurnLeftIcon />} isActive={activeTool?.value === 'TurnRight'} onClick={toggleTool} onDragStart={handleDragStart} />
-                  <div className="w-px h-8 bg-slate-600 opacity-50"></div>
-                  <DraggableIcon type="opening" value="TiltTurnLeft" label={t('tilt_turn_right')} icon={<TiltTurnRightIcon />} isActive={activeTool?.value === 'TiltTurnLeft'} onClick={toggleTool} onDragStart={handleDragStart} />
-                  <DraggableIcon type="opening" value="TiltTurnRight" label={t('tilt_turn_left')} icon={<TiltTurnLeftIcon />} isActive={activeTool?.value === 'TiltTurnRight'} onClick={toggleTool} onDragStart={handleDragStart} />
-                  <div className="w-px h-8 bg-slate-600 opacity-50"></div>
-                  <DraggableIcon type="opening" value="SlidingLeft" label={t('sliding_right')} icon={<SlidingIcon dir="right"/>} isActive={activeTool?.value === 'SlidingLeft'} onClick={toggleTool} onDragStart={handleDragStart} />
-                  <DraggableIcon type="opening" value="SlidingRight" label={t('sliding_left')} icon={<SlidingIcon dir="left"/>} isActive={activeTool?.value === 'SlidingRight'} onClick={toggleTool} onDragStart={handleDragStart} />
-                  <DraggableIcon type="opening" value="DoorLeft" label={t('door')} icon={<DoorIcon />} isActive={activeTool?.value === 'DoorLeft'} onClick={toggleTool} onDragStart={handleDragStart} />
+                  {/* Window Section */}
+                  <div className="flex items-center gap-2 pr-2 border-r border-slate-600/50 h-full">
+                      {/* Fixed: Rotate text container instead of writing-mode-vertical to prevent floating issue */}
+                      <div className="flex items-center justify-center h-full w-6">
+                         <span className="text-[9px] text-slate-500 font-bold -rotate-90 whitespace-nowrap">پنجره</span>
+                      </div>
+                      <DraggableIcon 
+                          type="opening" value="Fixed" label={t('fixed')} icon={<FixedIcon />} 
+                          isActive={activeTool?.value === 'Fixed'}
+                          onClick={toggleTool} onDragStart={handleDragStart} 
+                      />
+                      <DraggableIcon type="opening" value="TurnLeft" label={t('turn_left')} icon={<TurnLeftIcon />} isActive={activeTool?.value === 'TurnLeft'} onClick={toggleTool} onDragStart={handleDragStart} />
+                      <DraggableIcon type="opening" value="TurnRight" label={t('turn_right')} icon={<TurnRightIcon />} isActive={activeTool?.value === 'TurnRight'} onClick={toggleTool} onDragStart={handleDragStart} />
+                      <DraggableIcon type="opening" value="TiltTurnLeft" label={t('tilt_turn_left')} icon={<TiltTurnLeftIcon />} isActive={activeTool?.value === 'TiltTurnLeft'} onClick={toggleTool} onDragStart={handleDragStart} />
+                      <DraggableIcon type="opening" value="TiltTurnRight" label={t('tilt_turn_right')} icon={<TiltTurnRightIcon />} isActive={activeTool?.value === 'TiltTurnRight'} onClick={toggleTool} onDragStart={handleDragStart} />
+                      <DraggableIcon type="opening" value="SlidingLeft" label={t('sliding_left')} icon={<SlidingIcon dir="left"/>} isActive={activeTool?.value === 'SlidingLeft'} onClick={toggleTool} onDragStart={handleDragStart} />
+                      <DraggableIcon type="opening" value="SlidingRight" label={t('sliding_right')} icon={<SlidingIcon dir="right"/>} isActive={activeTool?.value === 'SlidingRight'} onClick={toggleTool} onDragStart={handleDragStart} />
+                  </div>
+                  
+                  {/* Door Section */}
+                  <div className="flex items-center gap-2 pl-2 h-full">
+                       <div className="flex items-center justify-center h-full w-6">
+                          <span className="text-[9px] text-slate-500 font-bold -rotate-90 whitespace-nowrap">درب</span>
+                       </div>
+                       <DraggableIcon type="opening" value="DoorLeft" label={t('door') + ' چپ'} icon={<DoorIcon />} isActive={activeTool?.value === 'DoorLeft'} onClick={toggleTool} onDragStart={handleDragStart} />
+                       <DraggableIcon type="opening" value="DoorRight" label={t('door') + ' راست'} icon={<DoorIcon />} isActive={activeTool?.value === 'DoorRight'} onClick={toggleTool} onDragStart={handleDragStart} />
+                  </div>
               </div>
            )}
 
@@ -571,9 +633,11 @@ export const UnitDesigner = () => {
                          <input 
                              type="text"
                              inputMode="numeric"
-                             value={config.width}
-                             onChange={(e) => setConfig({...config, width: Number(toEnglishDigits(e.target.value))})}
+                             value={config.width === 0 ? '' : config.width} // Empty string for 0 to allow deletion
+                             onChange={(e) => handleGlobalResize(e.target.value, 'w')}
                              className="w-full pl-8 pr-2 py-2 rounded-lg border border-slate-300 text-center font-bold text-sm"
+                             placeholder="0"
+                             style={{ direction: 'ltr' }}
                          />
                          <span className="absolute left-2 top-2 text-[10px] text-slate-400">mm</span>
                          <span className="absolute right-2 top-2 text-[10px] text-slate-400">{t('width')}</span>
@@ -583,9 +647,11 @@ export const UnitDesigner = () => {
                          <input 
                              type="text"
                              inputMode="numeric"
-                             value={config.height}
-                             onChange={(e) => setConfig({...config, height: Number(toEnglishDigits(e.target.value))})}
+                             value={config.height === 0 ? '' : config.height}
+                             onChange={(e) => handleGlobalResize(e.target.value, 'h')}
                              className="w-full pl-8 pr-2 py-2 rounded-lg border border-slate-300 text-center font-bold text-sm"
+                             placeholder="0"
+                             style={{ direction: 'ltr' }}
                          />
                          <span className="absolute left-2 top-2 text-[10px] text-slate-400">mm</span>
                          <span className="absolute right-2 top-2 text-[10px] text-slate-400">{t('height')}</span>
@@ -604,6 +670,7 @@ export const UnitDesigner = () => {
                              className={`w-full pl-8 pr-2 py-2 rounded-lg border text-center font-bold text-sm 
                                 ${!selectedNodeDims?.editableW ? 'bg-slate-100 text-slate-400 border-slate-200' : 'bg-white border-orange-300 text-orange-900'}
                              `}
+                             style={{ direction: 'ltr' }}
                          />
                          <span className="absolute left-2 top-2 text-[10px] text-slate-400">mm</span>
                          <span className="absolute right-2 top-2 text-[10px] text-slate-400">{t('width')}</span>
@@ -619,6 +686,7 @@ export const UnitDesigner = () => {
                              className={`w-full pl-8 pr-2 py-2 rounded-lg border text-center font-bold text-sm 
                                 ${!selectedNodeDims?.editableH ? 'bg-slate-100 text-slate-400 border-slate-200' : 'bg-white border-orange-300 text-orange-900'}
                              `}
+                             style={{ direction: 'ltr' }}
                          />
                          <span className="absolute left-2 top-2 text-[10px] text-slate-400">mm</span>
                          <span className="absolute right-2 top-2 text-[10px] text-slate-400">{t('height')}</span>
@@ -677,7 +745,7 @@ const DraggableIcon = ({ type, value, dir, count, label, icon, onDragStart, isAc
     </div>
 );
 
-// --- Custom SVGs ---
+// --- Custom SVGs - Updated to match new Logic ---
 const FixedIcon = () => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full">
         <rect x="3" y="3" width="18" height="18" rx="2" />
@@ -685,35 +753,39 @@ const FixedIcon = () => (
     </svg>
 );
 
-const TurnRightIcon = () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full">
-        <rect x="3" y="3" width="18" height="18" rx="2" />
-        <path d="M21 12L3 3V21L21 12Z" fill="white" fillOpacity="0.2" />
-        <path d="M16 12L8 4V20L16 12Z" fill="none" stroke="white" strokeWidth="1.5" />
-    </svg>
-);
-
 const TurnLeftIcon = () => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full">
         <rect x="3" y="3" width="18" height="18" rx="2" />
-        <path d="M3 12L21 3V21L3 12Z" fill="white" fillOpacity="0.2" />
-        <path d="M8 12L16 4V20L8 12Z" fill="none" stroke="white" strokeWidth="1.5" />
+        {/* Triangle points Right > (Handle Right) */}
+        <path d="M3 3L21 12L3 21V3Z" fill="white" fillOpacity="0.2" />
+        <path d="M3 3L21 12L3 21" fill="none" stroke="white" strokeWidth="1.5" />
     </svg>
 );
 
-const TiltTurnRightIcon = () => (
+const TurnRightIcon = () => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full">
         <rect x="3" y="3" width="18" height="18" rx="2" />
-        <path d="M16 12L8 4V20L16 12Z" fill="none" stroke="white" strokeWidth="1.5" />
-        <path d="M12 20L4 4H20L12 20Z" fill="none" stroke="white" strokeWidth="1" strokeDasharray="2 2" opacity="0.5" />
+        {/* Triangle points Left < (Handle Left) */}
+        <path d="M21 3L3 12L21 21V3Z" fill="white" fillOpacity="0.2" />
+        <path d="M21 3L3 12L21 21" fill="none" stroke="white" strokeWidth="1.5" />
     </svg>
 );
 
 const TiltTurnLeftIcon = () => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full">
         <rect x="3" y="3" width="18" height="18" rx="2" />
-        <path d="M8 12L16 4V20L8 12Z" fill="none" stroke="white" strokeWidth="1.5" />
-        <path d="M12 20L4 4H20L12 20Z" fill="none" stroke="white" strokeWidth="1" strokeDasharray="2 2" opacity="0.5" />
+        {/* Triangle Right > */}
+        <path d="M3 3L21 12L3 21" fill="none" stroke="white" strokeWidth="1.5" />
+        <path d="M3 21L12 3L21 21" fill="none" stroke="white" strokeWidth="1" strokeDasharray="2 2" opacity="0.5" />
+    </svg>
+);
+
+const TiltTurnRightIcon = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full">
+        <rect x="3" y="3" width="18" height="18" rx="2" />
+        {/* Triangle Left < */}
+        <path d="M21 3L3 12L21 21" fill="none" stroke="white" strokeWidth="1.5" />
+        <path d="M3 21L12 3L21 21" fill="none" stroke="white" strokeWidth="1" strokeDasharray="2 2" opacity="0.5" />
     </svg>
 );
 
