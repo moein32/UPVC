@@ -6,7 +6,7 @@ import { InputField, SelectField, PrimaryButton } from '../components/UIComponen
 import { WindowCanvas } from '../components/WindowCanvas';
 import { WindowConfig, ProjectDetails, InvoiceItem, ProfileBrand, GlassType, HardwareItem, WindowNode, OpeningDirection, InvoiceDetail } from '../types';
 import { pricingStore } from '../services/pricingStore';
-import { toPersianDigits, formatPrice } from '../utils/formatting';
+import { toPersianDigits, formatPrice, toEnglishDigits } from '../utils/formatting';
 
 // --- Default Data ---
 const createDefaultLayout = (): WindowNode => ({
@@ -222,9 +222,12 @@ export const UnitDesigner = () => {
       return null;
   };
 
-  const handleManualResize = (newVal: number, dim: 'w' | 'h') => {
+  const handleManualResize = (newValStr: string, dim: 'w' | 'h') => {
       if (!selectedNodeId || !config.layout) return;
       
+      const newVal = Number(toEnglishDigits(newValStr));
+      if (isNaN(newVal) || newVal <= 0) return;
+
       const parent = findParent(config.layout, selectedNodeId);
       if (!parent || !parent.children) return; 
 
@@ -413,7 +416,7 @@ export const UnitDesigner = () => {
   return (
     <div className="h-screen flex flex-col bg-slate-100 overflow-hidden">
       {/* Header */}
-      <div className="bg-white/90 backdrop-blur-md px-4 py-3 flex justify-between items-center z-30 shadow-sm border-b border-slate-200">
+      <div className="bg-white/90 backdrop-blur-md px-4 py-3 flex justify-between items-center z-30 shadow-sm border-b border-slate-200 shrink-0">
         <button onClick={() => navigate(-1)} className="p-2 bg-slate-100 rounded-lg text-slate-600">
           <ArrowRight size={20} className={i18n.language === 'en' ? 'rotate-180' : ''} />
         </button>
@@ -429,7 +432,7 @@ export const UnitDesigner = () => {
       </div>
 
       {/* Professional Tabbed Toolbar */}
-      <div className="bg-slate-800 text-white z-20 shadow-md flex flex-col">
+      <div className="bg-slate-800 text-white z-20 shadow-md flex flex-col shrink-0">
         {/* Tabs */}
         <div className="flex border-b border-slate-700">
           <button 
@@ -462,15 +465,16 @@ export const UnitDesigner = () => {
                       onClick={toggleTool} onDragStart={handleDragStart} 
                   />
                   <div className="w-px h-8 bg-slate-600 opacity-50"></div>
-                  <DraggableIcon type="opening" value="TurnRight" label={t('turn_right')} icon={<TurnRightIcon />} isActive={activeTool?.value === 'TurnRight'} onClick={toggleTool} onDragStart={handleDragStart} />
-                  <DraggableIcon type="opening" value="TurnLeft" label={t('turn_left')} icon={<TurnLeftIcon />} isActive={activeTool?.value === 'TurnLeft'} onClick={toggleTool} onDragStart={handleDragStart} />
+                  {/* Swapped Left/Right Icons based on user feedback */}
+                  <DraggableIcon type="opening" value="TurnLeft" label={t('turn_right')} icon={<TurnRightIcon />} isActive={activeTool?.value === 'TurnLeft'} onClick={toggleTool} onDragStart={handleDragStart} />
+                  <DraggableIcon type="opening" value="TurnRight" label={t('turn_left')} icon={<TurnLeftIcon />} isActive={activeTool?.value === 'TurnRight'} onClick={toggleTool} onDragStart={handleDragStart} />
                   <div className="w-px h-8 bg-slate-600 opacity-50"></div>
-                  <DraggableIcon type="opening" value="TiltTurnRight" label={t('tilt_turn_right')} icon={<TiltTurnRightIcon />} isActive={activeTool?.value === 'TiltTurnRight'} onClick={toggleTool} onDragStart={handleDragStart} />
-                  <DraggableIcon type="opening" value="TiltTurnLeft" label={t('tilt_turn_left')} icon={<TiltTurnLeftIcon />} isActive={activeTool?.value === 'TiltTurnLeft'} onClick={toggleTool} onDragStart={handleDragStart} />
+                  <DraggableIcon type="opening" value="TiltTurnLeft" label={t('tilt_turn_right')} icon={<TiltTurnRightIcon />} isActive={activeTool?.value === 'TiltTurnLeft'} onClick={toggleTool} onDragStart={handleDragStart} />
+                  <DraggableIcon type="opening" value="TiltTurnRight" label={t('tilt_turn_left')} icon={<TiltTurnLeftIcon />} isActive={activeTool?.value === 'TiltTurnRight'} onClick={toggleTool} onDragStart={handleDragStart} />
                   <div className="w-px h-8 bg-slate-600 opacity-50"></div>
-                  <DraggableIcon type="opening" value="SlidingRight" label={t('sliding_right')} icon={<SlidingIcon dir="right"/>} isActive={activeTool?.value === 'SlidingRight'} onClick={toggleTool} onDragStart={handleDragStart} />
-                  <DraggableIcon type="opening" value="SlidingLeft" label={t('sliding_left')} icon={<SlidingIcon dir="left"/>} isActive={activeTool?.value === 'SlidingLeft'} onClick={toggleTool} onDragStart={handleDragStart} />
-                  <DraggableIcon type="opening" value="DoorRight" label={t('door')} icon={<DoorIcon />} isActive={activeTool?.value === 'DoorRight'} onClick={toggleTool} onDragStart={handleDragStart} />
+                  <DraggableIcon type="opening" value="SlidingLeft" label={t('sliding_right')} icon={<SlidingIcon dir="right"/>} isActive={activeTool?.value === 'SlidingLeft'} onClick={toggleTool} onDragStart={handleDragStart} />
+                  <DraggableIcon type="opening" value="SlidingRight" label={t('sliding_left')} icon={<SlidingIcon dir="left"/>} isActive={activeTool?.value === 'SlidingRight'} onClick={toggleTool} onDragStart={handleDragStart} />
+                  <DraggableIcon type="opening" value="DoorLeft" label={t('door')} icon={<DoorIcon />} isActive={activeTool?.value === 'DoorLeft'} onClick={toggleTool} onDragStart={handleDragStart} />
               </div>
            )}
 
@@ -496,12 +500,12 @@ export const UnitDesigner = () => {
         </div>
       </div>
 
-      {/* Canvas Area with Zoom */}
-      <div className="flex-1 relative bg-slate-200 overflow-hidden flex flex-col">
+      {/* Canvas Area with Zoom - Min Height to prevent keyboard collapse */}
+      <div className="flex-1 relative bg-slate-200 overflow-hidden flex flex-col min-h-[300px]">
         {/* Active Tool Indicator for Mobile */}
         {activeTool && (
-           <div className="absolute top-4 left-0 right-0 z-20 flex justify-center">
-                <div className="bg-orange-600 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg flex items-center gap-2 animate-bounce">
+           <div className="absolute top-4 left-0 right-0 z-20 flex justify-center pointer-events-none">
+                <div className="bg-orange-600 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg flex items-center gap-2 animate-bounce pointer-events-auto">
                     <span>{t('active_tool_hint')}</span>
                     <button onClick={() => setActiveTool(null)} className="ml-2 bg-white/20 rounded-full p-0.5"><XCircle size={16}/></button>
                 </div>
@@ -553,7 +557,7 @@ export const UnitDesigner = () => {
       </div>
 
       {/* Bottom Properties Panel */}
-      <div className="bg-white rounded-t-2xl shadow-[0_-5px_30px_rgba(0,0,0,0.1)] z-30 p-5 pb-8">
+      <div className="bg-white rounded-t-2xl shadow-[0_-5px_30px_rgba(0,0,0,0.1)] z-30 p-5 pb-8 shrink-0">
          {/* Dynamic Dimensions Row */}
          <div className={`flex gap-4 mb-4 items-center p-3 rounded-xl border transition-colors ${!isRootSelected ? 'bg-orange-50 border-orange-200' : 'bg-slate-50 border-slate-100'}`}>
              <span className={`text-xs font-bold whitespace-nowrap ${!isRootSelected ? 'text-orange-600' : 'text-slate-500'}`}>
@@ -565,9 +569,10 @@ export const UnitDesigner = () => {
                 <div className="flex gap-2 flex-1">
                      <div className="relative flex-1">
                          <input 
-                             type="number"
+                             type="text"
+                             inputMode="numeric"
                              value={config.width}
-                             onChange={(e) => setConfig({...config, width: Number(e.target.value)})}
+                             onChange={(e) => setConfig({...config, width: Number(toEnglishDigits(e.target.value))})}
                              className="w-full pl-8 pr-2 py-2 rounded-lg border border-slate-300 text-center font-bold text-sm"
                          />
                          <span className="absolute left-2 top-2 text-[10px] text-slate-400">mm</span>
@@ -576,9 +581,10 @@ export const UnitDesigner = () => {
                      <span className="self-center text-slate-400">×</span>
                      <div className="relative flex-1">
                          <input 
-                             type="number"
+                             type="text"
+                             inputMode="numeric"
                              value={config.height}
-                             onChange={(e) => setConfig({...config, height: Number(e.target.value)})}
+                             onChange={(e) => setConfig({...config, height: Number(toEnglishDigits(e.target.value))})}
                              className="w-full pl-8 pr-2 py-2 rounded-lg border border-slate-300 text-center font-bold text-sm"
                          />
                          <span className="absolute left-2 top-2 text-[10px] text-slate-400">mm</span>
@@ -590,10 +596,11 @@ export const UnitDesigner = () => {
                  <div className="flex gap-2 flex-1">
                      <div className="relative flex-1">
                          <input 
-                             type="number"
+                             type="text"
+                             inputMode="numeric"
                              disabled={!selectedNodeDims?.editableW}
                              value={selectedNodeDims ? Math.round(selectedNodeDims.w) : ''}
-                             onChange={(e) => handleManualResize(Number(e.target.value), 'w')}
+                             onChange={(e) => handleManualResize(e.target.value, 'w')}
                              className={`w-full pl-8 pr-2 py-2 rounded-lg border text-center font-bold text-sm 
                                 ${!selectedNodeDims?.editableW ? 'bg-slate-100 text-slate-400 border-slate-200' : 'bg-white border-orange-300 text-orange-900'}
                              `}
@@ -604,10 +611,11 @@ export const UnitDesigner = () => {
                      <span className="self-center text-slate-400">×</span>
                      <div className="relative flex-1">
                          <input 
-                             type="number"
+                             type="text"
+                             inputMode="numeric"
                              disabled={!selectedNodeDims?.editableH}
                              value={selectedNodeDims ? Math.round(selectedNodeDims.h) : ''}
-                             onChange={(e) => handleManualResize(Number(e.target.value), 'h')}
+                             onChange={(e) => handleManualResize(e.target.value, 'h')}
                              className={`w-full pl-8 pr-2 py-2 rounded-lg border text-center font-bold text-sm 
                                 ${!selectedNodeDims?.editableH ? 'bg-slate-100 text-slate-400 border-slate-200' : 'bg-white border-orange-300 text-orange-900'}
                              `}

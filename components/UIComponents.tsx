@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { toEnglishDigits } from '../utils/formatting';
 
 export const GlassCard = ({ children, className = '', onClick }: { children?: React.ReactNode; className?: string; onClick?: () => void }) => (
   <motion.div
@@ -39,24 +40,47 @@ export const PrimaryButton = ({ children, onClick, icon: Icon, fullWidth = false
   </motion.button>
 );
 
-export const InputField = ({ label, value, onChange, type = "text", suffix, placeholder }: any) => (
-  <div className="flex flex-col gap-2">
-    <label className="text-xs font-medium text-slate-500 font-bold">{label}</label>
-    <div className="relative">
-      <input
-        type={type}
-        value={value}
-        onChange={onChange}
-        placeholder={placeholder}
-        className="w-full bg-white/50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-right"
-        style={{ direction: 'rtl' }}
-      />
-      {suffix && (
-        <span className="absolute left-4 top-3 text-slate-400 text-sm font-medium pointer-events-none">{suffix}</span>
-      )}
+export const InputField = ({ label, value, onChange, type = "text", suffix, placeholder }: any) => {
+  
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // If it's a numeric input intent, convert Persian digits to English for the state
+    if (type === 'number' || type === 'tel') {
+       const rawValue = e.target.value;
+       const englishValue = toEnglishDigits(rawValue);
+       // We create a synthetic event to pass back compatible with standard handlers
+       const syntheticEvent = {
+         ...e,
+         target: {
+           ...e.target,
+           value: englishValue
+         }
+       };
+       onChange(syntheticEvent);
+    } else {
+      onChange(e);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-2">
+      <label className="text-xs font-medium text-slate-500 font-bold">{label}</label>
+      <div className="relative">
+        <input
+          type={type === 'number' ? 'text' : type} // Use text input for numbers to allow Persian chars
+          inputMode={type === 'number' ? 'numeric' : 'text'}
+          value={value}
+          onChange={handleChange}
+          placeholder={placeholder}
+          className="w-full bg-white/50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-right"
+          style={{ direction: 'rtl' }}
+        />
+        {suffix && (
+          <span className="absolute left-4 top-3 text-slate-400 text-sm font-medium pointer-events-none">{suffix}</span>
+        )}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export const SelectField = ({ label, value, onChange, options }: any) => (
   <div className="flex flex-col gap-2">

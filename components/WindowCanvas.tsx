@@ -211,9 +211,9 @@ export const WindowCanvas = ({ node, selectedId, onSelect, onUpdateNode, width, 
       {/* Dimensions Overlay - Always Visible if space allows */}
       {width > 60 && height > 40 && (
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white/70 backdrop-blur-[2px] px-1.5 py-0.5 rounded border border-slate-300/50 pointer-events-none z-10 whitespace-nowrap flex flex-col items-center justify-center shadow-sm">
-             <span className="text-[10px] font-bold text-slate-800 leading-none">{Math.round(width)}</span>
+             <span className="text-[10px] font-bold text-slate-800 leading-none">{toPersianDigits(Math.round(width))}</span>
              <div className="w-full h-px bg-slate-400/50 my-0.5"></div>
-             <span className="text-[10px] font-bold text-slate-800 leading-none">{Math.round(height)}</span>
+             <span className="text-[10px] font-bold text-slate-800 leading-none">{toPersianDigits(Math.round(height))}</span>
           </div>
       )}
 
@@ -227,80 +227,80 @@ export const WindowCanvas = ({ node, selectedId, onSelect, onUpdateNode, width, 
   );
 };
 
-// Modern Opening Symbols (Vertex points to Handle/Opening side)
+// SWAPPED Logic for Left/Right based on user request
 const renderOpeningSymbol = (type?: OpeningDirection) => {
   const strokeColor = "stroke-slate-800";
   const strokeWidth = "1.5";
   const dashedStroke = "3 3";
   
   switch (type) {
-    case 'TurnLeft':
+    case 'TurnLeft': // Logic swapped: Now looks like Right (Vertex to Right)
       return (
         <div className="relative w-full h-full p-4">
              <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-                 <path d="M0,0 L100,50 L0,100" fill="none" stroke="black" strokeWidth={strokeWidth} className={strokeColor} />
-             </svg>
-             <ModernHandle position="right" />
-        </div>
-      );
-    case 'TurnRight':
-       return (
-        <div className="relative w-full h-full p-4">
-            <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
                  <path d="M100,0 L0,50 L100,100" fill="none" stroke="black" strokeWidth={strokeWidth} className={strokeColor} />
-            </svg>
-            <ModernHandle position="left" />
+             </svg>
+             <ModernHandle position="left" />
         </div>
       );
-    case 'TiltTurnLeft':
+    case 'TurnRight': // Logic swapped: Now looks like Left (Vertex to Left)
        return (
         <div className="relative w-full h-full p-4">
             <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-                <path d="M0,0 L100,50 L0,100" fill="none" stroke="black" strokeWidth={strokeWidth} className={strokeColor} />
-                <path d="M0,100 L50,0 L100,100" fill="none" stroke="black" strokeWidth="1" strokeDasharray={dashedStroke} className="opacity-60" />
+                 <path d="M0,0 L100,50 L0,100" fill="none" stroke="black" strokeWidth={strokeWidth} className={strokeColor} />
             </svg>
             <ModernHandle position="right" />
         </div>
       );
-    case 'TiltTurnRight':
+    case 'TiltTurnLeft': // Logic swapped
+       return (
+        <div className="relative w-full h-full p-4">
+            <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <path d="M100,0 L0,50 L100,100" fill="none" stroke="black" strokeWidth={strokeWidth} className={strokeColor} />
+                <path d="M0,100 L50,0 L100,100" fill="none" stroke="black" strokeWidth="1" strokeDasharray={dashedStroke} className="opacity-60" />
+            </svg>
+            <ModernHandle position="left" />
+        </div>
+      );
+    case 'TiltTurnRight': // Logic swapped
         return (
          <div className="relative w-full h-full p-4">
              <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-                 <path d="M100,0 L0,50 L100,100" fill="none" stroke="black" strokeWidth={strokeWidth} className={strokeColor} />
+                 <path d="M0,0 L100,50 L0,100" fill="none" stroke="black" strokeWidth={strokeWidth} className={strokeColor} />
                  <path d="M0,100 L50,0 L100,100" fill="none" stroke="black" strokeWidth="1" strokeDasharray={dashedStroke} className="opacity-60" />
              </svg>
-             <ModernHandle position="left" />
+             <ModernHandle position="right" />
          </div>
        );
-    case 'SlidingLeft':
-        return (
-            <div className="flex items-center gap-2 text-slate-700 font-bold opacity-70">
-                <ArrowIcon dir="left" />
-            </div>
-        );
-    case 'SlidingRight':
+    case 'SlidingLeft': // Swapped
         return (
             <div className="flex items-center gap-2 text-slate-700 font-bold opacity-70">
                 <ArrowIcon dir="right" />
             </div>
         );
-    case 'DoorLeft':
+    case 'SlidingRight': // Swapped
         return (
-            <div className="relative w-full h-full p-4">
-                 <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-                     <path d="M0,0 L100,50 L0,100" fill="none" stroke="black" strokeWidth={strokeWidth} className={strokeColor} />
-                 </svg>
-                 <ModernHandle position="right" isDoor />
-                 <div className="absolute bottom-2 right-1/2 translate-x-1/2 text-[10px] font-bold bg-white/80 px-1 rounded">درب</div>
+            <div className="flex items-center gap-2 text-slate-700 font-bold opacity-70">
+                <ArrowIcon dir="left" />
             </div>
         );
-    case 'DoorRight':
+    case 'DoorLeft': // Swapped
         return (
-             <div className="relative w-full h-full p-4">
+            <div className="relative w-full h-full p-4">
                  <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
                      <path d="M100,0 L0,50 L100,100" fill="none" stroke="black" strokeWidth={strokeWidth} className={strokeColor} />
                  </svg>
                  <ModernHandle position="left" isDoor />
+                 <div className="absolute bottom-2 right-1/2 translate-x-1/2 text-[10px] font-bold bg-white/80 px-1 rounded">درب</div>
+            </div>
+        );
+    case 'DoorRight': // Swapped
+        return (
+             <div className="relative w-full h-full p-4">
+                 <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                     <path d="M0,0 L100,50 L0,100" fill="none" stroke="black" strokeWidth={strokeWidth} className={strokeColor} />
+                 </svg>
+                 <ModernHandle position="right" isDoor />
                  <div className="absolute bottom-2 right-1/2 translate-x-1/2 text-[10px] font-bold bg-white/80 px-1 rounded">درب</div>
             </div>
         );
