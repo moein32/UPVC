@@ -19,7 +19,13 @@ const INITIAL_BRANDS: ProfileBrand[] = [
     tier: 'لوکس',
     series: ['۶۰', '۷۰'],
     warrantyYears: 15,
-    components: DEFAULT_COMPONENTS.map(c => ({ ...c, price: c.id === 'frame' ? 450000 : c.id === 'galvanized' ? 150000 : 460000 }))
+    components: DEFAULT_COMPONENTS.map(c => ({ 
+        ...c, 
+        price: c.id === 'frame' ? 450000 : 
+               c.id === 'galvanized' ? 150000 : 
+               c.id === 'bead' ? 60000 : 
+               460000 
+    }))
   },
   {
     id: 'wintech',
@@ -28,7 +34,12 @@ const INITIAL_BRANDS: ProfileBrand[] = [
     tier: 'لوکس',
     series: ['W640'],
     warrantyYears: 10,
-    components: DEFAULT_COMPONENTS.map(c => ({ ...c, price: c.id === 'galvanized' ? 140000 : 420000 }))
+    components: DEFAULT_COMPONENTS.map(c => ({ 
+        ...c, 
+        price: c.id === 'galvanized' ? 140000 : 
+               c.id === 'bead' ? 55000 : 
+               420000 
+    }))
   },
   {
     id: 'hofmann',
@@ -37,7 +48,12 @@ const INITIAL_BRANDS: ProfileBrand[] = [
     tier: 'استاندارد',
     series: ['۶۰'],
     warrantyYears: 10,
-    components: DEFAULT_COMPONENTS.map(c => ({ ...c, price: c.id === 'galvanized' ? 130000 : 380000 }))
+    components: DEFAULT_COMPONENTS.map(c => ({ 
+        ...c, 
+        price: c.id === 'galvanized' ? 130000 : 
+               c.id === 'bead' ? 50000 : 
+               380000 
+    }))
   },
   {
     id: 'yazdwin',
@@ -46,7 +62,12 @@ const INITIAL_BRANDS: ProfileBrand[] = [
     tier: 'اقتصادی',
     series: ['Eco'],
     warrantyYears: 5,
-    components: DEFAULT_COMPONENTS.map(c => ({ ...c, price: c.id === 'galvanized' ? 120000 : 280000 }))
+    components: DEFAULT_COMPONENTS.map(c => ({ 
+        ...c, 
+        price: c.id === 'galvanized' ? 120000 : 
+               c.id === 'bead' ? 40000 : 
+               280000 
+    }))
   }
 ];
 
@@ -61,6 +82,8 @@ const HARDWARE_BRANDS: HardwareBrand[] = [
   { id: 'gu', name: 'G-U (آلمان)', origin: 'Germany' },
   { id: 'endow', name: 'Endow (ترکیه)', origin: 'Turkey' },
   { id: 'vh', name: 'VH (ایران)', origin: 'Iran' },
+  { id: 'vorne', name: 'Vorne (ترکیه)', origin: 'Turkey' },
+  { id: 'accado', name: 'Accado (ترکیه)', origin: 'Turkey' }
 ];
 
 const INITIAL_HARDWARE: HardwareItem[] = [
@@ -96,6 +119,21 @@ export const pricingStore = {
     localStorage.setItem('lumina_brands', JSON.stringify(brands));
   },
 
+  addBrand: (brand: ProfileBrand) => {
+    const brands = pricingStore.getBrands();
+    // Ensure components are initialized
+    if (!brand.components || brand.components.length === 0) {
+        brand.components = DEFAULT_COMPONENTS.map(c => ({...c, price: 0}));
+    }
+    brands.push(brand);
+    localStorage.setItem('lumina_brands', JSON.stringify(brands));
+  },
+  
+  deleteBrand: (id: string) => {
+    const brands = pricingStore.getBrands().filter(b => b.id !== id);
+    localStorage.setItem('lumina_brands', JSON.stringify(brands));
+  },
+
   getGlass: (): GlassType[] => {
     const stored = localStorage.getItem('lumina_glass');
     return stored ? JSON.parse(stored) : INITIAL_GLASS;
@@ -105,6 +143,17 @@ export const pricingStore = {
     localStorage.setItem('lumina_glass', JSON.stringify(glass));
   },
 
+  addGlass: (newItem: GlassType) => {
+    const list = pricingStore.getGlass();
+    list.push(newItem);
+    localStorage.setItem('lumina_glass', JSON.stringify(list));
+  },
+  
+  deleteGlass: (id: string) => {
+    const list = pricingStore.getGlass().filter(i => i.id !== id);
+    localStorage.setItem('lumina_glass', JSON.stringify(list));
+  },
+
   getHardware: (): HardwareItem[] => {
     const stored = localStorage.getItem('lumina_hardware');
     return stored ? JSON.parse(stored) : INITIAL_HARDWARE;
@@ -112,6 +161,17 @@ export const pricingStore = {
 
   saveHardware: (hw: HardwareItem[]) => {
     localStorage.setItem('lumina_hardware', JSON.stringify(hw));
+  },
+  
+  addHardware: (newItem: HardwareItem) => {
+    const list = pricingStore.getHardware();
+    list.push(newItem);
+    localStorage.setItem('lumina_hardware', JSON.stringify(list));
+  },
+
+  deleteHardware: (id: string) => {
+    const list = pricingStore.getHardware().filter(i => i.id !== id);
+    localStorage.setItem('lumina_hardware', JSON.stringify(list));
   },
 
   getHardwareBrands: () => HARDWARE_BRANDS,

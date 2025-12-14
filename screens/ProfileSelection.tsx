@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, ChevronDown, ChevronUp, Edit2, Check } from 'lucide-react';
+import { ArrowRight, ChevronDown, ChevronUp, Edit2, Check, Plus, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { pricingStore } from '../services/pricingStore';
 import { ProfileBrand, ProfileComponent } from '../types';
-import { InputField, PrimaryButton } from '../components/UIComponents';
+import { InputField, PrimaryButton, SelectField } from '../components/UIComponents';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toPersianDigits, formatPrice } from '../utils/formatting';
 
@@ -13,6 +13,9 @@ export const ProfileSelection = () => {
   const [expandedBrandId, setExpandedBrandId] = useState<string | null>(null);
   const [editingComponent, setEditingComponent] = useState<{brandId: string, compId: string} | null>(null);
   const [tempPrice, setTempPrice] = useState('');
+  
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newBrand, setNewBrand] = useState({ name: '', tier: 'استاندارد' });
 
   useEffect(() => {
     setBrands(pricingStore.getBrands());
@@ -39,6 +42,31 @@ export const ProfileSelection = () => {
     setTempPrice(comp.price.toString());
   };
 
+  const handleAddBrand = () => {
+      if (!newBrand.name) return;
+      const brand: ProfileBrand = {
+          id: Date.now().toString(),
+          name: newBrand.name,
+          tier: newBrand.tier as any,
+          logo: '🆕',
+          series: ['Default'],
+          warrantyYears: 10,
+          components: [] // Store handles default components init
+      };
+      pricingStore.addBrand(brand);
+      setBrands(pricingStore.getBrands());
+      setShowAddForm(false);
+      setNewBrand({ name: '', tier: 'استاندارد' });
+  };
+  
+  const handleDeleteBrand = (e: React.MouseEvent, id: string) => {
+      e.stopPropagation();
+      if(window.confirm("آیا از حذف این پروفیل اطمینان دارید؟")) {
+          pricingStore.deleteBrand(id);
+          setBrands(pricingStore.getBrands());
+      }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 p-6 pt-10 pb-24">
       <div className="flex items-center mb-8">
@@ -46,6 +74,40 @@ export const ProfileSelection = () => {
           <ArrowRight size={20} />
         </button>
         <h1 className="text-xl font-bold text-slate-900">قیمت‌گذاری پروفیل‌ها</h1>
+      </div>
+      
+      {/* Add New Brand Section */}
+      <div className="mb-6">
+          {!showAddForm ? (
+             <button onClick={() => setShowAddForm(true)} className="w-full py-3 border-2 border-dashed border-slate-300 rounded-xl text-slate-500 font-bold flex items-center justify-center gap-2 hover:bg-slate-100 transition-colors">
+                 <Plus size={20} />
+                 افزودن پروفیل جدید
+             </button>
+          ) : (
+             <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                 <div className="flex flex-col gap-4">
+                     <InputField 
+                        label="نام برند پروفیل" 
+                        value={newBrand.name} 
+                        onChange={(e: any) => setNewBrand({...newBrand, name: e.target.value})} 
+                     />
+                     <SelectField 
+                        label="درجه کیفی"
+                        value={newBrand.tier}
+                        onChange={(e: any) => setNewBrand({...newBrand, tier: e.target.value})}
+                        options={[
+                            {label: 'اقتصادی', value: 'اقتصادی'},
+                            {label: 'استاندارد', value: 'استاندارد'},
+                            {label: 'لوکس', value: 'لوکس'}
+                        ]}
+                     />
+                     <div className="flex gap-3 mt-2">
+                         <PrimaryButton onClick={handleAddBrand} className="flex-1 py-2">ثبت</PrimaryButton>
+                         <button onClick={() => setShowAddForm(false)} className="flex-1 bg-slate-100 text-slate-600 rounded-xl font-bold">انصراف</button>
+                     </div>
+                 </div>
+             </div>
+          )}
       </div>
 
       <div className="grid gap-6">
@@ -62,8 +124,11 @@ export const ProfileSelection = () => {
                     <span className="text-xs text-slate-400 font-bold">{brand.tier}</span>
                  </div>
                </div>
-               <div className="p-2 bg-white rounded-full shadow-sm">
-                 {expandedBrandId === brand.id ? <ChevronUp size={20}/> : <ChevronDown size={20}/>}
+               <div className="flex items-center gap-2">
+                   <button onClick={(e) => handleDeleteBrand(e, brand.id)} className="p-2 text-red-400 hover:bg-red-50 rounded-full"><Trash2 size={18}/></button>
+                   <div className="p-2 bg-white rounded-full shadow-sm">
+                     {expandedBrandId === brand.id ? <ChevronUp size={20}/> : <ChevronDown size={20}/>}
+                   </div>
                </div>
             </div>
 

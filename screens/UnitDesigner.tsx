@@ -171,7 +171,7 @@ export const UnitDesigner = () => {
     id: Date.now().toString(),
     width: 1200,
     height: 1500,
-    profileId: 'vistabest',
+    profileId: projectDetails.defaultProfileId || '', // Use project default
     glassId: 'double_4_4',
     hardwareId: 'h1',
     type: 'Custom',
@@ -226,15 +226,17 @@ export const UnitDesigner = () => {
         layout: item.config.layout || createDefaultLayout()
       });
       setSelectedNodeId('root');
+    } else {
+        // Init default profile if not set
+        if (brands.length > 0 && !config.profileId) {
+            setConfig(c => ({
+                ...c, 
+                profileId: projectDetails.defaultProfileId || brands[0].id, 
+                glassId: glassList[0]?.id || '' 
+            }));
+        }
     }
-  }, [editIndex, projectItems]);
-
-  // Set defaults
-  useEffect(() => {
-    if (editIndex === undefined && brands.length > 0 && !config.profileId) {
-       setConfig(c => ({...c, profileId: brands[0].id, glassId: glassList[0]?.id || '' }));
-    }
-  }, [brands, glassList, editIndex]);
+  }, [editIndex, projectItems, brands, glassList, projectDetails.defaultProfileId]);
 
   // --- Tree Logic ---
   const findParent = (root: WindowNode, id: string): WindowNode | null => {
@@ -503,7 +505,8 @@ export const UnitDesigner = () => {
         mullionMeters: 0,
         glassArea: 0,
         panelArea: 0,
-        sashCount: 0
+        sashCount: 0,
+        beadMeters: 0 // Track bead length (perimeter of glass/panels)
     };
 
     if (node.type === 'container') {
@@ -540,6 +543,7 @@ export const UnitDesigner = () => {
                 stats.glassArea += childStats.glassArea;
                 stats.panelArea += childStats.panelArea;
                 stats.sashCount += childStats.sashCount;
+                stats.beadMeters += childStats.beadMeters;
             });
         }
     } else {
@@ -561,6 +565,10 @@ export const UnitDesigner = () => {
             // It is glass if it's 'Fixed' or if it's a sash leaf (the leaf itself is the glass)
             stats.glassArea += w * h;
         }
+
+        // Bead Calculation: Add perimeter of this leaf segment (glass or panel)
+        // Bead length = (Width + Height) * 2
+        stats.beadMeters += (w + h) * 2;
     }
     return stats;
   };
@@ -576,6 +584,8 @@ export const UnitDesigner = () => {
     const mullionM = stats.mullionMeters / 1000;
     const sashWindowM = stats.sashWindowMeters / 1000;
     const sashDoorM = stats.sashDoorMeters / 1000;
+    const beadM = stats.beadMeters / 1000; // Total Bead Length in meters
+
     const glassA = stats.glassArea / 1000000; 
     const panelA = stats.panelArea / 1000000;
 
@@ -593,6 +603,7 @@ export const UnitDesigner = () => {
     const mullionPrice = brand?.components.find(c => c.id === 'mullion')?.price || 0;
     const sashWindowPrice = brand?.components.find(c => c.id === 'sash_window')?.price || 0;
     const sashDoorPrice = brand?.components.find(c => c.id === 'sash_door')?.price || 0;
+    const beadPrice = brand?.components.find(c => c.id === 'bead')?.price || 0;
     const galoPrice = brand?.components.find(c => c.id === 'galvanized')?.price || 150000;
     
     const glassPricePerM2 = glassType?.pricePerSqm || 0;
@@ -613,6 +624,9 @@ export const UnitDesigner = () => {
     const mullionTotal = mullionM * mullionPrice;
     if (mullionM > 0) details.push({ rowId: rowId++, name: 'پروفیل مولیون', unit: 'متر طول', quantity: Number(mullionM.toFixed(2)), unitPrice: mullionPrice, totalPrice: Math.round(mullionTotal) });
 
+    const beadTotal = beadM * beadPrice;
+    if (beadM > 0) details.push({ rowId: rowId++, name: 'پروفیل زهوار', unit: 'متر طول', quantity: Number(beadM.toFixed(2)), unitPrice: beadPrice, totalPrice: Math.round(beadTotal) });
+
     const galoTotal = galoM * galoPrice;
     if (galoM > 0) details.push({ rowId: rowId++, name: 'گالوانیزه تقویتی', unit: 'متر طول', quantity: Number(galoM.toFixed(2)), unitPrice: galoPrice, totalPrice: Math.round(galoTotal) });
 
@@ -626,7 +640,7 @@ export const UnitDesigner = () => {
     if (stats.sashCount > 0) details.push({ rowId: rowId++, name: 'یراق آلات', unit: 'دست', quantity: stats.sashCount, unitPrice: hardwarePricePerSet, totalPrice: Math.round(hardwareTotal) });
 
     const totalProfileMeters = frameM + mullionM + sashWindowM + sashDoorM;
-    const profileCost = frameTotal + sashWinTotal + sashDoorTotal + mullionTotal + galoTotal;
+    const profileCost = frameTotal + sashWinTotal + sashDoorTotal + mullionTotal + galoTotal + beadTotal;
     const unitPrice = Math.round(profileCost + glassTotal + hardwareTotal + panelTotal);
 
     return {
@@ -670,17 +684,7 @@ export const UnitDesigner = () => {
       if (editIndex !== undefined) {
          navigate('/breakdown', { state: { projectDetails, items: updatedItems } });
       } else {
-         // Reset for new design (keep profile/glass but reset dimensions and layout)
-         setConfig(prev => ({ 
-             ...prev, 
-             id: Date.now().toString(),
-             width: 1200,
-             height: 1500,
-             layout: createDefaultLayout() 
-         }));
-         setLastSavedId(null);
-         setHistory([]);
-         setFuture([]);
+         setConfig(prev => ({ ...prev, id: Date.now().toString() }));
       }
   };
 

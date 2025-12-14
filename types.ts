@@ -1,3 +1,4 @@
+
 export interface ProfileComponent {
   id: string;
   name: string;
@@ -68,6 +69,7 @@ export interface ProjectDetails {
   companyName: string; // Legacy support, prefer settings
   date: string;
   status: 'Draft' | 'Final';
+  defaultProfileId?: string; // Added: Selected profile for this project
 }
 
 export interface InvoiceDetail {

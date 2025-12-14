@@ -36,9 +36,11 @@ const DimensionLine = ({
     isSegment?: boolean
 }) => {
     const isH = orientation === 'h';
-    // Reduced offsets to bring lines closer to the window
-    const baseOffset = isSegment ? -25 : -45; 
-    const totalOffset = baseOffset - (offset * 20);
+    // Adjusted offsets for tighter, standard technical drawing look
+    // Segments are closer to the object (15px), Total is further out (45px)
+    // We use positive values assuming alignment to the "inner" edge (end)
+    const baseOffset = isSegment ? 10 : 40; 
+    const totalOffset = baseOffset + (offset * 25);
 
     return (
         <div className={`absolute flex items-center justify-center z-40 select-none pointer-events-none
@@ -47,6 +49,7 @@ const DimensionLine = ({
         `}
         style={{
             [isH ? 'width' : 'height']: '100%',
+            // Align to 'bottom' or 'right' to measure from the frame outwards
             [isH ? (position === 'start' ? 'top' : 'bottom') : (position === 'start' ? 'left' : 'right')]: `${totalOffset}px`,
             [isH ? 'left' : 'top']: 0
         }}
@@ -197,25 +200,26 @@ export const WindowCanvas = ({
                )
           }
 
-          // Full Editor Wrapper with Dimensions - Reduced Padding
+          // Full Editor Wrapper with Dimensions
+          // Reduced padding to 14 (56px) for tighter fit
           return (
-              <div className="relative w-full h-full p-12 bg-transparent select-none">
+              <div className="relative w-full h-full p-14 bg-transparent select-none">
                   {/* Global Dimensions */}
-                  <div className="absolute top-0 left-12 right-12 h-12">
+                  <div className="absolute top-0 left-14 right-14 h-14">
                        <DimensionLine 
                             length={width} 
                             orientation="h" 
                             label={width} 
-                            position="start" 
+                            position="end" // Align to bottom (near frame)
                             onClick={() => onDimensionEdit && onDimensionEdit('w', width)}
                        />
                   </div>
-                  <div className="absolute left-0 top-12 bottom-12 w-12">
+                  <div className="absolute left-0 top-14 bottom-14 w-14">
                        <DimensionLine 
                             length={height} 
                             orientation="v" 
                             label={height} 
-                            position="start" 
+                            position="end" // Align to right (near frame)
                             onClick={() => onDimensionEdit && onDimensionEdit('h', height)}
                        />
                   </div>
@@ -224,7 +228,7 @@ export const WindowCanvas = ({
                   {node.type === 'container' && node.children && (
                       <>
                         {node.dir === 'row' ? (
-                            <div className="absolute top-0 left-12 right-12 h-12 flex">
+                            <div className="absolute top-0 left-14 right-14 h-14 flex">
                                 {node.children.map((child, idx) => {
                                     const totalFlex = node.children!.reduce((sum, c) => sum + (c.flex || 1), 0);
                                     const childW = width * ((child.flex || 1) / totalFlex);
@@ -234,7 +238,7 @@ export const WindowCanvas = ({
                                                 length={childW} 
                                                 orientation="h" 
                                                 label={childW} 
-                                                position="start"
+                                                position="end" // Align to bottom (near frame)
                                                 isSegment
                                                 onClick={() => onChildResize && onChildResize(node.id, idx, childW, width)}
                                             />
@@ -243,7 +247,7 @@ export const WindowCanvas = ({
                                 })}
                             </div>
                         ) : (
-                             <div className="absolute left-0 top-12 bottom-12 w-12 flex flex-col">
+                             <div className="absolute left-0 top-14 bottom-14 w-14 flex flex-col">
                                 {node.children.map((child, idx) => {
                                     const totalFlex = node.children!.reduce((sum, c) => sum + (c.flex || 1), 0);
                                     const childH = height * ((child.flex || 1) / totalFlex);
@@ -253,7 +257,7 @@ export const WindowCanvas = ({
                                                 length={childH} 
                                                 orientation="v" 
                                                 label={childH} 
-                                                position="start"
+                                                position="end" // Align to right (near frame)
                                                 isSegment
                                                 onClick={() => onChildResize && onChildResize(node.id, idx, childH, height)}
                                             />
@@ -470,7 +474,7 @@ const renderOpeningSymbol = (type?: OpeningDirection, isThumbnail?: boolean) => 
         return <div className={`w-full h-full flex items-center justify-center ${isThumbnail ? 'text-slate-900' : 'text-slate-800'} text-2xl font-bold`}>→</div>;
     case 'DoorLeft':
         return (
-             <div className="relative w-full h-full p-2">
+             <div className="relative w-full h-full p-6 pb-12">
                  <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
                      <path d="M100,0 L0,50 L100,100" fill="none" stroke="currentColor" strokeWidth={strokeWidth} className={strokeColor} vectorEffect="non-scaling-stroke"/>
                  </svg>
@@ -479,7 +483,7 @@ const renderOpeningSymbol = (type?: OpeningDirection, isThumbnail?: boolean) => 
         );
     case 'DoorRight':
         return (
-            <div className="relative w-full h-full p-2">
+            <div className="relative w-full h-full p-6 pb-12">
                  <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
                      <path d="M0,0 L100,50 L0,100" fill="none" stroke="currentColor" strokeWidth={strokeWidth} className={strokeColor} vectorEffect="non-scaling-stroke"/>
                  </svg>

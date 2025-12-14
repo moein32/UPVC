@@ -1,51 +1,72 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, User, MapPin, Wrench, Briefcase, Save } from 'lucide-react';
+import { ArrowRight, User, MapPin, Wrench, Briefcase, Save, Layers } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { InputField, PrimaryButton, GlassCard } from '../components/UIComponents';
-import { ProjectDetails } from '../types';
+import { InputField, PrimaryButton, GlassCard, SelectField } from '../components/UIComponents';
+import { ProjectDetails, ProfileBrand } from '../types';
 import { pricingStore } from '../services/pricingStore';
 
 export const ProjectSetup = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const locationState = location.state as { projectDetails?: ProjectDetails, isEdit?: boolean } || {};
-
-  const [details, setDetails] = useState<ProjectDetails>({
-    id: '',
-    customerName: '',
-    address: '',
-    installPercent: 15,
-    companyName: 'گروه صنعتی لومینا', // Default
-    date: new Date().toISOString(),
-    status: 'Draft'
+  
+  // Initialize state lazily to prevent re-render loops from useEffect dependencies
+  const [brands, setBrands] = useState<ProfileBrand[]>([]);
+  
+  const [details, setDetails] = useState<ProjectDetails>(() => {
+    const state = location.state as { projectDetails?: ProjectDetails } || {};
+    if (state.projectDetails) return state.projectDetails;
+    
+    return {
+      id: '',
+      customerName: '',
+      address: '',
+      installPercent: 15,
+      companyName: 'گروه صنعتی لومینا', // Default
+      date: new Date().toISOString(),
+      status: 'Draft',
+      defaultProfileId: ''
+    };
   });
 
-  const [isEdit, setIsEdit] = useState(false);
+  const [isEdit, setIsEdit] = useState(() => {
+    const state = location.state as { isEdit?: boolean } || {};
+    return !!state.isEdit;
+  });
 
   useEffect(() => {
-    if (locationState.projectDetails) {
-      setDetails(locationState.projectDetails);
-      setIsEdit(!!locationState.isEdit);
+    const loadedBrands = pricingStore.getBrands();
+    setBrands(loadedBrands);
+    
+    // Set default profile if new project and none selected yet
+    // Only set if we have brands and no profileId is currently set
+    if (!isEdit && !details.defaultProfileId && loadedBrands.length > 0) {
+        setDetails(d => ({ ...d, defaultProfileId: loadedBrands[0].id }));
     }
-  }, [locationState]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run once on mount
 
   const handleSave = () => {
     // Validate
-    if(!details.customerName) return;
+    if(!details.customerName) {
+        alert("لطفا نام مشتری را وارد کنید.");
+        return;
+    }
 
     if (isEdit) {
-      // If editing, we need to save to store immediately to persist changes
-      // We need to fetch the full project to preserve items
+      // Edit Mode
       const existingProject = pricingStore.getProjects().find((p: any) => p.id === details.id);
       if (existingProject) {
         const updatedProject = { ...existingProject, ...details };
         pricingStore.saveProject(updatedProject);
         // Navigate back to breakdown
         navigate('/breakdown', { state: { projectDetails: details, items: existingProject.items } });
+      } else {
+        alert("خطا: پروژه اصلی یافت نشد.");
       }
     } else {
-      // New project flow
-      navigate('/designer', { state: { projectDetails: details, items: [] } });
+      // New Project Mode
+      const newDetails = { ...details, id: Date.now().toString() };
+      navigate('/designer', { state: { projectDetails: newDetails, items: [] } });
     }
   };
 
@@ -60,8 +81,8 @@ export const ProjectSetup = () => {
 
       <GlassCard className="flex-1 flex flex-col gap-6">
         <div className="mb-2">
-            <h2 className="text-lg font-bold text-slate-800">اطلاعات مشتری</h2>
-            <p className="text-slate-400 text-sm">لطفا اطلاعات {isEdit ? 'جدید' : 'اولیه'} پروژه را وارد کنید</p>
+            <h2 className="text-lg font-bold text-slate-800">اطلاعات کلی</h2>
+            <p className="text-slate-400 text-sm">لطفا اطلاعات پروژه و نوع پروفیل مصرفی را وارد کنید</p>
         </div>
 
         <div className="space-y-4">
@@ -74,6 +95,13 @@ export const ProjectSetup = () => {
             />
 
             <div className="h-px bg-slate-100 my-4"></div>
+
+            <SelectField 
+                label="برند پروفیل مصرفی"
+                value={details.defaultProfileId}
+                onChange={(e: any) => setDetails({...details, defaultProfileId: e.target.value})}
+                options={brands.map(b => ({ label: `${b.name} (${b.tier})`, value: b.id }))}
+            />
 
             <InputField 
                 label="نام مشتری"
