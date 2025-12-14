@@ -670,7 +670,17 @@ export const UnitDesigner = () => {
       if (editIndex !== undefined) {
          navigate('/breakdown', { state: { projectDetails, items: updatedItems } });
       } else {
-         setConfig(prev => ({ ...prev, id: Date.now().toString() }));
+         // Reset for new design (keep profile/glass but reset dimensions and layout)
+         setConfig(prev => ({ 
+             ...prev, 
+             id: Date.now().toString(),
+             width: 1200,
+             height: 1500,
+             layout: createDefaultLayout() 
+         }));
+         setLastSavedId(null);
+         setHistory([]);
+         setFuture([]);
       }
   };
 

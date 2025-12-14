@@ -36,8 +36,9 @@ const DimensionLine = ({
     isSegment?: boolean
 }) => {
     const isH = orientation === 'h';
-    const baseOffset = isSegment ? -35 : -65; // Segments closer, Total further
-    const totalOffset = baseOffset - (offset * 25);
+    // Reduced offsets to bring lines closer to the window
+    const baseOffset = isSegment ? -25 : -45; 
+    const totalOffset = baseOffset - (offset * 20);
 
     return (
         <div className={`absolute flex items-center justify-center z-40 select-none pointer-events-none
@@ -196,11 +197,11 @@ export const WindowCanvas = ({
                )
           }
 
-          // Full Editor Wrapper with Dimensions
+          // Full Editor Wrapper with Dimensions - Reduced Padding
           return (
-              <div className="relative w-full h-full p-20 bg-transparent select-none">
+              <div className="relative w-full h-full p-12 bg-transparent select-none">
                   {/* Global Dimensions */}
-                  <div className="absolute top-0 left-20 right-20 h-20">
+                  <div className="absolute top-0 left-12 right-12 h-12">
                        <DimensionLine 
                             length={width} 
                             orientation="h" 
@@ -209,7 +210,7 @@ export const WindowCanvas = ({
                             onClick={() => onDimensionEdit && onDimensionEdit('w', width)}
                        />
                   </div>
-                  <div className="absolute left-0 top-20 bottom-20 w-20">
+                  <div className="absolute left-0 top-12 bottom-12 w-12">
                        <DimensionLine 
                             length={height} 
                             orientation="v" 
@@ -223,7 +224,7 @@ export const WindowCanvas = ({
                   {node.type === 'container' && node.children && (
                       <>
                         {node.dir === 'row' ? (
-                            <div className="absolute top-0 left-20 right-20 h-20 flex">
+                            <div className="absolute top-0 left-12 right-12 h-12 flex">
                                 {node.children.map((child, idx) => {
                                     const totalFlex = node.children!.reduce((sum, c) => sum + (c.flex || 1), 0);
                                     const childW = width * ((child.flex || 1) / totalFlex);
@@ -242,7 +243,7 @@ export const WindowCanvas = ({
                                 })}
                             </div>
                         ) : (
-                             <div className="absolute left-0 top-20 bottom-20 w-20 flex flex-col">
+                             <div className="absolute left-0 top-12 bottom-12 w-12 flex flex-col">
                                 {node.children.map((child, idx) => {
                                     const totalFlex = node.children!.reduce((sum, c) => sum + (c.flex || 1), 0);
                                     const childH = height * ((child.flex || 1) / totalFlex);
@@ -469,7 +470,7 @@ const renderOpeningSymbol = (type?: OpeningDirection, isThumbnail?: boolean) => 
         return <div className={`w-full h-full flex items-center justify-center ${isThumbnail ? 'text-slate-900' : 'text-slate-800'} text-2xl font-bold`}>→</div>;
     case 'DoorLeft':
         return (
-             <div className="relative w-full h-full p-6 pb-12">
+             <div className="relative w-full h-full p-2">
                  <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
                      <path d="M100,0 L0,50 L100,100" fill="none" stroke="currentColor" strokeWidth={strokeWidth} className={strokeColor} vectorEffect="non-scaling-stroke"/>
                  </svg>
@@ -478,7 +479,7 @@ const renderOpeningSymbol = (type?: OpeningDirection, isThumbnail?: boolean) => 
         );
     case 'DoorRight':
         return (
-            <div className="relative w-full h-full p-6 pb-12">
+            <div className="relative w-full h-full p-2">
                  <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
                      <path d="M0,0 L100,50 L0,100" fill="none" stroke="currentColor" strokeWidth={strokeWidth} className={strokeColor} vectorEffect="non-scaling-stroke"/>
                  </svg>
