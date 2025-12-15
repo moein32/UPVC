@@ -15,6 +15,8 @@ interface Props {
   onChildResize?: (nodeId: string, childIndex: number, newSize: number, totalSize: number) => void;
   readOnly?: boolean;
   isThumbnail?: boolean;
+  scale?: number; // New prop for scaling borders/handles
+  showDimensions?: boolean; // New prop to toggle dimensions
 }
 
 // Engineering Style Dimension Line
@@ -82,15 +84,16 @@ const DimensionLine = ({
 export const WindowCanvas = ({ 
   node, selectedId, onSelect, onUpdateNode, width, height, 
   depth = 0, isRoot = false, onDimensionEdit, onChildResize, 
-  readOnly = false, isThumbnail = false 
+  readOnly = false, isThumbnail = false, scale = 1, showDimensions = true
 }: Props) => {
   const isSelected = !readOnly && selectedId === node.id;
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
 
-  // Determine styles based on mode (Editor vs Thumbnail)
-  const frameBorderWidth = isThumbnail ? '3px' : '12px';
-  const sashBorderWidth = isThumbnail ? '4px' : '14px';
+  // Dynamic Styles based on scale
+  const frameBW = (isThumbnail ? 3 : 12) * scale;
+  const sashBW = (isThumbnail ? 4 : 14) * scale;
+  
   const frameBorderColor = isThumbnail ? 'border-slate-700' : 'border-slate-100'; // Darker for print visibility
   const frameOutline = isThumbnail ? '' : 'outline outline-1 outline-slate-400';
   const innerBorder = isThumbnail ? 'border-slate-400' : 'border-slate-400';
@@ -188,20 +191,27 @@ export const WindowCanvas = ({
 
   const ContainerWrapper = ({ children }: {children?: React.ReactNode}) => {
       if (isRoot) {
-          if (isThumbnail) {
-               // Minimal Wrapper for Invoice/Thumbnail
+          // If dimensions are hidden, we use the minimal wrapper (no padding), 
+          // effectively filling the container. This is used for thumbnails/previews.
+          // Note: !showDimensions acts as the trigger for "Preview Mode" layout.
+          if (!showDimensions) {
                return (
                   <div className="relative w-full h-full">
-                       <div className={`absolute inset-0 bg-white border-[${frameBorderWidth}] ${frameBorderColor}`}></div>
-                       <div className={`absolute inset-[${frameBorderWidth}] bg-white border ${innerBorder} overflow-hidden`}>
+                       <div 
+                         className={`absolute inset-0 bg-white ${frameBorderColor} ${frameOutline}`}
+                         style={{ borderWidth: frameBW }}
+                       ></div>
+                       <div 
+                         className={`absolute bg-white border ${innerBorder} overflow-hidden`}
+                         style={{ inset: frameBW }}
+                       >
                           {children}
                        </div>
                   </div>
                )
           }
 
-          // Full Editor Wrapper with Dimensions
-          // Reduced padding to 14 (56px) for tighter fit
+          // Full Editor Wrapper with Dimensions (Padding for dimension lines)
           return (
               <div className="relative w-full h-full p-14 bg-transparent select-none">
                   {/* Global Dimensions */}
@@ -271,8 +281,14 @@ export const WindowCanvas = ({
                   
                   {/* Frame Visual */}
                   <div className="relative w-full h-full shadow-xl">
-                      <div className={`absolute inset-0 bg-white border-[${frameBorderWidth}] ${frameBorderColor} ${frameOutline}`}></div>
-                      <div className={`absolute inset-[${frameBorderWidth}] bg-white border ${innerBorder} overflow-hidden`}>
+                      <div 
+                          className={`absolute inset-0 bg-white ${frameBorderColor} ${frameOutline}`}
+                          style={{ borderWidth: frameBW }}
+                      ></div>
+                      <div 
+                          className={`absolute bg-white border ${innerBorder} overflow-hidden`}
+                          style={{ inset: frameBW }}
+                      >
                           {children}
                       </div>
                   </div>
@@ -300,11 +316,14 @@ export const WindowCanvas = ({
             {/* Sash Frame Overlay for Containers */}
             {node.openingType && node.openingType !== 'Fixed' && (
                 <div className="absolute inset-0 z-30 pointer-events-none">
-                    <div className={`absolute inset-0 border-[${sashBorderWidth}] ${sashColor} shadow-[inset_0_0_2px_rgba(0,0,0,0.2)]`}>
+                    <div 
+                        className={`absolute inset-0 ${sashColor} shadow-[inset_0_0_2px_rgba(0,0,0,0.2)]`}
+                        style={{ borderWidth: sashBW }}
+                    >
                        <div className={`absolute inset-0 border ${sashInnerBorder}`}></div>
                     </div>
                      <div className="absolute inset-0 flex items-center justify-center">
-                        {renderOpeningSymbol(node.openingType, isThumbnail)}
+                        {renderOpeningSymbol(node.openingType, isThumbnail, scale)}
                      </div>
                  </div>
             )}
@@ -326,6 +345,8 @@ export const WindowCanvas = ({
                     depth={depth + 1}
                     readOnly={readOnly}
                     isThumbnail={isThumbnail}
+                    scale={scale}
+                    showDimensions={showDimensions}
                   />
                 </div>
                 
@@ -333,12 +354,15 @@ export const WindowCanvas = ({
                 {index < node.children.length - 1 && (
                   <div 
                     className={`relative z-20 flex items-center justify-center ${mullionColor} border-gray-400 transition-colors group/resizer
-                      ${node.dir === 'col' ? 'h-3 w-full border-y' : 'w-3 h-full border-x'}
+                      ${node.dir === 'col' ? 'w-full border-y' : 'h-full border-x'}
                       ${!readOnly ? (node.dir === 'col' ? 'cursor-row-resize' : 'cursor-col-resize') : ''}
                       ${!readOnly && !isThumbnail ? 'hover:bg-blue-100 hover:border-blue-400' : ''}
                       ${isThumbnail && node.dir === 'col' ? '!h-[2px] !border-none' : ''}
                       ${isThumbnail && node.dir === 'row' ? '!w-[2px] !border-none' : ''}
                     `}
+                    style={{
+                         [node.dir === 'col' ? 'height' : 'width']: frameBW
+                    }}
                     onMouseDown={(e) => !readOnly && handleResizeStart(e, index)}
                     onTouchStart={(e) => !readOnly && handleResizeStart(e, index)}
                   >
@@ -401,7 +425,10 @@ export const WindowCanvas = ({
       {/* Sash Frame */}
       {node.openingType !== 'Fixed' && node.openingType !== 'Panel' && (
         <div className="absolute inset-0 pointer-events-none">
-            <div className={`absolute inset-0 border-[${sashBorderWidth}] ${sashColor} shadow-[inset_0_0_2px_rgba(0,0,0,0.2)]`}>
+            <div 
+                className={`absolute inset-0 ${sashColor} shadow-[inset_0_0_2px_rgba(0,0,0,0.2)]`}
+                style={{ borderWidth: sashBW }}
+            >
                <div className={`absolute inset-0 border ${sashInnerBorder}`}></div>
             </div>
         </div>
@@ -409,7 +436,7 @@ export const WindowCanvas = ({
 
       {/* Opening Indicators */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        {renderOpeningSymbol(node.openingType, isThumbnail)}
+        {renderOpeningSymbol(node.openingType, isThumbnail, scale)}
       </div>
 
       {/* Selection Label */}
@@ -424,7 +451,7 @@ export const WindowCanvas = ({
 };
 
 // Clean technical opening symbols
-const renderOpeningSymbol = (type?: OpeningDirection, isThumbnail?: boolean) => {
+const renderOpeningSymbol = (type?: OpeningDirection, isThumbnail?: boolean, scale: number = 1) => {
   const strokeColor = isThumbnail ? "stroke-slate-900" : "stroke-blue-600";
   const strokeWidth = isThumbnail ? "1.5" : "1";
   const dashedStroke = "4 4";
@@ -436,7 +463,7 @@ const renderOpeningSymbol = (type?: OpeningDirection, isThumbnail?: boolean) => 
             <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
                  <path d="M100,0 L0,50 L100,100" fill="none" stroke="currentColor" strokeWidth={strokeWidth} className={strokeColor} vectorEffect="non-scaling-stroke"/>
              </svg>
-             {!isThumbnail && <ModernHandle position="left" />}
+             {!isThumbnail && <ModernHandle position="left" scale={scale} />}
         </div>
       );
     case 'TurnRight':
@@ -445,7 +472,7 @@ const renderOpeningSymbol = (type?: OpeningDirection, isThumbnail?: boolean) => 
              <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
                  <path d="M0,0 L100,50 L0,100" fill="none" stroke="currentColor" strokeWidth={strokeWidth} className={strokeColor} vectorEffect="non-scaling-stroke"/>
             </svg>
-            {!isThumbnail && <ModernHandle position="right" />}
+            {!isThumbnail && <ModernHandle position="right" scale={scale} />}
         </div>
       );
     case 'TiltTurnLeft': 
@@ -455,7 +482,7 @@ const renderOpeningSymbol = (type?: OpeningDirection, isThumbnail?: boolean) => 
                 <path d="M100,0 L0,50 L100,100" fill="none" stroke="currentColor" strokeWidth={strokeWidth} className={strokeColor} vectorEffect="non-scaling-stroke"/>
                 <path d="M0,100 L50,0 L100,100" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeDasharray={dashedStroke} className={strokeColor} opacity="0.5" vectorEffect="non-scaling-stroke"/>
             </svg>
-            {!isThumbnail && <ModernHandle position="left" />}
+            {!isThumbnail && <ModernHandle position="left" scale={scale} />}
          </div>
        );
     case 'TiltTurnRight': 
@@ -465,7 +492,7 @@ const renderOpeningSymbol = (type?: OpeningDirection, isThumbnail?: boolean) => 
                  <path d="M0,0 L100,50 L0,100" fill="none" stroke="currentColor" strokeWidth={strokeWidth} className={strokeColor} vectorEffect="non-scaling-stroke"/>
                  <path d="M0,100 L50,0 L100,100" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeDasharray={dashedStroke} className={strokeColor} opacity="0.5" vectorEffect="non-scaling-stroke"/>
              </svg>
-             {!isThumbnail && <ModernHandle position="right" />}
+             {!isThumbnail && <ModernHandle position="right" scale={scale} />}
         </div>
       );
     case 'SlidingLeft':
@@ -478,7 +505,7 @@ const renderOpeningSymbol = (type?: OpeningDirection, isThumbnail?: boolean) => 
                  <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
                      <path d="M100,0 L0,50 L100,100" fill="none" stroke="currentColor" strokeWidth={strokeWidth} className={strokeColor} vectorEffect="non-scaling-stroke"/>
                  </svg>
-                 {!isThumbnail && <ModernHandle position="left" isDoor />}
+                 {!isThumbnail && <ModernHandle position="left" isDoor scale={scale} />}
             </div>
         );
     case 'DoorRight':
@@ -487,18 +514,20 @@ const renderOpeningSymbol = (type?: OpeningDirection, isThumbnail?: boolean) => 
                  <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
                      <path d="M0,0 L100,50 L0,100" fill="none" stroke="currentColor" strokeWidth={strokeWidth} className={strokeColor} vectorEffect="non-scaling-stroke"/>
                  </svg>
-                 {!isThumbnail && <ModernHandle position="right" isDoor />}
+                 {!isThumbnail && <ModernHandle position="right" isDoor scale={scale} />}
             </div>
         );
     default: return null;
   }
 };
 
-const ModernHandle = ({ position, isDoor }: { position: 'left' | 'right', isDoor?: boolean }) => (
+const ModernHandle = ({ position, isDoor, scale = 1 }: { position: 'left' | 'right', isDoor?: boolean, scale?: number }) => (
     <div className={`absolute top-1/2 z-20 drop-shadow-sm
         ${position === 'left' ? 'left-2' : 'right-2'}
         ${isDoor ? '-translate-y-4' : '-translate-y-1/2'}
-    `}>
+    `}
+    style={{ transform: `scale(${scale})`, transformOrigin: position === 'left' ? 'center left' : 'center right' }}
+    >
         <div className={`bg-white rounded-sm border border-gray-400 shadow-sm ${isDoor ? 'w-2 h-10' : 'w-1 h-6'}`}></div>
     </div>
 );

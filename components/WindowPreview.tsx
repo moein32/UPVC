@@ -48,7 +48,10 @@ export const WindowPreview = ({ config, width, height, className = '' }: Props) 
                     onUpdateNode={() => {}}
                     isRoot={true}
                     readOnly={true}
-                    isThumbnail={true}
+                    // Change: Use realistic style (isThumbnail=false) but hide dimensions and scale down borders
+                    isThumbnail={false} 
+                    showDimensions={false}
+                    scale={0.35} // Scale down borders/handles for preview
                 />
             )}
         </div>
