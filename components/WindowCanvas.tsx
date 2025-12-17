@@ -7,16 +7,16 @@ const DESIGN_SYSTEM = {
     handle: {
         color: '#ffffff', 
         width: 4,         
-        height: 28,       
+        height: 26,       
         radius: 4,        
         shadow: '0 1px 3px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.5)', 
         zIndex: 50
     },
     doorHandle: {
-        plateWidth: 4,
-        plateHeight: 28,
-        leverWidth: 20,  
-        leverHeight: 4,  
+        plateWidth: 8,
+        plateHeight: 36,
+        leverWidth: 28,  
+        leverHeight: 6,  
     },
     openingLines: {
         color: "rgba(0,0,0,0.6)", 
@@ -24,8 +24,12 @@ const DESIGN_SYSTEM = {
         dashArray: "5,5" 
     },
     dimensions: {
-        segmentOffset: -35, 
-        globalOffset: 35,  
+        // *** تنظیم فاصله خطوط از پنجره ***
+        // عدد بزرگتر = فاصله بیشتر از پنجره
+        segmentOffset: -40, // فاصله اندازه‌های داخلی (تکه‌های پنجره)
+        
+        globalOffset: 55,  // فاصله اندازه کلی (عرض و ارتفاع کل)
+        
         lineColor: 'bg-slate-700', 
         textColor: 'text-slate-800', 
         badgeBg: 'bg-white/90 backdrop-blur-sm', 
@@ -221,15 +225,17 @@ export const WindowCanvas = ({
 
   const RootWrapper = ({ children }: {children?: React.ReactNode}) => {
       if (!isRoot) return <>{children}</>;
+      
+      // Increased padding to p-16 (from p-12) to accommodate larger globalOffsets without clipping
       return (
-        <div className={`relative w-full h-full ${showDimensions ? 'p-12' : 'p-0.5'} bg-transparent select-none`}>
+        <div className={`relative w-full h-full ${showDimensions ? 'p-16' : 'p-0.5'} bg-transparent select-none`}>
             {/* Global Dimensions */}
             {showDimensions && (
                 <>
-                  <div className="absolute top-0 left-12 right-12 h-12">
+                  <div className="absolute top-0 left-16 right-16 h-12">
                        <DimensionLine length={width} orientation="h" label={width} position="end" onClick={() => onDimensionEdit && onDimensionEdit('w', width)}/>
                   </div>
-                  <div className="absolute left-0 top-12 bottom-12 w-12">
+                  <div className="absolute left-0 top-16 bottom-16 w-12">
                        <DimensionLine length={height} orientation="v" label={height} position="end" onClick={() => onDimensionEdit && onDimensionEdit('h', height)}/>
                   </div>
                 </>

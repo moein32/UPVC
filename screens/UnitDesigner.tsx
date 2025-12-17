@@ -677,24 +677,45 @@ export const UnitDesigner = () => {
       const updatedItems = [...projectItems];
       if (editIndex !== undefined) {
           updatedItems[editIndex] = newItem;
+          
+          setProjectItems(updatedItems);
+          
+          const projectToSave = {
+            ...projectDetails,
+            items: updatedItems,
+            totalPrice: updatedItems.reduce((acc, i) => acc + i.calculations.totalPrice, 0)
+          };
+          pricingStore.saveProject(projectToSave);
+
+          setLastSavedId(newItem.id);
+          navigate('/breakdown', { state: { projectDetails, items: updatedItems } });
       } else {
           updatedItems.push(newItem);
-      }
-      setProjectItems(updatedItems);
+          setProjectItems(updatedItems);
 
-      const projectToSave = {
-        ...projectDetails,
-        items: updatedItems,
-        totalPrice: updatedItems.reduce((acc, i) => acc + i.calculations.totalPrice, 0)
-      };
-      pricingStore.saveProject(projectToSave);
+          const projectToSave = {
+            ...projectDetails,
+            items: updatedItems,
+            totalPrice: updatedItems.reduce((acc, i) => acc + i.calculations.totalPrice, 0)
+          };
+          pricingStore.saveProject(projectToSave);
 
-      setLastSavedId(newItem.id);
-      
-      if (editIndex !== undefined) {
-         navigate('/breakdown', { state: { projectDetails, items: updatedItems } });
-      } else {
-         setConfig(prev => ({ ...prev, id: Date.now().toString() }));
+          setLastSavedId(newItem.id);
+          
+          // Reset Config for new drawing
+          setConfig(prev => ({
+              ...prev,
+              id: Date.now().toString(),
+              width: 1200,
+              height: 1500,
+              layout: createDefaultLayout()
+          }));
+          setHistory([]);
+          setFuture([]);
+          setSelectedNodeId('root');
+          
+          // Reset visual feedback after a delay
+          setTimeout(() => setLastSavedId(null), 2000);
       }
   };
 
