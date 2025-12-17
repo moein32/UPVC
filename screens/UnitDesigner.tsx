@@ -19,7 +19,7 @@ const DraggableIcon = ({ type, value, dir, count, label, icon, isActive, onClick
       `}
       draggable
       onDragStart={(e) => onDragStart(e, type, value, dir, count)}
-      onDragEnd={onDragEnd} // Add onDragEnd to reset tool
+      onDragEnd={onDragEnd}
       onClick={() => onClick({ type, value, dir, count })}
     >
       <div className="w-8 h-8 flex items-center justify-center">
@@ -92,7 +92,6 @@ const SlidingIcon = ({ dir }: { dir: 'left' | 'right' }) => (
 const DoorLeftIcon = () => (
   <svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="1.5">
     <rect x="5" y="3" width="14" height="18" rx="1" />
-    {/* Hinge Left -> Handle Right -> Points Right */}
     <path d="M9 3 L19 12 L9 21" strokeDasharray="3 2" />
   </svg>
 );
@@ -100,7 +99,6 @@ const DoorLeftIcon = () => (
 const DoorRightIcon = () => (
   <svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="1.5">
     <rect x="5" y="3" width="14" height="18" rx="1" />
-    {/* Hinge Right -> Handle Left -> Points Left */}
     <path d="M15 3 L5 12 L15 21" strokeDasharray="3 2" />
   </svg>
 );
@@ -156,7 +154,6 @@ export const UnitDesigner = () => {
   };
 
   useEffect(() => {
-    // FIX: Redirect to dashboard if state is missing to avoid loops
     if (!locationState.projectDetails) navigate('/dashboard', { replace: true });
   }, [locationState, navigate]);
 
@@ -181,7 +178,7 @@ export const UnitDesigner = () => {
     id: Date.now().toString(),
     width: 1200,
     height: 1500,
-    profileId: projectDetails.defaultProfileId || '', // Use project default
+    profileId: projectDetails.defaultProfileId || '',
     glassId: 'double_4_4',
     hardwareId: 'h1',
     type: 'Custom',
@@ -194,7 +191,7 @@ export const UnitDesigner = () => {
   const [future, setFuture] = useState<WindowNode[]>([]);
 
   const pushToHistory = (newLayout: WindowNode) => {
-    setHistory(prev => [...prev.slice(-10), config.layout!]); // Keep last 10
+    setHistory(prev => [...prev.slice(-10), config.layout!]);
     setFuture([]);
   };
 
@@ -218,13 +215,8 @@ export const UnitDesigner = () => {
   const [activeTab, setActiveTab] = useState<'openings' | 'splits' | 'tools'>('openings');
   const [zoomLevel, setZoomLevel] = useState(0.8); 
   
-  // Mobile Interaction: Active Tool State
   const [activeTool, setActiveTool] = useState<{type: 'opening' | 'split', value: string, dir?: string, count?: number} | null>(null);
-  
-  // Selected Node Dimensions Helper
   const [selectedNodeDims, setSelectedNodeDims] = useState<{w: number, h: number, editableW: boolean, editableH: boolean} | null>(null);
-  
-  // LOCAL STATE for Inputs to allow smooth typing without tree re-renders breaking input
   const [localDims, setLocalDims] = useState<{w: string, h: string, id: string | null}>({ w: '', h: '', id: null });
 
   // Load Edit Data
@@ -237,7 +229,6 @@ export const UnitDesigner = () => {
       });
       setSelectedNodeId('root');
     } else {
-        // Init default profile if not set
         if (brands.length > 0 && !config.profileId) {
             setConfig(c => ({
                 ...c, 
@@ -284,7 +275,7 @@ export const UnitDesigner = () => {
 
   const handleUpdateNode = (id: string, updates: Partial<WindowNode>) => {
     if (!config.layout) return;
-    pushToHistory(config.layout); // Save state before update
+    pushToHistory(config.layout);
     setConfig(prev => ({
         ...prev,
         layout: updateNodeInTree(prev.layout!, id, (node) => ({ ...node, ...updates }))
@@ -302,30 +293,22 @@ export const UnitDesigner = () => {
      }));
   };
 
-  // --- Mobile Friendly Interaction: Tap to Apply ---
   const handleCanvasNodeClick = (id: string) => {
       if (activeTool) {
-          // Find target to ensure validity
           const targetNode = findNode(config.layout!, id);
           if (!targetNode) return;
 
           if (activeTool.type === 'opening') {
-              // Openings can only be applied to leaves OR containers that are sashes
                handleUpdateNode(id, { openingType: activeTool.value as any });
-               setActiveTool(null); // Reset tool after use
+               setActiveTool(null);
           } else if (activeTool.type === 'split') {
-              // Splits applied to leaves convert them to containers
               if (targetNode.type === 'leaf') {
                   const count = activeTool.count || 2;
-                  
-                  // Preserve the Opening Type on the container (e.g., if it was a Door, it stays a Door, but split inside)
-                  // Use 'as string' to avoid TS error about lack of overlap if type is narrowed
                   const existingOpening = (targetNode.openingType as string) === 'Panel' ? 'Fixed' : targetNode.openingType;
 
                   const newChildren = Array(count).fill(null).map((_, i) => ({
                       id: Date.now() + `_${i}_${Math.random()}`, 
                       type: 'leaf', 
-                      // Children become Fixed (Glass) by default inside the sash
                       openingType: 'Fixed', 
                       flex: 1 
                   })) as WindowNode[];
@@ -334,15 +317,12 @@ export const UnitDesigner = () => {
                       type: 'container', 
                       dir: activeTool.dir as 'row' | 'col', 
                       children: newChildren, 
-                      // If it was Fixed or Panel, remove it from container (container is just a mullion structure)
-                      // If it was an Opening (Door/Turn), keep it on container (Sash frame wraps the split)
                       openingType: (existingOpening && existingOpening !== 'Fixed' && existingOpening !== 'Panel') ? existingOpening : undefined
                   });
-                  setActiveTool(null); // Reset tool after use
+                  setActiveTool(null);
               }
           }
       } else {
-          // Standard Selection
           setSelectedNodeId(id);
       }
   };
@@ -355,15 +335,12 @@ export const UnitDesigner = () => {
       }
   };
 
-  // Drag End handler for Drag-and-Drop usage
   const handleDragEnd = () => {
-    // We delay this slightly to ensure the onDrop event on canvas fires first if valid
     setTimeout(() => {
         setActiveTool(null);
     }, 100);
   };
 
-  // --- Dimension Editing Logic ---
   const calculateNodeDimensions = (node: WindowNode, w: number, h: number, targetId: string): {w: number, h: number} | null => {
       if (node.id === targetId) return { w, h };
       if (node.children) {
@@ -379,7 +356,6 @@ export const UnitDesigner = () => {
       return null;
   };
 
-  // Sync Calculated Dims with Local Input State
   useEffect(() => {
       if(selectedNodeId && config.layout) {
           const dims = calculateNodeDimensions(config.layout, config.width, config.height, selectedNodeId);
@@ -419,7 +395,6 @@ export const UnitDesigner = () => {
       }
   }
 
-  // Handle direct click edit from canvas
   const handleDirectDimensionEdit = (dim: 'w' | 'h', val: number) => {
     const current = dim === 'w' ? config.width : config.height;
     const newVal = window.prompt(dim === 'w' ? 'عرض را وارد کنید (میلی‌متر):' : 'ارتفاع را وارد کنید (میلی‌متر):', current.toString());
@@ -428,7 +403,6 @@ export const UnitDesigner = () => {
     }
   };
 
-  // Handle child segment resizing via chain dimensions
   const handleChildResize = (nodeId: string, childIndex: number, currentSize: number, totalSize: number) => {
       const newValStr = window.prompt('اندازه جدید را وارد کنید (میلی‌متر):', Math.round(currentSize).toString());
       if (newValStr === null) return;
@@ -437,22 +411,13 @@ export const UnitDesigner = () => {
 
       const node = findNode(config.layout!, nodeId);
       if (!node || !node.children) return;
-
-      // Logic: Update the specific child's flex.
-      // To keep total consistent, we need to adjust other children proportionally or just one neighbor.
-      // Simple robust approach: Keep total flex constant, redistribute.
-      // But calculating exact pixels requires flex manipulation relative to the NEW ratio.
       
       const totalFlex = node.children.reduce((s, c) => s + (c.flex || 1), 0);
       const targetFlex = (newVal / totalSize) * totalFlex;
-      
-      // We need to remove the difference from the *rest* of the items to maintain the sum (approx).
       const currentFlex = node.children[childIndex].flex || 1;
       const flexDiff = targetFlex - currentFlex;
-      
       const otherChildrenCount = node.children.length - 1;
-      if (otherChildrenCount === 0) return; // Should not happen in split
-      
+      if (otherChildrenCount === 0) return;
       const subPerChild = flexDiff / otherChildrenCount;
 
       const newChildren = node.children.map((child, idx) => {
@@ -469,36 +434,25 @@ export const UnitDesigner = () => {
 
   const commitManualResize = (dim: 'w' | 'h') => {
       if (!selectedNodeId || !config.layout) return;
-
       const rawVal = dim === 'w' ? localDims.w : localDims.h;
       const newVal = Number(rawVal);
       if (isNaN(newVal) || newVal <= 0) return;
-
       const parent = findParent(config.layout, selectedNodeId);
       if (!parent || !parent.children) return; 
-
       if ((parent.dir === 'row' && dim === 'h') || (parent.dir === 'col' && dim === 'w')) return;
-
       const parentDims = calculateNodeDimensions(config.layout, config.width, config.height, parent.id);
       if(!parentDims) return;
-
       const totalSize = parent.dir === 'row' ? parentDims.w : parentDims.h;
       const totalFlex = parent.children.reduce((a, b) => a + (b.flex || 1), 0);
-      
       const targetRatio = newVal / totalSize;
-      
       if (targetRatio <= 0.05 || targetRatio >= 0.95) return; 
-
       const nodeIndex = parent.children.findIndex(c => c.id === selectedNodeId);
       const node = parent.children[nodeIndex];
       const otherFlex = totalFlex - (node.flex || 1);
-      
       const newNodeFlex = (targetRatio * otherFlex) / (1 - targetRatio);
-
       handleUpdateNode(selectedNodeId, { flex: newNodeFlex });
   };
   
-  // --- Drag Handling ---
   const handleDragStart = (e: React.DragEvent, type: 'opening' | 'split', value: string, dir?: string, count?: number) => {
       e.dataTransfer.setData('actionType', type);
       e.dataTransfer.setData('value', value);
@@ -515,14 +469,27 @@ export const UnitDesigner = () => {
         mullionMeters: 0,
         glassArea: 0,
         panelArea: 0,
-        sashCount: 0,
-        beadMeters: 0 // Track bead length (perimeter of glass/panels)
+        beadMeters: 0,
+        // Added hardware counts by type
+        hardware: {
+          Turn: 0,
+          TiltTurn: 0,
+          Sliding: 0,
+          Door: 0
+        }
+    };
+
+    const processHardware = (type: OpeningDirection | undefined) => {
+        if (!type) return;
+        if (type.startsWith('Turn')) stats.hardware.Turn += 1;
+        else if (type.startsWith('TiltTurn')) stats.hardware.TiltTurn += 1;
+        else if (type.startsWith('Sliding')) stats.hardware.Sliding += 1;
+        else if (type.startsWith('Door')) stats.hardware.Door += 1;
     };
 
     if (node.type === 'container') {
-        // If the container itself acts as a sash (e.g. split door), add sash meters here
         if (node.openingType && node.openingType !== 'Fixed') {
-             stats.sashCount += 1;
+             processHardware(node.openingType);
              const perimeter = (w + h) * 2;
              if (node.openingType.includes('Door')) {
                 stats.sashDoorMeters += perimeter;
@@ -533,8 +500,6 @@ export const UnitDesigner = () => {
     
         if (node.children) {
             const totalFlex = node.children.reduce((a, b) => a + (b.flex || 1), 0);
-            
-            // Mullions inside the container
             if (node.dir === 'row') {
                 stats.mullionMeters += (node.children.length - 1) * h;
             } else {
@@ -552,16 +517,18 @@ export const UnitDesigner = () => {
                 stats.mullionMeters += childStats.mullionMeters;
                 stats.glassArea += childStats.glassArea;
                 stats.panelArea += childStats.panelArea;
-                stats.sashCount += childStats.sashCount;
                 stats.beadMeters += childStats.beadMeters;
+                // Merge hardware counts
+                stats.hardware.Turn += childStats.hardware.Turn;
+                stats.hardware.TiltTurn += childStats.hardware.TiltTurn;
+                stats.hardware.Sliding += childStats.hardware.Sliding;
+                stats.hardware.Door += childStats.hardware.Door;
             });
         }
     } else {
-        // Leaf Node
         if (node.openingType && node.openingType !== 'Fixed' && node.openingType !== 'Panel') {
-            stats.sashCount += 1;
+            processHardware(node.openingType);
             const perimeter = (w + h) * 2;
-            
             if (node.openingType.includes('Door')) {
                 stats.sashDoorMeters += perimeter;
             } else {
@@ -572,12 +539,8 @@ export const UnitDesigner = () => {
         if (node.openingType === 'Panel') {
             stats.panelArea += w * h;
         } else {
-            // It is glass if it's 'Fixed' or if it's a sash leaf (the leaf itself is the glass)
             stats.glassArea += w * h;
         }
-
-        // Bead Calculation: Add perimeter of this leaf segment (glass or panel)
-        // Bead length = (Width + Height) * 2
         stats.beadMeters += (w + h) * 2;
     }
     return stats;
@@ -594,20 +557,19 @@ export const UnitDesigner = () => {
     const mullionM = stats.mullionMeters / 1000;
     const sashWindowM = stats.sashWindowMeters / 1000;
     const sashDoorM = stats.sashDoorMeters / 1000;
-    const beadM = stats.beadMeters / 1000; // Total Bead Length in meters
+    const beadM = stats.beadMeters / 1000;
 
     const glassA = stats.glassArea / 1000000; 
     const panelA = stats.panelArea / 1000000;
-
     const galoM = frameM + mullionM + sashWindowM + sashDoorM;
 
     const brand = brands.find(b => b.id === config.profileId);
     const glassType = glassList.find(g => g.id === config.glassId);
-    // Find panel price from glass list or default
     const panelType = glassList.find(g => g.id === 'panel_upvc');
     const panelPricePerM2 = panelType?.pricePerSqm || 1500000;
     
-    const hwItem = hardwareList.find(h => h.id === 'h1');
+    // Get all hardware items to match types
+    const hwItems = pricingStore.getHardware();
 
     const framePrice = brand?.components.find(c => c.id === 'frame')?.price || 0;
     const mullionPrice = brand?.components.find(c => c.id === 'mullion')?.price || 0;
@@ -617,7 +579,6 @@ export const UnitDesigner = () => {
     const galoPrice = brand?.components.find(c => c.id === 'galvanized')?.price || 150000;
     
     const glassPricePerM2 = glassType?.pricePerSqm || 0;
-    const hardwarePricePerSet = hwItem?.pricePerSet || 450000;
 
     const details: InvoiceDetail[] = [];
     let rowId = 1;
@@ -646,20 +607,44 @@ export const UnitDesigner = () => {
     const panelTotal = panelA * panelPricePerM2;
     if (panelA > 0) details.push({ rowId: rowId++, name: panelType?.name || 'پنل UPVC', unit: 'متر مربع', quantity: Number(panelA.toFixed(2)), unitPrice: panelPricePerM2, totalPrice: Math.round(panelTotal) });
 
-    const hardwareTotal = stats.sashCount * hardwarePricePerSet;
-    if (stats.sashCount > 0) details.push({ rowId: rowId++, name: 'یراق آلات', unit: 'دست', quantity: stats.sashCount, unitPrice: hardwarePricePerSet, totalPrice: Math.round(hardwareTotal) });
+    // Handle Detailed Hardware Items
+    let hardwareTotalSum = 0;
+    const hardwareMap = [
+      { type: 'Turn', label: 'یراق تک حالته', count: stats.hardware.Turn },
+      { type: 'TiltTurn', label: 'یراق دو حالته', count: stats.hardware.TiltTurn },
+      { type: 'Sliding', label: 'یراق کشویی', count: stats.hardware.Sliding },
+      { type: 'Door', label: 'یراق بازشو دربی (سوئیچی)', count: stats.hardware.Door },
+    ];
+
+    hardwareMap.forEach(hwEntry => {
+      if (hwEntry.count > 0) {
+        // Find matching hardware price from DB
+        const match = hwItems.find(item => item.type === hwEntry.type);
+        const price = match?.pricePerSet || 0;
+        const total = hwEntry.count * price;
+        hardwareTotalSum += total;
+        details.push({ 
+          rowId: rowId++, 
+          name: hwEntry.label, 
+          unit: 'دست', 
+          quantity: hwEntry.count, 
+          unitPrice: price, 
+          totalPrice: Math.round(total) 
+        });
+      }
+    });
 
     const totalProfileMeters = frameM + mullionM + sashWindowM + sashDoorM;
     const profileCost = frameTotal + sashWinTotal + sashDoorTotal + mullionTotal + galoTotal + beadTotal;
-    const unitPrice = Math.round(profileCost + glassTotal + hardwareTotal + panelTotal);
+    const unitPrice = Math.round(profileCost + glassTotal + hardwareTotalSum + panelTotal);
 
     return {
         profileMeters: Number(totalProfileMeters.toFixed(2)),
         profilePrice: Math.round(profileCost),
         glassArea: Number(glassA.toFixed(2)),
         glassPrice: Math.round(glassTotal + panelTotal),
-        sashCount: stats.sashCount,
-        hardwarePrice: Math.round(hardwareTotal),
+        sashCount: stats.hardware.Turn + stats.hardware.TiltTurn + stats.hardware.Sliding + stats.hardware.Door,
+        hardwarePrice: Math.round(hardwareTotalSum),
         totalPrice: unitPrice,
         unitPrice: unitPrice,
         details: details
@@ -677,32 +662,25 @@ export const UnitDesigner = () => {
       const updatedItems = [...projectItems];
       if (editIndex !== undefined) {
           updatedItems[editIndex] = newItem;
-          
           setProjectItems(updatedItems);
-          
           const projectToSave = {
             ...projectDetails,
             items: updatedItems,
             totalPrice: updatedItems.reduce((acc, i) => acc + i.calculations.totalPrice, 0)
           };
           pricingStore.saveProject(projectToSave);
-
           setLastSavedId(newItem.id);
           navigate('/breakdown', { state: { projectDetails, items: updatedItems } });
       } else {
           updatedItems.push(newItem);
           setProjectItems(updatedItems);
-
           const projectToSave = {
             ...projectDetails,
             items: updatedItems,
             totalPrice: updatedItems.reduce((acc, i) => acc + i.calculations.totalPrice, 0)
           };
           pricingStore.saveProject(projectToSave);
-
           setLastSavedId(newItem.id);
-          
-          // Reset Config for new drawing
           setConfig(prev => ({
               ...prev,
               id: Date.now().toString(),
@@ -713,8 +691,6 @@ export const UnitDesigner = () => {
           setHistory([]);
           setFuture([]);
           setSelectedNodeId('root');
-          
-          // Reset visual feedback after a delay
           setTimeout(() => setLastSavedId(null), 2000);
       }
   };
@@ -723,7 +699,6 @@ export const UnitDesigner = () => {
 
   return (
     <div className="h-screen flex flex-col bg-slate-100 overflow-hidden">
-      {/* Header */}
       <div className="bg-white/90 backdrop-blur-md px-4 py-3 flex justify-between items-center z-30 shadow-sm border-b border-slate-200 shrink-0">
         <div className="flex gap-2">
             <button onClick={() => navigate(-1)} className="p-2 bg-slate-100 rounded-lg text-slate-600">
@@ -747,45 +722,19 @@ export const UnitDesigner = () => {
         </div>
       </div>
 
-      {/* Professional Tabbed Toolbar */}
       <div className="bg-slate-800 text-white z-20 shadow-md flex flex-col shrink-0">
-        {/* Tabs */}
         <div className="flex border-b border-slate-700">
-          <button 
-            onClick={() => setActiveTab('openings')}
-            className={`flex-1 py-3 text-xs font-bold transition-colors ${activeTab === 'openings' ? 'bg-slate-700 text-white border-b-2 border-orange-500' : 'text-slate-400 hover:text-slate-200'}`}
-          >
-            {t('opening')}
-          </button>
-          <button 
-            onClick={() => setActiveTab('splits')}
-            className={`flex-1 py-3 text-xs font-bold transition-colors ${activeTab === 'splits' ? 'bg-slate-700 text-white border-b-2 border-orange-500' : 'text-slate-400 hover:text-slate-200'}`}
-          >
-             {t('splits')}
-          </button>
-          <button 
-            onClick={() => setActiveTab('tools')}
-            className={`flex-1 py-3 text-xs font-bold transition-colors ${activeTab === 'tools' ? 'bg-slate-700 text-white border-b-2 border-orange-500' : 'text-slate-400 hover:text-slate-200'}`}
-          >
-             {t('tools')}
-          </button>
+          <button onClick={() => setActiveTab('openings')} className={`flex-1 py-3 text-xs font-bold transition-colors ${activeTab === 'openings' ? 'bg-slate-700 text-white border-b-2 border-orange-500' : 'text-slate-400 hover:text-slate-200'}`}>{t('opening')}</button>
+          <button onClick={() => setActiveTab('splits')} className={`flex-1 py-3 text-xs font-bold transition-colors ${activeTab === 'splits' ? 'bg-slate-700 text-white border-b-2 border-orange-500' : 'text-slate-400 hover:text-slate-200'}`}>{t('splits')}</button>
+          <button onClick={() => setActiveTab('tools')} className={`flex-1 py-3 text-xs font-bold transition-colors ${activeTab === 'tools' ? 'bg-slate-700 text-white border-b-2 border-orange-500' : 'text-slate-400 hover:text-slate-200'}`}>{t('tools')}</button>
         </div>
 
-        {/* Toolbar Content Area */}
         <div className="p-3 h-20 overflow-x-auto overflow-y-hidden no-scrollbar bg-slate-800">
            {activeTab === 'openings' && (
               <div className="flex items-center gap-4 h-full">
-                  {/* Window Section */}
                   <div className="flex items-center gap-2 pr-2 border-r border-slate-600/50 h-full">
-                      {/* Fixed: Vertical text layout */}
-                      <div className="flex items-center justify-center h-full w-6">
-                         <span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }} className="text-[9px] text-slate-500 font-bold whitespace-nowrap">پنجره</span>
-                      </div>
-                      <DraggableIcon 
-                          type="opening" value="Fixed" label={t('fixed')} icon={<FixedIcon />} 
-                          isActive={activeTool?.value === 'Fixed'}
-                          onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd}
-                      />
+                      <div className="flex items-center justify-center h-full w-6"><span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }} className="text-[9px] text-slate-500 font-bold whitespace-nowrap">پنجره</span></div>
+                      <DraggableIcon type="opening" value="Fixed" label={t('fixed')} icon={<FixedIcon />} isActive={activeTool?.value === 'Fixed'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} />
                       <DraggableIcon type="opening" value="TurnLeft" label={t('turn_left')} icon={<TurnLeftIcon />} isActive={activeTool?.value === 'TurnLeft'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} />
                       <DraggableIcon type="opening" value="TurnRight" label={t('turn_right')} icon={<TurnRightIcon />} isActive={activeTool?.value === 'TurnRight'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} />
                       <DraggableIcon type="opening" value="TiltTurnLeft" label={t('tilt_turn_left')} icon={<TiltTurnLeftIcon />} isActive={activeTool?.value === 'TiltTurnLeft'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} />
@@ -793,18 +742,11 @@ export const UnitDesigner = () => {
                       <DraggableIcon type="opening" value="SlidingLeft" label={t('sliding_left')} icon={<SlidingIcon dir="left"/>} isActive={activeTool?.value === 'SlidingLeft'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} />
                       <DraggableIcon type="opening" value="SlidingRight" label={t('sliding_right')} icon={<SlidingIcon dir="right"/>} isActive={activeTool?.value === 'SlidingRight'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} />
                   </div>
-                  
-                  {/* Door Section */}
                   <div className="flex items-center gap-2 pl-2 h-full">
-                       <div className="flex items-center justify-center h-full w-6">
-                           <span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }} className="text-[9px] text-slate-500 font-bold whitespace-nowrap">درب</span>
-                       </div>
-                       {/* Swapped Label and Icon for Inverted Logic relative to Value */}
+                       <div className="flex items-center justify-center h-full w-6"><span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }} className="text-[9px] text-slate-500 font-bold whitespace-nowrap">درب</span></div>
                        <DraggableIcon type="opening" value="DoorLeft" label={t('door') + ' راست'} icon={<DoorRightIcon />} isActive={activeTool?.value === 'DoorLeft'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} />
                        <DraggableIcon type="opening" value="DoorRight" label={t('door') + ' چپ'} icon={<DoorLeftIcon />} isActive={activeTool?.value === 'DoorRight'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} />
                   </div>
-
-                  {/* Panel Section */}
                   <div className="flex items-center gap-2 pl-2 h-full border-l border-slate-600/50">
                        <DraggableIcon type="opening" value="Panel" label={t('panel')} icon={<LayoutTemplate size={24} />} isActive={activeTool?.value === 'Panel'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} />
                   </div>
@@ -833,9 +775,7 @@ export const UnitDesigner = () => {
         </div>
       </div>
 
-      {/* Canvas Area with Zoom - Min Height to prevent keyboard collapse */}
       <div className="flex-1 relative bg-slate-100 overflow-hidden flex flex-col min-h-[300px]">
-        {/* Active Tool Indicator for Mobile */}
         {activeTool && (
            <div className="absolute top-4 left-0 right-0 z-20 flex justify-center pointer-events-none">
                 <div className="bg-orange-600 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg flex items-center gap-2 animate-bounce pointer-events-auto">
@@ -845,155 +785,63 @@ export const UnitDesigner = () => {
            </div>
         )}
 
-        {/* Zoom Controls */}
         <div className="absolute top-4 right-4 z-20 flex flex-col gap-2 bg-white rounded-lg shadow-md p-1">
            <button onClick={() => setZoomLevel(z => Math.min(z + 0.1, 2))} className="p-2 text-slate-600 hover:bg-slate-100 rounded"><ZoomIn size={20}/></button>
            <button onClick={() => setZoomLevel(1)} className="p-2 text-slate-600 hover:bg-slate-100 rounded"><RefreshCcw size={16}/></button>
            <button onClick={() => setZoomLevel(z => Math.max(z - 0.1, 0.4))} className="p-2 text-slate-600 hover:bg-slate-100 rounded"><ZoomOut size={20}/></button>
         </div>
 
-        {/* Scrollable Container */}
         <div className="flex-1 overflow-auto flex items-center justify-center p-8 cursor-grab active:cursor-grabbing">
-             <div 
-                className="transition-transform duration-200 ease-out origin-center"
-                style={{ transform: `scale(${zoomLevel})` }}
-             >
-                <div 
-                  className="relative select-none"
-                  style={{ 
-                    width: Math.min(config.width / 4, window.innerWidth - 60), 
-                    height: Math.min(config.height / 4, window.innerHeight - 300),
-                    minWidth: '300px',
-                    minHeight: '300px'
-                  }}
-                >
-                  
+             <div className="transition-transform duration-200 ease-out origin-center" style={{ transform: `scale(${zoomLevel})` }}>
+                <div className="relative select-none" style={{ width: Math.min(config.width / 4, window.innerWidth - 60), height: Math.min(config.height / 4, window.innerHeight - 300), minWidth: '300px', minHeight: '300px' }}>
                   {config.layout && (
-                    <WindowCanvas 
-                        node={config.layout} 
-                        selectedId={selectedNodeId} 
-                        // IMPORTANT: Click now applies tool or selects
-                        onSelect={handleCanvasNodeClick}
-                        onUpdateNode={handleUpdateNode}
-                        onDimensionEdit={handleDirectDimensionEdit}
-                        onChildResize={handleChildResize}
-                        width={config.width}
-                        height={config.height}
-                        isRoot={true}
-                    />
+                    <WindowCanvas node={config.layout} selectedId={selectedNodeId} onSelect={handleCanvasNodeClick} onUpdateNode={handleUpdateNode} onDimensionEdit={handleDirectDimensionEdit} onChildResize={handleChildResize} width={config.width} height={config.height} isRoot={true} />
                   )}
                 </div>
              </div>
         </div>
-        
-        {/* Background Grid */}
-        <div className="absolute inset-0 opacity-5 pointer-events-none" 
-             style={{ backgroundImage: 'linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)', backgroundSize: '40px 40px' }}>
-        </div>
+        <div className="absolute inset-0 opacity-5 pointer-events-none" style={{ backgroundImage: 'linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
       </div>
 
-      {/* Bottom Properties Panel */}
       <div className="bg-white rounded-t-2xl shadow-[0_-5px_30px_rgba(0,0,0,0.1)] z-30 p-5 pb-8 shrink-0">
-         {/* Dynamic Dimensions Row */}
          <div className={`flex gap-4 mb-4 items-center p-3 rounded-xl border transition-colors ${!isRootSelected ? 'bg-orange-50 border-orange-200' : 'bg-slate-50 border-slate-100'}`}>
-             <span className={`text-xs font-bold whitespace-nowrap ${!isRootSelected ? 'text-orange-600' : 'text-slate-500'}`}>
-                {isRootSelected ? t('global_dims') : t('section_dims')}
-             </span>
-             
+             <span className={`text-xs font-bold whitespace-nowrap ${!isRootSelected ? 'text-orange-600' : 'text-slate-500'}`}>{isRootSelected ? t('global_dims') : t('section_dims')}</span>
              {isRootSelected ? (
-                // Global Dims (Root)
                 <div className="flex gap-2 flex-1">
                      <div className="relative flex-1">
-                         <input 
-                             type="text"
-                             inputMode="numeric"
-                             value={config.width === 0 ? '' : config.width} // Empty string for 0 to allow deletion
-                             onChange={(e) => handleGlobalResize(e.target.value, 'w')}
-                             className="w-full pl-8 pr-2 py-2 rounded-lg border border-slate-300 text-center font-bold text-sm"
-                             placeholder="0"
-                             style={{ direction: 'ltr' }}
-                         />
+                         <input type="text" inputMode="numeric" value={config.width === 0 ? '' : config.width} onChange={(e) => handleGlobalResize(e.target.value, 'w')} className="w-full pl-8 pr-2 py-2 rounded-lg border border-slate-300 text-center font-bold text-sm" placeholder="0" style={{ direction: 'ltr' }} />
                          <span className="absolute left-2 top-2 text-[10px] text-slate-400">mm</span>
                          <span className="absolute right-2 top-2 text-[10px] text-slate-400">{t('width')}</span>
                      </div>
                      <span className="self-center text-slate-400">×</span>
                      <div className="relative flex-1">
-                         <input 
-                             type="text"
-                             inputMode="numeric"
-                             value={config.height === 0 ? '' : config.height}
-                             onChange={(e) => handleGlobalResize(e.target.value, 'h')}
-                             className="w-full pl-8 pr-2 py-2 rounded-lg border border-slate-300 text-center font-bold text-sm"
-                             placeholder="0"
-                             style={{ direction: 'ltr' }}
-                         />
+                         <input type="text" inputMode="numeric" value={config.height === 0 ? '' : config.height} onChange={(e) => handleGlobalResize(e.target.value, 'h')} className="w-full pl-8 pr-2 py-2 rounded-lg border border-slate-300 text-center font-bold text-sm" placeholder="0" style={{ direction: 'ltr' }} />
                          <span className="absolute left-2 top-2 text-[10px] text-slate-400">mm</span>
                          <span className="absolute right-2 top-2 text-[10px] text-slate-400">{t('height')}</span>
                      </div>
                  </div>
              ) : (
-                // Selected Section Dims
                  <div className="flex gap-2 flex-1">
                      <div className="relative flex-1">
-                         <input 
-                             type="text"
-                             inputMode="numeric"
-                             disabled={!selectedNodeDims?.editableW}
-                             value={localDims.w}
-                             onChange={(e) => handleLocalInputChange(e.target.value, 'w')}
-                             onBlur={() => commitManualResize('w')}
-                             onKeyDown={(e) => e.key === 'Enter' && commitManualResize('w')}
-                             className={`w-full pl-8 pr-2 py-2 rounded-lg border text-center font-bold text-sm 
-                                ${!selectedNodeDims?.editableW ? 'bg-slate-100 text-slate-400 border-slate-200' : 'bg-white border-orange-300 text-orange-900'}
-                             `}
-                             style={{ direction: 'ltr' }}
-                         />
+                         <input type="text" inputMode="numeric" disabled={!selectedNodeDims?.editableW} value={localDims.w} onChange={(e) => handleLocalInputChange(e.target.value, 'w')} onBlur={() => commitManualResize('w')} onKeyDown={(e) => e.key === 'Enter' && commitManualResize('w')} className={`w-full pl-8 pr-2 py-2 rounded-lg border text-center font-bold text-sm ${!selectedNodeDims?.editableW ? 'bg-slate-100 text-slate-400 border-slate-200' : 'bg-white border-orange-300 text-orange-900'}`} style={{ direction: 'ltr' }} />
                          <span className="absolute left-2 top-2 text-[10px] text-slate-400">mm</span>
                          <span className="absolute right-2 top-2 text-[10px] text-slate-400">{t('width')}</span>
                      </div>
                      <span className="self-center text-slate-400">×</span>
                      <div className="relative flex-1">
-                         <input 
-                             type="text"
-                             inputMode="numeric"
-                             disabled={!selectedNodeDims?.editableH}
-                             value={localDims.h}
-                             onChange={(e) => handleLocalInputChange(e.target.value, 'h')}
-                             onBlur={() => commitManualResize('h')}
-                             onKeyDown={(e) => e.key === 'Enter' && commitManualResize('h')}
-                             className={`w-full pl-8 pr-2 py-2 rounded-lg border text-center font-bold text-sm 
-                                ${!selectedNodeDims?.editableH ? 'bg-slate-100 text-slate-400 border-slate-200' : 'bg-white border-orange-300 text-orange-900'}
-                             `}
-                             style={{ direction: 'ltr' }}
-                         />
+                         <input type="text" inputMode="numeric" disabled={!selectedNodeDims?.editableH} value={localDims.h} onChange={(e) => handleLocalInputChange(e.target.value, 'h')} onBlur={() => commitManualResize('h')} onKeyDown={(e) => e.key === 'Enter' && commitManualResize('h')} className={`w-full pl-8 pr-2 py-2 rounded-lg border text-center font-bold text-sm ${!selectedNodeDims?.editableH ? 'bg-slate-100 text-slate-400 border-slate-200' : 'bg-white border-orange-300 text-orange-900'}`} style={{ direction: 'ltr' }} />
                          <span className="absolute left-2 top-2 text-[10px] text-slate-400">mm</span>
                          <span className="absolute right-2 top-2 text-[10px] text-slate-400">{t('height')}</span>
                      </div>
-                     <button onClick={() => setSelectedNodeId('root')} className="p-2 bg-slate-200 rounded-lg text-slate-600 hover:bg-slate-300" title="بازگشت به ابعاد کل">
-                        <Grid size={16} />
-                     </button>
+                     <button onClick={() => setSelectedNodeId('root')} className="p-2 bg-slate-200 rounded-lg text-slate-600 hover:bg-slate-300" title="بازگشت به ابعاد کل"><Grid size={16} /></button>
                  </div>
              )}
          </div>
 
          <div className="flex gap-3">
-             <PrimaryButton 
-                onClick={handleAddToList}
-                variant={editIndex !== undefined ? "primary" : "secondary"}
-                className={`flex-1 ${lastSavedId ? '!bg-green-50 !text-green-600 !border-green-200' : ''}`}
-                icon={lastSavedId ? Check : PlusCircle}
-            >
-                {editIndex !== undefined ? t('save_changes') : (lastSavedId ? t('added') : t('add_to_list'))}
-             </PrimaryButton>
-
+             <PrimaryButton onClick={handleAddToList} variant={editIndex !== undefined ? "primary" : "secondary"} className={`flex-1 ${lastSavedId ? '!bg-green-50 !text-green-600 !border-green-200' : ''}`} icon={lastSavedId ? Check : PlusCircle}>{editIndex !== undefined ? t('save_changes') : (lastSavedId ? t('added') : t('add_to_list'))}</PrimaryButton>
              {(projectItems.length > 0 || lastSavedId) && (
-                 <PrimaryButton 
-                    onClick={() => navigate('/breakdown', { state: { projectDetails, items: projectItems } })} 
-                    className="flex-[1.5] bg-gradient-to-r from-blue-700 to-blue-900"
-                    icon={Receipt}
-                >
-                   {t('calculate_invoice')} ({toPersianDigits(projectItems.length)})
-                </PrimaryButton>
+                 <PrimaryButton onClick={() => navigate('/breakdown', { state: { projectDetails, items: projectItems } })} className="flex-[1.5] bg-gradient-to-r from-blue-700 to-blue-900" icon={Receipt}>{t('calculate_invoice')} ({toPersianDigits(projectItems.length)})</PrimaryButton>
              )}
          </div>
       </div>
