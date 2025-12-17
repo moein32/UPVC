@@ -3,40 +3,32 @@ import { WindowNode, OpeningDirection } from '../types';
 import { toPersianDigits } from '../utils/formatting';
 
 // --- DESIGN SYSTEM CONTROL PANEL ---
-// شما می‌توانید تمام تنظیمات ظاهری را از اینجا تغییر دهید
 const DESIGN_SYSTEM = {
     handle: {
-        color: '#ffffff', // رنگ دستگیره
-        width: 4,         // عرض دستگیره (px)
-        height: 26,       // ارتفاع دستگیره (px)
-        radius: 2,        // گردی گوشه‌های دستگیره
-        // استایل سایه برای ایجاد حالت فلت اما برجسته
+        color: '#ffffff', 
+        width: 4,         
+        height: 28,       
+        radius: 4,        
         shadow: '0 1px 3px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.5)', 
         zIndex: 50
     },
     doorHandle: {
         plateWidth: 4,
         plateHeight: 28,
-        leverWidth: 28,  // طول دسته درب
-        leverHeight: 4,  // ضخامت دسته درب
+        leverWidth: 20,  
+        leverHeight: 4,  
     },
     openingLines: {
-        color: "rgba(0,0,0,0.6)", // رنگ خطوط بازشو
+        color: "rgba(0,0,0,0.6)", 
         strokeWidth: 1.5,
-        dashArray: "5,5" // برای حالت‌های دوحالته (Tilt)
+        dashArray: "5,5" 
     },
     dimensions: {
-        // *** تنظیمات محل قرارگیری خطوط اندازه ***
-        // عدد مثبت = نمایش در داخل کادر (Inside)
-        // عدد منفی = نمایش در بیرون کادر (Outside)
-        // مثال: 15 (داخل)، -35 (بیرون)
         segmentOffset: -35, 
-        
-        globalOffset: 45,  // فاصله خطوط اندازه کلی از فریم (همیشه بیرون)
-        
-        lineColor: 'bg-slate-700', // رنگ خط تیره
-        textColor: 'text-slate-800', // رنگ متن عدد
-        badgeBg: 'bg-white/90 backdrop-blur-sm', // پس زمینه عدد
+        globalOffset: 35,  
+        lineColor: 'bg-slate-700', 
+        textColor: 'text-slate-800', 
+        badgeBg: 'bg-white/90 backdrop-blur-sm', 
         badgeBorder: 'border-slate-300/50'
     },
     frame: {
@@ -69,6 +61,7 @@ const DimensionLine = ({
     label, 
     position, 
     offset = 0,
+    depthOffset = 0,
     onClick,
     isSegment = false
 }: { 
@@ -77,18 +70,16 @@ const DimensionLine = ({
     label: number, 
     position: 'start' | 'end' | 'center', 
     offset?: number,
+    depthOffset?: number,
     onClick?: () => void,
     isSegment?: boolean
 }) => {
     const isH = orientation === 'h';
-    // Use values from DESIGN_SYSTEM
     const baseVal = isSegment ? DESIGN_SYSTEM.dimensions.segmentOffset : DESIGN_SYSTEM.dimensions.globalOffset; 
     
-    // We strictly use the value provided. Positive moves IN/AWAY from edge depending on CSS anchor.
-    // Standard CSS anchor for these lines is bottom/right.
-    // bottom: 10px -> 10px up from bottom (Inside).
-    // bottom: -10px -> 10px down from bottom (Outside).
-    const totalOffset = baseVal + (offset * 25);
+    // Add depthOffset to push nested dimensions further in/out to avoid overlap
+    // depthOffset comes from the recursion depth
+    const totalOffset = baseVal + (offset * 25) + (depthOffset * 20);
     
     const lineColor = isSegment ? DESIGN_SYSTEM.dimensions.lineColor : 'bg-slate-600';
     const textColor = isSegment ? DESIGN_SYSTEM.dimensions.textColor : 'text-slate-700';
@@ -100,8 +91,6 @@ const DimensionLine = ({
         `}
         style={{
             [isH ? 'width' : 'height']: '100%',
-            // DIRECTLY use totalOffset. No forced negative sign.
-            // This gives user full control via DESIGN_SYSTEM.dimensions.segmentOffset
             [isH ? (position === 'start' ? 'top' : 'bottom') : (position === 'start' ? 'left' : 'right')]: `${totalOffset}px`,
             [isH ? 'left' : 'top']: 0,
             opacity: 1
@@ -246,7 +235,7 @@ export const WindowCanvas = ({
                 </>
             )}
             
-            {/* Main Outer Frame - Removed overflow-hidden to allow dimension lines to show outside */}
+            {/* Main Outer Frame */}
             <div className="w-full h-full relative shadow-2xl rounded-sm border border-slate-300"
                  style={frameStyle}
             >
@@ -269,11 +258,10 @@ export const WindowCanvas = ({
     const Wrapper = isSashContainer ? 
         ({c}: {c: React.ReactNode}) => (
             <div className="w-full h-full relative rounded-sm border border-slate-300 shadow-md bg-white group" style={frameStyle}>
-                 {/* Removed overflow-hidden from here to allow dimensions to bleed out if offset is negative */}
                  <div className="w-full h-full" style={{ padding: sashThickness }}>
                      {c}
                  </div>
-                 {/* Opening Symbol Overlay - Rendered OUTSIDE the overflow container */}
+                 {/* Opening Symbol Overlay */}
                  <div className="absolute inset-0 pointer-events-none z-50">
                     {renderOpeningSymbol(node.openingType, node.id, sashThickness, isThumbnail)}
                  </div>
@@ -310,33 +298,35 @@ export const WindowCanvas = ({
                                         readOnly={readOnly}
                                         isThumbnail={isThumbnail}
                                         scale={scale}
-                                        showDimensions={false}
+                                        showDimensions={showDimensions} // FIXED: Propagate true/active state
                                     />
                                     {showDimensions && !isThumbnail && (
                                         <>
+                                            {/* Logic: Only show the dimension parallel to the split direction */}
+                                            {/* Row Split (Vertical Divider) -> Show Widths */}
                                             {node.dir === 'row' && (
-                                                <div className="absolute bottom-0 left-0 right-0 h-0 z-[60]">
-                                                    <DimensionLine 
-                                                        length={childWidth} 
-                                                        orientation="h" 
-                                                        label={childWidth} 
-                                                        position="end" 
-                                                        isSegment={true}
-                                                        onClick={() => onChildResize && onChildResize(node.id, index, childWidth, width)}
-                                                    />
-                                                </div>
+                                                <DimensionLine 
+                                                    length={childWidth} 
+                                                    orientation="h" 
+                                                    label={childWidth} 
+                                                    position="end" 
+                                                    isSegment={true}
+                                                    depthOffset={depth} // Pass depth to avoid overlap in nested same-dir splits
+                                                    onClick={() => onChildResize && onChildResize(node.id, index, childWidth, width)}
+                                                />
                                             )}
+
+                                            {/* Col Split (Horizontal Divider e.g. Transom/Panel) -> Show Heights */}
                                             {node.dir === 'col' && (
-                                                <div className="absolute right-0 top-0 bottom-0 w-0 z-[60]">
-                                                    <DimensionLine 
-                                                        length={childHeight} 
-                                                        orientation="v" 
-                                                        label={childHeight} 
-                                                        position="end" 
-                                                        isSegment={true}
-                                                        onClick={() => onChildResize && onChildResize(node.id, index, childHeight, height)}
-                                                    />
-                                                </div>
+                                                <DimensionLine 
+                                                    length={childHeight} 
+                                                    orientation="v" 
+                                                    label={childHeight} 
+                                                    position="end" 
+                                                    isSegment={true}
+                                                    depthOffset={depth} // Pass depth to avoid overlap in nested same-dir splits
+                                                    onClick={() => onChildResize && onChildResize(node.id, index, childHeight, height)}
+                                                />
                                             )}
                                         </>
                                     )}
