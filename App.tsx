@@ -24,7 +24,8 @@ function App() {
   return (
     <HashRouter>
       <Routes>
-        <Route path="/" element={<Navigate to="/onboarding" replace />} />
+        {/* Changed default route to Dashboard to prevent stuck navigation */}
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/project-setup" element={<ProjectSetup />} />

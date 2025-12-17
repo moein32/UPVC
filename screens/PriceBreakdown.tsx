@@ -143,7 +143,7 @@ export const PriceBreakdown = () => {
                 <thead>
                     <tr className="bg-slate-800 text-white text-xs font-bold">
                         <th className="p-3 w-12 text-center">#</th>
-                        <th className="p-3 w-40 text-center">نمای فنی</th>
+                        <th className="p-3 w-64 text-center">نمای فنی</th>
                         <th className="p-3">شرح اقلام و محاسبات</th>
                         <th className="p-3 w-32 text-center">قیمت کل (تومان)</th>
                     </tr>
@@ -164,7 +164,8 @@ export const PriceBreakdown = () => {
                                     
                                     <td className="p-4 border-l border-slate-200 align-top">
                                         <div className="flex flex-col items-center gap-2">
-                                            <div className="w-32 h-32 flex items-center justify-center">
+                                            {/* Increased size from w-32 to w-56 for better A4 visibility */}
+                                            <div className="w-56 h-56 flex items-center justify-center">
                                                 <WindowPreview config={item.config} width="100%" height="100%" className="!shadow-none" />
                                             </div>
                                             <div className="text-xs font-bold text-center bg-slate-100 px-2 py-1 rounded">

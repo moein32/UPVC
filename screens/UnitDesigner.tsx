@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowRight, Save, Trash2, SplitSquareHorizontal, SplitSquareVertical, PlusCircle, Maximize, ZoomIn, ZoomOut, RefreshCcw, Hand, MousePointer2, Receipt, Check, Edit3, Grid, XCircle, Undo, Redo, LayoutTemplate } from 'lucide-react';
+import { ArrowRight, Save, Trash2, SplitSquareHorizontal, SplitSquareVertical, PlusCircle, Maximize, ZoomIn, ZoomOut, RefreshCcw, Hand, MousePointer2, Receipt, Check, Edit3, Grid, XCircle, Undo, Redo, LayoutTemplate, Home } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { InputField, SelectField, PrimaryButton } from '../components/UIComponents';
@@ -89,10 +89,19 @@ const SlidingIcon = ({ dir }: { dir: 'left' | 'right' }) => (
   </svg>
 );
 
-const DoorIcon = () => (
+const DoorLeftIcon = () => (
   <svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="1.5">
     <rect x="5" y="3" width="14" height="18" rx="1" />
-    <circle cx="16" cy="12" r="1.5" fill="currentColor" />
+    {/* Hinge Left -> Handle Right -> Points Right */}
+    <path d="M9 3 L19 12 L9 21" strokeDasharray="3 2" />
+  </svg>
+);
+
+const DoorRightIcon = () => (
+  <svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="1.5">
+    <rect x="5" y="3" width="14" height="18" rx="1" />
+    {/* Hinge Right -> Handle Left -> Points Left */}
+    <path d="M15 3 L5 12 L15 21" strokeDasharray="3 2" />
   </svg>
 );
 
@@ -147,7 +156,8 @@ export const UnitDesigner = () => {
   };
 
   useEffect(() => {
-    if (!locationState.projectDetails) navigate('/project-setup');
+    // FIX: Redirect to dashboard if state is missing to avoid loops
+    if (!locationState.projectDetails) navigate('/dashboard', { replace: true });
   }, [locationState, navigate]);
 
   const [projectDetails] = useState<ProjectDetails>(locationState.projectDetails || {} as ProjectDetails);
@@ -694,9 +704,14 @@ export const UnitDesigner = () => {
     <div className="h-screen flex flex-col bg-slate-100 overflow-hidden">
       {/* Header */}
       <div className="bg-white/90 backdrop-blur-md px-4 py-3 flex justify-between items-center z-30 shadow-sm border-b border-slate-200 shrink-0">
-        <button onClick={() => navigate(-1)} className="p-2 bg-slate-100 rounded-lg text-slate-600">
-          <ArrowRight size={20} className={i18n.language === 'en' ? 'rotate-180' : ''} />
-        </button>
+        <div className="flex gap-2">
+            <button onClick={() => navigate(-1)} className="p-2 bg-slate-100 rounded-lg text-slate-600">
+                <ArrowRight size={20} className={i18n.language === 'en' ? 'rotate-180' : ''} />
+            </button>
+            <button onClick={() => navigate('/dashboard')} className="p-2 bg-slate-100 rounded-lg text-slate-600 hover:bg-slate-200 hover:text-blue-600">
+                <Home size={20} />
+            </button>
+        </div>
         <div className="text-center">
              <h1 className="font-bold text-slate-800 text-lg">{t('unit_design')}</h1>
              <p className="text-[10px] text-slate-500">{projectDetails.customerName}</p>
@@ -763,8 +778,9 @@ export const UnitDesigner = () => {
                        <div className="flex items-center justify-center h-full w-6">
                            <span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }} className="text-[9px] text-slate-500 font-bold whitespace-nowrap">درب</span>
                        </div>
-                       <DraggableIcon type="opening" value="DoorLeft" label={t('door') + ' چپ'} icon={<DoorIcon />} isActive={activeTool?.value === 'DoorLeft'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} />
-                       <DraggableIcon type="opening" value="DoorRight" label={t('door') + ' راست'} icon={<DoorIcon />} isActive={activeTool?.value === 'DoorRight'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} />
+                       {/* Swapped Label and Icon for Inverted Logic relative to Value */}
+                       <DraggableIcon type="opening" value="DoorLeft" label={t('door') + ' راست'} icon={<DoorRightIcon />} isActive={activeTool?.value === 'DoorLeft'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} />
+                       <DraggableIcon type="opening" value="DoorRight" label={t('door') + ' چپ'} icon={<DoorLeftIcon />} isActive={activeTool?.value === 'DoorRight'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} />
                   </div>
 
                   {/* Panel Section */}
