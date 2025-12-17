@@ -13,24 +13,24 @@ export interface ProfileBrand {
   tier: 'اقتصادی' | 'استاندارد' | 'لوکس';
   series: string[];
   warrantyYears: number;
-  components: ProfileComponent[]; // Detailed components like Frame, Sash, etc.
+  components: ProfileComponent[]; 
 }
 
 export interface GlassType {
   id: string;
-  name: string; // e.g. "Double Glazed 4-4"
+  name: string; 
   pricePerSqm: number;
 }
 
 export interface HardwareBrand {
   id: string;
-  name: string; // e.g. "G-U", "Endow"
+  name: string; 
   origin: string;
 }
 
 export interface HardwareItem {
   id: string;
-  name: string; // e.g. "Single Axis", "Tilt & Turn"
+  name: string; 
   brandId: string;
   type: 'Turn' | 'TiltTurn' | 'Sliding' | 'Door' | 'Fixed';
   pricePerSet: number;
@@ -41,10 +41,10 @@ export type OpeningDirection = 'Fixed' | 'TurnLeft' | 'TurnRight' | 'TiltTurnLef
 export interface WindowNode {
   id: string;
   type: 'container' | 'leaf';
-  dir?: 'row' | 'col'; // Only for container
-  children?: WindowNode[]; // Only for container
-  openingType?: OpeningDirection; // Updated for directional support
-  flex?: number; // For sizing ratio (default 1)
+  dir?: 'row' | 'col'; 
+  children?: WindowNode[]; 
+  openingType?: OpeningDirection; 
+  flex?: number; 
 }
 
 export interface WindowConfig {
@@ -54,11 +54,11 @@ export interface WindowConfig {
   profileId: string;
   glassId: string;
   hardwareId: string;
-  type: string; // Legacy
-  mullions: number; // Legacy
+  type: string; 
+  mullions: number; 
   glassType?: string;
   spacerColor?: string;
-  layout?: WindowNode; // The new advanced structure
+  layout?: WindowNode; 
 }
 
 export interface ProjectDetails {
@@ -66,10 +66,10 @@ export interface ProjectDetails {
   customerName: string;
   address: string;
   installPercent: number;
-  companyName: string; // Legacy support, prefer settings
+  companyName: string; 
   date: string;
   status: 'Draft' | 'Final';
-  defaultProfileId?: string; // Added: Selected profile for this project
+  defaultProfileId?: string; 
 }
 
 export interface InvoiceDetail {
@@ -93,7 +93,7 @@ export interface InvoiceItem {
     hardwarePrice: number;
     totalPrice: number;
     unitPrice: number;
-    details: InvoiceDetail[]; // The detailed BOM list
+    details: InvoiceDetail[]; 
   };
 }
 
@@ -102,17 +102,20 @@ export interface SavedProject extends ProjectDetails {
   totalPrice: number;
 }
 
+export type InvoiceLayoutType = 'standard' | 'modern' | 'technical' | 'classic';
+
 export interface InvoiceSettings {
   companyName: string;
-  companyLogo: string; // URL or Base64
+  companyLogo: string; 
   companyAddress: string;
   companyPhone: string;
   footerNote: string;
+  layoutType: InvoiceLayoutType; // New field
 }
 
 export interface AppSettings {
   darkMode: boolean;
   priceCoefficient: number;
   currency: string;
-  invoice: InvoiceSettings; // Added invoice settings
+  invoice: InvoiceSettings; 
 }

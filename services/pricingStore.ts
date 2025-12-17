@@ -1,6 +1,6 @@
+
 import { ProfileBrand, GlassType, HardwareItem, HardwareBrand, ProfileComponent, AppSettings } from '../types';
 
-// Default Data Initialization
 const DEFAULT_COMPONENTS: ProfileComponent[] = [
   { id: 'frame', name: 'پروفیل فریم (Frame)', unit: 'm', price: 0 },
   { id: 'sash_window', name: 'پروفیل لنگه پنجره (Sash)', unit: 'm', price: 0 },
@@ -8,7 +8,7 @@ const DEFAULT_COMPONENTS: ProfileComponent[] = [
   { id: 'mullion', name: 'پروفیل مولیون (Mullion)', unit: 'm', price: 0 },
   { id: 'bead', name: 'زهوار (Bead)', unit: 'm', price: 0 },
   { id: 'renovation', name: 'پروفیل بازسازی', unit: 'm', price: 0 },
-  { id: 'galvanized', name: 'گالوانیزه تقویتی (Reinforcement)', unit: 'm', price: 150000 }, // Added
+  { id: 'galvanized', name: 'گالوانیزه تقویتی (Reinforcement)', unit: 'm', price: 150000 },
 ];
 
 const INITIAL_BRANDS: ProfileBrand[] = [
@@ -75,7 +75,7 @@ const INITIAL_GLASS: GlassType[] = [
   { id: 'double_4_4', name: 'دوجداره ۴-۴ ساده', pricePerSqm: 650000 },
   { id: 'double_6_4', name: 'دوجداره ۶-۴ ساده', pricePerSqm: 750000 },
   { id: 'triple', name: 'سه جداره', pricePerSqm: 950000 },
-  { id: 'panel_upvc', name: 'پنل UPVC', pricePerSqm: 1500000 }, // Added Panel
+  { id: 'panel_upvc', name: 'پنل UPVC', pricePerSqm: 1500000 },
 ];
 
 const HARDWARE_BRANDS: HardwareBrand[] = [
@@ -104,11 +104,11 @@ const DEFAULT_SETTINGS: AppSettings = {
     companyLogo: '',
     companyAddress: 'تهران، میدان آزادی',
     companyPhone: '021-12345678',
-    footerNote: 'اعتبار این پیش‌فاکتور ۷۲ ساعت می‌باشد.'
+    footerNote: 'اعتبار این پیش‌فاکتور ۷۲ ساعت می‌باشد.',
+    layoutType: 'technical' // Default set to Technical layout
   }
 };
 
-// Simple in-memory store backed by localStorage
 export const pricingStore = {
   getBrands: (): ProfileBrand[] => {
     const stored = localStorage.getItem('lumina_brands');
@@ -121,7 +121,6 @@ export const pricingStore = {
 
   addBrand: (brand: ProfileBrand) => {
     const brands = pricingStore.getBrands();
-    // Ensure components are initialized
     if (!brand.components || brand.components.length === 0) {
         brand.components = DEFAULT_COMPONENTS.map(c => ({...c, price: 0}));
     }
@@ -176,7 +175,6 @@ export const pricingStore = {
 
   getHardwareBrands: () => HARDWARE_BRANDS,
 
-  // Projects
   getProjects: () => {
     const stored = localStorage.getItem('lumina_projects');
     return stored ? JSON.parse(stored) : [];
@@ -193,11 +191,9 @@ export const pricingStore = {
     localStorage.setItem('lumina_projects', JSON.stringify(projects));
   },
 
-  // Settings
   getSettings: (): AppSettings => {
     const stored = localStorage.getItem('lumina_settings');
     const parsed = stored ? JSON.parse(stored) : DEFAULT_SETTINGS;
-    // Merge with defaults to ensure invoice structure exists for legacy users
     return { ...DEFAULT_SETTINGS, ...parsed, invoice: { ...DEFAULT_SETTINGS.invoice, ...(parsed.invoice || {}) } };
   },
 
