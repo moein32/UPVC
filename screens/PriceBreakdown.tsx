@@ -68,16 +68,40 @@ export const PriceBreakdown = () => {
        <style>
          {`
            @media print {
-             @page { size: A4; margin: 10mm; }
-             body { -webkit-print-color-adjust: exact; background-color: white !important; font-family: 'Vazirmatn', sans-serif; }
-             .no-print { display: none !important; }
-             .invoice-container { 
-                box-shadow: none !important; border: none !important; border-radius: 0 !important; 
-                width: 100% !important; max-width: none !important; padding: 0 !important;
-                margin-top: 0 !important;
+             @page { 
+               size: A4; 
+               margin: 0; /* Margin managed by container transform for better precision */
              }
+             body { 
+               -webkit-print-color-adjust: exact; 
+               background-color: white !important; 
+               font-family: 'Vazirmatn', sans-serif !important;
+               margin: 0 !important;
+               padding: 0 !important;
+             }
+             .no-print { display: none !important; }
+             
+             .invoice-container { 
+                box-shadow: none !important; 
+                border: none !important; 
+                border-radius: 0 !important; 
+                padding: 15mm !important;
+                margin: 0 !important;
+                
+                /* Robust 80% Scaling for A4 Compatibility */
+                width: 125% !important; /* 100% / 0.8 = 125% to fill the A4 width after scaling */
+                transform: scale(0.8);
+                transform-origin: top right; /* Right origin for RTL layouts */
+                
+                min-height: auto !important;
+                overflow: visible !important;
+             }
+             
              .print-table { display: table !important; width: 100% !important; }
              .mobile-card { display: none !important; }
+             
+             /* Ensure text and colors are high contrast for print */
+             * { color-adjust: exact; -webkit-print-color-adjust: exact; }
            }
 
            /* Layout Specific Print Styles */
