@@ -70,14 +70,17 @@ export const PriceBreakdown = () => {
            @media print {
              @page { 
                size: A4; 
-               margin: 5mm; 
+               margin: 0; 
              }
              body { 
-               -webkit-print-color-adjust: exact; 
+               -webkit-print-color-adjust: exact !important; 
+               print-color-adjust: exact !important;
                background-color: white !important; 
                font-family: 'Vazirmatn', sans-serif !important;
                margin: 0 !important;
                padding: 0 !important;
+               width: 210mm;
+               height: 297mm;
              }
              .no-print { display: none !important; }
              
@@ -85,27 +88,33 @@ export const PriceBreakdown = () => {
                 box-shadow: none !important; 
                 border: none !important; 
                 border-radius: 0 !important; 
-                padding: 10mm !important;
+                padding: 12mm !important;
                 margin: 0 !important;
+                position: absolute;
+                top: 0;
+                right: 0;
                 
-                /* Precise 70% Scaling for A4 Compatibility */
-                width: 142.85% !important; /* Calculation: 100% / 0.7 = 142.85% */
+                /* Precision Engineering for 70% Scale */
+                /* 210mm / 0.7 = 300mm. We set width to 300mm then scale back to 210mm. */
+                width: 300mm !important; 
                 transform: scale(0.7);
-                transform-origin: top right; /* Critical for RTL layout alignment */
+                transform-origin: top right;
                 
-                min-height: auto !important;
-                overflow: visible !important;
+                min-height: 297mm !important;
+                background-color: white !important;
+                overflow: hidden !important;
              }
              
              .print-table { display: table !important; width: 100% !important; }
              .mobile-card { display: none !important; }
              
-             /* High contrast for clear dimensions in print */
-             * { color-adjust: exact; -webkit-print-color-adjust: exact; }
-             th, td { border-color: #cbd5e1 !important; }
+             /* High definition rendering for print */
+             * { -webkit-print-color-adjust: exact !important; }
+             .invoice-table th { background-color: #1e293b !important; color: white !important; }
+             .invoice-table td { border-bottom: 1px solid #e2e8f0 !important; }
            }
 
-           /* Layout Specific UI (On-Screen Only) */
+           /* On-Screen Layouts */
            .layout-modern .invoice-header { border-bottom: 4px solid #3b82f6; background: transparent !important; padding: 2rem 0; }
            .layout-technical .invoice-table { border: 1px solid #1e293b; }
            .layout-technical th, .layout-technical td { border: 1px solid #e2e8f0 !important; font-family: 'Vazirmatn', sans-serif; }
@@ -129,7 +138,7 @@ export const PriceBreakdown = () => {
         </div>
       </div>
 
-      <div className={`invoice-container layout-${layout} bg-white mx-auto max-w-[210mm] min-h-[297mm] rounded-none md:rounded-3xl shadow-2xl overflow-hidden print:w-full print:max-w-none print:min-h-0 print:p-8 transition-all`}>
+      <div className={`invoice-container layout-${layout} bg-white mx-auto max-w-[210mm] min-h-[297mm] rounded-none md:rounded-3xl shadow-2xl overflow-hidden print:w-full print:max-w-none print:min-h-0 transition-all`}>
         
         {/* Invoice Header */}
         <div className="invoice-header p-8 border-b-2 border-slate-800 bg-slate-50/50">
@@ -205,9 +214,6 @@ export const PriceBreakdown = () => {
                                         <div className="text-[10px] font-bold text-center text-slate-500 uppercase">
                                             {toPersianDigits(item.config.width)}×{toPersianDigits(item.config.height)} MM
                                         </div>
-                                        <button onClick={() => handleEditItem(index)} className="no-print mt-1 text-[9px] font-bold text-blue-600 hover:underline flex items-center gap-1">
-                                            <Edit2 size={10} /> ویرایش ابعاد
-                                        </button>
                                     </div>
                                 </td>
 
