@@ -70,7 +70,7 @@ export const PriceBreakdown = () => {
            @media print {
              @page { 
                size: A4; 
-               margin: 0; /* Margin managed by container transform for better precision */
+               margin: 5mm; 
              }
              body { 
                -webkit-print-color-adjust: exact; 
@@ -85,13 +85,13 @@ export const PriceBreakdown = () => {
                 box-shadow: none !important; 
                 border: none !important; 
                 border-radius: 0 !important; 
-                padding: 15mm !important;
+                padding: 10mm !important;
                 margin: 0 !important;
                 
-                /* Robust 80% Scaling for A4 Compatibility */
-                width: 125% !important; /* 100% / 0.8 = 125% to fill the A4 width after scaling */
-                transform: scale(0.8);
-                transform-origin: top right; /* Right origin for RTL layouts */
+                /* Precise 70% Scaling for A4 Compatibility */
+                width: 142.85% !important; /* Calculation: 100% / 0.7 = 142.85% */
+                transform: scale(0.7);
+                transform-origin: top right; /* Critical for RTL layout alignment */
                 
                 min-height: auto !important;
                 overflow: visible !important;
@@ -100,30 +100,17 @@ export const PriceBreakdown = () => {
              .print-table { display: table !important; width: 100% !important; }
              .mobile-card { display: none !important; }
              
-             /* Ensure text and colors are high contrast for print */
+             /* High contrast for clear dimensions in print */
              * { color-adjust: exact; -webkit-print-color-adjust: exact; }
+             th, td { border-color: #cbd5e1 !important; }
            }
 
-           /* Layout Specific Print Styles */
-           
-           /* MODERN LAYOUT */
+           /* Layout Specific UI (On-Screen Only) */
            .layout-modern .invoice-header { border-bottom: 4px solid #3b82f6; background: transparent !important; padding: 2rem 0; }
-           .layout-modern .invoice-table th { background: #f8fafc !important; color: #1e293b; border-bottom: 2px solid #e2e8f0; border-top: 0; border-left: 0; border-right: 0; }
-           .layout-modern .invoice-table td { border: 0; border-bottom: 1px solid #f1f5f9; }
-           .layout-modern .customer-box { background: #f1f5f9; border: 0; border-radius: 20px; }
-
-           /* TECHNICAL LAYOUT */
            .layout-technical .invoice-table { border: 1px solid #1e293b; }
            .layout-technical th, .layout-technical td { border: 1px solid #e2e8f0 !important; font-family: 'Vazirmatn', sans-serif; }
            .layout-technical .invoice-header { background: #1e293b !important; color: white !important; }
            .layout-technical .invoice-header * { color: white !important; }
-
-           /* CLASSIC LAYOUT */
-           .layout-classic .invoice-container { border: 2px solid #000; padding: 5mm; }
-           .layout-classic .invoice-header { text-align: center; border-bottom: 2px double #000; }
-           .layout-classic .invoice-header .flex-1 { text-align: center; }
-           .layout-classic .invoice-table th { background: #eee !important; color: #000; border: 1px solid #000; }
-           .layout-classic .invoice-table td { border: 1px solid #000; }
          `}
        </style>
 
@@ -200,7 +187,6 @@ export const PriceBreakdown = () => {
                             <tr key={index} className="border-b border-slate-100 print:break-inside-avoid group">
                                 <td className="p-4 text-center font-bold text-slate-400 align-top text-sm relative">
                                     {toPersianDigits(index + 1)}
-                                    {/* Action Buttons - Now always visible on hover and fixed on screen */}
                                     <div className="mt-4 flex flex-col gap-2 no-print items-center opacity-100 transition-opacity">
                                        <button onClick={() => handleEditItem(index)} className="p-2 text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-600 hover:text-white transition-all shadow-sm" title="ویرایش ابعاد و طراحی">
                                           <Ruler size={16}/>
@@ -219,10 +205,7 @@ export const PriceBreakdown = () => {
                                         <div className="text-[10px] font-bold text-center text-slate-500 uppercase">
                                             {toPersianDigits(item.config.width)}×{toPersianDigits(item.config.height)} MM
                                         </div>
-                                        <button 
-                                            onClick={() => handleEditItem(index)} 
-                                            className="no-print mt-1 text-[9px] font-bold text-blue-600 hover:underline flex items-center gap-1"
-                                        >
+                                        <button onClick={() => handleEditItem(index)} className="no-print mt-1 text-[9px] font-bold text-blue-600 hover:underline flex items-center gap-1">
                                             <Edit2 size={10} /> ویرایش ابعاد
                                         </button>
                                     </div>
@@ -267,7 +250,7 @@ export const PriceBreakdown = () => {
             </table>
         </div>
 
-        {/* Mobile View Card List */}
+        {/* Mobile View Card List (Hidden in Print) */}
         <div className="p-4 md:hidden mobile-card space-y-4">
             {items.map((item, index) => {
                 const brandName = BRANDS.find(b => b.id === item.config.profileId)?.name;
@@ -294,12 +277,6 @@ export const PriceBreakdown = () => {
                              <div className="flex-1">
                                  <div className="text-[10px] text-slate-400 mb-1 font-bold">ابعاد نهایی: {toPersianDigits(item.config.width)} × {toPersianDigits(item.config.height)}</div>
                                  <div className="text-lg font-black text-slate-900">{formatPrice(item.calculations.totalPrice)} <span className="text-[10px] font-normal">تومان</span></div>
-                                 <button 
-                                    onClick={() => handleEditItem(index)}
-                                    className="mt-2 text-[10px] font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg flex items-center gap-1.5"
-                                 >
-                                    <Edit2 size={12} /> اصلاح ابعاد و طراحی
-                                 </button>
                              </div>
                          </div>
                     </div>
