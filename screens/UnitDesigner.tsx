@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { ArrowRight, Save, Trash2, SplitSquareHorizontal, SplitSquareVertical, PlusCircle, Maximize, ZoomIn, ZoomOut, RefreshCcw, Hand, MousePointer2, Receipt, Check, Edit3, Grid, XCircle, Undo, Redo, LayoutTemplate, Home } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -416,13 +417,15 @@ export const UnitDesigner = () => {
       const targetFlex = (newVal / totalSize) * totalFlex;
       const currentFlex = node.children[childIndex].flex || 1;
       const flexDiff = targetFlex - currentFlex;
-      const otherChildrenCount = node.children.length - 1;
-      if (otherChildrenCount === 0) return;
-      const subPerChild = flexDiff / otherChildrenCount;
+      
+      // IMPROVED LOGIC: Adjust immediate neighbor only to prevent non-adjacent parts from moving
+      // Priority: Next neighbor if available, otherwise previous neighbor
+      let neighborIndex = childIndex + 1 < node.children.length ? childIndex + 1 : childIndex - 1;
 
       const newChildren = node.children.map((child, idx) => {
           if (idx === childIndex) return { ...child, flex: targetFlex };
-          return { ...child, flex: Math.max(0.1, (child.flex || 1) - subPerChild) };
+          if (idx === neighborIndex) return { ...child, flex: Math.max(0.1, (child.flex || 1) - flexDiff) };
+          return child;
       });
 
       handleUpdateNode(nodeId, { children: newChildren });
@@ -437,20 +440,33 @@ export const UnitDesigner = () => {
       const rawVal = dim === 'w' ? localDims.w : localDims.h;
       const newVal = Number(rawVal);
       if (isNaN(newVal) || newVal <= 0) return;
+      
       const parent = findParent(config.layout, selectedNodeId);
       if (!parent || !parent.children) return; 
+      
       if ((parent.dir === 'row' && dim === 'h') || (parent.dir === 'col' && dim === 'w')) return;
+      
       const parentDims = calculateNodeDimensions(config.layout, config.width, config.height, parent.id);
       if(!parentDims) return;
+      
       const totalSize = parent.dir === 'row' ? parentDims.w : parentDims.h;
       const totalFlex = parent.children.reduce((a, b) => a + (b.flex || 1), 0);
-      const targetRatio = newVal / totalSize;
-      if (targetRatio <= 0.05 || targetRatio >= 0.95) return; 
+      const targetFlex = (newVal / totalSize) * totalFlex;
+      
       const nodeIndex = parent.children.findIndex(c => c.id === selectedNodeId);
-      const node = parent.children[nodeIndex];
-      const otherFlex = totalFlex - (node.flex || 1);
-      const newNodeFlex = (targetRatio * otherFlex) / (1 - targetRatio);
-      handleUpdateNode(selectedNodeId, { flex: newNodeFlex });
+      const currentFlex = parent.children[nodeIndex].flex || 1;
+      const flexDiff = targetFlex - currentFlex;
+      
+      // IMPROVED LOGIC: Target immediate neighbor for manual input as well
+      let neighborIndex = nodeIndex + 1 < parent.children.length ? nodeIndex + 1 : nodeIndex - 1;
+      
+      const newChildren = parent.children.map((child, idx) => {
+          if (idx === nodeIndex) return { ...child, flex: targetFlex };
+          if (idx === neighborIndex) return { ...child, flex: Math.max(0.1, (child.flex || 1) - flexDiff) };
+          return child;
+      });
+
+      handleUpdateNode(parent.id, { children: newChildren });
   };
   
   const handleDragStart = (e: React.DragEvent, type: 'opening' | 'split', value: string, dir?: string, count?: number) => {

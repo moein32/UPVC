@@ -28,7 +28,7 @@ const DESIGN_SYSTEM = {
         // عدد بزرگتر = فاصله بیشتر از پنجره
         segmentOffset: -40, // فاصله اندازه‌های داخلی (تکه‌های پنجره)
         
-        globalOffset: 55,  // فاصله اندازه کلی (عرض و ارتفاع کل)
+        globalOffset: 20,  // فاصله اندازه کلی (عرض و ارتفاع کل)
         
         lineColor: 'bg-slate-700', 
         textColor: 'text-slate-800', 
