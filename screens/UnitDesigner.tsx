@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowRight, Save, Trash2, SplitSquareHorizontal, SplitSquareVertical, PlusCircle, Maximize, ZoomIn, ZoomOut, RefreshCcw, Hand, MousePointer2, Receipt, Check, Edit3, Grid, XCircle, Undo, Redo, LayoutTemplate, Home, Box } from 'lucide-react';
+import { ArrowRight, Save, Trash2, SplitSquareHorizontal, SplitSquareVertical, PlusCircle, Maximize, ZoomIn, ZoomOut, RefreshCcw, Hand, MousePointer2, Receipt, Check, Edit3, Grid, XCircle, Undo, Redo, LayoutTemplate, Home, Box, Square, Layout } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { InputField, SelectField, PrimaryButton } from '../components/UIComponents';
@@ -111,7 +111,7 @@ const SplitVerticalIcon = ({ count }: { count: number }) => (
     {count === 3 && (
       <>
         <line x1="9" y1="3" x2="9" y2="21" />
-        <line x1="15" y1="3" x2="15" y2="21" />
+        <line x1="15" y1="15" x2="15" y2="21" />
       </>
     )}
   </svg>
@@ -184,7 +184,8 @@ export const UnitDesigner = () => {
     hardwareId: 'h1',
     type: 'Custom',
     mullions: 0,
-    layout: createDefaultLayout()
+    layout: createDefaultLayout(),
+    frameType: 'standard'
   });
 
   // --- Undo/Redo History ---
@@ -261,7 +262,8 @@ export const UnitDesigner = () => {
       const item = projectItems[editIndex];
       setConfig({
         ...item.config,
-        layout: item.config.layout || createDefaultLayout()
+        layout: item.config.layout || createDefaultLayout(),
+        frameType: item.config.frameType || 'standard'
       });
       setSelectedNodeId('root');
     } else {
@@ -616,7 +618,11 @@ export const UnitDesigner = () => {
     const panelType = hwItems.find(h => h.id === 'panel_upvc');
     const panelPricePerM2 = panelType?.pricePerSet || 1500000;
 
-    const framePrice = brand?.components.find(c => c.id === 'frame')?.price || 0;
+    // Use renovation frame price if selected
+    const frameCompId = config.frameType === 'renovation' ? 'renovation' : 'frame';
+    const framePrice = brand?.components.find(c => c.id === frameCompId)?.price || 0;
+    const frameName = config.frameType === 'renovation' ? 'پروفیل فریم بازسازی' : 'پروفیل فریم';
+
     const mullionPrice = brand?.components.find(c => c.id === 'mullion')?.price || 0;
     const sashWindowPrice = brand?.components.find(c => c.id === 'sash_window')?.price || 0;
     const sashDoorPrice = brand?.components.find(c => c.id === 'sash_door')?.price || 0;
@@ -629,7 +635,7 @@ export const UnitDesigner = () => {
     let rowId = 1;
 
     const frameTotal = frameM * framePrice;
-    if (frameM > 0) details.push({ rowId: rowId++, name: 'پروفیل فریم', unit: 'متر طول', quantity: Number(frameM.toFixed(2)), unitPrice: framePrice, totalPrice: Math.round(frameTotal) });
+    if (frameM > 0) details.push({ rowId: rowId++, name: frameName, unit: 'متر طول', quantity: Number(frameM.toFixed(2)), unitPrice: framePrice, totalPrice: Math.round(frameTotal) });
 
     const sashWinTotal = sashWindowM * sashWindowPrice;
     if (sashWindowM > 0) details.push({ rowId: rowId++, name: 'پروفیل لنگه پنجره', unit: 'متر طول', quantity: Number(sashWindowM.toFixed(2)), unitPrice: sashWindowPrice, totalPrice: Math.round(sashWinTotal) });
@@ -744,7 +750,7 @@ export const UnitDesigner = () => {
     <div className="h-screen flex flex-col bg-slate-100 overflow-hidden">
       <div className="bg-white/90 backdrop-blur-md px-4 py-3 flex justify-between items-center z-30 shadow-sm border-b border-slate-200 shrink-0">
         <div className="flex gap-2">
-            <button onClick={() => navigate(-1)} className="p-2 bg-slate-100 rounded-lg text-slate-600">
+            <button onClick={() => navigate(-1)} className="p-2 bg-slate-100 rounded-lg text-slate-600 active:bg-slate-200 transition-colors">
                 <ArrowRight size={20} className={i18n.language === 'en' ? 'rotate-180' : ''} />
             </button>
             <button onClick={() => navigate('/dashboard')} className="p-2 bg-slate-100 rounded-lg text-slate-600 hover:bg-slate-200 hover:text-blue-600">
@@ -886,7 +892,7 @@ export const UnitDesigner = () => {
          </div>
 
          {/* Config Row 2: Glass Type Selection */}
-         <div className="mb-4">
+         <div className="mb-3">
              <div className="bg-blue-50/50 p-2 rounded-xl border border-blue-100 flex items-center gap-3">
                  <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
                     <Box size={18} />
@@ -904,6 +910,28 @@ export const UnitDesigner = () => {
                  </div>
                  <div className="px-3 border-r border-blue-200">
                     <span className="text-[10px] font-black text-blue-600 uppercase">نوع شیشه</span>
+                 </div>
+             </div>
+         </div>
+
+         {/* Config Row 3: Frame Type Selection */}
+         <div className="mb-4">
+             <div className="bg-orange-50/50 p-2 rounded-xl border border-orange-100 flex items-center gap-3">
+                 <div className="p-2 bg-orange-100 text-orange-600 rounded-lg">
+                    <Layout size={18} />
+                 </div>
+                 <div className="flex-1">
+                    <select 
+                        value={config.frameType || 'standard'}
+                        onChange={(e) => setConfig(prev => ({ ...prev, frameType: e.target.value as any }))}
+                        className="w-full bg-transparent border-none outline-none text-xs font-bold text-slate-700"
+                    >
+                        <option value="standard">فریم ساده (استاندارد)</option>
+                        <option value="renovation">فریم بازسازی (بال‌دار)</option>
+                    </select>
+                 </div>
+                 <div className="px-3 border-r border-orange-200">
+                    <span className="text-[10px] font-black text-orange-600 uppercase">نوع فریم</span>
                  </div>
              </div>
          </div>

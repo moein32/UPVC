@@ -58,7 +58,8 @@ export interface WindowConfig {
   mullions: number; 
   glassType?: string;
   spacerColor?: string;
-  layout?: WindowNode; 
+  layout?: WindowNode;
+  frameType?: 'standard' | 'renovation';
 }
 
 export interface ProjectDetails {
