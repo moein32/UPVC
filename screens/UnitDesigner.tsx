@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowRight, Save, Trash2, SplitSquareHorizontal, SplitSquareVertical, PlusCircle, Maximize, ZoomIn, ZoomOut, RefreshCcw, Hand, MousePointer2, Receipt, Check, Edit3, Grid, XCircle, Undo, Redo, LayoutTemplate, Home, Box, Square, Layout } from 'lucide-react';
+import { ArrowRight, Save, Trash2, SplitSquareHorizontal, SplitSquareVertical, PlusCircle, Maximize, ZoomIn, ZoomOut, RefreshCcw, Hand, MousePointer2, Receipt, Check, Edit3, Grid, XCircle, Undo, Redo, LayoutTemplate, Home, Box, Layers } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { InputField, SelectField, PrimaryButton } from '../components/UIComponents';
@@ -225,27 +225,18 @@ export const UnitDesigner = () => {
   // --- Responsive Auto-Fit Logic ---
   const fitToScreen = () => {
     if (!canvasAreaRef.current) return;
-    
-    // Significantly reduced padding to allow the unit to be much larger on screen
     const padding = 70; 
     const areaW = canvasAreaRef.current.clientWidth - padding;
     const areaH = canvasAreaRef.current.clientHeight - padding;
-    
     if (areaW <= 0 || areaH <= 0) return;
-
-    // The WindowCanvas uses width/4 as its base internal width.
     const baseW = config.width / 4;
     const baseH = config.height / 4;
-    
     const scaleW = areaW / baseW;
     const scaleH = areaH / baseH;
-    
-    // "Two degrees more": We use a multiplier to ensure the fit is tight and impressive
     const newZoom = Math.min(scaleW, scaleH) * 1.05; 
     setZoomLevel(Math.max(newZoom, 0.15));
   };
 
-  // Auto-fit whenever dimensions or screen size changes
   useEffect(() => {
     fitToScreen();
     const timer = setTimeout(fitToScreen, 150); 
@@ -335,7 +326,6 @@ export const UnitDesigner = () => {
       if (activeTool) {
           const targetNode = findNode(config.layout!, id);
           if (!targetNode) return;
-
           if (activeTool.type === 'opening') {
                handleUpdateNode(id, { openingType: activeTool.value as any });
                setActiveTool(null);
@@ -343,14 +333,12 @@ export const UnitDesigner = () => {
               if (targetNode.type === 'leaf') {
                   const count = activeTool.count || 2;
                   const existingOpening = (targetNode.openingType as string) === 'Panel' ? 'Fixed' : targetNode.openingType;
-
                   const newChildren = Array(count).fill(null).map((_, i) => ({
                       id: Date.now() + `_${i}_${Math.random()}`, 
                       type: 'leaf', 
                       openingType: 'Fixed', 
                       flex: 1 
                   })) as WindowNode[];
-
                   handleUpdateNode(id, { 
                       type: 'container', 
                       dir: activeTool.dir as 'row' | 'col', 
@@ -401,9 +389,7 @@ export const UnitDesigner = () => {
             const parent = findParent(config.layout, selectedNodeId);
             const editableW = parent ? parent.dir === 'row' : true; 
             const editableH = parent ? parent.dir === 'col' : true;
-            
             setSelectedNodeDims({ ...dims, editableW, editableH });
-
             if (localDims.id !== selectedNodeId) {
                 setLocalDims({ 
                     w: Math.round(dims.w).toString(), 
@@ -446,23 +432,18 @@ export const UnitDesigner = () => {
       if (newValStr === null) return;
       const newVal = Number(toEnglishDigits(newValStr));
       if (isNaN(newVal) || newVal <= 50 || newVal >= totalSize - 50) return;
-
       const node = findNode(config.layout!, nodeId);
       if (!node || !node.children) return;
-      
       const totalFlex = node.children.reduce((s, c) => s + (c.flex || 1), 0);
       const targetFlex = (newVal / totalSize) * totalFlex;
       const currentFlex = node.children[childIndex].flex || 1;
       const flexDiff = targetFlex - currentFlex;
-      
       let neighborIndex = childIndex + 1 < node.children.length ? childIndex + 1 : childIndex - 1;
-
       const newChildren = node.children.map((child, idx) => {
           if (idx === childIndex) return { ...child, flex: targetFlex };
           if (idx === neighborIndex) return { ...child, flex: Math.max(0.1, (child.flex || 1) - flexDiff) };
           return child;
       });
-
       handleUpdateNode(nodeId, { children: newChildren });
   };
 
@@ -475,31 +456,23 @@ export const UnitDesigner = () => {
       const rawVal = dim === 'w' ? localDims.w : localDims.h;
       const newVal = Number(rawVal);
       if (isNaN(newVal) || newVal <= 0) return;
-      
       const parent = findParent(config.layout, selectedNodeId);
       if (!parent || !parent.children) return; 
-      
       if ((parent.dir === 'row' && dim === 'h') || (parent.dir === 'col' && dim === 'w')) return;
-      
       const parentDims = calculateNodeDimensions(config.layout, config.width, config.height, parent.id);
       if(!parentDims) return;
-      
       const totalSize = parent.dir === 'row' ? parentDims.w : parentDims.h;
       const totalFlex = parent.children.reduce((a, b) => a + (b.flex || 1), 0);
       const targetFlex = (newVal / totalSize) * totalFlex;
-      
       const nodeIndex = parent.children.findIndex(c => c.id === selectedNodeId);
       const currentFlex = parent.children[nodeIndex].flex || 1;
       const flexDiff = targetFlex - currentFlex;
-      
       let neighborIndex = nodeIndex + 1 < parent.children.length ? nodeIndex + 1 : nodeIndex - 1;
-      
       const newChildren = parent.children.map((child, idx) => {
           if (idx === nodeIndex) return { ...child, flex: targetFlex };
           if (idx === neighborIndex) return { ...child, flex: Math.max(0.1, (child.flex || 1) - flexDiff) };
           return child;
       });
-
       handleUpdateNode(parent.id, { children: newChildren });
   };
   
@@ -520,14 +493,8 @@ export const UnitDesigner = () => {
         glassArea: 0,
         panelArea: 0,
         beadMeters: 0,
-        hardware: {
-          Turn: 0,
-          TiltTurn: 0,
-          Sliding: 0,
-          Door: 0
-        }
+        hardware: { Turn: 0, TiltTurn: 0, Sliding: 0, Door: 0 }
     };
-
     const processHardware = (type: OpeningDirection | undefined) => {
         if (!type) return;
         if (type.startsWith('Turn')) stats.hardware.Turn += 1;
@@ -535,31 +502,21 @@ export const UnitDesigner = () => {
         else if (type.startsWith('Sliding')) stats.hardware.Sliding += 1;
         else if (type.startsWith('Door')) stats.hardware.Door += 1;
     };
-
     if (node.type === 'container') {
         if (node.openingType && node.openingType !== 'Fixed') {
              processHardware(node.openingType);
              const perimeter = (w + h) * 2;
-             if (node.openingType.includes('Door')) {
-                stats.sashDoorMeters += perimeter;
-             } else {
-                stats.sashWindowMeters += perimeter;
-             }
+             if (node.openingType.includes('Door')) stats.sashDoorMeters += perimeter;
+             else stats.sashWindowMeters += perimeter;
         }
-    
         if (node.children) {
             const totalFlex = node.children.reduce((a, b) => a + (b.flex || 1), 0);
-            if (node.dir === 'row') {
-                stats.mullionMeters += (node.children.length - 1) * h;
-            } else {
-                stats.mullionMeters += (node.children.length - 1) * w;
-            }
-    
+            if (node.dir === 'row') stats.mullionMeters += (node.children.length - 1) * h;
+            else stats.mullionMeters += (node.children.length - 1) * w;
             node.children.forEach(child => {
                 const ratio = (child.flex || 1) / totalFlex;
                 const childW = node.dir === 'row' ? w * ratio : w;
                 const childH = node.dir === 'col' ? h * ratio : h;
-                
                 const childStats = calculateWindowStats(child, childW, childH);
                 stats.sashWindowMeters += childStats.sashWindowMeters;
                 stats.sashDoorMeters += childStats.sashDoorMeters;
@@ -577,18 +534,11 @@ export const UnitDesigner = () => {
         if (node.openingType && node.openingType !== 'Fixed' && node.openingType !== 'Panel') {
             processHardware(node.openingType);
             const perimeter = (w + h) * 2;
-            if (node.openingType.includes('Door')) {
-                stats.sashDoorMeters += perimeter;
-            } else {
-                stats.sashWindowMeters += perimeter;
-            }
+            if (node.openingType.includes('Door')) stats.sashDoorMeters += perimeter;
+            else stats.sashWindowMeters += perimeter;
         }
-        
-        if (node.openingType === 'Panel') {
-            stats.panelArea += w * h;
-        } else {
-            stats.glassArea += w * h;
-        }
+        if (node.openingType === 'Panel') stats.panelArea += w * h;
+        else stats.glassArea += w * h;
         stats.beadMeters += (w + h) * 2;
     }
     return stats;
@@ -598,7 +548,6 @@ export const UnitDesigner = () => {
     if (!config.layout) return {
          profileMeters: 0, profilePrice: 0, glassArea: 0, glassPrice: 0, sashCount: 0, hardwarePrice: 0, totalPrice: 0, unitPrice: 0, details: []
     };
-
     const stats = calculateWindowStats(config.layout, config.width, config.height);
     const frameMeters = (config.width + config.height) * 2;
     const frameM = frameMeters / 1000;
@@ -606,58 +555,41 @@ export const UnitDesigner = () => {
     const sashWindowM = stats.sashWindowMeters / 1000;
     const sashDoorM = stats.sashDoorMeters / 1000;
     const beadM = stats.beadMeters / 1000;
-
     const glassA = stats.glassArea / 1000000; 
     const panelA = stats.panelArea / 1000000;
     const galoM = frameM + mullionM + sashWindowM + sashDoorM;
-
     const brand = brands.find(b => b.id === config.profileId);
     const glassType = glassList.find(g => g.id === config.glassId);
-    
     const hwItems = pricingStore.getHardware();
     const panelType = hwItems.find(h => h.id === 'panel_upvc');
     const panelPricePerM2 = panelType?.pricePerSet || 1500000;
-
-    // Use renovation frame price if selected
     const frameCompId = config.frameType === 'renovation' ? 'renovation' : 'frame';
     const framePrice = brand?.components.find(c => c.id === frameCompId)?.price || 0;
     const frameName = config.frameType === 'renovation' ? 'پروفیل فریم بازسازی' : 'پروفیل فریم';
-
     const mullionPrice = brand?.components.find(c => c.id === 'mullion')?.price || 0;
     const sashWindowPrice = brand?.components.find(c => c.id === 'sash_window')?.price || 0;
     const sashDoorPrice = brand?.components.find(c => c.id === 'sash_door')?.price || 0;
     const beadPrice = brand?.components.find(c => c.id === 'bead')?.price || 0;
     const galoPrice = brand?.components.find(c => c.id === 'galvanized')?.price || 150000;
-    
     const glassPricePerM2 = glassType?.pricePerSqm || 0;
-
     const details: InvoiceDetail[] = [];
     let rowId = 1;
-
     const frameTotal = frameM * framePrice;
     if (frameM > 0) details.push({ rowId: rowId++, name: frameName, unit: 'متر طول', quantity: Number(frameM.toFixed(2)), unitPrice: framePrice, totalPrice: Math.round(frameTotal) });
-
     const sashWinTotal = sashWindowM * sashWindowPrice;
     if (sashWindowM > 0) details.push({ rowId: rowId++, name: 'پروفیل لنگه پنجره', unit: 'متر طول', quantity: Number(sashWindowM.toFixed(2)), unitPrice: sashWindowPrice, totalPrice: Math.round(sashWinTotal) });
-
     const sashDoorTotal = sashDoorM * sashDoorPrice;
     if (sashDoorM > 0) details.push({ rowId: rowId++, name: 'پروفیل لنگه درب', unit: 'متر طول', quantity: Number(sashDoorM.toFixed(2)), unitPrice: sashDoorPrice, totalPrice: Math.round(sashDoorTotal) });
-
     const mullionTotal = mullionM * mullionPrice;
     if (mullionM > 0) details.push({ rowId: rowId++, name: 'پروفیل مولیون', unit: 'متر طول', quantity: Number(mullionM.toFixed(2)), unitPrice: mullionPrice, totalPrice: Math.round(mullionTotal) });
-
     const beadTotal = beadM * beadPrice;
     if (beadM > 0) details.push({ rowId: rowId++, name: 'پروفیل زهوار', unit: 'متر طول', quantity: Number(beadM.toFixed(2)), unitPrice: beadPrice, totalPrice: Math.round(beadTotal) });
-
     const galoTotal = galoM * galoPrice;
     if (galoM > 0) details.push({ rowId: rowId++, name: 'گالوانیزه تقویتی', unit: 'متر طول', quantity: Number(galoM.toFixed(2)), unitPrice: galoPrice, totalPrice: Math.round(galoTotal) });
-
     const glassTotal = glassA * glassPricePerM2;
     if (glassA > 0) details.push({ rowId: rowId++, name: glassType?.name || 'شیشه دوجداره', unit: 'متر مربع', quantity: Number(glassA.toFixed(2)), unitPrice: glassPricePerM2, totalPrice: Math.round(glassTotal) });
-
     const panelTotal = panelA * panelPricePerM2;
     if (panelA > 0) details.push({ rowId: rowId++, name: panelType?.name || 'پنل UPVC', unit: 'متر مربع', quantity: Number(panelA.toFixed(2)), unitPrice: panelPricePerM2, totalPrice: Math.round(panelTotal) });
-
     let hardwareTotalSum = 0;
     const hardwareMap = [
       { type: 'Turn', label: 'یراق تک حالته', count: stats.hardware.Turn },
@@ -665,7 +597,6 @@ export const UnitDesigner = () => {
       { type: 'Sliding', label: 'یراق کشویی', count: stats.hardware.Sliding },
       { type: 'Door', label: 'یراق بازشو دربی (سوئیچی)', count: stats.hardware.Door },
     ];
-
     hardwareMap.forEach(hwEntry => {
       if (hwEntry.count > 0) {
         const match = hwItems.find(item => item.type === hwEntry.type);
@@ -682,11 +613,9 @@ export const UnitDesigner = () => {
         });
       }
     });
-
     const totalProfileMeters = frameM + mullionM + sashWindowM + sashDoorM;
     const profileCost = frameTotal + sashWinTotal + sashDoorTotal + mullionTotal + galoTotal + beadTotal;
     const unitPrice = Math.round(profileCost + glassTotal + hardwareTotalSum + panelTotal);
-
     return {
         profileMeters: Number(totalProfileMeters.toFixed(2)),
         profilePrice: Math.round(profileCost),
@@ -707,7 +636,6 @@ export const UnitDesigner = () => {
           config: { ...config },
           calculations
       };
-
       const updatedItems = [...projectItems];
       if (editIndex !== undefined) {
           updatedItems[editIndex] = newItem;
@@ -777,7 +705,6 @@ export const UnitDesigner = () => {
           <button onClick={() => setActiveTab('splits')} className={`flex-1 py-3 text-xs font-bold transition-colors ${activeTab === 'splits' ? 'bg-slate-700 text-white border-b-2 border-orange-500' : 'text-slate-400 hover:text-slate-200'}`}>{t('splits')}</button>
           <button onClick={() => setActiveTab('tools')} className={`flex-1 py-3 text-xs font-bold transition-colors ${activeTab === 'tools' ? 'bg-slate-700 text-white border-b-2 border-orange-500' : 'text-slate-400 hover:text-slate-200'}`}>{t('tools')}</button>
         </div>
-
         <div className="p-3 h-20 overflow-x-auto overflow-y-hidden no-scrollbar bg-slate-800">
            {activeTab === 'openings' && (
               <div className="flex items-center gap-4 h-full">
@@ -801,7 +728,6 @@ export const UnitDesigner = () => {
                   </div>
               </div>
            )}
-
            {activeTab === 'splits' && (
               <div className="flex items-center gap-4 h-full">
                   <DraggableIcon type="split" dir="row" count={2} label={t('split_v_2')} icon={<SplitVerticalIcon count={2} />} isActive={activeTool?.dir === 'row' && activeTool.count === 2} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} />
@@ -813,7 +739,6 @@ export const UnitDesigner = () => {
                   <DraggableIcon type="split" dir="row" count={1} value="clear" label={t('clear_split')} icon={<SquareIcon />} isActive={activeTool?.value === 'clear'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} />
               </div>
            )}
-
             {activeTab === 'tools' && (
               <div className="flex items-center gap-4 h-full">
                    <ToolBtn icon={Trash2} label={t('delete_item')} color="text-red-400" onClick={handleDelete} />
@@ -833,19 +758,14 @@ export const UnitDesigner = () => {
                 </div>
            </div>
         )}
-
         <div className="absolute top-4 right-4 z-20 flex flex-col gap-2 bg-white rounded-lg shadow-md p-1">
            <button onClick={() => setZoomLevel(z => Math.min(z + 0.1, 4))} className="p-2 text-slate-600 hover:bg-slate-100 rounded"><ZoomIn size={20}/></button>
            <button onClick={fitToScreen} className="p-2 text-slate-600 hover:bg-slate-100 rounded" title="Fit to Screen"><RefreshCcw size={16}/></button>
            <button onClick={() => setZoomLevel(z => Math.max(z - 0.1, 0.1))} className="p-2 text-slate-600 hover:bg-slate-100 rounded"><ZoomOut size={20}/></button>
         </div>
-
         <div className="flex-1 overflow-auto flex items-center justify-center p-1 cursor-grab active:cursor-grabbing">
              <div className="transition-transform duration-300 ease-out origin-center" style={{ transform: `scale(${zoomLevel})` }}>
-                <div className="relative select-none" style={{ 
-                    width: config.width / 4, 
-                    height: config.height / 4,
-                }}>
+                <div className="relative select-none" style={{ width: config.width / 4, height: config.height / 4 }}>
                   {config.layout && (
                     <WindowCanvas node={config.layout} selectedId={selectedNodeId} onSelect={handleCanvasNodeClick} onUpdateNode={handleUpdateNode} onDimensionEdit={handleDirectDimensionEdit} onChildResize={handleChildResize} width={config.width} height={config.height} isRoot={true} />
                   )}
@@ -856,7 +776,6 @@ export const UnitDesigner = () => {
       </div>
 
       <div className="bg-white rounded-t-2xl shadow-[0_-5px_30px_rgba(0,0,0,0.1)] z-30 p-5 pb-8 shrink-0">
-         {/* Config Row 1: Dimensions */}
          <div className={`flex gap-4 mb-4 items-center p-3 rounded-xl border transition-colors ${!isRootSelected ? 'bg-orange-50 border-orange-200' : 'bg-slate-50 border-slate-100'}`}>
              <span className={`text-xs font-bold whitespace-nowrap ${!isRootSelected ? 'text-orange-600' : 'text-slate-500'}`}>{isRootSelected ? t('global_dims') : t('section_dims')}</span>
              {isRootSelected ? (
@@ -891,7 +810,6 @@ export const UnitDesigner = () => {
              )}
          </div>
 
-         {/* Config Row 2: Glass Type Selection */}
          <div className="mb-3">
              <div className="bg-blue-50/50 p-2 rounded-xl border border-blue-100 flex items-center gap-3">
                  <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
@@ -914,11 +832,10 @@ export const UnitDesigner = () => {
              </div>
          </div>
 
-         {/* Config Row 3: Frame Type Selection */}
          <div className="mb-4">
-             <div className="bg-orange-50/50 p-2 rounded-xl border border-orange-100 flex items-center gap-3">
-                 <div className="p-2 bg-orange-100 text-orange-600 rounded-lg">
-                    <Layout size={18} />
+             <div className="bg-indigo-50/50 p-2 rounded-xl border border-indigo-100 flex items-center gap-3">
+                 <div className="p-2 bg-indigo-100 text-indigo-600 rounded-lg">
+                    <Layers size={18} />
                  </div>
                  <div className="flex-1">
                     <select 
@@ -930,8 +847,8 @@ export const UnitDesigner = () => {
                         <option value="renovation">فریم بازسازی (بال‌دار)</option>
                     </select>
                  </div>
-                 <div className="px-3 border-r border-orange-200">
-                    <span className="text-[10px] font-black text-orange-600 uppercase">نوع فریم</span>
+                 <div className="px-3 border-r border-indigo-200">
+                    <span className="text-[10px] font-black text-indigo-600 uppercase">نوع فریم</span>
                  </div>
              </div>
          </div>

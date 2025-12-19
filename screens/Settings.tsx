@@ -33,7 +33,6 @@ const LayoutOption = ({ type, label, description, isSelected, onClick }: { type:
         </div>
         <p className="text-[10px] text-slate-500 leading-tight">{description}</p>
         <div className="mt-3 h-12 bg-slate-100 rounded-lg flex items-center justify-center border border-slate-200/50 overflow-hidden">
-             {/* Simple visual cues for layout type */}
              {type === 'standard' && <div className="w-full flex flex-col gap-1 p-2"><div className="h-1 bg-slate-300 w-1/2"></div><div className="h-4 bg-slate-200 w-full"></div></div>}
              {type === 'modern' && <div className="w-full flex flex-col items-center gap-1 p-2"><div className="h-2 bg-blue-400 w-1/3"></div><div className="h-2 bg-slate-200 w-full"></div><div className="h-2 bg-slate-200 w-full"></div></div>}
              {type === 'technical' && <div className="w-full grid grid-cols-2 gap-1 p-2"><div className="h-6 bg-slate-200 w-full"></div><div className="h-6 bg-slate-200 w-full"></div></div>}
@@ -61,11 +60,6 @@ export const Settings = () => {
     save({ ...settings, darkMode: !settings.darkMode });
   };
 
-  const handleCoefficientChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!settings) return;
-    save({ ...settings, priceCoefficient: Number(e.target.value) });
-  };
-  
   const updateInvoice = (field: keyof AppSettings['invoice'], value: any) => {
     if (!settings) return;
     save({
