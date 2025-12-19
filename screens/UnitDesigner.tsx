@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowRight, Save, Trash2, SplitSquareHorizontal, SplitSquareVertical, PlusCircle, Maximize, ZoomIn, ZoomOut, RefreshCcw, Hand, MousePointer2, Receipt, Check, Edit3, Grid, XCircle, Undo, Redo, LayoutTemplate, Home } from 'lucide-react';
+import { ArrowRight, Save, Trash2, SplitSquareHorizontal, SplitSquareVertical, PlusCircle, Maximize, ZoomIn, ZoomOut, RefreshCcw, Hand, MousePointer2, Receipt, Check, Edit3, Grid, XCircle, Undo, Redo, LayoutTemplate, Home, Box } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { InputField, SelectField, PrimaryButton } from '../components/UIComponents';
@@ -215,10 +215,45 @@ export const UnitDesigner = () => {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>('root');
   const [activeTab, setActiveTab] = useState<'openings' | 'splits' | 'tools'>('openings');
   const [zoomLevel, setZoomLevel] = useState(0.8); 
+  const canvasAreaRef = useRef<HTMLDivElement>(null);
   
   const [activeTool, setActiveTool] = useState<{type: 'opening' | 'split', value: string, dir?: string, count?: number} | null>(null);
   const [selectedNodeDims, setSelectedNodeDims] = useState<{w: number, h: number, editableW: boolean, editableH: boolean} | null>(null);
   const [localDims, setLocalDims] = useState<{w: string, h: string, id: string | null}>({ w: '', h: '', id: null });
+
+  // --- Responsive Auto-Fit Logic ---
+  const fitToScreen = () => {
+    if (!canvasAreaRef.current) return;
+    
+    // Significantly reduced padding to allow the unit to be much larger on screen
+    const padding = 70; 
+    const areaW = canvasAreaRef.current.clientWidth - padding;
+    const areaH = canvasAreaRef.current.clientHeight - padding;
+    
+    if (areaW <= 0 || areaH <= 0) return;
+
+    // The WindowCanvas uses width/4 as its base internal width.
+    const baseW = config.width / 4;
+    const baseH = config.height / 4;
+    
+    const scaleW = areaW / baseW;
+    const scaleH = areaH / baseH;
+    
+    // "Two degrees more": We use a multiplier to ensure the fit is tight and impressive
+    const newZoom = Math.min(scaleW, scaleH) * 1.05; 
+    setZoomLevel(Math.max(newZoom, 0.15));
+  };
+
+  // Auto-fit whenever dimensions or screen size changes
+  useEffect(() => {
+    fitToScreen();
+    const timer = setTimeout(fitToScreen, 150); 
+    window.addEventListener('resize', fitToScreen);
+    return () => {
+        window.removeEventListener('resize', fitToScreen);
+        clearTimeout(timer);
+    };
+  }, [config.width, config.height]);
 
   // Load Edit Data
   useEffect(() => {
@@ -234,7 +269,7 @@ export const UnitDesigner = () => {
             setConfig(c => ({
                 ...c, 
                 profileId: projectDetails.defaultProfileId || brands[0].id, 
-                glassId: glassList[0]?.id || '' 
+                glassId: glassList[0]?.id || 'double_4_4' 
             }));
         }
     }
@@ -418,8 +453,6 @@ export const UnitDesigner = () => {
       const currentFlex = node.children[childIndex].flex || 1;
       const flexDiff = targetFlex - currentFlex;
       
-      // IMPROVED LOGIC: Adjust immediate neighbor only to prevent non-adjacent parts from moving
-      // Priority: Next neighbor if available, otherwise previous neighbor
       let neighborIndex = childIndex + 1 < node.children.length ? childIndex + 1 : childIndex - 1;
 
       const newChildren = node.children.map((child, idx) => {
@@ -457,7 +490,6 @@ export const UnitDesigner = () => {
       const currentFlex = parent.children[nodeIndex].flex || 1;
       const flexDiff = targetFlex - currentFlex;
       
-      // IMPROVED LOGIC: Target immediate neighbor for manual input as well
       let neighborIndex = nodeIndex + 1 < parent.children.length ? nodeIndex + 1 : nodeIndex - 1;
       
       const newChildren = parent.children.map((child, idx) => {
@@ -486,7 +518,6 @@ export const UnitDesigner = () => {
         glassArea: 0,
         panelArea: 0,
         beadMeters: 0,
-        // Added hardware counts by type
         hardware: {
           Turn: 0,
           TiltTurn: 0,
@@ -534,7 +565,6 @@ export const UnitDesigner = () => {
                 stats.glassArea += childStats.glassArea;
                 stats.panelArea += childStats.panelArea;
                 stats.beadMeters += childStats.beadMeters;
-                // Merge hardware counts
                 stats.hardware.Turn += childStats.hardware.Turn;
                 stats.hardware.TiltTurn += childStats.hardware.TiltTurn;
                 stats.hardware.Sliding += childStats.hardware.Sliding;
@@ -581,11 +611,10 @@ export const UnitDesigner = () => {
 
     const brand = brands.find(b => b.id === config.profileId);
     const glassType = glassList.find(g => g.id === config.glassId);
-    const panelType = glassList.find(g => g.id === 'panel_upvc');
-    const panelPricePerM2 = panelType?.pricePerSqm || 1500000;
     
-    // Get all hardware items to match types
     const hwItems = pricingStore.getHardware();
+    const panelType = hwItems.find(h => h.id === 'panel_upvc');
+    const panelPricePerM2 = panelType?.pricePerSet || 1500000;
 
     const framePrice = brand?.components.find(c => c.id === 'frame')?.price || 0;
     const mullionPrice = brand?.components.find(c => c.id === 'mullion')?.price || 0;
@@ -618,12 +647,11 @@ export const UnitDesigner = () => {
     if (galoM > 0) details.push({ rowId: rowId++, name: 'گالوانیزه تقویتی', unit: 'متر طول', quantity: Number(galoM.toFixed(2)), unitPrice: galoPrice, totalPrice: Math.round(galoTotal) });
 
     const glassTotal = glassA * glassPricePerM2;
-    if (glassA > 0) details.push({ rowId: rowId++, name: glassType?.name || 'شیشه', unit: 'متر مربع', quantity: Number(glassA.toFixed(2)), unitPrice: glassPricePerM2, totalPrice: Math.round(glassTotal) });
+    if (glassA > 0) details.push({ rowId: rowId++, name: glassType?.name || 'شیشه دوجداره', unit: 'متر مربع', quantity: Number(glassA.toFixed(2)), unitPrice: glassPricePerM2, totalPrice: Math.round(glassTotal) });
 
     const panelTotal = panelA * panelPricePerM2;
     if (panelA > 0) details.push({ rowId: rowId++, name: panelType?.name || 'پنل UPVC', unit: 'متر مربع', quantity: Number(panelA.toFixed(2)), unitPrice: panelPricePerM2, totalPrice: Math.round(panelTotal) });
 
-    // Handle Detailed Hardware Items
     let hardwareTotalSum = 0;
     const hardwareMap = [
       { type: 'Turn', label: 'یراق تک حالته', count: stats.hardware.Turn },
@@ -634,7 +662,6 @@ export const UnitDesigner = () => {
 
     hardwareMap.forEach(hwEntry => {
       if (hwEntry.count > 0) {
-        // Find matching hardware price from DB
         const match = hwItems.find(item => item.type === hwEntry.type);
         const price = match?.pricePerSet || 0;
         const total = hwEntry.count * price;
@@ -791,7 +818,7 @@ export const UnitDesigner = () => {
         </div>
       </div>
 
-      <div className="flex-1 relative bg-slate-100 overflow-hidden flex flex-col min-h-[300px]">
+      <div ref={canvasAreaRef} className="flex-1 relative bg-slate-100 overflow-hidden flex flex-col min-h-[300px]">
         {activeTool && (
            <div className="absolute top-4 left-0 right-0 z-20 flex justify-center pointer-events-none">
                 <div className="bg-orange-600 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg flex items-center gap-2 animate-bounce pointer-events-auto">
@@ -802,14 +829,17 @@ export const UnitDesigner = () => {
         )}
 
         <div className="absolute top-4 right-4 z-20 flex flex-col gap-2 bg-white rounded-lg shadow-md p-1">
-           <button onClick={() => setZoomLevel(z => Math.min(z + 0.1, 2))} className="p-2 text-slate-600 hover:bg-slate-100 rounded"><ZoomIn size={20}/></button>
-           <button onClick={() => setZoomLevel(1)} className="p-2 text-slate-600 hover:bg-slate-100 rounded"><RefreshCcw size={16}/></button>
-           <button onClick={() => setZoomLevel(z => Math.max(z - 0.1, 0.4))} className="p-2 text-slate-600 hover:bg-slate-100 rounded"><ZoomOut size={20}/></button>
+           <button onClick={() => setZoomLevel(z => Math.min(z + 0.1, 4))} className="p-2 text-slate-600 hover:bg-slate-100 rounded"><ZoomIn size={20}/></button>
+           <button onClick={fitToScreen} className="p-2 text-slate-600 hover:bg-slate-100 rounded" title="Fit to Screen"><RefreshCcw size={16}/></button>
+           <button onClick={() => setZoomLevel(z => Math.max(z - 0.1, 0.1))} className="p-2 text-slate-600 hover:bg-slate-100 rounded"><ZoomOut size={20}/></button>
         </div>
 
-        <div className="flex-1 overflow-auto flex items-center justify-center p-8 cursor-grab active:cursor-grabbing">
-             <div className="transition-transform duration-200 ease-out origin-center" style={{ transform: `scale(${zoomLevel})` }}>
-                <div className="relative select-none" style={{ width: Math.min(config.width / 4, window.innerWidth - 60), height: Math.min(config.height / 4, window.innerHeight - 300), minWidth: '300px', minHeight: '300px' }}>
+        <div className="flex-1 overflow-auto flex items-center justify-center p-1 cursor-grab active:cursor-grabbing">
+             <div className="transition-transform duration-300 ease-out origin-center" style={{ transform: `scale(${zoomLevel})` }}>
+                <div className="relative select-none" style={{ 
+                    width: config.width / 4, 
+                    height: config.height / 4,
+                }}>
                   {config.layout && (
                     <WindowCanvas node={config.layout} selectedId={selectedNodeId} onSelect={handleCanvasNodeClick} onUpdateNode={handleUpdateNode} onDimensionEdit={handleDirectDimensionEdit} onChildResize={handleChildResize} width={config.width} height={config.height} isRoot={true} />
                   )}
@@ -820,6 +850,7 @@ export const UnitDesigner = () => {
       </div>
 
       <div className="bg-white rounded-t-2xl shadow-[0_-5px_30px_rgba(0,0,0,0.1)] z-30 p-5 pb-8 shrink-0">
+         {/* Config Row 1: Dimensions */}
          <div className={`flex gap-4 mb-4 items-center p-3 rounded-xl border transition-colors ${!isRootSelected ? 'bg-orange-50 border-orange-200' : 'bg-slate-50 border-slate-100'}`}>
              <span className={`text-xs font-bold whitespace-nowrap ${!isRootSelected ? 'text-orange-600' : 'text-slate-500'}`}>{isRootSelected ? t('global_dims') : t('section_dims')}</span>
              {isRootSelected ? (
@@ -852,6 +883,29 @@ export const UnitDesigner = () => {
                      <button onClick={() => setSelectedNodeId('root')} className="p-2 bg-slate-200 rounded-lg text-slate-600 hover:bg-slate-300" title="بازگشت به ابعاد کل"><Grid size={16} /></button>
                  </div>
              )}
+         </div>
+
+         {/* Config Row 2: Glass Type Selection */}
+         <div className="mb-4">
+             <div className="bg-blue-50/50 p-2 rounded-xl border border-blue-100 flex items-center gap-3">
+                 <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
+                    <Box size={18} />
+                 </div>
+                 <div className="flex-1">
+                    <select 
+                        value={config.glassId}
+                        onChange={(e) => setConfig(prev => ({ ...prev, glassId: e.target.value }))}
+                        className="w-full bg-transparent border-none outline-none text-xs font-bold text-slate-700"
+                    >
+                        {glassList.map(glass => (
+                            <option key={glass.id} value={glass.id}>{glass.name} - ({formatPrice(glass.pricePerSqm)})</option>
+                        ))}
+                    </select>
+                 </div>
+                 <div className="px-3 border-r border-blue-200">
+                    <span className="text-[10px] font-black text-blue-600 uppercase">نوع شیشه</span>
+                 </div>
+             </div>
          </div>
 
          <div className="flex gap-3">

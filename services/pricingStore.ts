@@ -75,7 +75,6 @@ const INITIAL_GLASS: GlassType[] = [
   { id: 'double_4_4', name: 'دوجداره ۴-۴ ساده', pricePerSqm: 650000 },
   { id: 'double_6_4', name: 'دوجداره ۶-۴ ساده', pricePerSqm: 750000 },
   { id: 'triple', name: 'سه جداره', pricePerSqm: 950000 },
-  { id: 'panel_upvc', name: 'پنل UPVC', pricePerSqm: 1500000 },
 ];
 
 const HARDWARE_BRANDS: HardwareBrand[] = [
@@ -93,6 +92,7 @@ const INITIAL_HARDWARE: HardwareItem[] = [
   { id: 'h4', name: 'درب سرویسی', brandId: 'vh', type: 'Door', pricePerSet: 550000 },
   { id: 'h5', name: 'درب بالکنی', brandId: 'gu', type: 'Door', pricePerSet: 1200000 },
   { id: 'h0', name: 'ثابت (بدون یراق)', brandId: 'vh', type: 'Fixed', pricePerSet: 0 },
+  { id: 'panel_upvc', name: 'پنل UPVC (متر مربع)', brandId: 'vh', type: 'Fixed', pricePerSet: 1500000 },
 ];
 
 const DEFAULT_SETTINGS: AppSettings = {
