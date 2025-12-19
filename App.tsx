@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -10,12 +11,13 @@ import { ProfileSelection } from './screens/ProfileSelection';
 import { GlassHardware } from './screens/GlassHardware';
 import { Projects } from './screens/Projects';
 import { Settings } from './screens/Settings';
+import { FinancialManagement } from './screens/FinancialManagement';
+import { ProjectFinancials } from './screens/ProjectFinancials';
 
 function App() {
   const { i18n } = useTranslation();
 
   useEffect(() => {
-    // Dynamically set direction based on language
     const dir = i18n.language === 'en' ? 'ltr' : 'rtl';
     document.documentElement.dir = dir;
     document.documentElement.lang = i18n.language;
@@ -24,7 +26,6 @@ function App() {
   return (
     <HashRouter>
       <Routes>
-        {/* Changed default route to Dashboard to prevent stuck navigation */}
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/dashboard" element={<Dashboard />} />
@@ -35,6 +36,8 @@ function App() {
         <Route path="/glass-hardware" element={<GlassHardware />} />
         <Route path="/projects" element={<Projects />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/financial-mgmt" element={<FinancialManagement />} />
+        <Route path="/project-financials/:id" element={<ProjectFinancials />} />
       </Routes>
     </HashRouter>
   );

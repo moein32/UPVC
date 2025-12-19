@@ -68,8 +68,21 @@ export interface ProjectDetails {
   installPercent: number;
   companyName: string; 
   date: string;
-  status: 'Draft' | 'Final';
+  status: 'Draft' | 'Contract' | 'Production';
   defaultProfileId?: string; 
+}
+
+export interface Payment {
+  id: string;
+  amount: number;
+  date: string;
+  type: 'Cash' | 'Check';
+  checkDetails?: {
+    checkNumber: string;
+    bankName: string;
+    dueDate: string;
+    isSayad: boolean;
+  };
 }
 
 export interface InvoiceDetail {
@@ -100,6 +113,7 @@ export interface InvoiceItem {
 export interface SavedProject extends ProjectDetails {
   items: InvoiceItem[];
   totalPrice: number;
+  payments: Payment[];
 }
 
 export type InvoiceLayoutType = 'standard' | 'modern' | 'technical' | 'classic';
@@ -110,7 +124,7 @@ export interface InvoiceSettings {
   companyAddress: string;
   companyPhone: string;
   footerNote: string;
-  layoutType: InvoiceLayoutType; // New field
+  layoutType: InvoiceLayoutType;
 }
 
 export interface AppSettings {
