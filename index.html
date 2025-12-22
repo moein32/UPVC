@@ -2,8 +2,8 @@
 <html lang="fa" dir="rtl">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <meta name="theme-color" content="#1e293b" />
+    <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#001f3f" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Lumina" />
@@ -12,70 +12,91 @@
     <link rel="icon" type="image/svg+xml" href="./logo.svg" />
     <link rel="apple-touch-icon" href="./logo.svg" />
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" crossorigin="anonymous">
     <style>
+      :root {
+        --color-navy: #001f3f;
+      }
       body {
         font-family: 'Vazirmatn', sans-serif;
         background-color: #f3f4f6;
-        background-image: 
-          radial-gradient(at 0% 0%, hsla(210,100%,93%,1) 0, transparent 50%), 
-          radial-gradient(at 100% 0%, hsla(190,100%,93%,1) 0, transparent 50%), 
-          radial-gradient(at 100% 100%, hsla(210,100%,96%,1) 0, transparent 50%);
-        background-attachment: fixed;
         padding-top: env(safe-area-inset-top);
         padding-bottom: env(safe-area-inset-bottom);
-        padding-left: env(safe-area-inset-left);
-        padding-right: env(safe-area-inset-right);
         overscroll-behavior-y: none;
-        -webkit-tap-highlight-color: transparent;
       }
-      ::-webkit-scrollbar {
-        width: 0px;
-        background: transparent;
-      }
-      /* PWA Display Fixes */
-      @media all and (display-mode: standalone) {
-        body {
-          padding-top: env(safe-area-inset-top); 
-        }
-      }
+
+      /* --- PROFESSIONAL PRINT ENGINE --- */
       @media print {
         @page {
-          size: A4;
-          margin: 10mm;
+          size: A4 portrait;
+          margin: 0;
         }
-        body {
-          background: white;
-          padding: 0;
+        
+        html, body {
+          width: 1024px !important;
+          min-width: 1024px !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          background: #ffffff !important;
+          direction: rtl !important;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
         }
+
         #root {
-          width: 100%;
+          width: 1024px !important;
+          margin: 0 !important;
         }
-        .no-print {
-          display: none !important;
+
+        .no-print { display: none !important; }
+
+        /* Force A4 Scaling for 1024px Desktop Layout */
+        .print-invoice-wrapper {
+          position: relative !important;
+          display: block !important;
+          width: 1024px !important;
+          min-height: 297mm !important;
+          /* 1024px scaled down to ~794px A4 width */
+          transform: scale(0.775) !important;
+          transform-origin: top right !important;
+          background: white !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          box-shadow: none !important;
+        }
+
+        /* Prevent broken tables */
+        table { 
+          width: 100% !important;
+          table-layout: fixed !important;
+          border-collapse: collapse !important;
+          page-break-inside: auto;
+        }
+        tr { page-break-inside: avoid; page-break-after: auto; }
+        
+        /* Typography fix for RTL Print */
+        * {
+          direction: rtl !important;
+          unicode-bidi: isolate !important;
         }
       }
     </style>
-  <script type="importmap">
-{
-  "imports": {
-    "react-router-dom": "https://esm.sh/react-router-dom@^7.10.1",
-    "lucide-react": "https://esm.sh/lucide-react@^0.561.0",
-    "@google/genai": "https://esm.sh/@google/genai@^1.33.0",
-    "framer-motion": "https://esm.sh/framer-motion@^12.23.26",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "react": "https://esm.sh/react@^19.2.3",
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "react-i18next": "https://esm.sh/react-i18next@^16.5.0",
-    "i18next": "https://esm.sh/i18next@^25.7.2",
-    "html-to-image": "https://esm.sh/html-to-image@^1.11.11",
-    "jspdf": "https://esm.sh/jspdf@^2.5.1",
-    "jspdf-autotable": "https://esm.sh/jspdf-autotable@^3.5.28",
-    "arabic-persian-reshaper": "https://esm.sh/arabic-persian-reshaper@1.0.1"
-  }
-}
-</script>
-</head>
+    <script type="importmap">
+    {
+      "imports": {
+        "react-router-dom": "https://esm.sh/react-router-dom@^7.10.1",
+        "lucide-react": "https://esm.sh/lucide-react@^0.561.0",
+        "@google/genai": "https://esm.sh/@google/genai@^1.33.0",
+        "framer-motion": "https://esm.sh/framer-motion@^12.23.26",
+        "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+        "react": "https://esm.sh/react@^19.2.3",
+        "react/": "https://esm.sh/react@^19.2.3/",
+        "react-i18next": "https://esm.sh/react-i18next@^16.5.0",
+        "i18next": "https://esm.sh/i18next@^25.7.2"
+      }
+    }
+    </script>
+  </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
