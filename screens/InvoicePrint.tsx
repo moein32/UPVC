@@ -50,17 +50,28 @@ export const InvoicePrint = () => {
     
     setIsGenerating(true);
     
+    // Ensure fonts are fully loaded to prevent text glitches
+    try {
+        await document.fonts.ready;
+    } catch (e) {
+        console.warn('Font loading check failed', e);
+    }
+    
     const element = invoiceRef.current;
+    
+    // Configuration for html2pdf
     const opt = {
       margin: 0,
       filename: `Lumina-Invoice-${projectDetails.customerName}-${toPersianDigits(projectDetails.id.slice(-6))}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
+      // Use PNG for sharper text and shapes, JPEG causes artifacts on text edges
+      image: { type: 'png', quality: 1.0 }, 
       html2canvas: { 
-        scale: 2, 
+        scale: 2, // 2 is usually sufficient for A4, higher causes memory issues
         useCORS: true, 
-        letterRendering: true,
         scrollX: 0,
-        scrollY: 0
+        scrollY: 0,
+        backgroundColor: '#ffffff',
+        // logging: true, // debug only
       },
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
@@ -99,7 +110,21 @@ export const InvoicePrint = () => {
                 border-radius: 0 !important;
              }
            }
-           
+
+           /* CRITICAL FIXES FOR PDF GENERATION */
+           .invoice-page * {
+               /* Prevents disjointed Persian letters */
+               letter-spacing: normal !important;
+               font-variant-ligatures: normal !important;
+               
+               /* Removes backdrop filters which confuse html2canvas */
+               backdrop-filter: none !important;
+               -webkit-backdrop-filter: none !important;
+               
+               /* Ensures font rendering is consistent */
+               text-rendering: optimizeLegibility !important;
+           }
+
            /* Layout Specific Styles */
            .layout-technical .invoice-table th { background-color: #1e293b !important; color: white !important; }
            .layout-technical .invoice-table td { border-bottom: 1px solid #cbd5e1 !important; }
@@ -111,7 +136,7 @@ export const InvoicePrint = () => {
            .layout-classic th { border: 1px solid #000 !important; background: #eee !important; color: #000 !important; }
            .layout-classic td { border: 1px solid #000 !important; }
 
-           /* Fix for PDF rendering to ensure background colors are captured */
+           /* Ensure white background for capture */
            .invoice-page {
              background-color: white !important;
            }
@@ -171,6 +196,7 @@ export const InvoicePrint = () => {
        <div 
          ref={invoiceRef}
          className={`invoice-page layout-${tempLayout} bg-white w-[210mm] min-h-[297mm] shadow-2xl mx-auto relative flex flex-col overflow-hidden`}
+         style={{ fontFamily: "'Vazirmatn', sans-serif", direction: 'rtl' }}
         >
            
            {/* Header */}

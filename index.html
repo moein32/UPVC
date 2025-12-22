@@ -7,9 +7,13 @@
     <meta name="theme-color" content="#001f3f" />
     <title>Lumina UPVC</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100;400;700;900&display=swap" rel="stylesheet">
     
-    <!-- کتابخانه‌های مورد نیاز برای PDF -->
+    <!-- Fonts with CORS support for html2canvas -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100..900&display=swap" rel="stylesheet">
+    
+    <!-- PDF Generation Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
@@ -24,7 +28,6 @@
         padding: 0;
       }
       
-      /* المان مخفی اما قابل رندر برای خروجی PDF */
       #pdf-export-root {
         position: absolute;
         left: -9999px;
