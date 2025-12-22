@@ -1,84 +1,38 @@
+
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
   <head>
     <meta charset="UTF-8" />
     <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <meta name="theme-color" content="#001f3f" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Lumina" />
     <title>Lumina UPVC</title>
-    <link rel="manifest" href="./manifest.json" />
-    <link rel="icon" type="image/svg+xml" href="./logo.svg" />
-    <link rel="apple-touch-icon" href="./logo.svg" />
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100;400;700;900&display=swap" rel="stylesheet">
+    
+    <!-- کتابخانه‌های مورد نیاز برای PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
     <style>
-      :root {
-        --color-navy: #001f3f;
-      }
+      :root { --color-navy: #001f3f; }
       body {
         font-family: 'Vazirmatn', sans-serif;
         background-color: #f3f4f6;
-        padding-top: env(safe-area-inset-top);
-        padding-bottom: env(safe-area-inset-bottom);
-        overscroll-behavior-y: none;
+        direction: rtl;
+        unicode-bidi: embed;
+        margin: 0;
+        padding: 0;
       }
-
-      /* --- PROFESSIONAL PRINT ENGINE --- */
-      @media print {
-        @page {
-          size: A4 portrait;
-          margin: 0;
-        }
-        
-        html, body {
-          width: 1024px !important;
-          min-width: 1024px !important;
-          margin: 0 !important;
-          padding: 0 !important;
-          background: #ffffff !important;
-          direction: rtl !important;
-          -webkit-print-color-adjust: exact !important;
-          print-color-adjust: exact !important;
-        }
-
-        #root {
-          width: 1024px !important;
-          margin: 0 !important;
-        }
-
-        .no-print { display: none !important; }
-
-        /* Force A4 Scaling for 1024px Desktop Layout */
-        .print-invoice-wrapper {
-          position: relative !important;
-          display: block !important;
-          width: 1024px !important;
-          min-height: 297mm !important;
-          /* 1024px scaled down to ~794px A4 width */
-          transform: scale(0.775) !important;
-          transform-origin: top right !important;
-          background: white !important;
-          margin: 0 !important;
-          padding: 0 !important;
-          box-shadow: none !important;
-        }
-
-        /* Prevent broken tables */
-        table { 
-          width: 100% !important;
-          table-layout: fixed !important;
-          border-collapse: collapse !important;
-          page-break-inside: auto;
-        }
-        tr { page-break-inside: avoid; page-break-after: auto; }
-        
-        /* Typography fix for RTL Print */
-        * {
-          direction: rtl !important;
-          unicode-bidi: isolate !important;
-        }
+      
+      /* المان مخفی اما قابل رندر برای خروجی PDF */
+      #pdf-export-root {
+        position: absolute;
+        left: -9999px;
+        top: 0;
+        width: 800px;
+        background: white;
+        z-index: -100;
+        direction: rtl;
       }
     </style>
     <script type="importmap">
@@ -99,6 +53,7 @@
   </head>
   <body>
     <div id="root"></div>
+    <div id="pdf-export-root"></div>
     <script type="module" src="/index.tsx"></script>
   </body>
 </html>

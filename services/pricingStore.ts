@@ -1,5 +1,5 @@
 
-import { ProfileBrand, GlassType, HardwareItem, HardwareBrand, ProfileComponent, AppSettings } from '../types';
+import { ProfileBrand, GlassType, HardwareItem, HardwareBrand, ProfileComponent, AppSettings, SavedProject } from '../types';
 
 const DEFAULT_COMPONENTS: ProfileComponent[] = [
   { id: 'frame', name: 'پروفیل فریم (Frame)', unit: 'm', price: 0 },
@@ -109,6 +109,74 @@ const DEFAULT_SETTINGS: AppSettings = {
   }
 };
 
+const DEFAULT_PROJECT: SavedProject = {
+  id: 'demo-project-1',
+  customerName: 'پروژه نمونه (تست)',
+  address: 'تهران، سعادت آباد، بلوار دریا',
+  installPercent: 10,
+  companyName: 'گروه صنعتی لومینا',
+  date: new Date().toISOString(),
+  status: 'Draft',
+  defaultProfileId: 'vistabest',
+  totalPrice: 20437500, // Approximate total of items below
+  payments: [],
+  items: [
+    {
+      id: 'item-demo-1',
+      config: {
+        id: 'conf-1', width: 1500, height: 1500, profileId: 'vistabest', glassId: 'double_4_4', hardwareId: 'h1', type: 'Fixed', mullions: 0, frameType: 'standard',
+        layout: { id: 'root', type: 'leaf', openingType: 'Fixed', flex: 1 }
+      },
+      calculations: {
+        profileMeters: 6, profilePrice: 3000000, glassArea: 2.25, glassPrice: 1462500, sashCount: 0, hardwarePrice: 0, totalPrice: 4462500, unitPrice: 4462500,
+        details: [
+          { rowId: 1, name: 'پروفیل فریم', unit: 'متر طول', quantity: 6, unitPrice: 450000, totalPrice: 2700000 },
+          { rowId: 2, name: 'شیشه دوجداره', unit: 'متر مربع', quantity: 2.25, unitPrice: 650000, totalPrice: 1462500 }
+        ]
+      }
+    },
+    {
+      id: 'item-demo-2',
+      config: {
+        id: 'conf-2', width: 2000, height: 1500, profileId: 'vistabest', glassId: 'double_4_4', hardwareId: 'h1', type: 'Custom', mullions: 1, frameType: 'standard',
+        layout: {
+            id: 'root', type: 'container', dir: 'row', 
+            children: [
+                { id: 'c1', type: 'leaf', openingType: 'TurnRight', flex: 1 },
+                { id: 'c2', type: 'leaf', openingType: 'TiltTurnLeft', flex: 1 }
+            ]
+        }
+      },
+      calculations: {
+        profileMeters: 12, profilePrice: 6000000, glassArea: 2.5, glassPrice: 1625000, sashCount: 2, hardwarePrice: 1300000, totalPrice: 8925000, unitPrice: 8925000,
+        details: [
+             { rowId: 1, name: 'پروفیل فریم', unit: 'متر طول', quantity: 7, unitPrice: 450000, totalPrice: 3150000 },
+             { rowId: 2, name: 'پروفیل لنگه', unit: 'متر طول', quantity: 8, unitPrice: 460000, totalPrice: 3680000 },
+             { rowId: 3, name: 'شیشه دوجداره', unit: 'متر مربع', quantity: 2.5, unitPrice: 650000, totalPrice: 1625000 },
+             { rowId: 4, name: 'یراق تک حالته', unit: 'دست', quantity: 1, unitPrice: 450000, totalPrice: 450000 },
+             { rowId: 5, name: 'یراق دو حالته', unit: 'دست', quantity: 1, unitPrice: 850000, totalPrice: 850000 }
+        ]
+      }
+    },
+    {
+      id: 'item-demo-3',
+      config: {
+        id: 'conf-3', width: 900, height: 2100, profileId: 'wintech', glassId: 'double_4_4', hardwareId: 'h5', type: 'Door', mullions: 0, frameType: 'standard',
+        layout: { id: 'root', type: 'leaf', openingType: 'DoorRight', flex: 1 }
+      },
+      calculations: {
+        profileMeters: 6, profilePrice: 4000000, glassArea: 1.5, glassPrice: 975000, sashCount: 1, hardwarePrice: 1200000, totalPrice: 6175000, unitPrice: 6175000,
+        details: [
+            { rowId: 1, name: 'پروفیل فریم', unit: 'متر طول', quantity: 6, unitPrice: 420000, totalPrice: 2520000 },
+            { rowId: 2, name: 'پروفیل لنگه درب', unit: 'متر طول', quantity: 6, unitPrice: 420000, totalPrice: 2520000 },
+             { rowId: 3, name: 'شیشه دوجداره', unit: 'متر مربع', quantity: 1.5, unitPrice: 650000, totalPrice: 975000 },
+            { rowId: 4, name: 'یراق درب سوئیچی', unit: 'دست', quantity: 1, unitPrice: 1200000, totalPrice: 1200000 }
+        ]
+      }
+    }
+  ]
+};
+
 export const pricingStore = {
   getBrands: (): ProfileBrand[] => {
     const stored = localStorage.getItem('lumina_brands');
@@ -175,9 +243,17 @@ export const pricingStore = {
 
   getHardwareBrands: () => HARDWARE_BRANDS,
 
-  getProjects: () => {
+  getProjects: (): SavedProject[] => {
     const stored = localStorage.getItem('lumina_projects');
-    return stored ? JSON.parse(stored) : [];
+    if (stored) {
+        const projects = JSON.parse(stored);
+        if (projects.length > 0) return projects;
+    }
+    
+    // Default project initialization if storage is empty
+    const defaults = [DEFAULT_PROJECT];
+    localStorage.setItem('lumina_projects', JSON.stringify(defaults));
+    return defaults;
   },
   
   saveProject: (project: any) => {
