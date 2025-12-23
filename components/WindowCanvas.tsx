@@ -20,9 +20,9 @@ const DESIGN_SYSTEM = {
         leverHeight: 6,  
     },
     openingLines: {
-        color: "#000000", // Solid black for high-contrast printing
-        strokeWidth: 4.5, // Increased from 3.5 to 4.5 for ultra-clear visibility
-        dashArray: "12,12" // Distinct dash pattern for tilt parts
+        color: "#000000", // Solid black
+        strokeWidth: 4.5, // Increased thickness for print clarity
+        dashArray: "15,10" // Bold dashed pattern for tilt lines
     },
     dimensions: {
         segmentOffset: -40, 
@@ -357,11 +357,9 @@ const renderOpeningLines = (type: OpeningDirection | undefined, w: number, h: nu
     if (!type || type === 'Fixed' || type === 'Panel') return null;
     const { color: strokeColor, strokeWidth, dashArray } = DESIGN_SYSTEM.openingLines;
 
-    // Use dynamic viewBox based on unit's W/H
     const midH = h / 2;
     const midW = w / 2;
     
-    // Inset logic to prevent clipping
     const i = strokeWidth; 
     const iw = w - i;
     const ih = h - i;
@@ -379,13 +377,17 @@ const renderOpeningLines = (type: OpeningDirection | undefined, w: number, h: nu
             {type === 'TurnLeft' && <path d={`M${iw},${i} L${i},${midH} L${iw},${ih}`} fill="none" stroke={strokeColor} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />}
             {type === 'TiltTurnRight' && (
                 <>
+                    {/* Primary Side Opening */}
                     <path d={`M${i},${i} L${iw},${midH} L${i},${ih}`} fill="none" stroke={strokeColor} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+                    {/* Tilt Triangle Dashed Lines */}
                     <path d={`M${i},${ih} L${midW},${i} L${iw},${ih}`} fill="none" stroke={strokeColor} strokeWidth={strokeWidth} strokeDasharray={dashArray} strokeLinecap="round" strokeLinejoin="round" />
                 </>
             )}
             {type === 'TiltTurnLeft' && (
                 <>
+                    {/* Primary Side Opening */}
                     <path d={`M${iw},${i} L${i},${midH} L${iw},${ih}`} fill="none" stroke={strokeColor} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+                    {/* Tilt Triangle Dashed Lines */}
                     <path d={`M${iw},${ih} L${midW},${i} L${i},${ih}`} fill="none" stroke={strokeColor} strokeWidth={strokeWidth} strokeDasharray={dashArray} strokeLinecap="round" strokeLinejoin="round" />
                 </>
             )}

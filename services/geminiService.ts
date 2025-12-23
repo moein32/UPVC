@@ -1,6 +1,8 @@
+
 import { GoogleGenAI } from "@google/genai";
 import { WindowConfig, ProfileBrand } from "../types";
 
+// Always use const ai = new GoogleGenAI({apiKey: process.env.API_KEY});
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export const getOptimizationSuggestions = async (config: WindowConfig, brandName: string) => {
@@ -19,11 +21,13 @@ export const getOptimizationSuggestions = async (config: WindowConfig, brandName
       پاسخ را کاملاً به زبان فارسی و رسمی بنویس. از تیترهای مارک‌داون استفاده نکن.
     `;
 
+    // Updated model to 'gemini-3-flash-preview' for basic text tasks
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3-flash-preview',
       contents: prompt,
     });
 
+    // Access the .text property directly
     return response.text;
   } catch (error) {
     console.error("Gemini AI Error:", error);
