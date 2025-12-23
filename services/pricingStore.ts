@@ -105,7 +105,7 @@ const DEFAULT_SETTINGS: AppSettings = {
     companyAddress: 'تهران، میدان آزادی',
     companyPhone: '021-12345678',
     footerNote: 'اعتبار این پیش‌فاکتور ۷۲ ساعت می‌باشد.',
-    layoutType: 'technical' // Default set to Technical layout
+    layoutType: 'standard' // Changed from 'technical' to 'standard' as requested
   }
 };
 
