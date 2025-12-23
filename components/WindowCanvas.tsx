@@ -1,3 +1,4 @@
+
 import React, { useRef, useState } from 'react';
 import { WindowNode, OpeningDirection } from '../types';
 import { toPersianDigits } from '../utils/formatting';
@@ -19,17 +20,13 @@ const DESIGN_SYSTEM = {
         leverHeight: 6,  
     },
     openingLines: {
-        color: "rgba(0,0,0,0.6)", 
-        strokeWidth: 1.5,
-        dashArray: "5,5" 
+        color: "#000000", // Solid black for high-contrast printing
+        strokeWidth: 3.5, // Increased from 2.5 to 3.5 for ultra-clear visibility in PDF reports
+        dashArray: "10,10" // Adjusted for thicker lines
     },
     dimensions: {
-        // *** تنظیم فاصله خطوط از پنجره ***
-        // عدد بزرگتر = فاصله بیشتر از پنجره
-        segmentOffset: -40, // فاصله اندازه‌های داخلی (تکه‌های پنجره)
-        
-        globalOffset: 5,  // فاصله اندازه کلی (عرض و ارتفاع کل)
-        
+        segmentOffset: -40, 
+        globalOffset: 5,  
         lineColor: 'bg-slate-700', 
         textColor: 'text-slate-800', 
         badgeBg: 'bg-white/90 backdrop-blur-sm', 
@@ -80,11 +77,7 @@ const DimensionLine = ({
 }) => {
     const isH = orientation === 'h';
     const baseVal = isSegment ? DESIGN_SYSTEM.dimensions.segmentOffset : DESIGN_SYSTEM.dimensions.globalOffset; 
-    
-    // Add depthOffset to push nested dimensions further in/out to avoid overlap
-    // depthOffset comes from the recursion depth
     const totalOffset = baseVal + (offset * 25) + (depthOffset * 20);
-    
     const lineColor = isSegment ? DESIGN_SYSTEM.dimensions.lineColor : 'bg-slate-600';
     const textColor = isSegment ? DESIGN_SYSTEM.dimensions.textColor : 'text-slate-700';
 
@@ -101,10 +94,8 @@ const DimensionLine = ({
         }}
         >
             <div className={`${lineColor} absolute ${isH ? 'h-[1px] left-2 right-2 top-1/2' : 'w-[1px] top-2 bottom-2 left-1/2'}`}></div>
-            
             <div className={`absolute ${lineColor} ${isH ? 'left-2 h-2 w-[1px] top-1/2 -translate-y-1/2' : 'top-2 w-2 h-[1px] left-1/2 -translate-x-1/2'}`}></div>
             <div className={`absolute ${lineColor} ${isH ? 'right-2 h-2 w-[1px] top-1/2 -translate-y-1/2' : 'bottom-2 w-2 h-[1px] left-1/2 -translate-x-1/2'}`}></div>
-            
             <div 
                 onClick={(e) => { e.stopPropagation(); onClick && onClick(); }}
                 className={`${DESIGN_SYSTEM.dimensions.badgeBg} px-1.5 py-0.5 text-[10px] font-bold ${textColor} border ${DESIGN_SYSTEM.dimensions.badgeBorder} rounded shadow-sm hover:bg-blue-50 cursor-pointer transition-all z-[70] pointer-events-auto
@@ -125,7 +116,6 @@ export const WindowCanvas = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
 
-  // --- Visual Constants ---
   const frameStyle = {
       backgroundColor: DESIGN_SYSTEM.frame.bg,
       backgroundImage: DESIGN_SYSTEM.frame.gradient, 
@@ -225,11 +215,8 @@ export const WindowCanvas = ({
 
   const RootWrapper = ({ children }: {children?: React.ReactNode}) => {
       if (!isRoot) return <>{children}</>;
-      
-      // Increased padding to p-16 (from p-12) to accommodate larger globalOffsets without clipping
       return (
         <div className={`relative w-full h-full ${showDimensions ? 'p-16' : 'p-0.5'} bg-transparent select-none`}>
-            {/* Global Dimensions */}
             {showDimensions && (
                 <>
                   <div className="absolute top-0 left-16 right-16 h-12">
@@ -240,11 +227,7 @@ export const WindowCanvas = ({
                   </div>
                 </>
             )}
-            
-            {/* Main Outer Frame */}
-            <div className="w-full h-full relative shadow-2xl rounded-sm border border-slate-300"
-                 style={frameStyle}
-            >
+            <div className="w-full h-full relative shadow-2xl rounded-sm border border-slate-300" style={frameStyle}>
                  <div className="w-full h-full" style={{ padding: frameThickness }}>
                     <div className="w-full h-full relative bg-slate-900/5">
                         {children}
@@ -255,21 +238,21 @@ export const WindowCanvas = ({
       );
   }
 
-  // Render Container
   if (node.type === 'container' && node.children) {
     const isSashContainer = node.openingType && node.openingType !== 'Fixed';
     const totalFlex = node.children.reduce((a, b) => a + (b.flex || 1), 0);
     
-    // Wrapper for Sash Containers
     const Wrapper = isSashContainer ? 
         ({c}: {c: React.ReactNode}) => (
             <div className="w-full h-full relative rounded-sm border border-slate-300 shadow-md bg-white group" style={frameStyle}>
                  <div className="w-full h-full" style={{ padding: sashThickness }}>
                      {c}
                  </div>
-                 {/* Opening Symbol Overlay */}
-                 <div className="absolute inset-0 pointer-events-none z-50">
-                    {renderOpeningSymbol(node.openingType, node.id, sashThickness, isThumbnail)}
+                 <div className="absolute inset-0 pointer-events-none z-20">
+                    <div className="w-full h-full relative" style={{ padding: sashThickness }}>
+                         {renderOpeningLines(node.openingType, width, height)}
+                    </div>
+                    {renderHandles(node.openingType, sashThickness, isThumbnail)}
                  </div>
             </div>
         ) : ({c}: {c: React.ReactNode}) => <>{c}</>;
@@ -304,33 +287,19 @@ export const WindowCanvas = ({
                                         readOnly={readOnly}
                                         isThumbnail={isThumbnail}
                                         scale={scale}
-                                        showDimensions={showDimensions} // FIXED: Propagate true/active state
+                                        showDimensions={showDimensions}
                                     />
                                     {showDimensions && !isThumbnail && (
                                         <>
-                                            {/* Logic: Only show the dimension parallel to the split direction */}
-                                            {/* Row Split (Vertical Divider) -> Show Widths */}
                                             {node.dir === 'row' && (
                                                 <DimensionLine 
-                                                    length={childWidth} 
-                                                    orientation="h" 
-                                                    label={childWidth} 
-                                                    position="end" 
-                                                    isSegment={true}
-                                                    depthOffset={depth} // Pass depth to avoid overlap in nested same-dir splits
+                                                    length={childWidth} orientation="h" label={childWidth} position="end" isSegment={true} depthOffset={depth} 
                                                     onClick={() => onChildResize && onChildResize(node.id, index, childWidth, width)}
                                                 />
                                             )}
-
-                                            {/* Col Split (Horizontal Divider e.g. Transom/Panel) -> Show Heights */}
                                             {node.dir === 'col' && (
                                                 <DimensionLine 
-                                                    length={childHeight} 
-                                                    orientation="v" 
-                                                    label={childHeight} 
-                                                    position="end" 
-                                                    isSegment={true}
-                                                    depthOffset={depth} // Pass depth to avoid overlap in nested same-dir splits
+                                                    length={childHeight} orientation="v" label={childHeight} position="end" isSegment={true} depthOffset={depth}
                                                     onClick={() => onChildResize && onChildResize(node.id, index, childHeight, height)}
                                                 />
                                             )}
@@ -339,18 +308,11 @@ export const WindowCanvas = ({
                                 </div>
                                 {index < node.children!.length - 1 && (
                                     <div 
-                                        className={`relative z-20 border-slate-300
-                                            ${node.dir === 'col' ? 'w-full border-t border-b' : 'h-full border-l border-r'}
-                                            ${!readOnly ? (node.dir === 'col' ? 'cursor-row-resize' : 'cursor-col-resize') : ''}
-                                        `}
-                                        style={{ 
-                                            [node.dir === 'col' ? 'height' : 'width']: mullionWidth,
-                                            ...frameStyle
-                                        }}
+                                        className={`relative z-20 border-slate-300 ${node.dir === 'col' ? 'w-full border-t border-b' : 'h-full border-l border-r'} ${!readOnly ? (node.dir === 'col' ? 'cursor-row-resize' : 'cursor-col-resize') : ''}`}
+                                        style={{ [node.dir === 'col' ? 'height' : 'width']: mullionWidth, ...frameStyle }}
                                         onMouseDown={(e) => !readOnly && handleResizeStart(e, index)}
                                         onTouchStart={(e) => !readOnly && handleResizeStart(e, index)}
-                                    >
-                                    </div>
+                                    ></div>
                                 )}
                             </React.Fragment>
                         );
@@ -361,7 +323,6 @@ export const WindowCanvas = ({
     );
   }
 
-  // Render Leaf (Glass/Panel)
   const isOpening = node.openingType && node.openingType !== 'Fixed' && node.openingType !== 'Panel';
   
   return (
@@ -371,187 +332,116 @@ export const WindowCanvas = ({
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
-          className={`
-            w-full h-full relative group transition-all duration-200 box-border
-            ${!readOnly ? 'cursor-pointer' : ''}
-            ${isSelected ? 'ring-2 ring-inset ring-blue-500 z-50' : ''}
-            ${isDragOver ? 'bg-green-100/50 ring-4 ring-inset ring-green-500/50' : ''}
-          `}
+          className={`w-full h-full relative group transition-all duration-200 box-border ${!readOnly ? 'cursor-pointer' : ''} ${isSelected ? 'ring-2 ring-inset ring-blue-500 z-50' : ''} ${isDragOver ? 'bg-green-100/50 ring-4 ring-inset ring-green-500/50' : ''}`}
         >
-            {/* Sash Frame if Opening */}
-            <div className={`w-full h-full relative transition-all flex
-                ${isOpening ? 'shadow-sm border border-slate-300 rounded-[1px]' : ''}
-            `}
-            style={isOpening ? { padding: sashThickness, ...frameStyle } : {}}
-            >
-                {/* Content: Glass or Panel - Overflow Hidden applied ONLY here */}
-                <div className={`flex-1 relative overflow-hidden border border-slate-300/50
-                    ${node.openingType === 'Panel' 
-                        ? 'bg-slate-50' 
-                        : 'bg-gradient-to-br from-[#e0f2fe] via-[#bae6fd] to-[#7dd3fc]'
-                    }`}
-                    style={{
-                         boxShadow: 'inset 0 0 20px rgba(0,0,0,0.05)'
-                    }}
-                >
-                    {node.openingType !== 'Panel' && (
-                        <div className="absolute inset-0 bg-gradient-to-tr from-white/30 via-transparent to-white/10 skew-x-12 opacity-60"></div>
-                    )}
+            <div className={`w-full h-full relative transition-all flex ${isOpening ? 'shadow-sm border border-slate-300 rounded-[1px]' : ''}`} style={isOpening ? { padding: sashThickness, ...frameStyle } : {}}>
+                <div className={`flex-1 relative overflow-hidden border border-slate-300/50 ${node.openingType === 'Panel' ? 'bg-slate-50' : 'bg-gradient-to-br from-[#e0f2fe] via-[#bae6fd] to-[#7dd3fc]'}`} style={{ boxShadow: 'inset 0 0 20px rgba(0,0,0,0.05)' }}>
+                    {node.openingType !== 'Panel' && <div className="absolute inset-0 bg-gradient-to-tr from-white/30 via-transparent to-white/10 skew-x-12 opacity-60"></div>}
                     <div className="absolute inset-0 border-[2px] border-[#1e293b]/20 pointer-events-none"></div>
-                    {node.openingType === 'Panel' && (
-                        <div className="absolute inset-2 border border-slate-200 rounded opacity-50 bg-white/50 shadow-inner"></div>
-                    )}
+                    {node.openingType === 'Panel' && <div className="absolute inset-2 border border-slate-200 rounded opacity-50 bg-white/50 shadow-inner"></div>}
+                    <div className="absolute inset-0 pointer-events-none z-10">
+                        {renderOpeningLines(node.openingType, width, height)}
+                    </div>
                 </div>
-
-                {/* Opening Symbol Overlay - Rendered as sibling to glass container (still inside sash frame but z-indexed) */}
                 <div className="absolute inset-0 pointer-events-none z-20">
-                    {renderOpeningSymbol(node.openingType, node.id, sashThickness, isThumbnail)}
+                    {renderHandles(node.openingType, sashThickness, isThumbnail)}
                 </div>
             </div>
-
-            {isSelected && !isThumbnail && (
-                <div className="absolute top-1 right-1 bg-blue-600 text-white text-[9px] px-1.5 py-0.5 rounded shadow-sm z-[60]">
-                    انتخاب
-                </div>
-            )}
+            {isSelected && !isThumbnail && <div className="absolute top-1 right-1 bg-blue-600 text-white text-[9px] px-1.5 py-0.5 rounded shadow-sm z-[60]">انتخاب</div>}
         </div>
     </RootWrapper>
   );
 };
 
-// --- Flat & Minimal Handle & Symbol Renderer ---
-const renderOpeningSymbol = (type: OpeningDirection | undefined, nodeId: string, sashThickness: number, isThumbnail?: boolean) => {
+const renderOpeningLines = (type: OpeningDirection | undefined, w: number, h: number) => {
+    if (!type || type === 'Fixed' || type === 'Panel') return null;
+    const { color: strokeColor, strokeWidth, dashArray } = DESIGN_SYSTEM.openingLines;
+
+    // Use dynamic viewBox based on unit's W/H
+    const midH = h / 2;
+    const midW = w / 2;
+    
+    // Inset logic: Ensure lines are visible even at the edge by offsetting by stroke width
+    // This also helps keep the line joints clean when rendering at different scales.
+    const i = strokeWidth; 
+    const iw = w - i;
+    const ih = h - i;
+
+    return (
+        <svg 
+            width="100%" 
+            height="100%" 
+            className="absolute inset-0 block pointer-events-none" 
+            viewBox={`0 0 ${w} ${h}`} 
+            preserveAspectRatio="none"
+            style={{ shapeRendering: 'geometricPrecision', overflow: 'visible' }}
+        >
+            {type === 'TurnRight' && <path d={`M${i},${i} L${iw},${midH} L${i},${ih}`} fill="none" stroke={strokeColor} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />}
+            {type === 'TurnLeft' && <path d={`M${iw},${i} L${i},${midH} L${iw},${ih}`} fill="none" stroke={strokeColor} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />}
+            {type === 'TiltTurnRight' && (
+                <>
+                    <path d={`M${i},${i} L${iw},${midH} L${i},${ih}`} fill="none" stroke={strokeColor} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+                    <path d={`M${i},${ih} L${midW},${i} L${iw},${ih}`} fill="none" stroke={strokeColor} strokeWidth={strokeWidth} strokeDasharray={dashArray} strokeLinecap="round" strokeLinejoin="round" />
+                </>
+            )}
+            {type === 'TiltTurnLeft' && (
+                <>
+                    <path d={`M${iw},${i} L${i},${midH} L${iw},${ih}`} fill="none" stroke={strokeColor} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+                    <path d={`M${iw},${ih} L${midW},${i} L${i},${ih}`} fill="none" stroke={strokeColor} strokeWidth={strokeWidth} strokeDasharray={dashArray} strokeLinecap="round" strokeLinejoin="round" />
+                </>
+            )}
+            {type === 'DoorRight' && <path d={`M${i},${i} L${iw},${midH} L${i},${ih}`} fill="none" stroke={strokeColor} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />}
+            {type === 'DoorLeft' && <path d={`M${iw},${i} L${i},${midH} L${iw},${ih}`} fill="none" stroke={strokeColor} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />}
+            {(type === 'SlidingRight' || type === 'SlidingLeft') && (
+                 <>
+                    <line x1={w * 0.1} y1={midH} x2={w * 0.9} y2={midH} stroke={strokeColor} strokeWidth={strokeWidth * 1.5} />
+                    {type === 'SlidingRight' && <path d={`M${w * 0.85},${midH - 10} L${w * 0.9},${midH} L${w * 0.85},${midH + 10}`} fill="none" stroke={strokeColor} strokeWidth={strokeWidth * 1.5} strokeLinecap="round" strokeLinejoin="round" />}
+                    {type === 'SlidingLeft' && <path d={`M${w * 0.15},${midH - 10} L${w * 0.1},${midH} L${w * 0.15},${midH + 10}`} fill="none" stroke={strokeColor} strokeWidth={strokeWidth * 1.5} strokeLinecap="round" strokeLinejoin="round" />}
+                 </>
+            )}
+        </svg>
+    );
+};
+
+const renderHandles = (type: OpeningDirection | undefined, sashThickness: number, isThumbnail?: boolean) => {
   if (!type || type === 'Fixed' || type === 'Panel') return null;
 
-  // Use variables from DESIGN_SYSTEM
-  const { color: strokeColor, strokeWidth, dashArray } = DESIGN_SYSTEM.openingLines;
   const { color: handleColor, shadow, zIndex } = DESIGN_SYSTEM.handle;
-
-  // Handle Dimensions
   const hW = isThumbnail ? DESIGN_SYSTEM.handle.width / 2 : DESIGN_SYSTEM.handle.width;
   const hH = isThumbnail ? DESIGN_SYSTEM.handle.height / 2 : DESIGN_SYSTEM.handle.height;
   const hR = isThumbnail ? DESIGN_SYSTEM.handle.radius / 2 : DESIGN_SYSTEM.handle.radius;
 
-  // Offset Calculation
-  // We place it (sashThickness - hW) / 2 from the edge to center it on the profile.
   const offset = (sashThickness - hW) / 2;
   const offsetPx = `${offset}px`;
 
-  // Handle Style Base
   const handleBaseStyle: React.CSSProperties = { 
-      position: 'absolute', 
-      top: '50%', 
-      transform: 'translateY(-50%)', 
-      zIndex: zIndex,
-      width: `${hW}px`,
-      height: `${hH}px`,
-      backgroundColor: handleColor,
-      borderRadius: `${hR}px`,
-      boxShadow: shadow
+      position: 'absolute', top: '50%', transform: 'translateY(-50%)', zIndex: zIndex, width: `${hW}px`, height: `${hH}px`, backgroundColor: handleColor, borderRadius: `${hR}px`, boxShadow: shadow
   };
 
-  // Door Lever Dimensions
   const leverH = isThumbnail ? DESIGN_SYSTEM.doorHandle.leverHeight / 2 : DESIGN_SYSTEM.doorHandle.leverHeight;
   const leverW = isThumbnail ? DESIGN_SYSTEM.doorHandle.leverWidth / 2 : DESIGN_SYSTEM.doorHandle.leverWidth;
   
   const leverBaseStyle: React.CSSProperties = {
-      position: 'absolute',
-      top: '50%',
-      transform: 'translateY(-50%)',
-      zIndex: zIndex,
-      display: 'flex',
-      alignItems: 'center'
+      position: 'absolute', top: '50%', transform: 'translateY(-50%)', zIndex: zIndex, display: 'flex', alignItems: 'center'
   };
 
   const LeverHandle = ({ flip = false }) => (
       <div style={leverBaseStyle}>
-          {/* Base Plate */}
-          <div style={{
-              width: `${hW}px`,
-              height: `${hH}px`,
-              backgroundColor: handleColor,
-              borderRadius: `${hR}px`,
-              boxShadow: shadow
-          }}></div>
-          {/* Lever */}
-          <div style={{
-              position: 'absolute',
-              [flip ? 'right' : 'left']: `${hW/2 - 2}px`, // Slight overlap
-              width: `${leverW}px`,
-              height: `${leverH}px`,
-              backgroundColor: handleColor,
-              borderRadius: `${leverH}px`,
-              boxShadow: '0 1px 2px rgba(0,0,0,0.2)'
-          }}></div>
+          <div style={{ width: `${hW}px`, height: `${hH}px`, backgroundColor: handleColor, borderRadius: `${hR}px`, boxShadow: shadow }}></div>
+          <div style={{ position: 'absolute', [flip ? 'right' : 'left']: `${hW/2 - 2}px`, width: `${leverW}px`, height: `${leverH}px`, backgroundColor: handleColor, borderRadius: `${leverH}px`, boxShadow: '0 1px 2px rgba(0,0,0,0.2)' }}></div>
       </div>
   );
 
   return (
     <>
-        {/* Layer 1: Direction Lines */}
-        <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none">
-            {type === 'TurnRight' && <path d="M0,0 L100,50 L0,100" fill="none" stroke={strokeColor} vectorEffect="non-scaling-stroke" strokeWidth={strokeWidth} />}
-            {type === 'TurnLeft' && <path d="M100,0 L0,50 L100,100" fill="none" stroke={strokeColor} vectorEffect="non-scaling-stroke" strokeWidth={strokeWidth} />}
-            {type === 'TiltTurnRight' && (
-                <>
-                    <path d="M0,0 L100,50 L0,100" fill="none" stroke={strokeColor} vectorEffect="non-scaling-stroke" strokeWidth={strokeWidth} />
-                    <path d="M0,100 L50,0 L100,100" fill="none" stroke={strokeColor} vectorEffect="non-scaling-stroke" strokeWidth={strokeWidth} strokeDasharray={dashArray} />
-                </>
-            )}
-            {type === 'TiltTurnLeft' && (
-                <>
-                    <path d="M100,0 L0,50 L100,100" fill="none" stroke={strokeColor} vectorEffect="non-scaling-stroke" strokeWidth={strokeWidth} />
-                    <path d="M100,100 L50,0 L0,100" fill="none" stroke={strokeColor} vectorEffect="non-scaling-stroke" strokeWidth={strokeWidth} strokeDasharray={dashArray} />
-                </>
-            )}
-             {/* Doors */}
-             {type === 'DoorRight' && <path d="M0,0 L100,50 L0,100" fill="none" stroke={strokeColor} vectorEffect="non-scaling-stroke" strokeWidth={strokeWidth} />}
-             {type === 'DoorLeft' && <path d="M100,0 L0,50 L100,100" fill="none" stroke={strokeColor} vectorEffect="non-scaling-stroke" strokeWidth={strokeWidth} />}
-        </svg>
-
-        {(type === 'SlidingRight' || type === 'SlidingLeft') && (
-            <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none">
-                 <line x1="10" y1="50" x2="90" y2="50" stroke={strokeColor} strokeWidth="2" vectorEffect="non-scaling-stroke" />
-                 {type === 'SlidingRight' && <path d="M85,45 L90,50 L85,55" fill="none" stroke={strokeColor} strokeWidth="2" vectorEffect="non-scaling-stroke" />}
-                 {type === 'SlidingLeft' && <path d="M15,45 L10,50 L15,55" fill="none" stroke={strokeColor} strokeWidth="2" vectorEffect="non-scaling-stroke" />}
-            </svg>
-        )}
-
-        {/* Layer 2: Flat Handles positioned on Profile */}
-        
-        {/* TurnRight: Handle Right */}
         {type === 'TurnRight' && <div style={{...handleBaseStyle, right: offsetPx}}></div>}
-
-        {/* TurnLeft: Handle Left */}
         {type === 'TurnLeft' && <div style={{...handleBaseStyle, left: offsetPx}}></div>}
-
-        {/* TiltTurnRight: Handle Right */}
         {type === 'TiltTurnRight' && <div style={{...handleBaseStyle, right: offsetPx}}></div>}
-
-        {/* TiltTurnLeft: Handle Left */}
         {type === 'TiltTurnLeft' && <div style={{...handleBaseStyle, left: offsetPx}}></div>}
-
-        {/* DoorRight: Handle Right */}
-        {type === 'DoorRight' && (
-            <div style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', right: offsetPx, zIndex: zIndex }}>
-                <LeverHandle flip />
-            </div>
-        )}
-
-        {/* DoorLeft: Handle Left */}
-        {type === 'DoorLeft' && (
-            <div style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', left: offsetPx, zIndex: zIndex }}>
-                <LeverHandle />
-            </div>
-        )}
-
-        {/* Sliding Handles - Flat Rect */}
-        {type === 'SlidingRight' && (
-             <div style={{...handleBaseStyle, right: '2px', height: `${hH*0.8}px`}}></div>
-        )}
-        {type === 'SlidingLeft' && (
-             <div style={{...handleBaseStyle, left: '2px', height: `${hH*0.8}px`}}></div>
-        )}
+        {type === 'DoorRight' && <div style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', right: offsetPx, zIndex: zIndex }}><LeverHandle flip /></div>}
+        {type === 'DoorLeft' && <div style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', left: offsetPx, zIndex: zIndex }}><LeverHandle /></div>}
+        {type === 'SlidingRight' && <div style={{...handleBaseStyle, right: '2px', height: `${hH*0.8}px`}}></div>}
+        {type === 'SlidingLeft' && <div style={{...handleBaseStyle, left: '2px', height: `${hH*0.8}px`}}></div>}
     </>
   );
 };
