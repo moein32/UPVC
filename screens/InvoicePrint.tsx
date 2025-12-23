@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowRight, Download, Settings2, Loader2, Building, Printer, ZoomIn, ZoomOut, Maximize } from 'lucide-react';
+import { ArrowRight, Download, Settings2, Loader2, Building, Printer, ZoomIn, ZoomOut, Maximize, X } from 'lucide-react';
 import { WindowPreview } from '../components/WindowPreview';
 import { ProjectDetails, InvoiceItem, AppSettings, InvoiceLayoutType } from '../types';
 import { BRANDS } from '../constants';
@@ -36,7 +36,7 @@ export const InvoicePrint = () => {
     const handleResize = () => {
         if (!containerRef.current) return;
         const screenW = window.innerWidth;
-        const targetW = 820; // Slightly more than A4 (794px) for safe preview
+        const targetW = 810; 
         const newScale = Math.min((screenW - 24) / targetW, 1);
         setScale(newScale);
     };
@@ -66,44 +66,29 @@ export const InvoicePrint = () => {
     
     const element = invoiceRef.current;
     
-    // Optimal configuration for Persian/Arabic text and A4 sizing
+    // Width 794px is the exact equivalent of 210mm at 96dpi
     const opt = {
       margin: 0,
-      filename: `Lumina-Invoice-${projectDetails.customerName.replace(/\s+/g, '-')}.pdf`,
-      image: { type: 'jpeg', quality: 0.92 }, // 0.92 is the "sweet spot" for quality vs file size
+      filename: `Invoice-${projectDetails.customerName}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 }, 
       html2canvas: { 
-        scale: 2.2, // 2.2 provides sharp 300DPI-like prints while keeping size under control
+        scale: 2.5, 
         useCORS: true, 
         backgroundColor: '#ffffff',
-        letterRendering: false, // CRITICAL: Fix for Persian character connection issue
+        letterRendering: false,
         scrollY: 0,
         scrollX: 0,
-        windowWidth: 794, // Force A4 width during capture to prevent layout shifts
-        onclone: (clonedDoc: Document) => {
-          // Additional safety: Ensure no letter-spacing or text-transform breaks the rendering
-          const elements = clonedDoc.querySelectorAll('*');
-          elements.forEach((el: any) => {
-            if (el.style) {
-              el.style.letterSpacing = 'normal';
-              el.style.textTransform = 'none';
-            }
-          });
-        }
+        windowWidth: 794,
+        x: 0,
+        y: 0
       },
-      jsPDF: { 
-        unit: 'mm', 
-        format: 'a4', 
-        orientation: 'portrait', 
-        compress: true, // Enable internal PDF stream compression
-        precision: 2 
-      }
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true }
     };
 
     try {
       await html2pdf().set(opt).from(element).save();
     } catch (error) {
       console.error('PDF Generation Error:', error);
-      alert('خطا در ایجاد فایل PDF. لطفا دوباره تلاش کنید.');
     } finally {
       setIsGenerating(false);
     }
@@ -116,54 +101,51 @@ export const InvoicePrint = () => {
            @media print {
              @page { size: A4; margin: 0; }
              .no-print { display: none !important; }
-             .invoice-page { margin: 0 !important; width: 210mm !important; box-shadow: none !important; }
+             .invoice-page { margin: 0 !important; width: 794px !important; box-shadow: none !important; }
            }
 
-           /* Core A4 Styling for Perfect PDF Output */
            .invoice-page { 
-             width: 210mm !important; 
-             height: 297mm !important;
+             width: 794px !important; /* Fixed pixel width for PDF engine stability */
+             height: 1123px !important; /* Fixed pixel height (A4) */
              background-color: #ffffff !important; 
              box-sizing: border-box;
              position: relative;
              overflow: hidden;
              display: flex;
              flex-direction: column;
-             margin: 0 auto;
+             margin: 0; /* Important: removed margin auto for precise canvas capture */
              color: #1e293b !important;
-             /* Prevent sub-pixel rendering issues that break Persian connections */
-             font-feature-settings: "kern" 0;
-             letter-spacing: 0 !important;
            }
 
            .invoice-page * {
              font-family: 'Vazirmatn', sans-serif !important;
              letter-spacing: 0 !important;
-             text-rendering: auto !important;
            }
 
-           /* Layout Specific Styles with Explicit Color Overrides */
+           /* --- LAYOUT: TECHNICAL (NAVY) --- */
            .layout-technical .invoice-header { background: #0f172a !important; border-bottom: 8px solid #2563eb; padding: 40px; }
            .layout-technical .invoice-header h1 { color: #ffffff !important; }
            .layout-technical .invoice-header p, .layout-technical .invoice-header span { color: #cbd5e1 !important; }
            .layout-technical .invoice-table th { background: #1e293b !important; color: #ffffff !important; border: 1px solid #334155; }
            .layout-technical .total-box { background: #0f172a !important; padding: 40px; margin-top: auto; }
            .layout-technical .total-box * { color: #ffffff !important; }
-           .layout-technical .total-box .text-slate-400 { color: #94a3b8 !important; }
 
+           /* --- LAYOUT: MODERN --- */
            .layout-modern .invoice-header { padding: 50px; border-top: 15px solid #2563eb; background: #ffffff !important; }
            .layout-modern .invoice-header * { color: #1e293b !important; }
            .layout-modern .invoice-table th { border-bottom: 3px solid #2563eb; color: #0f172a !important; font-weight: 900; background: transparent !important; }
            .layout-modern .total-box { background: #f8fafc !important; border-radius: 40px; padding: 30px; margin: 20px 40px; border: 1px solid #e2e8f0; }
            .layout-modern .total-box * { color: #1e293b !important; }
 
+           /* --- LAYOUT: STANDARD --- */
            .layout-standard .invoice-header { background: #f8fafc !important; border-bottom: 2px solid #e2e8f0; padding: 40px; }
            .layout-standard .invoice-header * { color: #1e293b !important; }
            .layout-standard .invoice-table th { background: #f1f5f9 !important; color: #334155 !important; border: 1px solid #e2e8f0; }
            .layout-standard .total-box { background: #f8fafc !important; padding: 30px; border-top: 2px solid #e2e8f0; }
            .layout-standard .total-box * { color: #1e293b !important; }
 
-           .layout-classic { padding: 10mm; }
+           /* --- LAYOUT: CLASSIC --- */
+           .layout-classic { padding: 40px; }
            .layout-classic .invoice-page-inner { border: 1.5pt solid #000000; height: 100%; display: flex; flex-direction: column; background: #ffffff !important; }
            .layout-classic .invoice-header { text-align: center; border-bottom: 1.5pt solid #000000; padding: 20px; color: #000000 !important; }
            .layout-classic .invoice-header h1 { color: #000000 !important; }
@@ -171,22 +153,15 @@ export const InvoicePrint = () => {
            .layout-classic .invoice-table th { background: #f2f2f2 !important; font-weight: 900; }
            .layout-classic .total-box { border-top: 1.5pt solid #000000; padding: 25px; background: #ffffff !important; color: #000000 !important; }
            .layout-classic .total-box * { color: #000000 !important; }
-           .layout-classic .unit-card { border: 0.5pt solid #000000; padding: 5px; }
-
-           /* Fix for common PDF rendering artifact: ensure tables don't have stray white borders */
-           table { border-collapse: collapse; }
-           
-           /* Hide scrollbars during generation */
-           .generating-pdf .invoice-page { overflow: visible !important; }
          `}
        </style>
 
-       {/* UI Control Bar */}
+       {/* Control Bar - Mobile Optimized */}
        <div className="no-print fixed bottom-6 left-4 right-4 z-50 flex justify-center">
-            <div className="bg-white/95 backdrop-blur-3xl shadow-[0_15px_50px_rgba(0,0,0,0.2)] border border-slate-200 rounded-[2.5rem] p-2 w-full max-w-xl flex items-center justify-between gap-2">
+            <div className="bg-white/95 backdrop-blur-3xl shadow-[0_20px_60px_rgba(0,0,0,0.2)] border border-slate-200 rounded-[2rem] p-2 w-full max-w-xl flex items-center gap-2">
                 <button 
                   onClick={() => navigate(-1)} 
-                  className="p-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-full transition-all active:scale-90"
+                  className="w-12 h-12 flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-full transition-all shrink-0"
                 >
                   <ArrowRight size={20} />
                 </button>
@@ -194,18 +169,18 @@ export const InvoicePrint = () => {
                 <button 
                     onClick={handleDownloadPDF}
                     disabled={isGenerating}
-                    className="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white h-14 rounded-full font-black text-xs sm:text-sm shadow-xl hover:bg-blue-700 disabled:opacity-50 transition-all"
+                    className="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white h-12 rounded-full font-black text-[11px] sm:text-xs shadow-lg hover:bg-blue-700 disabled:opacity-50 transition-all px-2"
                 >
-                    {isGenerating ? <Loader2 className="animate-spin" size={20} /> : <Printer size={20} />}
-                    <span className="whitespace-nowrap">{isGenerating ? 'در حال ایجاد فایل...' : 'ذخیره و چاپ فاکتور (PDF)'}</span>
+                    {isGenerating ? <Loader2 className="animate-spin" size={18} /> : <Printer size={18} />}
+                    <span className="whitespace-nowrap">{isGenerating ? 'صبر کنید...' : 'چاپ فاکتور'}</span>
                 </button>
 
-                <div className="flex items-center gap-1.5 bg-slate-50 rounded-full px-3 h-14 border border-slate-100 shrink-0">
-                    <Settings2 size={16} className="text-blue-600" />
+                <div className="flex items-center gap-1.5 bg-slate-50 rounded-full px-2 h-12 border border-slate-100 min-w-[90px] sm:min-w-[130px] shrink-0">
+                    <Settings2 size={16} className="text-blue-600 hidden sm:block" />
                     <select 
                         value={tempLayout} 
                         onChange={(e) => setTempLayout(e.target.value as any)}
-                        className="bg-transparent border-none p-0 text-[10px] sm:text-[11px] font-black text-slate-800 focus:ring-0 cursor-pointer outline-none"
+                        className="bg-transparent border-none p-0 text-[10px] font-black text-slate-800 focus:ring-0 cursor-pointer outline-none w-full text-center"
                     >
                         <option value="technical">قالب فنی</option>
                         <option value="modern">قالب مدرن</option>
@@ -216,24 +191,24 @@ export const InvoicePrint = () => {
             </div>
        </div>
 
-       {/* Zoom Controls */}
+       {/* Restored Zoom Controls */}
        <div className="no-print fixed top-6 right-6 z-50 flex flex-col gap-2">
-            <button onClick={() => setScale(s => Math.min(s + 0.1, 2.5))} className="p-3 bg-white shadow-xl rounded-2xl text-slate-700 hover:bg-slate-50 border border-slate-100"><ZoomIn size={22}/></button>
-            <button onClick={() => setScale(s => Math.max(s - 0.1, 0.2))} className="p-3 bg-white shadow-xl rounded-2xl text-slate-700 hover:bg-slate-50 border border-slate-100"><ZoomOut size={22}/></button>
-            <button onClick={() => setScale(1)} className="p-3 bg-blue-600 shadow-xl rounded-2xl text-white hover:bg-blue-700"><Maximize size={22}/></button>
+            <button onClick={() => setScale(s => Math.min(s + 0.1, 2.5))} className="p-3.5 bg-white shadow-xl rounded-2xl text-slate-700 hover:bg-slate-50 transition-all border border-slate-100 active:scale-90"><ZoomIn size={22}/></button>
+            <button onClick={() => setScale(s => Math.max(s - 0.1, 0.2))} className="p-3.5 bg-white shadow-xl rounded-2xl text-slate-700 hover:bg-slate-50 transition-all border border-slate-100 active:scale-90"><ZoomOut size={22}/></button>
+            <button onClick={() => setScale(1)} className="p-3.5 bg-blue-600 shadow-xl rounded-2xl text-white hover:bg-blue-700 active:scale-90 transition-all"><Maximize size={22}/></button>
        </div>
 
-       {/* PDF Preview / Source Area */}
-       <div ref={containerRef} className={`w-full flex justify-center py-12 pb-44 ${isGenerating ? 'generating-pdf' : ''}`}>
+       {/* Invoice Page Container */}
+       <div ref={containerRef} className="w-full flex justify-center py-12 pb-44 overflow-x-auto scrollbar-hide">
             <div 
-                className="relative shadow-2xl origin-top transition-all duration-300"
-                style={{ transform: `scale(${scale})`, width: '210mm' }}
+                className="relative shadow-[0_30px_100px_rgba(0,0,0,0.15)] origin-top transition-all duration-300"
+                style={{ transform: `scale(${scale})`, width: '794px' }}
             >
                 <div ref={invoiceRef} className={`invoice-page layout-${tempLayout}`}>
                     <div className="invoice-page-inner flex-1 flex flex-col">
                         
                         {/* HEADER */}
-                        <div className="invoice-header px-10">
+                        <div className="invoice-header px-10 pt-10">
                             <div className="flex justify-between items-start">
                                 <div>
                                     <h1 className="text-3xl font-black mb-1 tracking-tighter">
@@ -276,7 +251,7 @@ export const InvoicePrint = () => {
                             </div>
                         </div>
 
-                        {/* MAIN ITEMS TABLE */}
+                        {/* TABLE */}
                         <div className="flex-1 px-10">
                             <table className="invoice-table w-full border-collapse">
                                 <thead>
@@ -296,7 +271,7 @@ export const InvoicePrint = () => {
                                                     {toPersianDigits(index + 1)}
                                                 </td>
                                                 <td className="p-3 align-top">
-                                                    <div className={`unit-card aspect-square bg-white flex items-center justify-center p-2 ${tempLayout === 'modern' ? 'rounded-xl border border-slate-100' : tempLayout === 'classic' ? 'border border-black' : 'border border-slate-200'}`}>
+                                                    <div className={`unit-card aspect-square bg-white flex items-center justify-center p-2 border ${tempLayout === 'modern' ? 'rounded-xl border-slate-100' : tempLayout === 'classic' ? 'border-black' : 'border-slate-200'}`}>
                                                         <WindowPreview config={item.config} width="100%" height="100%" />
                                                     </div>
                                                     <div className="text-center mt-2 text-[9px] font-black text-slate-400 uppercase tracking-tighter">
@@ -305,7 +280,7 @@ export const InvoicePrint = () => {
                                                 </td>
                                                 <td className="p-3 align-top">
                                                     <div className="mb-2 flex items-center gap-2">
-                                                        <span className={`px-2 py-0.5 rounded text-[9px] font-black ${tempLayout === 'technical' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700 border border-slate-200'}`}>
+                                                        <span className={`px-2 py-0.5 rounded text-[9px] font-black ${tempLayout === 'technical' ? 'bg-blue-600 text-white border-none' : 'bg-slate-100 text-slate-700 border border-slate-200'}`}>
                                                             {brand?.name}
                                                         </span>
                                                         <span className="text-[10px] font-black text-slate-800">{item.config.type}</span>
@@ -331,7 +306,7 @@ export const InvoicePrint = () => {
                                                         ))}
                                                     </div>
                                                 </td>
-                                                <td className={`p-3 align-top text-left font-black text-base text-slate-900 ${tempLayout === 'technical' ? 'bg-slate-50' : ''}`}>
+                                                <td className={`p-3 align-top text-left font-black text-base text-slate-900 ${tempLayout === 'technical' ? 'bg-slate-50/50' : ''}`}>
                                                     {formatPrice(item.calculations.totalPrice)}
                                                 </td>
                                             </tr>
@@ -341,42 +316,42 @@ export const InvoicePrint = () => {
                             </table>
                         </div>
 
-                        {/* FOOTER SUMMARY */}
+                        {/* FOOTER */}
                         <div className="total-box mt-auto">
                             <div className="flex justify-between items-start gap-10">
                                 <div className="flex-1">
-                                    <h4 className="text-[9px] font-black uppercase tracking-[2px] mb-2 opacity-60">توضیحات تکمیلی فاکتور:</h4>
-                                    <p className="text-[10px] leading-relaxed text-justify font-medium text-slate-700">
-                                        {invoiceConfig.footerNote || 'اعتبار این پیش‌فاکتور ۷۲ ساعت می‌باشد. هزینه حمل و نصب بر طبق توافق نهایی منظور خواهد شد.'}
+                                    <h4 className="text-[9px] font-black uppercase tracking-[2px] mb-2 opacity-60">توضیحات فاکتور:</h4>
+                                    <p className="text-[10px] leading-relaxed text-justify font-medium">
+                                        {invoiceConfig.footerNote || 'اعتبار این پیش‌فاکتور ۷۲ ساعت می‌باشد.'}
                                     </p>
                                     <div className="mt-12 flex justify-between items-center px-4">
                                         <div className="text-center">
-                                            <div className="w-32 h-px bg-slate-300 mb-2"></div>
-                                            <span className="text-[8px] font-black opacity-60 uppercase tracking-widest text-slate-400">مهر و امضای فروشنده</span>
+                                            <div className="w-32 h-px bg-current opacity-20 mb-2"></div>
+                                            <span className="text-[8px] font-black opacity-60 uppercase tracking-widest">مهر و امضا</span>
                                         </div>
-                                        {tempLayout === 'classic' && <div className="classic-stamp text-black">STAMP</div>}
+                                        {tempLayout === 'classic' && <div className="text-black font-black text-sm border-2 border-black p-2 rounded-full opacity-20 rotate-12">STAMP</div>}
                                         <div className="text-center">
-                                            <div className="w-32 h-px bg-slate-300 mb-2"></div>
-                                            <span className="text-[8px] font-black opacity-60 uppercase tracking-widest text-slate-400">تایید و امضای خریدار</span>
+                                            <div className="w-32 h-px bg-current opacity-20 mb-2"></div>
+                                            <span className="text-[8px] font-black opacity-60 uppercase tracking-widest">تایید خریدار</span>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div className="w-72 space-y-3">
-                                    <div className="flex justify-between text-xs font-bold text-slate-500">
+                                    <div className="flex justify-between text-xs font-bold opacity-70">
                                         <span>جمع کل متریال:</span>
-                                        <span className="font-black text-slate-900">{formatPrice(totalMaterialPrice)}</span>
+                                        <span className="font-black">{formatPrice(totalMaterialPrice)}</span>
                                     </div>
-                                    <div className="flex justify-between text-xs font-bold text-slate-500">
+                                    <div className="flex justify-between text-xs font-bold opacity-70">
                                         <span>هزینه نصب ({toPersianDigits(projectDetails.installPercent)}٪):</span>
-                                        <span className="font-black text-slate-900">{formatPrice(installationCost)}</span>
+                                        <span className="font-black">{formatPrice(installationCost)}</span>
                                     </div>
-                                    <div className="h-px bg-slate-200 my-1"></div>
+                                    <div className="h-px bg-current opacity-10 my-1"></div>
                                     <div className="flex justify-between items-end">
-                                        <span className="text-xs font-black mb-1 opacity-80 uppercase tracking-tighter text-slate-600">مبلغ نهایی قابل پرداخت:</span>
+                                        <span className="text-xs font-black mb-1 opacity-80">مبلغ نهایی فاکتور:</span>
                                         <div className="text-left">
-                                            <div className="text-4xl font-black tracking-tighter leading-none text-slate-900">{formatPrice(finalPrice)}</div>
-                                            <span className="text-[9px] font-black opacity-40 mt-1 block uppercase tracking-widest text-slate-500">Toman / تومان</span>
+                                            <div className="text-4xl font-black tracking-tighter leading-none">{formatPrice(finalPrice)}</div>
+                                            <span className="text-[9px] font-black opacity-40 mt-1 block uppercase">Toman / تومان</span>
                                         </div>
                                     </div>
                                 </div>
