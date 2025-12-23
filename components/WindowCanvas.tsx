@@ -25,9 +25,8 @@ const DESIGN_SYSTEM = {
         dashArray: "15,10"
     },
     dimensions: {
-        // Offset values to move lines outside the unit
-        segmentOffset: -35, 
-        globalOffset: -55,  
+        segmentOffset: -38, 
+        globalOffset: -62,  
         lineColor: 'bg-slate-400', 
         textColor: 'text-slate-600', 
         badgeBg: 'bg-white/95 backdrop-blur-sm', 
@@ -57,29 +56,68 @@ interface Props {
   showDimensions?: boolean;
 }
 
-const DimensionLine = ({ 
-    length, 
-    orientation, 
-    label, 
-    position, 
-    offset = 0,
-    depthOffset = 0,
-    onClick,
-    isSegment = false
-}: { 
-    length: number, 
-    orientation: 'h' | 'v', 
-    label: number, 
-    position: 'start' | 'end' | 'center', 
-    offset?: number,
-    depthOffset?: number,
-    onClick?: () => void,
-    isSegment?: boolean
+const UnifiedDimensionLine = ({
+    segments,
+    orientation,
+    totalSize,
+    onSegmentClick
+}: {
+    segments: { id: string, size: number, parentId: string, index: number, total: number }[],
+    orientation: 'h' | 'v',
+    totalSize: number,
+    onSegmentClick?: (parentId: string, index: number, size: number, total: number) => void
 }) => {
     const isH = orientation === 'h';
-    // Logic: move lines further outside based on depth to avoid overlap
-    const baseVal = isSegment ? DESIGN_SYSTEM.dimensions.segmentOffset : DESIGN_SYSTEM.dimensions.globalOffset; 
-    const totalOffset = baseVal - (depthOffset * 22);
+    const totalOffset = DESIGN_SYSTEM.dimensions.segmentOffset;
+
+    return (
+        <div className={`absolute z-[60] select-none pointer-events-none transition-all
+            ${isH ? 'h-6' : 'w-6'}
+        `}
+        style={{
+            [isH ? 'width' : 'height']: '100%',
+            [isH ? 'top' : 'left']: `${totalOffset}px`,
+            [isH ? 'left' : 'top']: 0,
+        }}
+        >
+            <div className={`${DESIGN_SYSTEM.dimensions.lineColor} absolute ${isH ? 'h-[1px] left-0 right-0 top-1/2' : 'w-[1px] top-0 bottom-0 left-1/2'}`}></div>
+            
+            <div className={`flex w-full h-full ${isH ? 'flex-row' : 'flex-col'}`}>
+                {segments.map((seg, idx) => {
+                    const ratio = (seg.size / totalSize) * 100;
+                    return (
+                        <div 
+                            key={`${seg.id}-${idx}`} 
+                            className="relative flex items-center justify-center" 
+                            style={{ [isH ? 'width' : 'height']: `${ratio}%` }}
+                        >
+                            <div 
+                                onClick={(e) => { e.stopPropagation(); onSegmentClick && onSegmentClick(seg.parentId, seg.index, seg.size, seg.total); }}
+                                className={`${DESIGN_SYSTEM.dimensions.badgeBg} px-1.5 py-0.5 text-[8px] font-black ${DESIGN_SYSTEM.dimensions.textColor} border ${DESIGN_SYSTEM.dimensions.badgeBorder} rounded shadow-sm hover:border-blue-400 cursor-pointer transition-all z-[70] pointer-events-auto
+                                ${isH ? '' : 'rotate-90 origin-center'}
+                            `}>
+                                {toPersianDigits(Math.round(seg.size))}
+                            </div>
+
+                            <div className={`${DESIGN_SYSTEM.dimensions.lineColor} absolute ${isH ? 'left-0 h-3 w-[1.5px] top-1/2 -translate-y-1/2' : 'top-0 w-3 h-[1.5px] left-1/2 -translate-x-1/2'}`}></div>
+                            {idx === segments.length - 1 && (
+                                <div className={`${DESIGN_SYSTEM.dimensions.lineColor} absolute ${isH ? 'right-0 h-3 w-[1.5px] top-1/2 -translate-y-1/2' : 'bottom-0 w-3 h-[1.5px] left-1/2 -translate-x-1/2'}`}></div>
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+};
+
+const DimensionLine = ({ 
+    length, orientation, label, onClick 
+}: { 
+    length: number, orientation: 'h' | 'v', label: number, onClick?: () => void 
+}) => {
+    const isH = orientation === 'h';
+    const totalOffset = DESIGN_SYSTEM.dimensions.globalOffset;
     
     return (
         <div className={`absolute flex items-center justify-center z-[60] select-none pointer-events-none transition-all
@@ -88,14 +126,13 @@ const DimensionLine = ({
         `}
         style={{
             [isH ? 'width' : 'height']: '100%',
-            [isH ? 'top' : 'left']: `${totalOffset}px`, // Moved height line to the LEFT
+            [isH ? 'top' : 'left']: `${totalOffset}px`,
             [isH ? 'left' : 'top']: 0,
         }}
         >
             <div className={`${DESIGN_SYSTEM.dimensions.lineColor} absolute ${isH ? 'h-[1.5px] left-0 right-0 top-1/2' : 'w-[1.5px] top-0 bottom-0 left-1/2'}`}></div>
-            {/* End caps */}
-            <div className={`${DESIGN_SYSTEM.dimensions.lineColor} absolute ${isH ? 'left-0 h-3 w-[1.5px] top-1/2 -translate-y-1/2' : 'top-0 w-3 h-[1.5px] left-1/2 -translate-x-1/2'}`}></div>
-            <div className={`${DESIGN_SYSTEM.dimensions.lineColor} absolute ${isH ? 'right-0 h-3 w-[1.5px] top-1/2 -translate-y-1/2' : 'bottom-0 w-3 h-[1.5px] left-1/2 -translate-x-1/2'}`}></div>
+            <div className={`${DESIGN_SYSTEM.dimensions.lineColor} absolute ${isH ? 'left-0 h-4 w-[1.5px] top-1/2 -translate-y-1/2' : 'top-0 w-4 h-[1.5px] left-1/2 -translate-x-1/2'}`}></div>
+            <div className={`${DESIGN_SYSTEM.dimensions.lineColor} absolute ${isH ? 'right-0 h-4 w-[1.5px] top-1/2 -translate-y-1/2' : 'bottom-0 w-4 h-[1.5px] left-1/2 -translate-x-1/2'}`}></div>
             
             <div 
                 onClick={(e) => { e.stopPropagation(); onClick && onClick(); }}
@@ -107,6 +144,48 @@ const DimensionLine = ({
         </div>
     )
 }
+
+/**
+ * Recursive function to flatten all dimensions. 
+ * Corrected: Now checks all children and returns the one with the most segments.
+ */
+const collectFlattenedSegments = (node: WindowNode, totalSize: number, targetDir: 'row' | 'col'): any[] => {
+    if (node.type === 'leaf') {
+        return [];
+    }
+
+    if (node.dir === targetDir) {
+        const totalFlex = node.children?.reduce((sum, c) => sum + (c.flex || 1), 0) || 1;
+        return node.children?.flatMap((child, idx) => {
+            const childSize = (child.flex || 1) / totalFlex * totalSize;
+            const subSegments = collectFlattenedSegments(child, childSize, targetDir);
+            
+            if (subSegments.length === 0) {
+                return [{
+                    id: child.id,
+                    size: childSize,
+                    parentId: node.id,
+                    index: idx,
+                    total: totalSize
+                }];
+            }
+            return subSegments;
+        }) || [];
+    } else {
+        // If split in opposite direction, we check ALL children and take the one with the MOST segments.
+        // This ensures if the bottom section has 3 parts and top has 1, we show the 3 parts.
+        let bestSegments: any[] = [];
+        if (node.children) {
+            for (const child of node.children) {
+                const childSegments = collectFlattenedSegments(child, totalSize, targetDir);
+                if (childSegments.length > bestSegments.length) {
+                    bestSegments = childSegments;
+                }
+            }
+        }
+        return bestSegments;
+    }
+};
 
 export const WindowCanvas = ({ 
   node, selectedId, onSelect, onUpdateNode, width, height, 
@@ -216,13 +295,33 @@ export const WindowCanvas = ({
 
   const RootWrapper = ({ children }: {children?: React.ReactNode}) => {
       if (!isRoot) return <>{children}</>;
+      
+      const hSegments = collectFlattenedSegments(node, width, 'row');
+      const vSegments = collectFlattenedSegments(node, height, 'col');
+
       return (
         <div className="relative w-full h-full bg-transparent select-none overflow-visible">
             {showDimensions && (
                 <>
-                  {/* Global dimensions outside the main frame */}
-                  <DimensionLine length={width} orientation="h" label={width} position="end" onClick={() => onDimensionEdit && onDimensionEdit('w', width)}/>
-                  <DimensionLine length={height} orientation="v" label={height} position="end" onClick={() => onDimensionEdit && onDimensionEdit('h', height)}/>
+                  <DimensionLine length={width} orientation="h" label={width} onClick={() => onDimensionEdit && onDimensionEdit('w', width)}/>
+                  <DimensionLine length={height} orientation="v" label={height} onClick={() => onDimensionEdit && onDimensionEdit('h', height)}/>
+                  
+                  {!isThumbnail && hSegments.length > 0 && (
+                      <UnifiedDimensionLine 
+                        segments={hSegments} 
+                        orientation="h" 
+                        totalSize={width} 
+                        onSegmentClick={onChildResize}
+                      />
+                  )}
+                  {!isThumbnail && vSegments.length > 0 && (
+                      <UnifiedDimensionLine 
+                        segments={vSegments} 
+                        orientation="v" 
+                        totalSize={height} 
+                        onSegmentClick={onChildResize}
+                      />
+                  )}
                 </>
             )}
             <div className="w-full h-full relative rounded-sm border border-slate-300 transition-all duration-300" style={frameStyle}>
@@ -287,22 +386,6 @@ export const WindowCanvas = ({
                                         scale={scale}
                                         showDimensions={showDimensions}
                                     />
-                                    {showDimensions && !isThumbnail && (
-                                        <>
-                                            {node.dir === 'row' && (
-                                                <DimensionLine 
-                                                    length={childWidth} orientation="h" label={childWidth} position="end" isSegment={true} depthOffset={depth + 1} 
-                                                    onClick={() => onChildResize && onChildResize(node.id, index, childWidth, width)}
-                                                />
-                                            )}
-                                            {node.dir === 'col' && (
-                                                <DimensionLine 
-                                                    length={childHeight} orientation="v" label={childHeight} position="end" isSegment={true} depthOffset={depth + 1}
-                                                    onClick={() => onChildResize && onChildResize(node.id, index, childHeight, height)}
-                                                />
-                                            )}
-                                        </>
-                                    )}
                                 </div>
                                 {index < node.children!.length - 1 && (
                                     <div 
