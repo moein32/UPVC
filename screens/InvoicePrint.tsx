@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowRight, Download, Settings2, Loader2, Building, Printer, ZoomIn, ZoomOut, Maximize, X } from 'lucide-react';
+import { ArrowRight, Download, Settings2, Loader2, Building, Printer, ZoomIn, ZoomOut, Maximize, X, Share2 } from 'lucide-react';
 import { WindowPreview } from '../components/WindowPreview';
 import { ProjectDetails, InvoiceItem, AppSettings, InvoiceLayoutType } from '../types';
 import { BRANDS } from '../constants';
@@ -66,7 +66,6 @@ export const InvoicePrint = () => {
     
     const element = invoiceRef.current;
     
-    // Width 794px is the exact equivalent of 210mm at 96dpi
     const opt = {
       margin: 0,
       filename: `Invoice-${projectDetails.customerName}.pdf`,
@@ -94,6 +93,52 @@ export const InvoicePrint = () => {
     }
   };
 
+  const handleSharePDF = async () => {
+    if (!invoiceRef.current) return;
+    setIsGenerating(true);
+    
+    const element = invoiceRef.current;
+    const opt = {
+      margin: 0,
+      filename: `Invoice-${projectDetails.customerName}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 }, 
+      html2canvas: { 
+        scale: 2.5, 
+        useCORS: true, 
+        backgroundColor: '#ffffff',
+        windowWidth: 794,
+        x: 0,
+        y: 0
+      },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true }
+    };
+
+    try {
+      const pdfBlob = await html2pdf().set(opt).from(element).outputPdf('blob');
+      const file = new File([pdfBlob], `Invoice-${projectDetails.customerName}.pdf`, { type: 'application/pdf' });
+      
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: 'پیش‌فاکتور لومینا',
+          text: `پیش‌فاکتور پروژه ${projectDetails.customerName}`,
+        });
+      } else {
+        // Fallback: download if sharing is not supported
+        const url = URL.createObjectURL(pdfBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `Invoice-${projectDetails.customerName}.pdf`;
+        link.click();
+        URL.revokeObjectURL(url);
+      }
+    } catch (error) {
+      console.error('Sharing Error:', error);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-300 flex flex-col items-center overflow-x-hidden relative font-['Vazirmatn']">
        <style>
@@ -105,15 +150,15 @@ export const InvoicePrint = () => {
            }
 
            .invoice-page { 
-             width: 794px !important; /* Fixed pixel width for PDF engine stability */
-             height: 1123px !important; /* Fixed pixel height (A4) */
+             width: 794px !important; 
+             height: 1123px !important; 
              background-color: #ffffff !important; 
              box-sizing: border-box;
              position: relative;
              overflow: hidden;
              display: flex;
              flex-direction: column;
-             margin: 0; /* Important: removed margin auto for precise canvas capture */
+             margin: 0; 
              color: #1e293b !important;
            }
 
@@ -191,14 +236,23 @@ export const InvoicePrint = () => {
             </div>
        </div>
 
-       {/* Restored Zoom Controls */}
+       {/* Zoom & Share Controls */}
        <div className="no-print fixed top-6 right-6 z-50 flex flex-col gap-2">
+            <button 
+              onClick={handleSharePDF} 
+              disabled={isGenerating}
+              className="p-3.5 bg-emerald-600 shadow-xl rounded-2xl text-white hover:bg-emerald-700 active:scale-90 transition-all border border-emerald-500 disabled:opacity-50"
+              title="اشتراک‌گذاری"
+            >
+              {isGenerating ? <Loader2 size={22} className="animate-spin" /> : <Share2 size={22}/>}
+            </button>
+            <div className="w-full h-px bg-slate-400 opacity-20 my-1"></div>
             <button onClick={() => setScale(s => Math.min(s + 0.1, 2.5))} className="p-3.5 bg-white shadow-xl rounded-2xl text-slate-700 hover:bg-slate-50 transition-all border border-slate-100 active:scale-90"><ZoomIn size={22}/></button>
             <button onClick={() => setScale(s => Math.max(s - 0.1, 0.2))} className="p-3.5 bg-white shadow-xl rounded-2xl text-slate-700 hover:bg-slate-50 transition-all border border-slate-100 active:scale-90"><ZoomOut size={22}/></button>
             <button onClick={() => setScale(1)} className="p-3.5 bg-blue-600 shadow-xl rounded-2xl text-white hover:bg-blue-700 active:scale-90 transition-all"><Maximize size={22}/></button>
        </div>
 
-       {/* Invoice Page Container */}
+       {/* Invoice Preview Area */}
        <div ref={containerRef} className="w-full flex justify-center py-12 pb-44 overflow-x-auto scrollbar-hide">
             <div 
                 className="relative shadow-[0_30px_100px_rgba(0,0,0,0.15)] origin-top transition-all duration-300"
