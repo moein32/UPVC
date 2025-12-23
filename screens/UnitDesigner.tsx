@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowRight, Save, Trash2, SplitSquareHorizontal, SplitSquareVertical, PlusCircle, Maximize, ZoomIn, ZoomOut, RefreshCcw, Hand, MousePointer2, Receipt, Check, Edit3, Grid, XCircle, Undo, Redo, LayoutTemplate, Home, Box, Layers } from 'lucide-react';
+import { ArrowRight, Save, Trash2, SplitSquareHorizontal, SplitSquareVertical, PlusCircle, Maximize, ZoomIn, ZoomOut, RefreshCcw, Hand, MousePointer2, Receipt, Check, Edit3, Grid, XCircle, Undo, Redo, LayoutTemplate, Home, Box, Layers, Settings, ChevronDown, ChevronUp, SlidersHorizontal } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { InputField, SelectField, PrimaryButton } from '../components/UIComponents';
@@ -162,6 +162,9 @@ export const UnitDesigner = () => {
   const [projectItems, setProjectItems] = useState<InvoiceItem[]>(locationState.items || []);
   const [editIndex, setEditIndex] = useState<number | undefined>(locationState.editIndex);
   const [lastSavedId, setLastSavedId] = useState<string | null>(null);
+
+  // --- UI Control State ---
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
 
   // --- External Data ---
   const [brands, setBrands] = useState<ProfileBrand[]>([]);
@@ -775,90 +778,115 @@ export const UnitDesigner = () => {
         <div className="absolute inset-0 opacity-5 pointer-events-none" style={{ backgroundImage: 'linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
       </div>
 
-      <div className="bg-white rounded-t-2xl shadow-[0_-5px_30px_rgba(0,0,0,0.1)] z-30 p-5 pb-8 shrink-0">
-         <div className={`flex gap-4 mb-4 items-center p-3 rounded-xl border transition-colors ${!isRootSelected ? 'bg-orange-50 border-orange-200' : 'bg-slate-50 border-slate-100'}`}>
-             <span className={`text-xs font-bold whitespace-nowrap ${!isRootSelected ? 'text-orange-600' : 'text-slate-500'}`}>{isRootSelected ? t('global_dims') : t('section_dims')}</span>
-             {isRootSelected ? (
-                <div className="flex gap-2 flex-1">
-                     <div className="relative flex-1">
-                         <input type="text" inputMode="numeric" value={config.width === 0 ? '' : config.width} onChange={(e) => handleGlobalResize(e.target.value, 'w')} className="w-full pl-8 pr-2 py-2 rounded-lg border border-slate-300 text-center font-bold text-sm" placeholder="0" style={{ direction: 'ltr' }} />
-                         <span className="absolute left-2 top-2 text-[10px] text-slate-400">mm</span>
-                         <span className="absolute right-2 top-2 text-[10px] text-slate-400">{t('width')}</span>
-                     </div>
-                     <span className="self-center text-slate-400">×</span>
-                     <div className="relative flex-1">
-                         <input type="text" inputMode="numeric" value={config.height === 0 ? '' : config.height} onChange={(e) => handleGlobalResize(e.target.value, 'h')} className="w-full pl-8 pr-2 py-2 rounded-lg border border-slate-300 text-center font-bold text-sm" placeholder="0" style={{ direction: 'ltr' }} />
-                         <span className="absolute left-2 top-2 text-[10px] text-slate-400">mm</span>
-                         <span className="absolute right-2 top-2 text-[10px] text-slate-400">{t('height')}</span>
-                     </div>
-                 </div>
-             ) : (
-                 <div className="flex gap-2 flex-1">
-                     <div className="relative flex-1">
-                         <input type="text" inputMode="numeric" disabled={!selectedNodeDims?.editableW} value={localDims.w} onChange={(e) => handleLocalInputChange(e.target.value, 'w')} onBlur={() => commitManualResize('w')} onKeyDown={(e) => e.key === 'Enter' && commitManualResize('w')} className={`w-full pl-8 pr-2 py-2 rounded-lg border text-center font-bold text-sm ${!selectedNodeDims?.editableW ? 'bg-slate-100 text-slate-400 border-slate-200' : 'bg-white border-orange-300 text-orange-900'}`} style={{ direction: 'ltr' }} />
-                         <span className="absolute left-2 top-2 text-[10px] text-slate-400">mm</span>
-                         <span className="absolute right-2 top-2 text-[10px] text-slate-400">{t('width')}</span>
-                     </div>
-                     <span className="self-center text-slate-400">×</span>
-                     <div className="relative flex-1">
-                         <input type="text" inputMode="numeric" disabled={!selectedNodeDims?.editableH} value={localDims.h} onChange={(e) => handleLocalInputChange(e.target.value, 'h')} onBlur={() => commitManualResize('h')} onKeyDown={(e) => e.key === 'Enter' && commitManualResize('h')} className={`w-full pl-8 pr-2 py-2 rounded-lg border text-center font-bold text-sm ${!selectedNodeDims?.editableH ? 'bg-slate-100 text-slate-400 border-slate-200' : 'bg-white border-orange-300 text-orange-900'}`} style={{ direction: 'ltr' }} />
-                         <span className="absolute left-2 top-2 text-[10px] text-slate-400">mm</span>
-                         <span className="absolute right-2 top-2 text-[10px] text-slate-400">{t('height')}</span>
-                     </div>
-                     <button onClick={() => setSelectedNodeId('root')} className="p-2 bg-slate-200 rounded-lg text-slate-600 hover:bg-slate-300" title="بازگشت به ابعاد کل"><Grid size={16} /></button>
-                 </div>
-             )}
-         </div>
+      {/* FLOATING ACTION PANEL - REDESIGNED */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 p-4 pointer-events-none">
+          <div className="max-w-xl mx-auto flex flex-col items-center gap-3">
+              
+              {/* Expandable Settings Card */}
+              <div className={`w-full bg-white/90 backdrop-blur-2xl border border-white/60 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] overflow-hidden transition-all duration-500 pointer-events-auto ${isPanelOpen ? 'max-h-[500px] p-6' : 'max-h-0 p-0 border-none opacity-0'}`}>
+                  <div className="space-y-6">
+                      {/* Dimensions Section */}
+                      <div className={`p-4 rounded-3xl border transition-colors ${!isRootSelected ? 'bg-orange-50 border-orange-200' : 'bg-slate-50 border-slate-100'}`}>
+                        <div className="flex items-center justify-between mb-3">
+                            <span className={`text-[10px] font-black uppercase tracking-widest ${!isRootSelected ? 'text-orange-600' : 'text-slate-500'}`}>{isRootSelected ? t('global_dims') : t('section_dims')}</span>
+                            {!isRootSelected && <button onClick={() => setSelectedNodeId('root')} className="text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-1 rounded-lg">بازگشت به ابعاد کل</button>}
+                        </div>
+                        <div className="flex gap-2 items-center">
+                            <div className="relative flex-1">
+                                <input 
+                                    type="text" 
+                                    inputMode="numeric" 
+                                    disabled={!isRootSelected && !selectedNodeDims?.editableW}
+                                    value={isRootSelected ? (config.width === 0 ? '' : config.width) : localDims.w} 
+                                    onChange={(e) => isRootSelected ? handleGlobalResize(e.target.value, 'w') : handleLocalInputChange(e.target.value, 'w')} 
+                                    onBlur={() => !isRootSelected && commitManualResize('w')}
+                                    className={`w-full pl-8 pr-2 py-3 rounded-xl border text-center font-black text-sm transition-all ${(!isRootSelected && !selectedNodeDims?.editableW) ? 'bg-slate-100 text-slate-400 border-slate-200' : 'bg-white border-slate-200 focus:border-blue-500'}`} 
+                                    style={{ direction: 'ltr' }} 
+                                />
+                                <span className="absolute left-3 top-3.5 text-[10px] text-slate-400">mm</span>
+                            </div>
+                            <span className="text-slate-300 font-bold">×</span>
+                            <div className="relative flex-1">
+                                <input 
+                                    type="text" 
+                                    inputMode="numeric" 
+                                    disabled={!isRootSelected && !selectedNodeDims?.editableH}
+                                    value={isRootSelected ? (config.height === 0 ? '' : config.height) : localDims.h} 
+                                    onChange={(e) => isRootSelected ? handleGlobalResize(e.target.value, 'h') : handleLocalInputChange(e.target.value, 'h')} 
+                                    onBlur={() => !isRootSelected && commitManualResize('h')}
+                                    className={`w-full pl-8 pr-2 py-3 rounded-xl border text-center font-black text-sm transition-all ${(!isRootSelected && !selectedNodeDims?.editableH) ? 'bg-slate-100 text-slate-400 border-slate-200' : 'bg-white border-slate-200 focus:border-blue-500'}`} 
+                                    style={{ direction: 'ltr' }} 
+                                />
+                                <span className="absolute left-3 top-3.5 text-[10px] text-slate-400">mm</span>
+                            </div>
+                        </div>
+                      </div>
 
-         <div className="mb-3">
-             <div className="bg-blue-50/50 p-2 rounded-xl border border-blue-100 flex items-center gap-3">
-                 <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
-                    <Box size={18} />
-                 </div>
-                 <div className="flex-1">
-                    <select 
-                        value={config.glassId}
-                        onChange={(e) => setConfig(prev => ({ ...prev, glassId: e.target.value }))}
-                        className="w-full bg-transparent border-none outline-none text-xs font-bold text-slate-700"
-                    >
-                        {glassList.map(glass => (
-                            <option key={glass.id} value={glass.id}>{glass.name} - ({formatPrice(glass.pricePerSqm)})</option>
-                        ))}
-                    </select>
-                 </div>
-                 <div className="px-3 border-r border-blue-200">
-                    <span className="text-[10px] font-black text-blue-600 uppercase">نوع شیشه</span>
-                 </div>
-             </div>
-         </div>
+                      {/* Selectors Section */}
+                      <div className="grid grid-cols-1 gap-3">
+                          <div className="bg-blue-50/50 p-2 pl-4 rounded-2xl border border-blue-100 flex items-center gap-3">
+                              <div className="p-2.5 bg-blue-100 text-blue-600 rounded-xl"><Box size={20} /></div>
+                              <div className="flex-1">
+                                  <label className="text-[9px] font-black text-blue-400 uppercase block mb-0.5">نوع شیشه و جداره</label>
+                                  <select 
+                                      value={config.glassId}
+                                      onChange={(e) => setConfig(prev => ({ ...prev, glassId: e.target.value }))}
+                                      className="w-full bg-transparent border-none outline-none text-xs font-black text-slate-700 p-0"
+                                  >
+                                      {glassList.map(glass => (
+                                          <option key={glass.id} value={glass.id}>{glass.name}</option>
+                                      ))}
+                                  </select>
+                              </div>
+                          </div>
+                          
+                          <div className="bg-indigo-50/50 p-2 pl-4 rounded-2xl border border-indigo-100 flex items-center gap-3">
+                              <div className="p-2.5 bg-indigo-100 text-indigo-600 rounded-xl"><Layers size={20} /></div>
+                              <div className="flex-1">
+                                  <label className="text-[9px] font-black text-indigo-400 uppercase block mb-0.5">نوع پروفیل فریم</label>
+                                  <select 
+                                      value={config.frameType || 'standard'}
+                                      onChange={(e) => setConfig(prev => ({ ...prev, frameType: e.target.value as any }))}
+                                      className="w-full bg-transparent border-none outline-none text-xs font-black text-slate-700 p-0"
+                                  >
+                                      <option value="standard">فریم ساده (استاندارد)</option>
+                                      <option value="renovation">فریم بازسازی (بال‌دار)</option>
+                                  </select>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              </div>
 
-         <div className="mb-4">
-             <div className="bg-indigo-50/50 p-2 rounded-xl border border-indigo-100 flex items-center gap-3">
-                 <div className="p-2 bg-indigo-100 text-indigo-600 rounded-lg">
-                    <Layers size={18} />
-                 </div>
-                 <div className="flex-1">
-                    <select 
-                        value={config.frameType || 'standard'}
-                        onChange={(e) => setConfig(prev => ({ ...prev, frameType: e.target.value as any }))}
-                        className="w-full bg-transparent border-none outline-none text-xs font-bold text-slate-700"
-                    >
-                        <option value="standard">فریم ساده (استاندارد)</option>
-                        <option value="renovation">فریم بازسازی (بال‌دار)</option>
-                    </select>
-                 </div>
-                 <div className="px-3 border-r border-indigo-200">
-                    <span className="text-[10px] font-black text-indigo-600 uppercase">نوع فریم</span>
-                 </div>
-             </div>
-         </div>
-
-         <div className="flex gap-3">
-             <PrimaryButton onClick={handleAddToList} variant={editIndex !== undefined ? "primary" : "secondary"} className={`flex-1 ${lastSavedId ? '!bg-green-50 !text-green-600 !border-green-200' : ''}`} icon={lastSavedId ? Check : PlusCircle}>{editIndex !== undefined ? t('save_changes') : (lastSavedId ? t('added') : t('add_to_list'))}</PrimaryButton>
-             {(projectItems.length > 0 || lastSavedId) && (
-                 <PrimaryButton onClick={() => navigate('/breakdown', { state: { projectDetails, items: projectItems } })} className="flex-[1.5] bg-gradient-to-r from-blue-700 to-blue-900" icon={Receipt}>{t('calculate_invoice')} ({toPersianDigits(projectItems.length)})</PrimaryButton>
-             )}
-         </div>
+              {/* Persistent Action Bar */}
+              <div className="w-full flex items-center gap-2 pointer-events-auto">
+                  <button 
+                    onClick={() => setIsPanelOpen(!isPanelOpen)}
+                    className={`h-14 w-14 flex items-center justify-center rounded-full transition-all shadow-xl border border-white/20 ${isPanelOpen ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'}`}
+                  >
+                     {isPanelOpen ? <ChevronDown size={24}/> : <SlidersHorizontal size={22}/>}
+                  </button>
+                  
+                  <div className="flex-1 flex gap-2 h-14 bg-white/95 backdrop-blur-xl border border-white/40 p-1.5 rounded-full shadow-[0_15px_40px_rgba(0,0,0,0.1)]">
+                      <button 
+                        onClick={handleAddToList}
+                        className={`flex-1 rounded-full text-[10px] font-black flex items-center justify-center gap-2 transition-all ${lastSavedId ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-700'}`}
+                      >
+                         {lastSavedId ? <Check size={16}/> : <PlusCircle size={16}/>}
+                         {editIndex !== undefined ? 'تایید' : 'افزودن'}
+                      </button>
+                      
+                      {(projectItems.length > 0 || lastSavedId) && (
+                          <button 
+                            onClick={() => navigate('/breakdown', { state: { projectDetails, items: projectItems } })}
+                            className="flex-[2] bg-blue-600 text-white rounded-full text-[10px] font-black flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 active:scale-95 transition-all"
+                          >
+                             <Receipt size={16}/> صدور فاکتور ({toPersianDigits(projectItems.length)})
+                          </button>
+                      )}
+                  </div>
+              </div>
+          </div>
       </div>
     </div>
   );
