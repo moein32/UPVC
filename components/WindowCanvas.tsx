@@ -21,8 +21,8 @@ const DESIGN_SYSTEM = {
     },
     openingLines: {
         color: "#000000", // Solid black for high-contrast printing
-        strokeWidth: 3.5, // Increased from 2.5 to 3.5 for ultra-clear visibility in PDF reports
-        dashArray: "10,10" // Adjusted for thicker lines
+        strokeWidth: 4.5, // Increased from 3.5 to 4.5 for ultra-clear visibility
+        dashArray: "12,12" // Distinct dash pattern for tilt parts
     },
     dimensions: {
         segmentOffset: -40, 
@@ -361,8 +361,7 @@ const renderOpeningLines = (type: OpeningDirection | undefined, w: number, h: nu
     const midH = h / 2;
     const midW = w / 2;
     
-    // Inset logic: Ensure lines are visible even at the edge by offsetting by stroke width
-    // This also helps keep the line joints clean when rendering at different scales.
+    // Inset logic to prevent clipping
     const i = strokeWidth; 
     const iw = w - i;
     const ih = h - i;

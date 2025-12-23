@@ -581,9 +581,9 @@ export const UnitDesigner = () => {
     const sashDoorTotal = sashDoorM * sashDoorPrice;
     if (sashDoorM > 0) details.push({ rowId: rowId++, name: 'پروفیل لنگه درب', unit: 'متر طول', quantity: Number(sashDoorM.toFixed(2)), unitPrice: sashDoorPrice, totalPrice: Math.round(sashDoorTotal) });
     const mullionTotal = mullionM * mullionPrice;
-    if (mullionM > 0) details.push({ rowId: rowId++, name: 'پروفیل مولیون', unit: 'متر طول', quantity: Number(mullionM.toFixed(2)), unitPrice: mullionPrice, totalPrice: Math.round(mullionTotal) });
+    if (mullionM > 0) details.push({ rowId: rowId++, name: 'پروفیل مولیون (وادار)', unit: 'متر طول', quantity: Number(mullionM.toFixed(2)), unitPrice: mullionPrice, totalPrice: Math.round(mullionTotal) });
     const beadTotal = beadM * beadPrice;
-    if (beadM > 0) details.push({ rowId: rowId++, name: 'پروفیل زهوار', unit: 'متر طول', quantity: Number(beadM.toFixed(2)), unitPrice: beadPrice, totalPrice: Math.round(beadTotal) });
+    if (beadM > 0) details.push({ rowId: rowId++, name: 'پروفیل زهوار شیشه', unit: 'متر طول', quantity: Number(beadM.toFixed(2)), unitPrice: beadPrice, totalPrice: Math.round(beadTotal) });
     const galoTotal = galoM * galoPrice;
     if (galoM > 0) details.push({ rowId: rowId++, name: 'گالوانیزه تقویتی', unit: 'متر طول', quantity: Number(galoM.toFixed(2)), unitPrice: galoPrice, totalPrice: Math.round(galoTotal) });
     const glassTotal = glassA * glassPricePerM2;

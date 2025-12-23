@@ -306,12 +306,20 @@ export const InvoicePrint = () => {
                                                     <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-[10px] font-black uppercase">{brandName}</span>
                                                     <span>{item.config.type}</span>
                                                 </div>
-                                                <div className="grid grid-cols-1 gap-y-1.5">
+                                                <div className="grid grid-cols-1 gap-y-1.5 mt-2">
+                                                    {/* Sub-header labels for detailed breakdown */}
+                                                    <div className="flex justify-between text-[9px] font-black text-slate-400 border-b border-slate-100 pb-1 mb-1 px-1">
+                                                        <span>شرح متریال مصرفی</span>
+                                                        <div className="flex gap-4">
+                                                            <span className="w-24 text-center">مقدار مواد مصرفی</span>
+                                                            <span className="w-20 text-left">قیمت</span>
+                                                        </div>
+                                                    </div>
                                                     {item.calculations.details?.map((detail, dIdx) => (
-                                                        <div key={dIdx} className="flex justify-between text-[10px] border-b border-slate-50 pb-1.5 last:border-0">
+                                                        <div key={dIdx} className="flex justify-between text-[10px] border-b border-slate-50 pb-1.5 last:border-0 px-1">
                                                             <span className="text-slate-500 font-medium">{detail.name}</span>
                                                             <div className="flex gap-4">
-                                                                <span className="font-bold text-slate-700">{toPersianDigits(detail.quantity)} {detail.unit}</span>
+                                                                <span className="font-bold text-slate-700 w-24 text-center">{toPersianDigits(detail.quantity)} {detail.unit}</span>
                                                                 <span className="font-black text-slate-900 w-20 text-left tracking-tighter">{formatPrice(detail.totalPrice)}</span>
                                                             </div>
                                                         </div>
