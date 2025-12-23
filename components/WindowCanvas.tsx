@@ -20,22 +20,23 @@ const DESIGN_SYSTEM = {
         leverHeight: 6,  
     },
     openingLines: {
-        color: "#000000", // Solid black
-        strokeWidth: 4.5, // Increased thickness for print clarity
-        dashArray: "15,10" // Bold dashed pattern for tilt lines
+        color: "#000000",
+        strokeWidth: 4.5,
+        dashArray: "15,10"
     },
     dimensions: {
-        segmentOffset: -40, 
-        globalOffset: 5,  
-        lineColor: 'bg-slate-700', 
-        textColor: 'text-slate-800', 
-        badgeBg: 'bg-white/90 backdrop-blur-sm', 
-        badgeBorder: 'border-slate-300/50'
+        // Offset values to move lines outside the unit
+        segmentOffset: -35, 
+        globalOffset: -55,  
+        lineColor: 'bg-slate-400', 
+        textColor: 'text-slate-600', 
+        badgeBg: 'bg-white/95 backdrop-blur-sm', 
+        badgeBorder: 'border-slate-200'
     },
     frame: {
         bg: '#f8fafc',
         gradient: 'linear-gradient(to right bottom, #ffffff, #f1f5f9)',
-        borderColor: '#e2e8f0'
+        borderColor: '#cbd5e1'
     }
 };
 
@@ -76,30 +77,30 @@ const DimensionLine = ({
     isSegment?: boolean
 }) => {
     const isH = orientation === 'h';
+    // Logic: move lines further outside based on depth to avoid overlap
     const baseVal = isSegment ? DESIGN_SYSTEM.dimensions.segmentOffset : DESIGN_SYSTEM.dimensions.globalOffset; 
-    const totalOffset = baseVal + (offset * 25) + (depthOffset * 20);
-    const lineColor = isSegment ? DESIGN_SYSTEM.dimensions.lineColor : 'bg-slate-600';
-    const textColor = isSegment ? DESIGN_SYSTEM.dimensions.textColor : 'text-slate-700';
-
+    const totalOffset = baseVal - (depthOffset * 22);
+    
     return (
-        <div className={`absolute flex items-center justify-center z-[60] select-none pointer-events-none
+        <div className={`absolute flex items-center justify-center z-[60] select-none pointer-events-none transition-all
             ${isH ? 'h-6' : 'w-6'}
             ${isH ? 'flex-row' : 'flex-col'}
         `}
         style={{
             [isH ? 'width' : 'height']: '100%',
-            [isH ? (position === 'start' ? 'top' : 'bottom') : (position === 'start' ? 'left' : 'right')]: `${totalOffset}px`,
+            [isH ? 'top' : 'left']: `${totalOffset}px`, // Moved height line to the LEFT
             [isH ? 'left' : 'top']: 0,
-            opacity: 1
         }}
         >
-            <div className={`${lineColor} absolute ${isH ? 'h-[1px] left-2 right-2 top-1/2' : 'w-[1px] top-2 bottom-2 left-1/2'}`}></div>
-            <div className={`absolute ${lineColor} ${isH ? 'left-2 h-2 w-[1px] top-1/2 -translate-y-1/2' : 'top-2 w-2 h-[1px] left-1/2 -translate-x-1/2'}`}></div>
-            <div className={`absolute ${lineColor} ${isH ? 'right-2 h-2 w-[1px] top-1/2 -translate-y-1/2' : 'bottom-2 w-2 h-[1px] left-1/2 -translate-x-1/2'}`}></div>
+            <div className={`${DESIGN_SYSTEM.dimensions.lineColor} absolute ${isH ? 'h-[1.5px] left-0 right-0 top-1/2' : 'w-[1.5px] top-0 bottom-0 left-1/2'}`}></div>
+            {/* End caps */}
+            <div className={`${DESIGN_SYSTEM.dimensions.lineColor} absolute ${isH ? 'left-0 h-3 w-[1.5px] top-1/2 -translate-y-1/2' : 'top-0 w-3 h-[1.5px] left-1/2 -translate-x-1/2'}`}></div>
+            <div className={`${DESIGN_SYSTEM.dimensions.lineColor} absolute ${isH ? 'right-0 h-3 w-[1.5px] top-1/2 -translate-y-1/2' : 'bottom-0 w-3 h-[1.5px] left-1/2 -translate-x-1/2'}`}></div>
+            
             <div 
                 onClick={(e) => { e.stopPropagation(); onClick && onClick(); }}
-                className={`${DESIGN_SYSTEM.dimensions.badgeBg} px-1.5 py-0.5 text-[10px] font-bold ${textColor} border ${DESIGN_SYSTEM.dimensions.badgeBorder} rounded shadow-sm hover:bg-blue-50 cursor-pointer transition-all z-[70] pointer-events-auto
-                 ${isH ? '-translate-y-[1px]' : '-rotate-90 origin-center'}
+                className={`${DESIGN_SYSTEM.dimensions.badgeBg} px-2 py-0.5 text-[10px] font-black ${DESIGN_SYSTEM.dimensions.textColor} border ${DESIGN_SYSTEM.dimensions.badgeBorder} rounded-md shadow-sm hover:border-blue-400 cursor-pointer transition-all z-[70] pointer-events-auto
+                 ${isH ? '-translate-y-[1px]' : 'rotate-90 origin-center'}
             `}>
                 {toPersianDigits(Math.round(label))}
             </div>
@@ -121,13 +122,13 @@ export const WindowCanvas = ({
       backgroundImage: DESIGN_SYSTEM.frame.gradient, 
       boxShadow: isThumbnail 
         ? 'inset 0 0 2px rgba(0,0,0,0.1)' 
-        : 'inset 1px 1px 3px rgba(255,255,255,1), inset -1px -1px 3px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.05)',
+        : 'inset 1px 1px 3px rgba(255,255,255,1), inset -1px -1px 3px rgba(0,0,0,0.1), 0 4px 15px rgba(0,0,0,0.05)',
       borderColor: DESIGN_SYSTEM.frame.borderColor, 
   };
 
-  const frameThickness = (isThumbnail ? 3 : 14) * scale;
-  const mullionWidth = (isThumbnail ? 3 : 14) * scale; 
-  const sashThickness = (isThumbnail ? 3 : 12) * scale;
+  const frameThickness = (isThumbnail ? 3 : 12) * scale;
+  const mullionWidth = (isThumbnail ? 3 : 12) * scale; 
+  const sashThickness = (isThumbnail ? 3 : 10) * scale;
 
   const handleResizeStart = (e: React.MouseEvent | React.TouchEvent, index: number) => {
     if (readOnly) return;
@@ -216,18 +217,15 @@ export const WindowCanvas = ({
   const RootWrapper = ({ children }: {children?: React.ReactNode}) => {
       if (!isRoot) return <>{children}</>;
       return (
-        <div className={`relative w-full h-full ${showDimensions ? 'p-16' : 'p-0.5'} bg-transparent select-none`}>
+        <div className="relative w-full h-full bg-transparent select-none overflow-visible">
             {showDimensions && (
                 <>
-                  <div className="absolute top-0 left-16 right-16 h-12">
-                       <DimensionLine length={width} orientation="h" label={width} position="end" onClick={() => onDimensionEdit && onDimensionEdit('w', width)}/>
-                  </div>
-                  <div className="absolute left-0 top-16 bottom-16 w-12">
-                       <DimensionLine length={height} orientation="v" label={height} position="end" onClick={() => onDimensionEdit && onDimensionEdit('h', height)}/>
-                  </div>
+                  {/* Global dimensions outside the main frame */}
+                  <DimensionLine length={width} orientation="h" label={width} position="end" onClick={() => onDimensionEdit && onDimensionEdit('w', width)}/>
+                  <DimensionLine length={height} orientation="v" label={height} position="end" onClick={() => onDimensionEdit && onDimensionEdit('h', height)}/>
                 </>
             )}
-            <div className="w-full h-full relative shadow-2xl rounded-sm border border-slate-300" style={frameStyle}>
+            <div className="w-full h-full relative rounded-sm border border-slate-300 transition-all duration-300" style={frameStyle}>
                  <div className="w-full h-full" style={{ padding: frameThickness }}>
                     <div className="w-full h-full relative bg-slate-900/5">
                         {children}
@@ -244,7 +242,7 @@ export const WindowCanvas = ({
     
     const Wrapper = isSashContainer ? 
         ({c}: {c: React.ReactNode}) => (
-            <div className="w-full h-full relative rounded-sm border border-slate-300 shadow-md bg-white group" style={frameStyle}>
+            <div className="w-full h-full relative rounded-sm border border-slate-300 shadow-sm bg-white group" style={frameStyle}>
                  <div className="w-full h-full" style={{ padding: sashThickness }}>
                      {c}
                  </div>
@@ -262,7 +260,7 @@ export const WindowCanvas = ({
             <Wrapper c={
                 <div 
                     ref={containerRef}
-                    className="flex w-full h-full relative"
+                    className="flex w-full h-full relative overflow-visible"
                     style={{ flexDirection: node.dir === 'col' ? 'column' : 'row' }}
                     onClick={(e) => { e.stopPropagation(); if (!readOnly) onSelect(node.id); }}
                 >
@@ -293,13 +291,13 @@ export const WindowCanvas = ({
                                         <>
                                             {node.dir === 'row' && (
                                                 <DimensionLine 
-                                                    length={childWidth} orientation="h" label={childWidth} position="end" isSegment={true} depthOffset={depth} 
+                                                    length={childWidth} orientation="h" label={childWidth} position="end" isSegment={true} depthOffset={depth + 1} 
                                                     onClick={() => onChildResize && onChildResize(node.id, index, childWidth, width)}
                                                 />
                                             )}
                                             {node.dir === 'col' && (
                                                 <DimensionLine 
-                                                    length={childHeight} orientation="v" label={childHeight} position="end" isSegment={true} depthOffset={depth}
+                                                    length={childHeight} orientation="v" label={childHeight} position="end" isSegment={true} depthOffset={depth + 1}
                                                     onClick={() => onChildResize && onChildResize(node.id, index, childHeight, height)}
                                                 />
                                             )}
@@ -332,12 +330,12 @@ export const WindowCanvas = ({
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
-          className={`w-full h-full relative group transition-all duration-200 box-border ${!readOnly ? 'cursor-pointer' : ''} ${isSelected ? 'ring-2 ring-inset ring-blue-500 z-50' : ''} ${isDragOver ? 'bg-green-100/50 ring-4 ring-inset ring-green-500/50' : ''}`}
+          className={`w-full h-full relative group transition-all duration-200 box-border ${!readOnly ? 'cursor-pointer' : ''} ${isSelected ? 'ring-2 ring-inset ring-blue-500 z-50 shadow-lg' : ''} ${isDragOver ? 'bg-green-100/50 ring-4 ring-inset ring-green-500/50' : ''}`}
         >
-            <div className={`w-full h-full relative transition-all flex ${isOpening ? 'shadow-sm border border-slate-300 rounded-[1px]' : ''}`} style={isOpening ? { padding: sashThickness, ...frameStyle } : {}}>
+            <div className={`w-full h-full relative transition-all flex ${isOpening ? 'shadow-sm border border-slate-200 rounded-[1px]' : ''}`} style={isOpening ? { padding: sashThickness, ...frameStyle } : {}}>
                 <div className={`flex-1 relative overflow-hidden border border-slate-300/50 ${node.openingType === 'Panel' ? 'bg-slate-50' : 'bg-gradient-to-br from-[#e0f2fe] via-[#bae6fd] to-[#7dd3fc]'}`} style={{ boxShadow: 'inset 0 0 20px rgba(0,0,0,0.05)' }}>
                     {node.openingType !== 'Panel' && <div className="absolute inset-0 bg-gradient-to-tr from-white/30 via-transparent to-white/10 skew-x-12 opacity-60"></div>}
-                    <div className="absolute inset-0 border-[2px] border-[#1e293b]/20 pointer-events-none"></div>
+                    <div className="absolute inset-0 border-[2px] border-[#1e293b]/10 pointer-events-none"></div>
                     {node.openingType === 'Panel' && <div className="absolute inset-2 border border-slate-200 rounded opacity-50 bg-white/50 shadow-inner"></div>}
                     <div className="absolute inset-0 pointer-events-none z-10">
                         {renderOpeningLines(node.openingType, width, height)}
@@ -347,7 +345,7 @@ export const WindowCanvas = ({
                     {renderHandles(node.openingType, sashThickness, isThumbnail)}
                 </div>
             </div>
-            {isSelected && !isThumbnail && <div className="absolute top-1 right-1 bg-blue-600 text-white text-[9px] px-1.5 py-0.5 rounded shadow-sm z-[60]">انتخاب</div>}
+            {isSelected && !isThumbnail && <div className="absolute top-1 right-1 bg-blue-600 text-white text-[9px] px-1.5 py-0.5 rounded shadow-sm z-[60] font-black">انتخاب</div>}
         </div>
     </RootWrapper>
   );
@@ -377,17 +375,13 @@ const renderOpeningLines = (type: OpeningDirection | undefined, w: number, h: nu
             {type === 'TurnLeft' && <path d={`M${iw},${i} L${i},${midH} L${iw},${ih}`} fill="none" stroke={strokeColor} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />}
             {type === 'TiltTurnRight' && (
                 <>
-                    {/* Primary Side Opening */}
                     <path d={`M${i},${i} L${iw},${midH} L${i},${ih}`} fill="none" stroke={strokeColor} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
-                    {/* Tilt Triangle Dashed Lines */}
                     <path d={`M${i},${ih} L${midW},${i} L${iw},${ih}`} fill="none" stroke={strokeColor} strokeWidth={strokeWidth} strokeDasharray={dashArray} strokeLinecap="round" strokeLinejoin="round" />
                 </>
             )}
             {type === 'TiltTurnLeft' && (
                 <>
-                    {/* Primary Side Opening */}
                     <path d={`M${iw},${i} L${i},${midH} L${iw},${ih}`} fill="none" stroke={strokeColor} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
-                    {/* Tilt Triangle Dashed Lines */}
                     <path d={`M${iw},${ih} L${midW},${i} L${i},${ih}`} fill="none" stroke={strokeColor} strokeWidth={strokeWidth} strokeDasharray={dashArray} strokeLinecap="round" strokeLinejoin="round" />
                 </>
             )}

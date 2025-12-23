@@ -228,7 +228,7 @@ export const UnitDesigner = () => {
   // --- Responsive Auto-Fit Logic ---
   const fitToScreen = () => {
     if (!canvasAreaRef.current) return;
-    const padding = 70; 
+    const padding = 120; // Increased padding to accommodate outer dimensions
     const areaW = canvasAreaRef.current.clientWidth - padding;
     const areaH = canvasAreaRef.current.clientHeight - padding;
     if (areaW <= 0 || areaH <= 0) return;
@@ -236,7 +236,8 @@ export const UnitDesigner = () => {
     const baseH = config.height / 4;
     const scaleW = areaW / baseW;
     const scaleH = areaH / baseH;
-    const newZoom = Math.min(scaleW, scaleH) * 1.05; 
+    // Multiplier reduced from 1.05 to ~0.85 to ensure it's not over-zoomed and fully visible
+    const newZoom = Math.min(scaleW, scaleH) * 0.85; 
     setZoomLevel(Math.max(newZoom, 0.15));
   };
 
