@@ -36,8 +36,8 @@ export const InvoicePrint = () => {
     const handleResize = () => {
         if (!containerRef.current) return;
         const screenW = window.innerWidth;
-        const targetW = 810; 
-        const newScale = Math.min((screenW - 20) / targetW, 1);
+        const targetW = 820; // Slightly more than A4 (794px) for safe preview
+        const newScale = Math.min((screenW - 24) / targetW, 1);
         setScale(newScale);
     };
 
@@ -65,33 +65,52 @@ export const InvoicePrint = () => {
     setIsGenerating(true);
     
     const element = invoiceRef.current;
+    
+    // Optimal configuration for Persian/Arabic text and A4 sizing
     const opt = {
       margin: 0,
-      filename: `Invoice-${projectDetails.customerName}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 }, 
+      filename: `Lumina-Invoice-${projectDetails.customerName.replace(/\s+/g, '-')}.pdf`,
+      image: { type: 'jpeg', quality: 0.92 }, // 0.92 is the "sweet spot" for quality vs file size
       html2canvas: { 
-        scale: 2.5, 
+        scale: 2.2, // 2.2 provides sharp 300DPI-like prints while keeping size under control
         useCORS: true, 
         backgroundColor: '#ffffff',
-        letterRendering: false,
+        letterRendering: false, // CRITICAL: Fix for Persian character connection issue
         scrollY: 0,
         scrollX: 0,
-        windowWidth: 794 
+        windowWidth: 794, // Force A4 width during capture to prevent layout shifts
+        onclone: (clonedDoc: Document) => {
+          // Additional safety: Ensure no letter-spacing or text-transform breaks the rendering
+          const elements = clonedDoc.querySelectorAll('*');
+          elements.forEach((el: any) => {
+            if (el.style) {
+              el.style.letterSpacing = 'normal';
+              el.style.textTransform = 'none';
+            }
+          });
+        }
       },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true }
+      jsPDF: { 
+        unit: 'mm', 
+        format: 'a4', 
+        orientation: 'portrait', 
+        compress: true, // Enable internal PDF stream compression
+        precision: 2 
+      }
     };
 
     try {
       await html2pdf().set(opt).from(element).save();
     } catch (error) {
       console.error('PDF Generation Error:', error);
+      alert('خطا در ایجاد فایل PDF. لطفا دوباره تلاش کنید.');
     } finally {
       setIsGenerating(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-200 flex flex-col items-center overflow-x-hidden relative font-['Vazirmatn']">
+    <div className="min-h-screen bg-slate-300 flex flex-col items-center overflow-x-hidden relative font-['Vazirmatn']">
        <style>
          {`
            @media print {
@@ -100,6 +119,7 @@ export const InvoicePrint = () => {
              .invoice-page { margin: 0 !important; width: 210mm !important; box-shadow: none !important; }
            }
 
+           /* Core A4 Styling for Perfect PDF Output */
            .invoice-page { 
              width: 210mm !important; 
              height: 297mm !important;
@@ -111,32 +131,38 @@ export const InvoicePrint = () => {
              flex-direction: column;
              margin: 0 auto;
              color: #1e293b !important;
+             /* Prevent sub-pixel rendering issues that break Persian connections */
+             font-feature-settings: "kern" 0;
+             letter-spacing: 0 !important;
            }
 
-           /* --- LAYOUT: TECHNICAL (NAVY) --- */
+           .invoice-page * {
+             font-family: 'Vazirmatn', sans-serif !important;
+             letter-spacing: 0 !important;
+             text-rendering: auto !important;
+           }
+
+           /* Layout Specific Styles with Explicit Color Overrides */
            .layout-technical .invoice-header { background: #0f172a !important; border-bottom: 8px solid #2563eb; padding: 40px; }
            .layout-technical .invoice-header h1 { color: #ffffff !important; }
            .layout-technical .invoice-header p, .layout-technical .invoice-header span { color: #cbd5e1 !important; }
            .layout-technical .invoice-table th { background: #1e293b !important; color: #ffffff !important; border: 1px solid #334155; }
            .layout-technical .total-box { background: #0f172a !important; padding: 40px; margin-top: auto; }
-           .layout-technical .total-box h4 { color: #94a3b8 !important; }
-           .layout-technical .total-box p, .layout-technical .total-box span, .layout-technical .total-box div { color: #ffffff !important; }
+           .layout-technical .total-box * { color: #ffffff !important; }
+           .layout-technical .total-box .text-slate-400 { color: #94a3b8 !important; }
 
-           /* --- LAYOUT: MODERN --- */
            .layout-modern .invoice-header { padding: 50px; border-top: 15px solid #2563eb; background: #ffffff !important; }
            .layout-modern .invoice-header * { color: #1e293b !important; }
            .layout-modern .invoice-table th { border-bottom: 3px solid #2563eb; color: #0f172a !important; font-weight: 900; background: transparent !important; }
            .layout-modern .total-box { background: #f8fafc !important; border-radius: 40px; padding: 30px; margin: 20px 40px; border: 1px solid #e2e8f0; }
            .layout-modern .total-box * { color: #1e293b !important; }
 
-           /* --- LAYOUT: STANDARD --- */
            .layout-standard .invoice-header { background: #f8fafc !important; border-bottom: 2px solid #e2e8f0; padding: 40px; }
            .layout-standard .invoice-header * { color: #1e293b !important; }
            .layout-standard .invoice-table th { background: #f1f5f9 !important; color: #334155 !important; border: 1px solid #e2e8f0; }
            .layout-standard .total-box { background: #f8fafc !important; padding: 30px; border-top: 2px solid #e2e8f0; }
            .layout-standard .total-box * { color: #1e293b !important; }
 
-           /* --- LAYOUT: CLASSIC (MARKET) --- */
            .layout-classic { padding: 10mm; }
            .layout-classic .invoice-page-inner { border: 1.5pt solid #000000; height: 100%; display: flex; flex-direction: column; background: #ffffff !important; }
            .layout-classic .invoice-header { text-align: center; border-bottom: 1.5pt solid #000000; padding: 20px; color: #000000 !important; }
@@ -146,15 +172,21 @@ export const InvoicePrint = () => {
            .layout-classic .total-box { border-top: 1.5pt solid #000000; padding: 25px; background: #ffffff !important; color: #000000 !important; }
            .layout-classic .total-box * { color: #000000 !important; }
            .layout-classic .unit-card { border: 0.5pt solid #000000; padding: 5px; }
+
+           /* Fix for common PDF rendering artifact: ensure tables don't have stray white borders */
+           table { border-collapse: collapse; }
+           
+           /* Hide scrollbars during generation */
+           .generating-pdf .invoice-page { overflow: visible !important; }
          `}
        </style>
 
-       {/* Floating Control Bar - Re-designed for Mobile Responsiveness */}
+       {/* UI Control Bar */}
        <div className="no-print fixed bottom-6 left-4 right-4 z-50 flex justify-center">
-            <div className="bg-white/95 backdrop-blur-3xl shadow-[0_15px_50px_rgba(0,0,0,0.15)] border border-slate-200 rounded-[2rem] p-2 w-full max-w-xl flex items-center justify-between gap-2 overflow-hidden">
+            <div className="bg-white/95 backdrop-blur-3xl shadow-[0_15px_50px_rgba(0,0,0,0.2)] border border-slate-200 rounded-[2.5rem] p-2 w-full max-w-xl flex items-center justify-between gap-2">
                 <button 
                   onClick={() => navigate(-1)} 
-                  className="p-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-full transition-all active:scale-90 shrink-0"
+                  className="p-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-full transition-all active:scale-90"
                 >
                   <ArrowRight size={20} />
                 </button>
@@ -162,18 +194,18 @@ export const InvoicePrint = () => {
                 <button 
                     onClick={handleDownloadPDF}
                     disabled={isGenerating}
-                    className="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white h-14 rounded-full font-black text-xs sm:text-sm shadow-xl hover:bg-blue-700 disabled:opacity-50 transition-all shrink-1"
+                    className="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white h-14 rounded-full font-black text-xs sm:text-sm shadow-xl hover:bg-blue-700 disabled:opacity-50 transition-all"
                 >
                     {isGenerating ? <Loader2 className="animate-spin" size={20} /> : <Printer size={20} />}
-                    <span className="whitespace-nowrap">{isGenerating ? 'در حال رندر...' : 'چاپ فاکتور (PDF)'}</span>
+                    <span className="whitespace-nowrap">{isGenerating ? 'در حال ایجاد فایل...' : 'ذخیره و چاپ فاکتور (PDF)'}</span>
                 </button>
 
-                <div className="flex items-center gap-1.5 bg-slate-50 rounded-full px-3 h-14 border border-slate-100 min-w-[100px] sm:min-w-[140px] shrink-0">
+                <div className="flex items-center gap-1.5 bg-slate-50 rounded-full px-3 h-14 border border-slate-100 shrink-0">
                     <Settings2 size={16} className="text-blue-600" />
                     <select 
                         value={tempLayout} 
                         onChange={(e) => setTempLayout(e.target.value as any)}
-                        className="bg-transparent border-none p-0 text-[9px] sm:text-[11px] font-black text-slate-800 focus:ring-0 cursor-pointer outline-none w-full"
+                        className="bg-transparent border-none p-0 text-[10px] sm:text-[11px] font-black text-slate-800 focus:ring-0 cursor-pointer outline-none"
                     >
                         <option value="technical">قالب فنی</option>
                         <option value="modern">قالب مدرن</option>
@@ -184,15 +216,15 @@ export const InvoicePrint = () => {
             </div>
        </div>
 
-       {/* Zoom Controls - Restored */}
+       {/* Zoom Controls */}
        <div className="no-print fixed top-6 right-6 z-50 flex flex-col gap-2">
-            <button onClick={() => setScale(s => Math.min(s + 0.1, 2.5))} className="p-3 bg-white shadow-xl rounded-2xl text-slate-700 hover:bg-slate-50 transition-colors border border-slate-100"><ZoomIn size={22}/></button>
-            <button onClick={() => setScale(s => Math.max(s - 0.1, 0.2))} className="p-3 bg-white shadow-xl rounded-2xl text-slate-700 hover:bg-slate-50 transition-colors border border-slate-100"><ZoomOut size={22}/></button>
-            <button onClick={() => setScale(1)} className="p-3 bg-blue-600 shadow-xl rounded-2xl text-white hover:bg-blue-700 transition-colors"><Maximize size={22}/></button>
+            <button onClick={() => setScale(s => Math.min(s + 0.1, 2.5))} className="p-3 bg-white shadow-xl rounded-2xl text-slate-700 hover:bg-slate-50 border border-slate-100"><ZoomIn size={22}/></button>
+            <button onClick={() => setScale(s => Math.max(s - 0.1, 0.2))} className="p-3 bg-white shadow-xl rounded-2xl text-slate-700 hover:bg-slate-50 border border-slate-100"><ZoomOut size={22}/></button>
+            <button onClick={() => setScale(1)} className="p-3 bg-blue-600 shadow-xl rounded-2xl text-white hover:bg-blue-700"><Maximize size={22}/></button>
        </div>
 
-       {/* PDF Preview Area */}
-       <div ref={containerRef} className="w-full flex justify-center py-12 pb-44 overflow-x-auto scrollbar-hide">
+       {/* PDF Preview / Source Area */}
+       <div ref={containerRef} className={`w-full flex justify-center py-12 pb-44 ${isGenerating ? 'generating-pdf' : ''}`}>
             <div 
                 className="relative shadow-2xl origin-top transition-all duration-300"
                 style={{ transform: `scale(${scale})`, width: '210mm' }}
@@ -201,7 +233,7 @@ export const InvoicePrint = () => {
                     <div className="invoice-page-inner flex-1 flex flex-col">
                         
                         {/* HEADER */}
-                        <div className="invoice-header">
+                        <div className="invoice-header px-10">
                             <div className="flex justify-between items-start">
                                 <div>
                                     <h1 className="text-3xl font-black mb-1 tracking-tighter">
@@ -209,7 +241,7 @@ export const InvoicePrint = () => {
                                     </h1>
                                     <div className="text-[11px] font-bold opacity-90 mt-2 space-y-0.5">
                                         <p>{invoiceConfig.companyAddress}</p>
-                                        <p>تلفن: {toPersianDigits(invoiceConfig.companyPhone)}</p>
+                                        <p>تماس: {toPersianDigits(invoiceConfig.companyPhone)}</p>
                                     </div>
                                 </div>
                                 <div className="text-left w-48">
@@ -230,7 +262,7 @@ export const InvoicePrint = () => {
                             </div>
                         </div>
 
-                        {/* CUSTOMER BOX */}
+                        {/* CUSTOMER INFO */}
                         <div className="px-10 py-5">
                             <div className={`grid grid-cols-2 gap-8 p-6 ${tempLayout === 'modern' ? 'bg-slate-50 border border-slate-200 rounded-3xl' : tempLayout === 'classic' ? 'border-2 border-black' : 'border border-slate-200 rounded-xl'}`}>
                                 <div>
@@ -244,7 +276,7 @@ export const InvoicePrint = () => {
                             </div>
                         </div>
 
-                        {/* MAIN TABLE */}
+                        {/* MAIN ITEMS TABLE */}
                         <div className="flex-1 px-10">
                             <table className="invoice-table w-full border-collapse">
                                 <thead>
