@@ -124,7 +124,6 @@ export const InvoicePrint = () => {
           text: `پیش‌فاکتور پروژه ${projectDetails.customerName}`,
         });
       } else {
-        // Fallback: download if sharing is not supported
         const url = URL.createObjectURL(pdfBlob);
         const link = document.createElement('a');
         link.href = url;
@@ -146,20 +145,22 @@ export const InvoicePrint = () => {
            @media print {
              @page { size: A4; margin: 0; }
              .no-print { display: none !important; }
-             .invoice-page { margin: 0 !important; width: 794px !important; box-shadow: none !important; }
+             .invoice-page { margin: 0 !important; width: 794px !important; box-shadow: none !important; height: auto !important; }
            }
 
            .invoice-page { 
              width: 794px !important; 
-             height: 1123px !important; 
+             min-height: 1123px !important; /* Minimum A4 height */
+             height: auto !important; /* Allow growth to prevent footer clipping */
              background-color: #ffffff !important; 
              box-sizing: border-box;
              position: relative;
-             overflow: hidden;
+             overflow: visible; /* Changed from hidden to show all content */
              display: flex;
              flex-direction: column;
              margin: 0; 
              color: #1e293b !important;
+             padding-bottom: 40px;
            }
 
            .invoice-page * {
@@ -198,6 +199,8 @@ export const InvoicePrint = () => {
            .layout-classic .invoice-table th { background: #f2f2f2 !important; font-weight: 900; }
            .layout-classic .total-box { border-top: 1.5pt solid #000000; padding: 25px; background: #ffffff !important; color: #000000 !important; }
            .layout-classic .total-box * { color: #000000 !important; }
+
+           .fee-column { color: #000000 !important; font-weight: 700 !important; opacity: 1 !important; }
          `}
        </style>
 
@@ -353,7 +356,7 @@ export const InvoicePrint = () => {
                                                                 <span className="flex-1 font-bold text-slate-700">{detail.name}</span>
                                                                 <div className="flex gap-4 w-[240px] justify-end">
                                                                     <span className="w-20 text-center font-black text-slate-900">{toPersianDigits(detail.quantity)} {detail.unit}</span>
-                                                                    <span className="w-20 text-center opacity-40 text-slate-500 font-medium tracking-tighter">{formatPrice(detail.unitPrice)}</span>
+                                                                    <span className="w-20 text-center fee-column tracking-tighter">{formatPrice(detail.unitPrice)}</span>
                                                                     <span className="w-20 text-left font-black text-slate-900 tracking-tighter">{formatPrice(detail.totalPrice)}</span>
                                                                 </div>
                                                             </div>
@@ -371,7 +374,7 @@ export const InvoicePrint = () => {
                         </div>
 
                         {/* FOOTER */}
-                        <div className="total-box mt-auto">
+                        <div className="total-box mt-10">
                             <div className="flex justify-between items-start gap-10">
                                 <div className="flex-1">
                                     <h4 className="text-[9px] font-black uppercase tracking-[2px] mb-2 opacity-60">توضیحات فاکتور:</h4>
