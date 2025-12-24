@@ -96,7 +96,8 @@ export const PriceBreakdown = () => {
         </button>
       </div>
 
-      <div className="p-6 space-y-8">
+      {/* Main Content Container with Max Width for Large Screens */}
+      <div className="max-w-3xl mx-auto p-6 space-y-8">
         {/* Project Info Card */}
         <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-[35px] p-7 text-white shadow-2xl relative overflow-hidden group">
             <div className="relative z-10">
@@ -166,7 +167,7 @@ export const PriceBreakdown = () => {
 
                             {/* Hero Preview - Significantly Larger & Centered */}
                             <div className="px-6 py-4">
-                                <div className="w-full aspect-[4/3] bg-slate-50 rounded-[35px] flex items-center justify-center p-8 border border-slate-100/50 shadow-inner group-hover:bg-slate-100/50 transition-colors duration-500 relative overflow-hidden">
+                                <div className="w-full aspect-[4/3] max-h-[450px] bg-slate-50 rounded-[35px] flex items-center justify-center p-8 border border-slate-100/50 shadow-inner group-hover:bg-slate-100/50 transition-colors duration-500 relative overflow-hidden">
                                     <WindowPreview config={item.config} width="100%" height="100%" className="scale-110" />
                                     
                                     {/* Size labels inside the preview area */}
@@ -200,9 +201,9 @@ export const PriceBreakdown = () => {
         </div>
       </div>
 
-      {/* Floating Action Bar */}
+      {/* Floating Action Bar - Restricted width on Large Screens */}
       <div className="fixed bottom-0 left-0 right-0 p-6 z-50">
-        <div className="bg-white/90 backdrop-blur-2xl p-6 rounded-[40px] shadow-[0_15px_60px_rgba(0,0,0,0.1)] border border-slate-200/50">
+        <div className="max-w-3xl mx-auto bg-white/90 backdrop-blur-2xl p-6 rounded-[40px] shadow-[0_15px_60px_rgba(0,0,0,0.15)] border border-slate-200/50">
             <div className="flex justify-between items-center mb-6 px-2">
                 <div>
                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">مبلغ نهایی پروژه</span>

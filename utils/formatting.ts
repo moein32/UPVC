@@ -11,6 +11,9 @@ export const toEnglishDigits = (str: string): string => {
             .replace(/[٠-٩]/g, (d) => String.fromCharCode(d.charCodeAt(0) - 1584));
 };
 
-export const formatPrice = (price: number): string => {
+export const formatPrice = (price: number | undefined | null): string => {
+  if (price === undefined || price === null || isNaN(price as number)) {
+    return (0).toLocaleString('fa-IR');
+  }
   return price.toLocaleString('fa-IR');
 };

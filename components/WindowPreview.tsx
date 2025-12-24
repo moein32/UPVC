@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { WindowConfig } from '../types';
 import { WindowCanvas } from './WindowCanvas';
@@ -52,6 +53,7 @@ export const WindowPreview = ({ config, width, height, className = '' }: Props) 
                     isThumbnail={false} 
                     showDimensions={false}
                     scale={0.35} // Scale down borders/handles for preview
+                    frameType={config.frameType}
                 />
             )}
         </div>

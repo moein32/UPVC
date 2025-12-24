@@ -13,12 +13,6 @@ const DESIGN_SYSTEM = {
         shadow: '0 1px 3px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.5)', 
         zIndex: 50
     },
-    doorHandle: {
-        plateWidth: 8,
-        plateHeight: 36,
-        leverWidth: 28,  
-        leverHeight: 6,  
-    },
     openingLines: {
         color: "#000000",
         strokeWidth: 4.5,
@@ -54,6 +48,7 @@ interface Props {
   isThumbnail?: boolean;
   scale?: number; 
   showDimensions?: boolean;
+  frameType?: 'standard' | 'renovation';
 }
 
 const UnifiedDimensionLine = ({
@@ -145,10 +140,6 @@ const DimensionLine = ({
     )
 }
 
-/**
- * Recursive function to flatten all dimensions. 
- * Corrected: Now checks all children and returns the one with the most segments.
- */
 const collectFlattenedSegments = (node: WindowNode, totalSize: number, targetDir: 'row' | 'col'): any[] => {
     if (node.type === 'leaf') {
         return [];
@@ -172,8 +163,6 @@ const collectFlattenedSegments = (node: WindowNode, totalSize: number, targetDir
             return subSegments;
         }) || [];
     } else {
-        // If split in opposite direction, we check ALL children and take the one with the MOST segments.
-        // This ensures if the bottom section has 3 parts and top has 1, we show the 3 parts.
         let bestSegments: any[] = [];
         if (node.children) {
             for (const child of node.children) {
@@ -190,7 +179,8 @@ const collectFlattenedSegments = (node: WindowNode, totalSize: number, targetDir
 export const WindowCanvas = ({ 
   node, selectedId, onSelect, onUpdateNode, width, height, 
   depth = 0, isRoot = false, onDimensionEdit, onChildResize, 
-  readOnly = false, isThumbnail = false, scale = 1, showDimensions = true
+  readOnly = false, isThumbnail = false, scale = 1, showDimensions = true,
+  frameType = 'standard'
 }: Props) => {
   const isSelected = !readOnly && selectedId === node.id;
   const containerRef = useRef<HTMLDivElement>(null);
@@ -205,9 +195,15 @@ export const WindowCanvas = ({
       borderColor: DESIGN_SYSTEM.frame.borderColor, 
   };
 
-  const frameThickness = (isThumbnail ? 3 : 12) * scale;
+  // Logic to thicken frame if Renovation
+  const isRenovation = frameType === 'renovation';
+  const frameThickness = (isThumbnail ? 3 : (isRenovation ? 20 : 12)) * scale;
+  
   const mullionWidth = (isThumbnail ? 3 : 12) * scale; 
-  const sashThickness = (isThumbnail ? 3 : 10) * scale;
+  
+  // Logic to thicken sash if Door
+  const isDoor = node.openingType?.includes('Door');
+  const sashThickness = (isThumbnail ? 3 : (isDoor ? 25 : 12)) * scale;
 
   const handleResizeStart = (e: React.MouseEvent | React.TouchEvent, index: number) => {
     if (readOnly) return;
@@ -385,6 +381,7 @@ export const WindowCanvas = ({
                                         isThumbnail={isThumbnail}
                                         scale={scale}
                                         showDimensions={showDimensions}
+                                        frameType={frameType}
                                     />
                                 </div>
                                 {index < node.children!.length - 1 && (
@@ -496,28 +493,39 @@ const renderHandles = (type: OpeningDirection | undefined, sashThickness: number
       position: 'absolute', top: '50%', transform: 'translateY(-50%)', zIndex: zIndex, width: `${hW}px`, height: `${hH}px`, backgroundColor: handleColor, borderRadius: `${hR}px`, boxShadow: shadow
   };
 
-  const leverH = isThumbnail ? DESIGN_SYSTEM.doorHandle.leverHeight / 2 : DESIGN_SYSTEM.doorHandle.leverHeight;
-  const leverW = isThumbnail ? DESIGN_SYSTEM.doorHandle.leverWidth / 2 : DESIGN_SYSTEM.doorHandle.leverWidth;
-  
-  const leverBaseStyle: React.CSSProperties = {
-      position: 'absolute', top: '50%', transform: 'translateY(-50%)', zIndex: zIndex, display: 'flex', alignItems: 'center'
-  };
-
-  const LeverHandle = ({ flip = false }) => (
-      <div style={leverBaseStyle}>
-          <div style={{ width: `${hW}px`, height: `${hH}px`, backgroundColor: handleColor, borderRadius: `${hR}px`, boxShadow: shadow }}></div>
-          <div style={{ position: 'absolute', [flip ? 'right' : 'left']: `${hW/2 - 2}px`, width: `${leverW}px`, height: `${leverH}px`, backgroundColor: handleColor, borderRadius: `${leverH}px`, boxShadow: '0 1px 2px rgba(0,0,0,0.2)' }}></div>
-      </div>
+  const Keyhole = () => (
+      <div style={{
+          position: 'absolute',
+          bottom: isThumbnail ? '2px' : '5px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: isThumbnail ? '1px' : '1.5px',
+          height: isThumbnail ? '1.5px' : '3px',
+          backgroundColor: '#334155', // Dark slate/blackish
+          borderRadius: '1px',
+          boxShadow: 'inset 0 0 1px rgba(0,0,0,0.5)'
+      }} />
   );
 
   return (
     <>
-        {type === 'TurnRight' && <div style={{...handleBaseStyle, right: offsetPx}}></div>}
-        {type === 'TurnLeft' && <div style={{...handleBaseStyle, left: offsetPx}}></div>}
-        {type === 'TiltTurnRight' && <div style={{...handleBaseStyle, right: offsetPx}}></div>}
-        {type === 'TiltTurnLeft' && <div style={{...handleBaseStyle, left: offsetPx}}></div>}
-        {type === 'DoorRight' && <div style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', right: offsetPx, zIndex: zIndex }}><LeverHandle flip /></div>}
-        {type === 'DoorLeft' && <div style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', left: offsetPx, zIndex: zIndex }}><LeverHandle /></div>}
+        {/* Window Handles */}
+        {(type === 'TurnRight' || type === 'TiltTurnRight') && <div style={{...handleBaseStyle, right: offsetPx}}></div>}
+        {(type === 'TurnLeft' || type === 'TiltTurnLeft') && <div style={{...handleBaseStyle, left: offsetPx}}></div>}
+        
+        {/* Door Handles - Same appearance as window but with Keyhole */}
+        {type === 'DoorRight' && (
+            <div style={{...handleBaseStyle, right: offsetPx}}>
+                <Keyhole />
+            </div>
+        )}
+        {type === 'DoorLeft' && (
+            <div style={{...handleBaseStyle, left: offsetPx}}>
+                <Keyhole />
+            </div>
+        )}
+
+        {/* Sliding Handles */}
         {type === 'SlidingRight' && <div style={{...handleBaseStyle, right: '2px', height: `${hH*0.8}px`}}></div>}
         {type === 'SlidingLeft' && <div style={{...handleBaseStyle, left: '2px', height: `${hH*0.8}px`}}></div>}
     </>

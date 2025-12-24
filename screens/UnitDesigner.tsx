@@ -771,7 +771,7 @@ export const UnitDesigner = () => {
              <div className="transition-transform duration-300 ease-out origin-center" style={{ transform: `scale(${zoomLevel})` }}>
                 <div className="relative select-none" style={{ width: config.width / 4, height: config.height / 4 }}>
                   {config.layout && (
-                    <WindowCanvas node={config.layout} selectedId={selectedNodeId} onSelect={handleCanvasNodeClick} onUpdateNode={handleUpdateNode} onDimensionEdit={handleDirectDimensionEdit} onChildResize={handleChildResize} width={config.width} height={config.height} isRoot={true} />
+                    <WindowCanvas node={config.layout} selectedId={selectedNodeId} onSelect={handleCanvasNodeClick} onUpdateNode={handleUpdateNode} onDimensionEdit={handleDirectDimensionEdit} onChildResize={handleChildResize} width={config.width} height={config.height} isRoot={true} frameType={config.frameType} />
                   )}
                 </div>
              </div>
