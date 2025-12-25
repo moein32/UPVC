@@ -1,26 +1,26 @@
 
 import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowRight, Download, Settings2, Loader2, Building, Printer, ZoomIn, ZoomOut, Maximize, X, Share2 } from 'lucide-react';
+import { ArrowRight, Printer, Loader2, Share2, ZoomIn, ZoomOut, Maximize } from 'lucide-react';
+import { toJpeg } from 'html-to-image';
+import { jsPDF } from 'jspdf';
 import { WindowPreview } from '../components/WindowPreview';
 import { ProjectDetails, InvoiceItem, AppSettings, InvoiceLayoutType } from '../types';
 import { BRANDS } from '../constants';
 import { toPersianDigits, formatPrice } from '../utils/formatting';
 import { pricingStore } from '../services/pricingStore';
 
-declare var html2pdf: any;
-
 export const InvoicePrint = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const invoiceRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const scaledWrapperRef = useRef<HTMLDivElement>(null);
   const state = location.state as { projectDetails: ProjectDetails, items: InvoiceItem[] } | null;
   
   const [projectDetails, setProjectDetails] = useState<ProjectDetails | null>(state?.projectDetails || null);
   const [items, setItems] = useState<InvoiceItem[]>(state?.items || []);
   const [settings, setSettings] = useState<AppSettings | null>(null);
-  const [tempLayout, setTempLayout] = useState<InvoiceLayoutType>('technical');
+  const [tempLayout, setTempLayout] = useState<InvoiceLayoutType>('standard');
   const [isGenerating, setIsGenerating] = useState(false);
   const [scale, setScale] = useState(1);
 
@@ -36,9 +36,9 @@ export const InvoicePrint = () => {
     const handleResize = () => {
         if (!containerRef.current) return;
         const screenW = window.innerWidth;
-        const targetW = 810; 
-        const newScale = Math.min((screenW - 24) / targetW, 1);
-        setScale(newScale);
+        const targetW = 840; 
+        const newScale = Math.min((screenW - 32) / targetW, 1);
+        setScale(Math.max(newScale, 0.4));
     };
 
     handleResize();
@@ -48,375 +48,499 @@ export const InvoicePrint = () => {
 
   if (!projectDetails || items.length === 0) {
       return (
-        <div className="h-screen flex items-center justify-center bg-slate-50">
-          <Loader2 className="animate-spin text-blue-600" size={32} />
+        <div className="h-screen flex items-center justify-center bg-slate-50 flex-col gap-4">
+          <Loader2 className="animate-spin text-slate-900" size={40} />
+          <p className="text-slate-500 font-medium text-sm">در حال بارگذاری اطلاعات...</p>
         </div>
       );
   }
 
+  // --- Calculations ---
   const totalMaterialPrice = items.reduce<number>((acc, item) => acc + item.calculations.unitPrice, 0);
   const installationCost = Math.round(totalMaterialPrice * (projectDetails.installPercent / 100));
   const finalPrice = totalMaterialPrice + installationCost;
   const todayJalali = new Intl.DateTimeFormat('fa-IR', { dateStyle: 'full' }).format(new Date(projectDetails.date));
   const invoiceConfig = settings?.invoice || { companyName: 'فروشگاه لومینا', companyPhone: '', companyAddress: '', footerNote: '' };
 
+  // --- Pagination Logic ---
+  const ITEMS_PER_PAGE = 3; // 3 items fit comfortably with large previews
+  const pages = [];
+  for (let i = 0; i < items.length; i += ITEMS_PER_PAGE) {
+    pages.push(items.slice(i, i + ITEMS_PER_PAGE));
+  }
+
+  // --- PDF Generation ---
   const handleDownloadPDF = async () => {
-    if (!invoiceRef.current) return;
     setIsGenerating(true);
-    
-    const element = invoiceRef.current;
-    
-    const opt = {
-      margin: 0,
-      filename: `Invoice-${projectDetails.customerName}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 }, 
-      html2canvas: { 
-        scale: 2.5, 
-        useCORS: true, 
-        backgroundColor: '#ffffff',
-        letterRendering: false,
-        scrollY: 0,
-        scrollX: 0,
-        windowWidth: 794,
-        x: 0,
-        y: 0
-      },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true }
-    };
+    const pageElements = document.querySelectorAll('.invoice-page-export');
+    if (!pageElements.length || !scaledWrapperRef.current) return;
+
+    // Save original scale
+    const originalTransform = scaledWrapperRef.current.style.transform;
+    scaledWrapperRef.current.style.transform = 'none';
 
     try {
-      await html2pdf().set(opt).from(element).save();
+      await new Promise(resolve => setTimeout(resolve, 300)); // Wait for reflow
+
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+
+      for (let i = 0; i < pageElements.length; i++) {
+         if (i > 0) pdf.addPage();
+         const canvas = await toJpeg(pageElements[i] as HTMLElement, { 
+             quality: 0.95, 
+             pixelRatio: 2.5, 
+             backgroundColor: '#ffffff' 
+         });
+         const imgProps = pdf.getImageProperties(canvas);
+         const imgHeight = (imgProps.height * pdfWidth) / imgProps.width;
+         pdf.addImage(canvas, 'JPEG', 0, 0, pdfWidth, imgHeight);
+      }
+
+      pdf.save(`Invoice-${projectDetails.customerName}-${Date.now()}.pdf`);
     } catch (error) {
-      console.error('PDF Generation Error:', error);
+      console.error('PDF Error:', error);
+      alert('خطا در تولید PDF');
     } finally {
+      scaledWrapperRef.current.style.transform = originalTransform;
       setIsGenerating(false);
     }
   };
 
   const handleSharePDF = async () => {
-    if (!invoiceRef.current) return;
     setIsGenerating(true);
-    
-    const element = invoiceRef.current;
-    const opt = {
-      margin: 0,
-      filename: `Invoice-${projectDetails.customerName}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 }, 
-      html2canvas: { 
-        scale: 2.5, 
-        useCORS: true, 
-        backgroundColor: '#ffffff',
-        windowWidth: 794,
-        x: 0,
-        y: 0
-      },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true }
-    };
+    const pageElements = document.querySelectorAll('.invoice-page-export');
+    if (!pageElements.length || !scaledWrapperRef.current) return;
+
+    const originalTransform = scaledWrapperRef.current.style.transform;
+    scaledWrapperRef.current.style.transform = 'none';
 
     try {
-      const pdfBlob = await html2pdf().set(opt).from(element).outputPdf('blob');
-      const file = new File([pdfBlob], `Invoice-${projectDetails.customerName}.pdf`, { type: 'application/pdf' });
-      
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          title: 'پیش‌فاکتور لومینا',
-          text: `پیش‌فاکتور پروژه ${projectDetails.customerName}`,
-        });
-      } else {
-        const url = URL.createObjectURL(pdfBlob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `Invoice-${projectDetails.customerName}.pdf`;
-        link.click();
-        URL.revokeObjectURL(url);
+      await new Promise(resolve => setTimeout(resolve, 300));
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+
+      for (let i = 0; i < pageElements.length; i++) {
+         if (i > 0) pdf.addPage();
+         const canvas = await toJpeg(pageElements[i] as HTMLElement, { quality: 0.90, pixelRatio: 2, backgroundColor: '#ffffff' });
+         const imgProps = pdf.getImageProperties(canvas);
+         const imgHeight = (imgProps.height * pdfWidth) / imgProps.width;
+         pdf.addImage(canvas, 'JPEG', 0, 0, pdfWidth, imgHeight);
       }
-    } catch (error) {
-      console.error('Sharing Error:', error);
+
+      const pdfBlob = pdf.output('blob');
+      const file = new File([pdfBlob], `Invoice.pdf`, { type: 'application/pdf' });
+
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: 'پیش‌فاکتور', text: `فاکتور ${projectDetails.customerName}` });
+      } else {
+        pdf.save(`Invoice-${projectDetails.customerName}.pdf`);
+      }
+    } catch (error: any) {
+      if (error.name !== 'AbortError') {
+        console.error('Share Error:', error);
+        alert('خطا در اشتراک‌گذاری');
+      }
     } finally {
+      scaledWrapperRef.current.style.transform = originalTransform;
       setIsGenerating(false);
     }
   };
 
+  // --- Reusable Header Component ---
+  const InvoiceHeader = () => (
+    <div className="inv-header">
+        <div className={`flex ${tempLayout === 'classic' ? 'flex-col items-center gap-4' : 'justify-between items-start'}`}>
+            <div className={`${tempLayout === 'classic' ? 'text-center' : 'text-right'}`}>
+                <div className="inv-title-box">
+                    <h1 className="text-3xl font-black mb-2 tracking-tight text-black">{invoiceConfig.companyName}</h1>
+                    {tempLayout === 'modern' && <span className="inv-badge text-[10px] font-bold">پیش‌فاکتور رسمی</span>}
+                </div>
+                <div className="text-[11px] opacity-80 space-y-1 font-medium mt-3 text-slate-800">
+                    <div className="flex items-center gap-2">
+                        <span>آدرس:</span>
+                        <span>{invoiceConfig.companyAddress || '---'}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span>تلفن تماس:</span>
+                        <span>{toPersianDigits(invoiceConfig.companyPhone) || '---'}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div className={`flex flex-col ${tempLayout === 'classic' ? 'items-center w-full border-t-2 border-black pt-4 mt-2' : 'items-end text-left'}`}>
+                {tempLayout !== 'modern' && (
+                    <div className={`text-[12px] font-black px-4 py-2 mb-3 rounded-lg ${tempLayout === 'technical' ? 'bg-black text-white' : tempLayout === 'classic' ? 'border border-black' : 'bg-slate-100'}`}>
+                        پیش‌فاکتور فروش
+                    </div>
+                )}
+                <div className="text-[10px] font-bold space-y-1.5 opacity-90 text-slate-900">
+                    <div className="flex gap-4 justify-between min-w-[140px]">
+                        <span>تاریخ صدور:</span>
+                        <span className="font-black">{todayJalali}</span>
+                    </div>
+                    <div className="flex gap-4 justify-between min-w-[140px]">
+                        <span>شماره سند:</span>
+                        <span className="font-black">{toPersianDigits(projectDetails.id.slice(-6))}</span>
+                    </div>
+                    <div className="flex gap-4 justify-between min-w-[140px]">
+                        <span>مشتری:</span>
+                        <span className="font-black">{projectDetails.customerName}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+  );
+
+  // --- Reusable Footer Component ---
+  const InvoiceFooter = ({ pageNum, totalPages }: { pageNum: number, totalPages: number }) => (
+     <div className="inv-footer mt-auto">
+        <div className="inv-footer-container relative pt-6 border-t border-black/10">
+            <div className="flex justify-between items-end">
+                {/* Left Side: Terms */}
+                <div className="max-w-[55%]">
+                    <div className="flex items-center gap-2 mb-2 opacity-50">
+                            <div className="w-1.5 h-1.5 bg-black rounded-full"></div>
+                            <span className="text-[9px] font-black text-black uppercase tracking-widest">توضیحات و شرایط</span>
+                    </div>
+                    <p className="text-[9px] leading-loose text-justify opacity-70 font-medium pl-4">
+                        {invoiceConfig.footerNote || 'هزینه حمل و نقل بر عهده خریدار می‌باشد. اعتبار این پیش‌فاکتور ۷۲ ساعت از تاریخ صدور است.'}
+                    </p>
+                </div>
+
+                {/* Right Side: Contact & Page Info */}
+                <div className="text-left flex flex-col items-end gap-4">
+                        <div className="text-[9px] font-bold opacity-80 dir-ltr text-right">
+                        {invoiceConfig.companyAddress && (
+                            <div className="mb-1 flex items-center justify-end gap-2">
+                                <span>{invoiceConfig.companyAddress}</span>
+                            </div>
+                        )}
+                        {invoiceConfig.companyPhone && (
+                            <div className="opacity-70 font-mono tracking-widest">{invoiceConfig.companyPhone}</div>
+                        )}
+                        </div>
+
+                        {/* Page Number Badge */}
+                        <div className="bg-black text-white text-[9px] font-bold px-4 py-1.5 rounded-full flex items-center gap-3 shadow-md">
+                            <span className="opacity-70 font-normal">صفحه</span>
+                            <span className="font-mono pt-0.5 tracking-wider">{toPersianDigits(pageNum)} / {toPersianDigits(totalPages)}</span>
+                        </div>
+                </div>
+            </div>
+        </div>
+     </div>
+  );
+
   return (
-    <div className="min-h-screen bg-slate-300 flex flex-col items-center overflow-x-hidden relative font-['Vazirmatn']">
+    <div className="min-h-screen bg-slate-200/50 flex flex-col items-center overflow-x-hidden font-['Vazirmatn'] relative pb-32">
        <style>
          {`
            @media print {
              @page { size: A4; margin: 0; }
+             body { background: white; }
              .no-print { display: none !important; }
-             .invoice-page { margin: 0 !important; width: 794px !important; box-shadow: none !important; height: auto !important; }
+             .invoice-page { margin: 0 !important; width: 210mm !important; min-height: 297mm !important; height: auto !important; box-shadow: none !important; border-radius: 0 !important; }
            }
 
+           /* --- BASE INVOICE RESET --- */
            .invoice-page { 
-             width: 794px !important; 
-             min-height: 1123px !important; /* Minimum A4 height */
-             height: auto !important; /* Allow growth to prevent footer clipping */
-             background-color: #ffffff !important; 
+             width: 794px !important; /* A4 Width at 96 DPI */
+             min-height: 1123px !important; 
+             background-color: #ffffff; 
+             color: #000000;
              box-sizing: border-box;
              position: relative;
-             overflow: visible; /* Changed from hidden to show all content */
              display: flex;
              flex-direction: column;
-             margin: 0; 
-             color: #1e293b !important;
-             padding-bottom: 40px;
+             margin-bottom: 2rem; /* Gap between pages in preview */
+             box-shadow: 0 10px 30px -10px rgba(0,0,0,0.1);
            }
-
+           
            .invoice-page * {
-             font-family: 'Vazirmatn', sans-serif !important;
-             letter-spacing: 0 !important;
+             font-family: 'Vazirmatn', sans-serif;
+             -webkit-print-color-adjust: exact !important;
+             print-color-adjust: exact !important;
            }
 
-           /* --- LAYOUT: TECHNICAL (NAVY) --- */
-           .layout-technical .invoice-header { background: #0f172a !important; border-bottom: 8px solid #2563eb; padding: 40px; }
-           .layout-technical .invoice-header h1 { color: #ffffff !important; }
-           .layout-technical .invoice-header p, .layout-technical .invoice-header span { color: #cbd5e1 !important; }
-           .layout-technical .invoice-table th { background: #1e293b !important; color: #ffffff !important; border: 1px solid #334155; }
-           .layout-technical .total-box { background: #0f172a !important; padding: 40px; margin-top: auto; }
-           .layout-technical .total-box * { color: #ffffff !important; }
+           /* --- FOOTER SPECIFIC STYLES --- */
+           .inv-footer { padding: 0 50px 40px 50px; } /* Inset padding */
+           
+           .layout-modern .inv-footer-container { 
+               background: #f8fafc; 
+               border: none;
+               padding: 24px 30px; 
+               border-radius: 16px;
+               margin-top: 20px;
+           }
+           .layout-technical .inv-footer-container {
+               border-top: 4px solid black;
+               padding-top: 20px;
+           }
+           .layout-classic .inv-footer-container {
+               border-top: 3px double black;
+           }
 
-           /* --- LAYOUT: MODERN --- */
-           .layout-modern .invoice-header { padding: 50px; border-top: 15px solid #2563eb; background: #ffffff !important; }
-           .layout-modern .invoice-header * { color: #1e293b !important; }
-           .layout-modern .invoice-table th { border-bottom: 3px solid #2563eb; color: #0f172a !important; font-weight: 900; background: transparent !important; }
-           .layout-modern .total-box { background: #f8fafc !important; border-radius: 40px; padding: 30px; margin: 20px 40px; border: 1px solid #e2e8f0; }
-           .layout-modern .total-box * { color: #1e293b !important; }
 
-           /* --- LAYOUT: STANDARD --- */
-           .layout-standard .invoice-header { background: #f8fafc !important; border-bottom: 2px solid #e2e8f0; padding: 40px; }
-           .layout-standard .invoice-header * { color: #1e293b !important; }
-           .layout-standard .invoice-table th { background: #f1f5f9 !important; color: #334155 !important; border: 1px solid #e2e8f0; }
-           .layout-standard .total-box { background: #f8fafc !important; padding: 30px; border-top: 2px solid #e2e8f0; }
-           .layout-standard .total-box * { color: #1e293b !important; }
+           /* --- THEMES CONFIGURATION (ALL BLACK/GRAY) --- */
 
-           /* --- LAYOUT: CLASSIC --- */
-           .layout-classic { padding: 40px; }
-           .layout-classic .invoice-page-inner { border: 1.5pt solid #000000; height: 100%; display: flex; flex-direction: column; background: #ffffff !important; }
-           .layout-classic .invoice-header { text-align: center; border-bottom: 1.5pt solid #000000; padding: 20px; color: #000000 !important; }
-           .layout-classic .invoice-header h1 { color: #000000 !important; }
-           .layout-classic .invoice-table th, .layout-classic .invoice-table td { border: 0.8pt solid #000000 !important; color: #000000 !important; }
-           .layout-classic .invoice-table th { background: #f2f2f2 !important; font-weight: 900; }
-           .layout-classic .total-box { border-top: 1.5pt solid #000000; padding: 25px; background: #ffffff !important; color: #000000 !important; }
-           .layout-classic .total-box * { color: #000000 !important; }
+           /* 1. STANDARD THEME */
+           .layout-standard {
+             --primary: #000000;
+             --primary-light: #f3f4f6;
+             --text-main: #000000;
+             --text-muted: #525252;
+             --border: #e5e5e5;
+             --header-bg: #f9fafb;
+           }
+           .layout-standard .inv-header { background-color: var(--header-bg); border-bottom: 2px solid var(--primary); padding: 40px; }
+           .layout-standard .inv-title-box { border-right: 4px solid var(--primary); padding-right: 15px; }
+           .layout-standard .inv-card { background: white; border: 1px solid var(--border); border-radius: 4px; }
+           .layout-standard .inv-table th { background-color: var(--primary); color: white; text-transform: uppercase; font-weight: 900; border-bottom: 2px solid var(--primary); text-align: center; }
+           .layout-standard .inv-table td { border-bottom: 1px solid var(--border); text-align: center; vertical-align: middle; }
+           .layout-standard .inv-total { background-color: var(--header-bg); border-top: 2px solid var(--primary); padding: 30px; margin-top: 20px; }
 
-           .fee-column { color: #000000 !important; font-weight: 700 !important; opacity: 1 !important; }
+           /* 2. MODERN THEME */
+           .layout-modern {
+             --primary: #000000;
+             --primary-light: #f8fafc;
+             --text-main: #171717;
+             --text-muted: #737373;
+             --border: transparent;
+             --header-bg: #ffffff;
+           }
+           .layout-modern .inv-header { padding: 40px 40px 10px 40px; }
+           .layout-modern .inv-badge { background-color: var(--primary); color: white; padding: 6px 16px; border-radius: 100px; }
+           .layout-modern .inv-card { background: #f5f5f5; border-radius: 12px; border: none; }
+           .layout-modern .inv-table th { color: var(--text-muted); font-weight: 700; font-size: 10px; padding-bottom: 15px; text-align: center; border-bottom: 1px solid #e5e5e5; }
+           .layout-modern .inv-table td { padding-top: 15px; padding-bottom: 15px; vertical-align: middle; text-align: center; }
+           .layout-modern .inv-total { background-color: var(--primary); color: white; border-radius: 16px; padding: 40px; margin: 20px 40px; }
+           .layout-modern .inv-total * { color: white !important; }
+
+           /* 3. TECHNICAL THEME */
+           .layout-technical {
+             --primary: #000000;
+             --primary-light: #e5e5e5;
+             --text-main: #000000;
+             --text-muted: #404040;
+             --border: #404040;
+             --header-bg: #171717;
+           }
+           .layout-technical .inv-header { background-color: var(--header-bg); color: white; padding: 40px; border-bottom: 4px solid #525252; }
+           .layout-technical .inv-header * { color: white !important; }
+           .layout-technical .inv-card { border: 1px solid var(--border); border-radius: 0; background: white; }
+           .layout-technical .inv-table th { background-color: #d4d4d4; color: black; border: 1px solid var(--border); font-weight: 800; text-align: center; }
+           .layout-technical .inv-table td { border: 1px solid var(--border); text-align: center; vertical-align: middle; }
+           .layout-technical .inv-total { border-top: 4px solid black; background-color: #f5f5f5; padding: 30px; margin-top: 20px; border-bottom: 10px solid var(--header-bg); }
+
+           /* 4. CLASSIC THEME */
+           .layout-classic {
+             --primary: #000000;
+             --primary-light: #f3f3f3;
+             --text-main: #000000;
+             --text-muted: #000000;
+             --border: #000000;
+             --header-bg: #ffffff;
+           }
+           .layout-classic { padding: 40px; border: none; }
+           .layout-classic .classic-border-frame { border: 2px solid black; height: 100%; display: flex; flex-direction: column; }
+           .layout-classic .inv-header { border-bottom: 2px solid black; padding: 30px; text-align: center; }
+           .layout-classic .inv-title-box { border: none; padding: 0; margin-bottom: 10px; }
+           .layout-classic .inv-card { border: 1px solid black; border-radius: 0; }
+           .layout-classic .inv-table th { border-bottom: 1px solid black; background-color: #eee; font-weight: bold; text-align: center; }
+           .layout-classic .inv-table td { border-bottom: 1px solid black; text-align: center; vertical-align: middle; }
+           .layout-classic .inv-total { border-top: 2px solid black; padding: 20px; background-color: #fff; margin-top: 20px; }
+
+           /* --- UTILS --- */
+           .window-preview-clean svg { filter: none !important; box-shadow: none !important; }
+           .window-preview-clean div { box-shadow: none !important; }
          `}
        </style>
 
-       {/* Control Bar - Mobile Optimized */}
-       <div className="no-print fixed bottom-6 left-4 right-4 z-50 flex justify-center">
-            <div className="bg-white/95 backdrop-blur-3xl shadow-[0_20px_60px_rgba(0,0,0,0.2)] border border-slate-200 rounded-[2rem] p-2 w-full max-w-xl flex items-center gap-2">
-                <button 
-                  onClick={() => navigate(-1)} 
-                  className="w-12 h-12 flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-full transition-all shrink-0"
-                >
-                  <ArrowRight size={20} />
-                </button>
-                
-                <button 
-                    onClick={handleDownloadPDF}
-                    disabled={isGenerating}
-                    className="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white h-12 rounded-full font-black text-[11px] sm:text-xs shadow-lg hover:bg-blue-700 disabled:opacity-50 transition-all px-2"
-                >
-                    {isGenerating ? <Loader2 className="animate-spin" size={18} /> : <Printer size={18} />}
-                    <span className="whitespace-nowrap">{isGenerating ? 'صبر کنید...' : 'چاپ فاکتور'}</span>
-                </button>
+       {/* --- FLOATING CONTROLS --- */}
+       <div className="no-print fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-3 w-full px-4 max-w-2xl pointer-events-none">
+            {/* Layout Selector */}
+            <div className="bg-white/90 backdrop-blur-xl shadow-2xl border border-white/50 rounded-2xl p-2 flex gap-1 pointer-events-auto">
+                 {['standard', 'modern', 'technical', 'classic'].map((layout) => (
+                     <button
+                        key={layout}
+                        onClick={() => setTempLayout(layout as InvoiceLayoutType)}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${tempLayout === layout ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 hover:bg-slate-100'}`}
+                     >
+                        {layout === 'standard' && 'استاندارد'}
+                        {layout === 'modern' && 'مدرن'}
+                        {layout === 'technical' && 'فنی'}
+                        {layout === 'classic' && 'کلاسیک'}
+                     </button>
+                 ))}
+            </div>
 
-                <div className="flex items-center gap-1.5 bg-slate-50 rounded-full px-2 h-12 border border-slate-100 min-w-[90px] sm:min-w-[130px] shrink-0">
-                    <Settings2 size={16} className="text-blue-600 hidden sm:block" />
-                    <select 
-                        value={tempLayout} 
-                        onChange={(e) => setTempLayout(e.target.value as any)}
-                        className="bg-transparent border-none p-0 text-[10px] font-black text-slate-800 focus:ring-0 cursor-pointer outline-none w-full text-center"
-                    >
-                        <option value="technical">قالب فنی</option>
-                        <option value="modern">قالب مدرن</option>
-                        <option value="standard">قالب رسمی</option>
-                        <option value="classic">قالب سنتی</option>
-                    </select>
+            {/* Actions */}
+            <div className="bg-slate-900/95 backdrop-blur-xl shadow-2xl rounded-full p-2 flex items-center gap-2 pointer-events-auto">
+                <button onClick={() => navigate(-1)} className="w-10 h-10 flex items-center justify-center bg-white/10 hover:bg-white/20 text-white rounded-full transition-all">
+                  <ArrowRight size={18} />
+                </button>
+                <div className="w-px h-6 bg-white/20 mx-1"></div>
+                <button onClick={handleDownloadPDF} disabled={isGenerating} className="flex items-center gap-2 px-6 h-10 bg-blue-600 hover:bg-blue-500 text-white rounded-full font-bold text-xs transition-all disabled:opacity-50">
+                    {isGenerating ? <Loader2 size={16} className="animate-spin" /> : <Printer size={16} />}
+                    <span>دانلود PDF</span>
+                </button>
+                <button onClick={handleSharePDF} disabled={isGenerating} className="w-10 h-10 flex items-center justify-center bg-emerald-600 hover:bg-emerald-500 text-white rounded-full transition-all disabled:opacity-50">
+                    <Share2 size={18} />
+                </button>
+                <div className="w-px h-6 bg-white/20 mx-1"></div>
+                <div className="flex bg-white/10 rounded-full p-1">
+                    <button onClick={() => setScale(s => Math.max(0.3, s - 0.1))} className="w-8 h-8 flex items-center justify-center text-white hover:bg-white/10 rounded-full"><ZoomOut size={14} /></button>
+                    <button onClick={() => setScale(1)} className="w-8 h-8 flex items-center justify-center text-white hover:bg-white/10 rounded-full"><Maximize size={14} /></button>
+                    <button onClick={() => setScale(s => Math.min(2, s + 0.1))} className="w-8 h-8 flex items-center justify-center text-white hover:bg-white/10 rounded-full"><ZoomIn size={14} /></button>
                 </div>
             </div>
        </div>
 
-       {/* Zoom & Share Controls */}
-       <div className="no-print fixed top-6 right-6 z-50 flex flex-col gap-2">
-            <button 
-              onClick={handleSharePDF} 
-              disabled={isGenerating}
-              className="p-3.5 bg-emerald-600 shadow-xl rounded-2xl text-white hover:bg-emerald-700 active:scale-90 transition-all border border-emerald-500 disabled:opacity-50"
-              title="اشتراک‌گذاری"
-            >
-              {isGenerating ? <Loader2 size={22} className="animate-spin" /> : <Share2 size={22}/>}
-            </button>
-            <div className="w-full h-px bg-slate-400 opacity-20 my-1"></div>
-            <button onClick={() => setScale(s => Math.min(s + 0.1, 2.5))} className="p-3.5 bg-white shadow-xl rounded-2xl text-slate-700 hover:bg-slate-50 transition-all border border-slate-100 active:scale-90"><ZoomIn size={22}/></button>
-            <button onClick={() => setScale(s => Math.max(s - 0.1, 0.2))} className="p-3.5 bg-white shadow-xl rounded-2xl text-slate-700 hover:bg-slate-50 transition-all border border-slate-100 active:scale-90"><ZoomOut size={22}/></button>
-            <button onClick={() => setScale(1)} className="p-3.5 bg-blue-600 shadow-xl rounded-2xl text-white hover:bg-blue-700 active:scale-90 transition-all"><Maximize size={22}/></button>
-       </div>
-
-       {/* Invoice Preview Area */}
-       <div ref={containerRef} className="w-full flex justify-center py-12 pb-44 overflow-x-auto scrollbar-hide">
+       {/* --- PREVIEW AREA --- */}
+       <div ref={containerRef} className="w-full flex justify-center pt-8 pb-48 overflow-visible">
             <div 
-                className="relative shadow-[0_30px_100px_rgba(0,0,0,0.15)] origin-top transition-all duration-300"
+                ref={scaledWrapperRef}
+                className="relative origin-top transition-transform duration-200 ease-out flex flex-col gap-8"
                 style={{ transform: `scale(${scale})`, width: '794px' }}
             >
-                <div ref={invoiceRef} className={`invoice-page layout-${tempLayout}`}>
-                    <div className="invoice-page-inner flex-1 flex flex-col">
-                        
-                        {/* HEADER */}
-                        <div className="invoice-header px-10 pt-10">
-                            <div className="flex justify-between items-start">
-                                <div>
-                                    <h1 className="text-3xl font-black mb-1 tracking-tighter">
-                                        {invoiceConfig.companyName}
-                                    </h1>
-                                    <div className="text-[11px] font-bold opacity-90 mt-2 space-y-0.5">
-                                        <p>{invoiceConfig.companyAddress}</p>
-                                        <p>تماس: {toPersianDigits(invoiceConfig.companyPhone)}</p>
-                                    </div>
-                                </div>
-                                <div className="text-left w-48">
-                                    <div className={`text-center py-2 px-3 rounded-lg mb-4 font-black text-xs ${tempLayout === 'classic' ? 'border-2 border-black text-black' : 'bg-blue-600 text-white shadow-sm'}`}>
-                                        پیش‌فاکتور فروش
-                                    </div>
-                                    <div className={`space-y-1 text-[10px] font-black ${tempLayout === 'technical' ? 'text-white' : 'text-slate-700'}`}>
-                                        <div className="flex justify-between border-b border-current/10 pb-0.5">
-                                            <span>تاریخ صدور:</span>
-                                            <span>{todayJalali}</span>
+                {pages.map((pageItems, pageIndex) => (
+                    <div key={pageIndex} className={`invoice-page invoice-page-export layout-${tempLayout}`}>
+                         <div className={tempLayout === 'classic' ? 'classic-border-frame' : 'h-full flex flex-col'}>
+                             
+                             {/* REPEATING HEADER */}
+                             <InvoiceHeader />
+
+                             {/* CUSTOMER INFO - ONLY ON FIRST PAGE */}
+                             {pageIndex === 0 && (
+                                <div className="px-10 py-6">
+                                    <div className="inv-card p-5 grid grid-cols-2 gap-8">
+                                        <div>
+                                            <span className="text-[9px] font-black opacity-50 uppercase tracking-widest mb-1.5 block">مشخصات خریدار</span>
+                                            <div className="text-lg font-black text-[var(--text-main)] text-center">{projectDetails.customerName}</div>
                                         </div>
-                                        <div className="flex justify-between">
-                                            <span>شماره فاکتور:</span>
-                                            <span>{toPersianDigits(projectDetails.id.slice(-6))}</span>
+                                        <div>
+                                            <span className="text-[9px] font-black opacity-50 uppercase tracking-widest mb-1.5 block">محل پروژه</span>
+                                            <div className="text-sm font-bold text-[var(--text-muted)] text-center">{projectDetails.address || 'ثبت نشده'}</div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
+                             )}
 
-                        {/* CUSTOMER INFO */}
-                        <div className="px-10 py-5">
-                            <div className={`grid grid-cols-2 gap-8 p-6 ${tempLayout === 'modern' ? 'bg-slate-50 border border-slate-200 rounded-3xl' : tempLayout === 'classic' ? 'border-2 border-black' : 'border border-slate-200 rounded-xl'}`}>
-                                <div>
-                                    <span className="text-[9px] font-black text-slate-400 block mb-1 uppercase tracking-widest">خریدار محترم:</span>
-                                    <div className="text-xl font-black text-slate-900">{projectDetails.customerName}</div>
-                                </div>
-                                <div>
-                                    <span className="text-[9px] font-black text-slate-400 block mb-1 uppercase tracking-widest">محل اجرای پروژه:</span>
-                                    <div className="text-[11px] font-bold leading-relaxed text-slate-700">{projectDetails.address || 'ثبت نشده است'}</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* TABLE */}
-                        <div className="flex-1 px-10">
-                            <table className="invoice-table w-full border-collapse">
-                                <thead>
-                                    <tr className="text-[10px] font-black">
-                                        <th className="p-3 w-10 text-center">ردیف</th>
-                                        <th className="p-3 w-40 text-center">نقشه فنی</th>
-                                        <th className="p-3">ریز محاسبات و اقلام مصرفی</th>
-                                        <th className="p-3 w-36 text-left">مجموع واحد</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {items.map((item, index) => {
-                                        const brand = BRANDS.find(b => b.id === item.config.profileId);
-                                        return (
-                                            <tr key={index} className="break-inside-avoid">
-                                                <td className="p-3 text-center font-black text-[10px] text-slate-500">
-                                                    {toPersianDigits(index + 1)}
-                                                </td>
-                                                <td className="p-3 align-top">
-                                                    <div className={`unit-card aspect-square bg-white flex items-center justify-center p-2 border ${tempLayout === 'modern' ? 'rounded-xl border-slate-100' : tempLayout === 'classic' ? 'border-black' : 'border-slate-200'}`}>
-                                                        <WindowPreview config={item.config} width="100%" height="100%" />
-                                                    </div>
-                                                    <div className="text-center mt-2 text-[9px] font-black text-slate-400 uppercase tracking-tighter">
-                                                        {toPersianDigits(item.config.width)} × {toPersianDigits(item.config.height)} mm
-                                                    </div>
-                                                </td>
-                                                <td className="p-3 align-top">
-                                                    <div className="mb-2 flex items-center gap-2">
-                                                        <span className={`px-2 py-0.5 rounded text-[9px] font-black ${tempLayout === 'technical' ? 'bg-blue-600 text-white border-none' : 'bg-slate-100 text-slate-700 border border-slate-200'}`}>
-                                                            {brand?.name}
-                                                        </span>
-                                                        <span className="text-[10px] font-black text-slate-800">{item.config.type}</span>
-                                                    </div>
-                                                    <div className="w-full">
-                                                        <div className="flex justify-between text-[8px] font-black text-slate-400 border-b pb-1 mb-1">
-                                                            <span className="flex-1 uppercase tracking-tighter">شرح کالا / متریال مصرفی</span>
-                                                            <div className="flex gap-4 w-[240px] justify-end">
-                                                                <span className="w-20 text-center">مقدار</span>
-                                                                <span className="w-20 text-center">فی</span>
-                                                                <span className="w-20 text-left">جمع</span>
-                                                            </div>
+                             {/* ITEMS TABLE */}
+                             <div className="flex-1 px-10">
+                                <table className="inv-table w-full border-collapse">
+                                    <thead>
+                                        <tr>
+                                            <th className="p-3 w-12 text-center rounded-r-lg">#</th>
+                                            <th className="p-3 w-40 text-center">نقشه فنی</th>
+                                            <th className="p-3 text-center">شرح اقلام و محاسبات</th>
+                                            <th className="p-3 w-32 text-center rounded-l-lg">مبلغ کل (تومان)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {pageItems.map((item, localIndex) => {
+                                            const globalIndex = pageIndex * ITEMS_PER_PAGE + localIndex;
+                                            const brand = BRANDS.find(b => b.id === item.config.profileId);
+                                            return (
+                                                <tr key={globalIndex}>
+                                                    <td className="p-3 font-bold text-xs opacity-50">
+                                                        {toPersianDigits(globalIndex + 1)}
+                                                    </td>
+                                                    <td className="p-3">
+                                                        <div className="window-preview-clean relative w-32 h-32 mx-auto bg-white border border-slate-200 rounded-lg flex items-center justify-center p-2">
+                                                            <WindowPreview config={item.config} width="100%" height="100%" />
                                                         </div>
-                                                        {item.calculations.details?.map((detail, dIdx) => (
-                                                            <div key={dIdx} className="flex justify-between text-[10px] py-0.5 border-b border-slate-50 last:border-0">
-                                                                <span className="flex-1 font-bold text-slate-700">{detail.name}</span>
-                                                                <div className="flex gap-4 w-[240px] justify-end">
-                                                                    <span className="w-20 text-center font-black text-slate-900">{toPersianDigits(detail.quantity)} {detail.unit}</span>
-                                                                    <span className="w-20 text-center fee-column tracking-tighter">{formatPrice(detail.unitPrice)}</span>
-                                                                    <span className="w-20 text-left font-black text-slate-900 tracking-tighter">{formatPrice(detail.totalPrice)}</span>
+                                                        <div className="text-center mt-2 text-[9px] font-black opacity-60 dir-ltr">
+                                                            {toPersianDigits(item.config.width)} × {toPersianDigits(item.config.height)} mm
+                                                        </div>
+                                                    </td>
+                                                    <td className="p-3">
+                                                        <div className="flex items-center justify-center gap-2 mb-3">
+                                                            <span className="bg-slate-100 text-slate-900 px-2 py-0.5 rounded text-[10px] font-black border border-slate-200">
+                                                                {brand?.name}
+                                                            </span>
+                                                            <span className="text-[10px] font-bold opacity-70">
+                                                                {item.config.type}
+                                                            </span>
+                                                        </div>
+                                                        
+                                                        {/* Detail Rows - Centered */}
+                                                        <div className="w-full space-y-1">
+                                                            {item.calculations.details?.map((detail, dIdx) => (
+                                                                <div key={dIdx} className="row-divider flex justify-between items-center text-[9px] py-1">
+                                                                    <span className="font-medium text-[var(--text-main)] w-1/3 truncate text-center">{detail.name}</span>
+                                                                    <div className="flex gap-4 w-2/3 justify-center opacity-80">
+                                                                        <span className="w-16 text-center">{toPersianDigits(detail.quantity)} {detail.unit}</span>
+                                                                        <span className="w-20 text-center">{formatPrice(detail.unitPrice)}</span>
+                                                                        <span className="w-20 text-center font-bold">{formatPrice(detail.totalPrice)}</span>
+                                                                    </div>
                                                                 </div>
-                                                            </div>
-                                                        ))}
+                                                            ))}
+                                                        </div>
+                                                    </td>
+                                                    <td className="p-3">
+                                                        <div className="text-sm font-black text-[var(--text-main)]">
+                                                            {formatPrice(item.calculations.totalPrice)}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                             </div>
+
+                             {/* TOTALS - ONLY ON LAST PAGE */}
+                             {pageIndex === pages.length - 1 && (
+                                 <div className="inv-total">
+                                    <div className="flex gap-8 items-start">
+                                        <div className="flex-1">
+                                            {/* Signatures */}
+                                            <div className="flex justify-between items-center px-4 opacity-70 mt-2">
+                                                <div className="text-center">
+                                                    <span className="text-[9px] font-bold block mb-4">مهر و امضاء فروشنده</span>
+                                                    <div className="w-24 h-px bg-current opacity-30 mx-auto"></div>
+                                                </div>
+                                                <div className="text-center">
+                                                    <span className="text-[9px] font-bold block mb-4">تایید خریدار</span>
+                                                    <div className="w-24 h-px bg-current opacity-30 mx-auto"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="w-64">
+                                            <div className="space-y-3">
+                                                <div className="flex justify-between text-xs font-bold opacity-70">
+                                                    <span>جمع متریال:</span>
+                                                    <span>{formatPrice(totalMaterialPrice)}</span>
+                                                </div>
+                                                <div className="flex justify-between text-xs font-bold opacity-70">
+                                                    <span>اجرت نصب ({toPersianDigits(projectDetails.installPercent)}٪):</span>
+                                                    <span>{formatPrice(installationCost)}</span>
+                                                </div>
+                                                
+                                                <div className="total-divider h-px bg-current opacity-20 my-2"></div>
+                                                
+                                                <div className="flex justify-between items-end">
+                                                    <span className="text-sm font-black mb-1">مبلغ نهایی:</span>
+                                                    <div className="text-left">
+                                                        <div className="text-2xl font-black tracking-tight leading-none">{formatPrice(finalPrice)}</div>
+                                                        <span className="text-[9px] font-bold opacity-50 block mt-1 uppercase">Toman</span>
                                                     </div>
-                                                </td>
-                                                <td className={`p-3 align-top text-left font-black text-base text-slate-900 ${tempLayout === 'technical' ? 'bg-slate-50/50' : ''}`}>
-                                                    {formatPrice(item.calculations.totalPrice)}
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
-                        </div>
-
-                        {/* FOOTER */}
-                        <div className="total-box mt-10">
-                            <div className="flex justify-between items-start gap-10">
-                                <div className="flex-1">
-                                    <h4 className="text-[9px] font-black uppercase tracking-[2px] mb-2 opacity-60">توضیحات فاکتور:</h4>
-                                    <p className="text-[10px] leading-relaxed text-justify font-medium">
-                                        {invoiceConfig.footerNote || 'اعتبار این پیش‌فاکتور ۷۲ ساعت می‌باشد.'}
-                                    </p>
-                                    <div className="mt-12 flex justify-between items-center px-4">
-                                        <div className="text-center">
-                                            <div className="w-32 h-px bg-current opacity-20 mb-2"></div>
-                                            <span className="text-[8px] font-black opacity-60 uppercase tracking-widest">مهر و امضا</span>
-                                        </div>
-                                        {tempLayout === 'classic' && <div className="text-black font-black text-sm border-2 border-black p-2 rounded-full opacity-20 rotate-12">STAMP</div>}
-                                        <div className="text-center">
-                                            <div className="w-32 h-px bg-current opacity-20 mb-2"></div>
-                                            <span className="text-[8px] font-black opacity-60 uppercase tracking-widest">تایید خریدار</span>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
+                                 </div>
+                             )}
 
-                                <div className="w-72 space-y-3">
-                                    <div className="flex justify-between text-xs font-bold opacity-70">
-                                        <span>جمع کل متریال:</span>
-                                        <span className="font-black">{formatPrice(totalMaterialPrice)}</span>
-                                    </div>
-                                    <div className="flex justify-between text-xs font-bold opacity-70">
-                                        <span>هزینه نصب ({toPersianDigits(projectDetails.installPercent)}٪):</span>
-                                        <span className="font-black">{formatPrice(installationCost)}</span>
-                                    </div>
-                                    <div className="h-px bg-current opacity-10 my-1"></div>
-                                    <div className="flex justify-between items-end">
-                                        <span className="text-xs font-black mb-1 opacity-80">مبلغ نهایی فاکتور:</span>
-                                        <div className="text-left">
-                                            <div className="text-4xl font-black tracking-tighter leading-none">{formatPrice(finalPrice)}</div>
-                                            <span className="text-[9px] font-black opacity-40 mt-1 block uppercase">Toman / تومان</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
+                             {/* REPEATING FOOTER */}
+                             <InvoiceFooter pageNum={pageIndex + 1} totalPages={pages.length} />
+                         </div>
                     </div>
-                </div>
+                ))}
             </div>
        </div>
     </div>
