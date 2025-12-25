@@ -153,10 +153,10 @@ export const InvoicePrint = () => {
         <div className={`flex ${tempLayout === 'classic' ? 'flex-col items-center gap-4' : 'justify-between items-start'}`}>
             <div className={`${tempLayout === 'classic' ? 'text-center' : 'text-right'}`}>
                 <div className="inv-title-box">
-                    <h1 className="text-3xl font-black mb-2 tracking-tight text-black">{invoiceConfig.companyName}</h1>
+                    <h1 className="text-3xl font-black mb-2 tracking-tight text-slate-900">{invoiceConfig.companyName}</h1>
                     {tempLayout === 'modern' && <span className="inv-badge text-[10px] font-bold">پیش‌فاکتور رسمی</span>}
                 </div>
-                <div className="text-[11px] opacity-80 space-y-1 font-medium mt-3 text-slate-800">
+                <div className="text-[11px] opacity-80 space-y-1 font-medium mt-3 text-slate-700">
                     <div className="flex items-center gap-2">
                         <span>آدرس:</span>
                         <span>{invoiceConfig.companyAddress || '---'}</span>
@@ -168,13 +168,13 @@ export const InvoicePrint = () => {
                 </div>
             </div>
             
-            <div className={`flex flex-col ${tempLayout === 'classic' ? 'items-center w-full border-t-2 border-black pt-4 mt-2' : 'items-end text-left'}`}>
+            <div className={`flex flex-col ${tempLayout === 'classic' ? 'items-center w-full border-t-2 border-slate-900 pt-4 mt-2' : 'items-end text-left'}`}>
                 {tempLayout !== 'modern' && (
-                    <div className={`text-[12px] font-black px-4 py-2 mb-3 rounded-lg ${tempLayout === 'technical' ? 'bg-black text-white' : tempLayout === 'classic' ? 'border border-black' : 'bg-slate-100'}`}>
+                    <div className={`text-[12px] font-black px-4 py-2 mb-3 rounded-lg ${tempLayout === 'technical' ? 'bg-slate-900 text-white' : tempLayout === 'classic' ? 'border border-slate-900' : 'bg-slate-100'}`}>
                         پیش‌فاکتور فروش
                     </div>
                 )}
-                <div className="text-[10px] font-bold space-y-1.5 opacity-90 text-slate-900">
+                <div className="text-[10px] font-bold space-y-1.5 opacity-90 text-slate-800">
                     <div className="flex gap-4 justify-between min-w-[140px]">
                         <span>تاریخ صدور:</span>
                         <span className="font-black">{todayJalali}</span>
@@ -196,22 +196,22 @@ export const InvoicePrint = () => {
   // --- Reusable Footer Component ---
   const InvoiceFooter = ({ pageNum, totalPages }: { pageNum: number, totalPages: number }) => (
      <div className="inv-footer mt-auto">
-        <div className="inv-footer-container relative pt-6 border-t border-black/10">
+        <div className="inv-footer-container relative pt-6 border-t border-slate-200">
             <div className="flex justify-between items-end">
                 {/* Left Side: Terms */}
                 <div className="max-w-[55%]">
-                    <div className="flex items-center gap-2 mb-2 opacity-50">
-                            <div className="w-1.5 h-1.5 bg-black rounded-full"></div>
-                            <span className="text-[9px] font-black text-black uppercase tracking-widest">توضیحات و شرایط</span>
+                    <div className="flex items-center gap-2 mb-2 opacity-60">
+                            <div className="w-1.5 h-1.5 bg-slate-900 rounded-full"></div>
+                            <span className="text-[9px] font-black text-slate-900 uppercase tracking-widest">توضیحات و شرایط</span>
                     </div>
-                    <p className="text-[9px] leading-loose text-justify opacity-70 font-medium pl-4">
+                    <p className="text-[9px] leading-loose text-justify opacity-70 font-medium pl-4 text-slate-700">
                         {invoiceConfig.footerNote || 'هزینه حمل و نقل بر عهده خریدار می‌باشد. اعتبار این پیش‌فاکتور ۷۲ ساعت از تاریخ صدور است.'}
                     </p>
                 </div>
 
                 {/* Right Side: Contact & Page Info */}
                 <div className="text-left flex flex-col items-end gap-4">
-                        <div className="text-[9px] font-bold opacity-80 dir-ltr text-right">
+                        <div className="text-[9px] font-bold opacity-80 dir-ltr text-right text-slate-700">
                         {invoiceConfig.companyAddress && (
                             <div className="mb-1 flex items-center justify-end gap-2">
                                 <span>{invoiceConfig.companyAddress}</span>
@@ -223,7 +223,7 @@ export const InvoicePrint = () => {
                         </div>
 
                         {/* Page Number Badge */}
-                        <div className="bg-black text-white text-[9px] font-bold px-4 py-1.5 rounded-full flex items-center gap-3 shadow-md">
+                        <div className="bg-slate-900 text-white text-[9px] font-bold px-4 py-1.5 rounded-full flex items-center gap-3 shadow-md">
                             <span className="opacity-70 font-normal">صفحه</span>
                             <span className="font-mono pt-0.5 tracking-wider">{toPersianDigits(pageNum)} / {toPersianDigits(totalPages)}</span>
                         </div>
@@ -249,7 +249,7 @@ export const InvoicePrint = () => {
              width: 794px !important; /* A4 Width at 96 DPI */
              min-height: 1123px !important; 
              background-color: #ffffff; 
-             color: #000000;
+             color: #0f172a; /* Slate 900 instead of Black */
              box-sizing: border-box;
              position: relative;
              display: flex;
@@ -275,24 +275,24 @@ export const InvoicePrint = () => {
                margin-top: 20px;
            }
            .layout-technical .inv-footer-container {
-               border-top: 4px solid black;
+               border-top: 4px solid #1e293b;
                padding-top: 20px;
            }
            .layout-classic .inv-footer-container {
-               border-top: 3px double black;
+               border-top: 3px double #1e293b;
            }
 
 
-           /* --- THEMES CONFIGURATION (ALL BLACK/GRAY) --- */
+           /* --- THEMES CONFIGURATION (Refined Dark Grays/Slates for Print) --- */
 
            /* 1. STANDARD THEME */
            .layout-standard {
-             --primary: #000000;
-             --primary-light: #f3f4f6;
-             --text-main: #000000;
-             --text-muted: #525252;
-             --border: #e5e5e5;
-             --header-bg: #f9fafb;
+             --primary: #334155;       /* Slate 700 - Softer than black */
+             --primary-light: #f1f5f9;
+             --text-main: #0f172a;     /* Slate 900 */
+             --text-muted: #475569;    /* Slate 600 */
+             --border: #cbd5e1;
+             --header-bg: #f8fafc;
            }
            .layout-standard .inv-header { background-color: var(--header-bg); border-bottom: 2px solid var(--primary); padding: 40px; }
            .layout-standard .inv-title-box { border-right: 4px solid var(--primary); padding-right: 15px; }
@@ -303,54 +303,54 @@ export const InvoicePrint = () => {
 
            /* 2. MODERN THEME */
            .layout-modern {
-             --primary: #000000;
+             --primary: #1e293b;       /* Slate 800 - Premium Dark, Print Safe */
              --primary-light: #f8fafc;
-             --text-main: #171717;
-             --text-muted: #737373;
+             --text-main: #1e293b;     
+             --text-muted: #64748b;
              --border: transparent;
              --header-bg: #ffffff;
            }
            .layout-modern .inv-header { padding: 40px 40px 10px 40px; }
            .layout-modern .inv-badge { background-color: var(--primary); color: white; padding: 6px 16px; border-radius: 100px; }
            .layout-modern .inv-card { background: #f5f5f5; border-radius: 12px; border: none; }
-           .layout-modern .inv-table th { color: var(--text-muted); font-weight: 700; font-size: 10px; padding-bottom: 15px; text-align: center; border-bottom: 1px solid #e5e5e5; }
+           .layout-modern .inv-table th { color: var(--text-muted); font-weight: 700; font-size: 10px; padding-bottom: 15px; text-align: center; border-bottom: 1px solid #e2e8f0; }
            .layout-modern .inv-table td { padding-top: 15px; padding-bottom: 15px; vertical-align: middle; text-align: center; }
            .layout-modern .inv-total { background-color: var(--primary); color: white; border-radius: 16px; padding: 40px; margin: 20px 40px; }
            .layout-modern .inv-total * { color: white !important; }
 
            /* 3. TECHNICAL THEME */
            .layout-technical {
-             --primary: #000000;
-             --primary-light: #e5e5e5;
-             --text-main: #000000;
-             --text-muted: #404040;
-             --border: #404040;
-             --header-bg: #171717;
+             --primary: #0f172a;       /* Slate 900 */
+             --primary-light: #e2e8f0;
+             --text-main: #0f172a;
+             --text-muted: #475569;
+             --border: #475569;
+             --header-bg: #1e293b;     /* Slate 800 */
            }
-           .layout-technical .inv-header { background-color: var(--header-bg); color: white; padding: 40px; border-bottom: 4px solid #525252; }
+           .layout-technical .inv-header { background-color: var(--header-bg); color: white; padding: 40px; border-bottom: 4px solid #475569; }
            .layout-technical .inv-header * { color: white !important; }
            .layout-technical .inv-card { border: 1px solid var(--border); border-radius: 0; background: white; }
-           .layout-technical .inv-table th { background-color: #d4d4d4; color: black; border: 1px solid var(--border); font-weight: 800; text-align: center; }
+           .layout-technical .inv-table th { background-color: #cbd5e1; color: #0f172a; border: 1px solid var(--border); font-weight: 800; text-align: center; }
            .layout-technical .inv-table td { border: 1px solid var(--border); text-align: center; vertical-align: middle; }
-           .layout-technical .inv-total { border-top: 4px solid black; background-color: #f5f5f5; padding: 30px; margin-top: 20px; border-bottom: 10px solid var(--header-bg); }
+           .layout-technical .inv-total { border-top: 4px solid #0f172a; background-color: #f1f5f9; padding: 30px; margin-top: 20px; border-bottom: 10px solid var(--header-bg); }
 
            /* 4. CLASSIC THEME */
            .layout-classic {
-             --primary: #000000;
+             --primary: #171717;       /* Neutral 900 */
              --primary-light: #f3f3f3;
-             --text-main: #000000;
-             --text-muted: #000000;
-             --border: #000000;
+             --text-main: #171717;
+             --text-muted: #262626;
+             --border: #171717;
              --header-bg: #ffffff;
            }
            .layout-classic { padding: 40px; border: none; }
-           .layout-classic .classic-border-frame { border: 2px solid black; height: 100%; display: flex; flex-direction: column; }
-           .layout-classic .inv-header { border-bottom: 2px solid black; padding: 30px; text-align: center; }
+           .layout-classic .classic-border-frame { border: 2px solid var(--border); height: 100%; display: flex; flex-direction: column; }
+           .layout-classic .inv-header { border-bottom: 2px solid var(--border); padding: 30px; text-align: center; }
            .layout-classic .inv-title-box { border: none; padding: 0; margin-bottom: 10px; }
-           .layout-classic .inv-card { border: 1px solid black; border-radius: 0; }
-           .layout-classic .inv-table th { border-bottom: 1px solid black; background-color: #eee; font-weight: bold; text-align: center; }
-           .layout-classic .inv-table td { border-bottom: 1px solid black; text-align: center; vertical-align: middle; }
-           .layout-classic .inv-total { border-top: 2px solid black; padding: 20px; background-color: #fff; margin-top: 20px; }
+           .layout-classic .inv-card { border: 1px solid var(--border); border-radius: 0; }
+           .layout-classic .inv-table th { border-bottom: 1px solid var(--border); background-color: #f5f5f5; font-weight: bold; text-align: center; }
+           .layout-classic .inv-table td { border-bottom: 1px solid var(--border); text-align: center; vertical-align: middle; }
+           .layout-classic .inv-total { border-top: 2px solid var(--border); padding: 20px; background-color: #fff; margin-top: 20px; }
 
            /* --- UTILS --- */
            .window-preview-clean svg { filter: none !important; box-shadow: none !important; }
