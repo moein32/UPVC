@@ -105,20 +105,20 @@ const DEFAULT_SETTINGS: AppSettings = {
     companyAddress: 'تهران، میدان آزادی',
     companyPhone: '021-12345678',
     footerNote: 'اعتبار این پیش‌فاکتور ۷۲ ساعت می‌باشد.',
-    layoutType: 'standard' // Changed from 'technical' to 'standard' as requested
+    layoutType: 'standard' 
   }
 };
 
 const DEFAULT_PROJECT: SavedProject = {
-  id: 'demo-project-1',
-  customerName: 'پروژه نمونه (تست)',
+  id: 'demo-project-v3', // Incremented ID to force fresh demo for users
+  customerName: 'پروژه نمونه (تست نهایی)',
   address: 'تهران، سعادت آباد، بلوار دریا',
   installPercent: 10,
   companyName: 'گروه صنعتی لومینا',
   date: new Date().toISOString(),
   status: 'Draft',
   defaultProfileId: 'vistabest',
-  totalPrice: 20437500, // Approximate total of items below
+  totalPrice: 20437500, 
   payments: [],
   items: [
     {
@@ -131,7 +131,9 @@ const DEFAULT_PROJECT: SavedProject = {
         profileMeters: 6, profilePrice: 3000000, glassArea: 2.25, glassPrice: 1462500, sashCount: 0, hardwarePrice: 0, totalPrice: 4462500, unitPrice: 4462500,
         details: [
           { rowId: 1, name: 'پروفیل فریم', unit: 'متر طول', quantity: 6, unitPrice: 450000, totalPrice: 2700000 },
-          { rowId: 2, name: 'شیشه دوجداره', unit: 'متر مربع', quantity: 2.25, unitPrice: 650000, totalPrice: 1462500 }
+          { rowId: 2, name: 'زهوار دوجداره', unit: 'متر طول', quantity: 6, unitPrice: 60000, totalPrice: 360000 },
+          { rowId: 3, name: 'گالوانیزه تقویتی', unit: 'متر طول', quantity: 6, unitPrice: 150000, totalPrice: 900000 },
+          { rowId: 4, name: 'شیشه دوجداره ۴-۴', unit: 'متر مربع', quantity: 2.25, unitPrice: 650000, totalPrice: 1462500 }
         ]
       }
     },
@@ -151,10 +153,13 @@ const DEFAULT_PROJECT: SavedProject = {
         profileMeters: 12, profilePrice: 6000000, glassArea: 2.5, glassPrice: 1625000, sashCount: 2, hardwarePrice: 1300000, totalPrice: 8925000, unitPrice: 8925000,
         details: [
              { rowId: 1, name: 'پروفیل فریم', unit: 'متر طول', quantity: 7, unitPrice: 450000, totalPrice: 3150000 },
-             { rowId: 2, name: 'پروفیل لنگه', unit: 'متر طول', quantity: 8, unitPrice: 460000, totalPrice: 3680000 },
-             { rowId: 3, name: 'شیشه دوجداره', unit: 'متر مربع', quantity: 2.5, unitPrice: 650000, totalPrice: 1625000 },
-             { rowId: 4, name: 'یراق تک حالته', unit: 'دست', quantity: 1, unitPrice: 450000, totalPrice: 450000 },
-             { rowId: 5, name: 'یراق دو حالته', unit: 'دست', quantity: 1, unitPrice: 850000, totalPrice: 850000 }
+             { rowId: 2, name: 'پروفیل لنگه پنجره', unit: 'متر طول', quantity: 8, unitPrice: 460000, totalPrice: 3680000 },
+             { rowId: 3, name: 'پروفیل مولیون', unit: 'متر طول', quantity: 1.5, unitPrice: 460000, totalPrice: 690000 },
+             { rowId: 4, name: 'گالوانیزه تقویتی', unit: 'متر طول', quantity: 16.5, unitPrice: 150000, totalPrice: 2475000 },
+             { rowId: 5, name: 'زهوار شیشه', unit: 'متر طول', quantity: 16, unitPrice: 60000, totalPrice: 960000 },
+             { rowId: 6, name: 'شیشه دوجداره ۴-۴', unit: 'متر مربع', quantity: 2.5, unitPrice: 650000, totalPrice: 1625000 },
+             { rowId: 7, name: 'یراق تک حالته', unit: 'دست', quantity: 1, unitPrice: 450000, totalPrice: 450000 },
+             { rowId: 8, name: 'یراق دو حالته', unit: 'دست', quantity: 1, unitPrice: 850000, totalPrice: 850000 }
         ]
       }
     },
@@ -169,8 +174,10 @@ const DEFAULT_PROJECT: SavedProject = {
         details: [
             { rowId: 1, name: 'پروفیل فریم', unit: 'متر طول', quantity: 6, unitPrice: 420000, totalPrice: 2520000 },
             { rowId: 2, name: 'پروفیل لنگه درب', unit: 'متر طول', quantity: 6, unitPrice: 420000, totalPrice: 2520000 },
-             { rowId: 3, name: 'شیشه دوجداره', unit: 'متر مربع', quantity: 1.5, unitPrice: 650000, totalPrice: 975000 },
-            { rowId: 4, name: 'یراق درب سوئیچی', unit: 'دست', quantity: 1, unitPrice: 1200000, totalPrice: 1200000 }
+            { rowId: 3, name: 'گالوانیزه تقویتی', unit: 'متر طول', quantity: 12, unitPrice: 140000, totalPrice: 1680000 },
+            { rowId: 4, name: 'زهوار شیشه', unit: 'متر طول', quantity: 6, unitPrice: 55000, totalPrice: 330000 },
+            { rowId: 5, name: 'شیشه دوجداره', unit: 'متر مربع', quantity: 1.5, unitPrice: 650000, totalPrice: 975000 },
+            { rowId: 6, name: 'یراق درب سوئیچی', unit: 'دست', quantity: 1, unitPrice: 1200000, totalPrice: 1200000 }
         ]
       }
     }
@@ -245,15 +252,18 @@ export const pricingStore = {
 
   getProjects: (): SavedProject[] => {
     const stored = localStorage.getItem('lumina_projects');
-    if (stored) {
-        const projects = JSON.parse(stored);
-        if (projects.length > 0) return projects;
+    let projects: SavedProject[] = stored ? JSON.parse(stored) : [];
+    
+    // Check if demo project exists or needs updating
+    const demoExists = projects.some(p => p.id === DEFAULT_PROJECT.id);
+    if (!demoExists) {
+        // Remove old demo projects to keep it clean
+        projects = projects.filter(p => !p.id.startsWith('demo-project'));
+        projects.unshift(DEFAULT_PROJECT);
+        localStorage.setItem('lumina_projects', JSON.stringify(projects));
     }
     
-    // Default project initialization if storage is empty
-    const defaults = [DEFAULT_PROJECT];
-    localStorage.setItem('lumina_projects', JSON.stringify(defaults));
-    return defaults;
+    return projects;
   },
   
   saveProject: (project: any) => {
