@@ -142,7 +142,7 @@ const collectFlattenedSegments = (node: WindowNode, totalSize: number, targetDir
 // --- CORE HANDLES LOGIC (Ultra-Small for Invoices) ---
 
 const renderHandles = (type: OpeningDirection | undefined, sashThickness: number, isThumbnail: boolean = false, scale: number = 1) => {
-    if (!type || type === 'Fixed' || type === 'Panel') return null;
+    if (!type || type === 'Fixed' || type.includes('Panel')) return null;
   
     const { color: handleColor, shadow, zIndex } = DESIGN_SYSTEM.handle;
     const isDoor = type.includes('Door');
@@ -346,15 +346,27 @@ export const WindowCanvas = ({
     );
   }
 
-  const isOpening = node.openingType && node.openingType !== 'Fixed' && node.openingType !== 'Panel';
+  const isOpening = node.openingType && node.openingType !== 'Fixed' && !node.openingType.includes('Panel');
+  const isPanel = node.openingType && node.openingType.includes('Panel');
+  
+  // Real-looking grooved textures for panels
+  const panelStyle: React.CSSProperties = isPanel ? {
+    backgroundColor: '#f8fafc',
+    backgroundImage: node.openingType === 'PanelV' 
+        ? 'repeating-linear-gradient(to right, #f1f5f9, #f1f5f9 18px, #e2e8f0 18px, #e2e8f0 20px)' 
+        : 'repeating-linear-gradient(to bottom, #f1f5f9, #f1f5f9 18px, #e2e8f0 18px, #e2e8f0 20px)',
+    boxShadow: 'inset 0 0 10px rgba(0,0,0,0.05)'
+  } : {};
+
   return (
     <RootWrapper>
         <div onClick={(e) => { e.stopPropagation(); if (!readOnly) onSelect(node.id); }}
           className={`w-full h-full relative transition-all ${isSelected ? 'ring-2 ring-blue-500 z-50' : ''}`}>
             <div className={`w-full h-full relative flex ${isOpening ? 'shadow-sm border border-slate-200' : ''}`} style={isOpening ? { padding: sashThickness, ...frameStyle } : {}}>
                 {isOpening && isThumbnail && <div className="absolute inset-[2.5px] border border-slate-300 pointer-events-none z-10" />}
-                <div className={`flex-1 relative overflow-hidden ${node.openingType === 'Panel' ? 'bg-slate-50' : 'bg-gradient-to-br from-[#e0f2fe] via-[#bae6fd] to-[#7dd3fc]'}`}>
-                    <div className="absolute inset-0 pointer-events-none z-10">{renderOpeningLines(node.openingType, width, height, isThumbnail)}</div>
+                <div className={`flex-1 relative overflow-hidden ${isPanel ? '' : 'bg-gradient-to-br from-[#e0f2fe] via-[#bae6fd] to-[#7dd3fc]'}`} style={panelStyle}>
+                    {!isPanel && <div className="absolute inset-0 pointer-events-none z-10">{renderOpeningLines(node.openingType, width, height, isThumbnail)}</div>}
+                    {isPanel && isThumbnail && <div className="absolute inset-0 opacity-10 border border-slate-900 pointer-events-none" />}
                 </div>
                 <div className="absolute inset-0 pointer-events-none z-20">{renderHandles(node.openingType, sashThickness, isThumbnail, scale)}</div>
             </div>
@@ -364,7 +376,7 @@ export const WindowCanvas = ({
 };
 
 const renderOpeningLines = (type: OpeningDirection | undefined, w: number, h: number, isThumbnail: boolean = false) => {
-    if (!type || type === 'Fixed' || type === 'Panel') return null;
+    if (!type || type === 'Fixed' || type.includes('Panel')) return null;
     const { color: strokeColor, strokeWidth, dashArray } = DESIGN_SYSTEM.openingLines;
     
     const finalStrokeWidth = isThumbnail ? strokeWidth * 1.5 : strokeWidth;

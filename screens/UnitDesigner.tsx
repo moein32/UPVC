@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowRight, Save, Trash2, SplitSquareHorizontal, SplitSquareVertical, PlusCircle, Maximize, ZoomIn, ZoomOut, RefreshCcw, Hand, MousePointer2, Receipt, Check, Edit3, Grid, XCircle, Undo, Redo, LayoutTemplate, Home, Box, Layers, Settings, ChevronDown, ChevronUp, SlidersHorizontal } from 'lucide-react';
+import { ArrowRight, Save, Trash2, SplitSquareHorizontal, SplitSquareVertical, PlusCircle, Maximize, ZoomIn, ZoomOut, RefreshCcw, Hand, MousePointer2, Receipt, Check, Edit3, Grid, XCircle, Undo, Redo, LayoutTemplate, Home, Box, Layers, Settings, ChevronDown, ChevronUp, SlidersHorizontal, AlignJustify, AlignCenter } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { InputField, SelectField, PrimaryButton } from '../components/UIComponents';
@@ -84,9 +84,10 @@ const TiltTurnRightIcon = () => (
 );
 
 const SlidingIcon = ({ dir }: { dir: 'left' | 'right' }) => (
-  <svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="1.5">
-    <rect x="3" y="3" width="18" height="18" rx="2" />
-    {dir === 'left' ? <path d="M15 12H9M9 12L12 9M9 12L12 15" /> : <path d="M9 12H15M15 12L12 9M15 12L12 15" />}
+  <svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="1.8">
+    <rect x="3" y="3" width="18" height="18" rx="2" opacity="0.3" />
+    <rect x={dir === 'left' ? "4" : "11"} y="4" width="9" height="16" rx="1" fill="currentColor" fillOpacity="0.1" />
+    <path d={dir === 'left' ? "M16 12H10M10 12L13 9M10 12L13 15" : "M8 12H14M14 12L11 9M14 12L11 15"} strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
 
@@ -104,27 +105,45 @@ const DoorRightIcon = () => (
   </svg>
 );
 
-const SplitVerticalIcon = ({ count }: { count: number }) => (
+const PanelVIcon = () => (
   <svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="1.5">
     <rect x="3" y="3" width="18" height="18" rx="2" />
-    {count === 2 && <line x1="12" y1="3" x2="12" y2="21" />}
+    <line x1="8" y1="3" x2="8" y2="21" opacity="0.4" />
+    <line x1="12" y1="3" x2="12" y2="21" opacity="0.4" />
+    <line x1="16" y1="3" x2="16" y2="21" opacity="0.4" />
+  </svg>
+);
+
+const PanelHIcon = () => (
+  <svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="1.5">
+    <rect x="3" y="3" width="18" height="18" rx="2" />
+    <line x1="3" y1="8" x2="21" y2="8" opacity="0.4" />
+    <line x1="3" y1="12" x2="21" y2="12" opacity="0.4" />
+    <line x1="3" y1="16" x2="21" y2="16" opacity="0.4" />
+  </svg>
+);
+
+const SplitVerticalIcon = ({ count }: { count: number }) => (
+  <svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="2">
+    <rect x="3" y="3" width="18" height="18" rx="3" opacity="0.2" />
+    {count === 2 && <line x1="12" y1="3" x2="12" y2="21" strokeLinecap="round" />}
     {count === 3 && (
       <>
-        <line x1="9" y1="3" x2="9" y2="21" />
-        <line x1="15" y1="15" x2="15" y2="21" />
+        <line x1="9" y1="3" x2="9" y2="21" strokeLinecap="round" />
+        <line x1="15" y1="3" x2="15" y2="21" strokeLinecap="round" />
       </>
     )}
   </svg>
 );
 
 const SplitHorizontalIcon = ({ count }: { count: number }) => (
-  <svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="1.5">
-    <rect x="3" y="3" width="18" height="18" rx="2" />
-    {count === 2 && <line x1="3" y1="12" x2="21" y2="12" />}
+  <svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="2">
+    <rect x="3" y="3" width="18" height="18" rx="3" opacity="0.2" />
+    {count === 2 && <line x1="3" y1="12" x2="21" y2="12" strokeLinecap="round" />}
     {count === 3 && (
       <>
-        <line x1="3" y1="9" x2="21" y2="9" />
-        <line x1="3" y1="15" x2="21" y2="15" />
+        <line x1="3" y1="9" x2="21" y2="9" strokeLinecap="round" />
+        <line x1="3" y1="15" x2="21" y2="15" strokeLinecap="round" />
       </>
     )}
   </svg>
@@ -336,7 +355,7 @@ export const UnitDesigner = () => {
           } else if (activeTool.type === 'split') {
               if (targetNode.type === 'leaf') {
                   const count = activeTool.count || 2;
-                  const existingOpening = (targetNode.openingType as string) === 'Panel' ? 'Fixed' : targetNode.openingType;
+                  const existingOpening = (targetNode.openingType as string).includes('Panel') ? 'Fixed' : targetNode.openingType;
                   const newChildren = Array(count).fill(null).map((_, i) => ({
                       id: Date.now() + `_${i}_${Math.random()}`, 
                       type: 'leaf', 
@@ -347,7 +366,7 @@ export const UnitDesigner = () => {
                       type: 'container', 
                       dir: activeTool.dir as 'row' | 'col', 
                       children: newChildren, 
-                      openingType: (existingOpening && existingOpening !== 'Fixed' && existingOpening !== 'Panel') ? existingOpening : undefined
+                      openingType: (existingOpening && existingOpening !== 'Fixed' && !existingOpening.includes('Panel')) ? existingOpening : undefined
                   });
                   setActiveTool(null);
               }
@@ -535,13 +554,13 @@ export const UnitDesigner = () => {
             });
         }
     } else {
-        if (node.openingType && node.openingType !== 'Fixed' && node.openingType !== 'Panel') {
+        if (node.openingType && node.openingType !== 'Fixed' && !node.openingType.includes('Panel')) {
             processHardware(node.openingType);
             const perimeter = (w + h) * 2;
             if (node.openingType.includes('Door')) stats.sashDoorMeters += perimeter;
             else stats.sashWindowMeters += perimeter;
         }
-        if (node.openingType === 'Panel') stats.panelArea += w * h;
+        if (node.openingType && node.openingType.includes('Panel')) stats.panelArea += w * h;
         else stats.glassArea += w * h;
         stats.beadMeters += (w + h) * 2;
     }
@@ -728,7 +747,8 @@ export const UnitDesigner = () => {
                        <DraggableIcon type="opening" value="DoorRight" label={t('door') + ' چپ'} icon={<DoorLeftIcon />} isActive={activeTool?.value === 'DoorRight'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} />
                   </div>
                   <div className="flex items-center gap-2 pl-2 h-full border-l border-slate-600/50">
-                       <DraggableIcon type="opening" value="Panel" label={t('panel')} icon={<LayoutTemplate size={24} />} isActive={activeTool?.value === 'Panel'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} />
+                       <DraggableIcon type="opening" value="PanelV" label="پنل عمودی" icon={<PanelVIcon />} isActive={activeTool?.value === 'PanelV'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} />
+                       <DraggableIcon type="opening" value="PanelH" label="پنل افقی" icon={<PanelHIcon />} isActive={activeTool?.value === 'PanelH'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} />
                   </div>
               </div>
            )}
