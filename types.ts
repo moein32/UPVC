@@ -98,6 +98,7 @@ export interface InvoiceDetail {
 export interface InvoiceItem {
   id: string;
   config: WindowConfig;
+  quantity: number; // Added field for quantity
   calculations: {
     profileMeters: number;
     profilePrice: number;

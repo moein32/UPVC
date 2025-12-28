@@ -127,6 +127,8 @@ const DEFAULT_PROJECT: SavedProject = {
         id: 'conf-1', width: 1500, height: 1500, profileId: 'vistabest', glassId: 'double_4_4', hardwareId: 'h1', type: 'Fixed', mullions: 0, frameType: 'standard',
         layout: { id: 'root', type: 'leaf', openingType: 'Fixed', flex: 1 }
       },
+      // Fix: Add missing quantity property (defaults to 1 for demo)
+      quantity: 1,
       calculations: {
         profileMeters: 6, profilePrice: 3000000, glassArea: 2.25, glassPrice: 1462500, sashCount: 0, hardwarePrice: 0, totalPrice: 4462500, unitPrice: 4462500,
         details: [
@@ -149,6 +151,8 @@ const DEFAULT_PROJECT: SavedProject = {
             ]
         }
       },
+      // Fix: Add missing quantity property (defaults to 1 for demo)
+      quantity: 1,
       calculations: {
         profileMeters: 12, profilePrice: 6000000, glassArea: 2.5, glassPrice: 1625000, sashCount: 2, hardwarePrice: 1300000, totalPrice: 8925000, unitPrice: 8925000,
         details: [
@@ -169,6 +173,8 @@ const DEFAULT_PROJECT: SavedProject = {
         id: 'conf-3', width: 900, height: 2100, profileId: 'wintech', glassId: 'double_4_4', hardwareId: 'h5', type: 'Door', mullions: 0, frameType: 'standard',
         layout: { id: 'root', type: 'leaf', openingType: 'DoorRight', flex: 1 }
       },
+      // Fix: Add missing quantity property (defaults to 1 for demo)
+      quantity: 1,
       calculations: {
         profileMeters: 6, profilePrice: 4000000, glassArea: 1.5, glassPrice: 975000, sashCount: 1, hardwarePrice: 1200000, totalPrice: 6175000, unitPrice: 6175000,
         details: [

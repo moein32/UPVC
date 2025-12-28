@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowRight, Printer, Home, Edit2, Trash2, Ruler, FileText, PlusCircle, LayoutGrid, CheckCircle, Maximize2, CheckCircle2, ChevronLeft } from 'lucide-react';
+import { ArrowRight, Printer, Home, Edit2, Trash2, Ruler, FileText, PlusCircle, LayoutGrid, CheckCircle, Maximize2, CheckCircle2, ChevronLeft, MapPin } from 'lucide-react';
 import { WindowPreview } from '../components/WindowPreview';
 import { ProjectDetails, InvoiceItem, AppSettings } from '../types';
 import { BRANDS } from '../constants';
@@ -57,7 +57,7 @@ export const PriceBreakdown = () => {
       const projectToSave = {
         ...projectDetails,
         items: updatedItems,
-        totalPrice: updatedItems.reduce((acc, item) => acc + item.calculations.totalPrice, 0),
+        totalPrice: updatedItems.reduce((acc, item) => acc + (item.calculations.totalPrice * item.quantity), 0),
       };
       pricingStore.saveProject(projectToSave);
       setProjectDetails(projectToSave);
@@ -70,7 +70,7 @@ export const PriceBreakdown = () => {
       });
   };
 
-  const totalMaterialPrice = items.reduce<number>((acc, item) => acc + item.calculations.unitPrice, 0);
+  const totalMaterialPrice = items.reduce<number>((acc, item) => acc + (item.calculations.unitPrice * item.quantity), 0);
   const installationCost = Math.round(totalMaterialPrice * (projectDetails.installPercent / 100));
   const finalPrice = totalMaterialPrice + installationCost;
 
@@ -113,8 +113,8 @@ export const PriceBreakdown = () => {
                             <p className="font-bold text-xs">{toPersianDigits(new Date(projectDetails.date).toLocaleDateString('fa-IR'))}</p>
                         </div>
                         <div>
-                            <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest block mb-1">تعداد واحد</span>
-                            <p className="font-bold text-xs">{toPersianDigits(items.length)} عدد</p>
+                            <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest block mb-1">تعداد کل واحد</span>
+                            <p className="font-bold text-xs">{toPersianDigits(items.reduce((acc, i) => acc + i.quantity, 0))} عدد</p>
                         </div>
                     </div>
                     <div className="text-left">
@@ -132,8 +132,9 @@ export const PriceBreakdown = () => {
                 const brand = BRANDS.find(b => b.id === item.config.profileId);
                 return (
                     <div key={item.id} className="relative group">
-                        <div className="absolute -top-3 right-8 z-20 bg-white text-slate-900 px-4 py-1.5 rounded-xl font-black shadow-xl border border-slate-100 text-xs">
-                           واحد {toPersianDigits(index + 1)}
+                        <div className="absolute -top-3 right-8 z-20 bg-white text-slate-900 px-4 py-1.5 rounded-xl font-black shadow-xl border border-slate-100 text-xs flex items-center gap-2">
+                           واحد {toPersianDigits(index + 1)} 
+                           <span className="text-blue-600 bg-blue-50 px-2 rounded-lg">تعداد: {toPersianDigits(item.quantity)}</span>
                         </div>
 
                         <div className="bg-white rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.05)] border border-slate-100 overflow-hidden">
@@ -186,14 +187,15 @@ export const PriceBreakdown = () => {
                             <div className="px-6 pb-6">
                                 <div className="flex justify-between items-center px-5 py-4 bg-slate-50/50 rounded-2xl border border-slate-100">
                                     <div className="flex flex-col">
-                                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">قیمت برآورد شده</span>
+                                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">قیمت واحد (تعداد: {toPersianDigits(item.quantity)})</span>
                                         <div className="flex items-baseline gap-1.5">
                                             <span className="text-lg font-black text-slate-900">{formatPrice(item.calculations.totalPrice)}</span>
                                             <span className="text-[9px] font-bold text-slate-500">تومان</span>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-2 text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg text-[9px] font-black border border-emerald-100">
-                                        <CheckCircle size={12} /> تایید فنی
+                                    <div className="text-left flex flex-col items-end">
+                                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">جمع این تیپ</span>
+                                        <div className="text-sm font-black text-blue-600 tracking-tight">{formatPrice(item.calculations.totalPrice * item.quantity)}</div>
                                     </div>
                                 </div>
                             </div>
@@ -204,14 +206,14 @@ export const PriceBreakdown = () => {
         </div>
       </div>
 
-      {/* FINAL PRICE STICKY DOCK - COMPLETELY REIMAGINED */}
+      {/* FINAL PRICE STICKY DOCK */}
       <div className="fixed bottom-0 left-0 right-0 z-50 p-4 md:p-6 pb-8">
         <div className="max-w-xl mx-auto bg-white/80 backdrop-blur-3xl p-5 md:p-6 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-white/60">
             {/* Header: Price & Status */}
             <div className="flex justify-between items-center mb-6 px-2">
                 <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">مبلغ قابل پرداخت پروژه</span>
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">مبلغ نهایی کل قرارداد</span>
                         <div className="flex items-center gap-1 bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded-md text-[8px] font-black">
                             <div className="w-1 h-1 bg-emerald-600 rounded-full animate-ping"></div>
                             آماده فاکتور
@@ -223,8 +225,8 @@ export const PriceBreakdown = () => {
                     </div>
                 </div>
                 <div className="text-left hidden xs:block">
-                    <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">تعداد کل</div>
-                    <div className="text-base font-black text-slate-900 leading-none">{toPersianDigits(items.length)} عدد</div>
+                    <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">تعداد کل یونیت‌ها</div>
+                    <div className="text-base font-black text-slate-900 leading-none">{toPersianDigits(items.reduce((acc, i) => acc + i.quantity, 0))} عدد</div>
                 </div>
             </div>
             
@@ -257,9 +259,3 @@ export const PriceBreakdown = () => {
     </div>
   );
 };
-
-const MapPin = ({ size, className }: any) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
-  </svg>
-);

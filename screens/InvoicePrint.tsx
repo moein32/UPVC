@@ -56,7 +56,7 @@ export const InvoicePrint = () => {
       );
   }
 
-  const totalMaterialPrice = items.reduce<number>((acc, item) => acc + item.calculations.unitPrice, 0);
+  const totalMaterialPrice = items.reduce<number>((acc, item) => acc + (item.calculations.unitPrice * item.quantity), 0);
   const installationCost = Math.round(totalMaterialPrice * (projectDetails.installPercent / 100));
   const finalPrice = totalMaterialPrice + installationCost;
   const todayJalali = new Intl.DateTimeFormat('fa-IR', { dateStyle: 'full' }).format(new Date(projectDetails.date));
@@ -207,9 +207,10 @@ export const InvoicePrint = () => {
                 <thead>
                     <tr>
                         <th className="p-1.5 w-8 text-center border-b-2 border-slate-300 text-[10px]">#</th>
-                        <th className="p-1.5 w-44 text-center border-b-2 border-slate-300 text-[10px]">نقشه فنی</th>
-                        <th className="p-1.5 text-center border-b-2 border-slate-300 text-[10px]">شرح اقلام و محاسبات فنی</th>
-                        <th className="p-1.5 w-32 text-center border-b-2 border-slate-300 text-[10px]">مبلغ نهایی (تومان)</th>
+                        <th className="p-1.5 w-36 text-center border-b-2 border-slate-300 text-[10px]">نقشه فنی</th>
+                        <th className="p-1.5 text-center border-b-2 border-slate-300 text-[10px]">شرح اقلام و محاسبات</th>
+                        <th className="p-1.5 w-16 text-center border-b-2 border-slate-300 text-[10px]">تعداد</th>
+                        <th className="p-1.5 w-32 text-center border-b-2 border-slate-300 text-[10px]">جمع ردیف (تومان)</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -220,48 +221,56 @@ export const InvoicePrint = () => {
                             <tr key={item.id} className="border-b border-slate-100 last:border-0">
                                 <td className="p-1 font-bold text-[10px] opacity-40 text-center align-top pt-4">{toPersianDigits(globalIndex + 1)}</td>
                                 <td className="p-1 align-top pt-4">
-                                    <div className="relative w-40 h-40 mx-auto bg-white flex items-center justify-center border border-slate-50 rounded-lg overflow-hidden shadow-sm">
+                                    <div className="relative w-32 h-32 mx-auto bg-white flex items-center justify-center border border-slate-50 rounded-lg overflow-hidden shadow-sm">
                                         <WindowPreview 
                                           config={item.config} 
                                           width="100%" 
                                           height="100%" 
                                           isThumbnail={true} 
-                                          scale={0.42} 
+                                          scale={0.38} 
                                         />
                                     </div>
-                                    <div className="text-center mt-1.5 text-[10px] font-black text-slate-800 bg-slate-50 py-0.5 rounded border border-slate-100">
+                                    <div className="text-center mt-1.5 text-[9px] font-black text-slate-800 bg-slate-50 py-0.5 rounded border border-slate-100">
                                       {toPersianDigits(item.config.width)} × {toPersianDigits(item.config.height)} mm
                                     </div>
                                 </td>
                                 <td className="p-1 align-top pt-2">
                                     <div className="flex items-center justify-center gap-2 mb-1">
-                                        <span className="bg-slate-100 text-slate-900 px-2 py-0.5 rounded text-[9px] font-black border border-slate-200">{brand?.name}</span>
-                                        <span className="text-[9px] font-bold opacity-70">{item.config.type}</span>
+                                        <span className="bg-slate-100 text-slate-900 px-2 py-0.5 rounded text-[8px] font-black border border-slate-200">{brand?.name}</span>
+                                        <span className="text-[8px] font-bold opacity-70">{item.config.type}</span>
                                     </div>
-                                    <table className="w-full text-[9px] border border-slate-100 rounded overflow-hidden bg-white">
+                                    <table className="w-full text-[8px] border border-slate-100 rounded overflow-hidden bg-white">
                                         <thead className="bg-slate-50 border-b border-slate-100">
                                             <tr>
                                                 <th className="p-1 text-right text-slate-500 w-[40%]">شرح کالا</th>
                                                 <th className="p-1 text-center text-slate-500 w-[15%]">مقدار</th>
                                                 <th className="p-1 text-center text-slate-500 w-[15%]">واحد</th>
-                                                <th className="p-1 text-left text-slate-500 w-[30%]">مبلغ کل</th>
+                                                <th className="p-1 text-left text-slate-500 w-[30%]">مبلغ واحد</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {item.calculations.details?.map((detail: any, dIdx: number) => (
+                                            {item.calculations.details?.slice(0, 5).map((detail: any, dIdx: number) => (
                                                 <tr key={dIdx} className="border-b border-slate-50 last:border-0">
-                                                    <td className="p-1 font-bold text-slate-900 truncate max-w-[120px]">{detail.name}</td>
+                                                    <td className="p-1 font-bold text-slate-900 truncate max-w-[100px]">{detail.name}</td>
                                                     <td className="p-1 text-center text-slate-800 font-black">{toPersianDigits(detail.quantity)}</td>
-                                                    <td className="p-1 text-center text-slate-500 text-[8px]">{detail.unit}</td>
-                                                    <td className="p-1 text-left font-black text-slate-900">{formatPrice(detail.totalPrice)}</td>
+                                                    <td className="p-1 text-center text-slate-500 text-[7px]">{detail.unit}</td>
+                                                    <td className="p-1 text-left font-black text-slate-900">{formatPrice(detail.unitPrice)}</td>
                                                 </tr>
                                             ))}
+                                            {item.calculations.details?.length > 5 && (
+                                                <tr>
+                                                    <td colSpan={4} className="p-0.5 text-center text-[7px] text-slate-400 italic">...و سایر اقلام فنی طبق طراحی</td>
+                                                </tr>
+                                            )}
                                         </tbody>
                                     </table>
                                 </td>
                                 <td className="p-1 text-center align-top pt-10">
-                                    <div className="text-base font-black text-slate-900 tracking-tight text-center">{formatPrice(item.calculations.totalPrice)}</div>
-                                    <span className="text-[9px] font-black text-slate-400 block text-center mt-1">تومان</span>
+                                    <div className="text-base font-black text-slate-900">{toPersianDigits(item.quantity)}</div>
+                                </td>
+                                <td className="p-1 text-center align-top pt-10">
+                                    <div className="text-sm font-black text-slate-900 tracking-tight text-center">{formatPrice(item.calculations.totalPrice * item.quantity)}</div>
+                                    <span className="text-[8px] font-black text-slate-400 block text-center mt-1">تومان</span>
                                 </td>
                             </tr>
                         );
@@ -288,7 +297,7 @@ export const InvoicePrint = () => {
                     <div className="totals-box w-68 p-4 rounded-2xl flex flex-col bg-slate-100 border border-slate-200 shadow-sm">
                         <div className="space-y-2">
                             <div className="flex justify-between text-[11px] font-bold text-slate-500">
-                                <span>مجموع متریال:</span>
+                                <span>مجموع اقلام (تعداد {toPersianDigits(items.reduce((acc, i) => acc + i.quantity, 0))} عدد):</span>
                                 <span className="text-slate-900 font-black">{formatPrice(totalMaterialPrice)}</span>
                             </div>
                             <div className="flex justify-between text-[11px] font-bold text-slate-500">

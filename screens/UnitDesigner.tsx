@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowRight, Save, Trash2, SplitSquareHorizontal, SplitSquareVertical, PlusCircle, Maximize, ZoomIn, ZoomOut, RefreshCcw, Hand, MousePointer2, Receipt, Check, Edit3, Grid, XCircle, Undo, Redo, LayoutTemplate, Home, Box, Layers, Settings, ChevronDown, ChevronUp, SlidersHorizontal, AlignJustify, AlignCenter } from 'lucide-react';
+import { ArrowRight, Save, Trash2, SplitSquareHorizontal, SplitSquareVertical, PlusCircle, Maximize, ZoomIn, ZoomOut, RefreshCcw, Hand, MousePointer2, Receipt, Check, Edit3, Grid, XCircle, Undo, Redo, LayoutTemplate, Home, Box, Layers, Settings, ChevronDown, ChevronUp, SlidersHorizontal, AlignJustify, AlignCenter, Minus, Plus } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { InputField, SelectField, PrimaryButton } from '../components/UIComponents';
@@ -184,6 +184,7 @@ export const UnitDesigner = () => {
 
   // --- UI Control State ---
   const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const [unitCount, setUnitCount] = useState(1); // Added for quantity support
 
   // --- External Data ---
   const [brands, setBrands] = useState<ProfileBrand[]>([]);
@@ -279,6 +280,7 @@ export const UnitDesigner = () => {
         layout: item.config.layout || createDefaultLayout(),
         frameType: item.config.frameType || 'standard'
       });
+      setUnitCount(item.quantity || 1);
       setSelectedNodeId('root');
     } else {
         if (brands.length > 0 && !config.profileId) {
@@ -657,6 +659,7 @@ export const UnitDesigner = () => {
       const newItem: InvoiceItem = {
           id: Date.now().toString(),
           config: { ...config },
+          quantity: unitCount, // Support for multi-quantity
           calculations
       };
       const updatedItems = [...projectItems];
@@ -666,7 +669,7 @@ export const UnitDesigner = () => {
           const projectToSave = {
             ...projectDetails,
             items: updatedItems,
-            totalPrice: updatedItems.reduce((acc, i) => acc + i.calculations.totalPrice, 0)
+            totalPrice: updatedItems.reduce((acc, i) => acc + (i.calculations.totalPrice * i.quantity), 0)
           };
           pricingStore.saveProject(projectToSave);
           setLastSavedId(newItem.id);
@@ -677,7 +680,7 @@ export const UnitDesigner = () => {
           const projectToSave = {
             ...projectDetails,
             items: updatedItems,
-            totalPrice: updatedItems.reduce((acc, i) => acc + i.calculations.totalPrice, 0)
+            totalPrice: updatedItems.reduce((acc, i) => acc + (i.calculations.totalPrice * i.quantity), 0)
           };
           pricingStore.saveProject(projectToSave);
           setLastSavedId(newItem.id);
@@ -688,6 +691,7 @@ export const UnitDesigner = () => {
               height: 1500,
               layout: createDefaultLayout()
           }));
+          setUnitCount(1);
           setHistory([]);
           setFuture([]);
           setSelectedNodeId('root');
@@ -889,6 +893,26 @@ export const UnitDesigner = () => {
                   </button>
                   
                   <div className="flex-1 flex gap-2 h-14 bg-white/95 backdrop-blur-xl border border-white/40 p-1.5 rounded-full shadow-[0_15px_40px_rgba(0,0,0,0.1)]">
+                      {/* Quantity Picker Box */}
+                      <div className="flex items-center bg-slate-100 rounded-full px-2 py-1 border border-slate-200">
+                          <button 
+                            onClick={() => setUnitCount(prev => Math.max(1, prev - 1))}
+                            className="p-1.5 bg-white text-slate-700 rounded-full shadow-sm hover:bg-slate-50 transition-colors"
+                          >
+                            <Minus size={14} />
+                          </button>
+                          <div className="w-10 text-center flex flex-col items-center">
+                            <span className="text-[8px] font-black text-slate-400 leading-none">تعداد</span>
+                            <span className="text-xs font-black text-slate-800">{toPersianDigits(unitCount)}</span>
+                          </div>
+                          <button 
+                            onClick={() => setUnitCount(prev => prev + 1)}
+                            className="p-1.5 bg-white text-slate-700 rounded-full shadow-sm hover:bg-slate-50 transition-colors"
+                          >
+                            <Plus size={14} />
+                          </button>
+                      </div>
+
                       <button 
                         onClick={handleAddToList}
                         className={`flex-1 rounded-full text-[10px] font-black flex items-center justify-center gap-2 transition-all ${lastSavedId ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-700'}`}
@@ -900,9 +924,9 @@ export const UnitDesigner = () => {
                       {(projectItems.length > 0 || lastSavedId) && (
                           <button 
                             onClick={() => navigate('/breakdown', { state: { projectDetails, items: projectItems } })}
-                            className="flex-[2] bg-blue-600 text-white rounded-full text-[10px] font-black flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 active:scale-95 transition-all"
+                            className="flex-[1.5] bg-blue-600 text-white rounded-full text-[10px] font-black flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 active:scale-95 transition-all"
                           >
-                             <Receipt size={16}/> صدور فاکتور ({toPersianDigits(projectItems.length)})
+                             <Receipt size={16}/> فاکتور
                           </button>
                       )}
                   </div>
