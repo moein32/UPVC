@@ -1,3 +1,4 @@
+
 import React, { useRef, useState } from 'react';
 import { WindowNode, OpeningDirection } from '../types';
 import { toPersianDigits } from '../utils/formatting';
@@ -138,21 +139,43 @@ const collectFlattenedSegments = (node: WindowNode, totalSize: number, targetDir
     }
 };
 
-// --- CORE HANDLES LOGIC (Fixed Direction) ---
+// --- CORE HANDLES LOGIC (Ultra-Small for Invoices) ---
 
-const renderHandles = (type: OpeningDirection | undefined, sashThickness: number, isThumbnail?: boolean) => {
+const renderHandles = (type: OpeningDirection | undefined, sashThickness: number, isThumbnail: boolean = false, scale: number = 1) => {
     if (!type || type === 'Fixed' || type === 'Panel') return null;
   
     const { color: handleColor, shadow, zIndex } = DESIGN_SYSTEM.handle;
-    const hW = isThumbnail ? DESIGN_SYSTEM.handle.width / 2 : DESIGN_SYSTEM.handle.width;
-    const hH = isThumbnail ? DESIGN_SYSTEM.handle.height / 2 : DESIGN_SYSTEM.handle.height;
-    const hR = isThumbnail ? DESIGN_SYSTEM.handle.radius / 2 : DESIGN_SYSTEM.handle.radius;
+    const isDoor = type.includes('Door');
+    
+    // REDUCED BASE SIZES FOR THUMBNAILS (Premium Look)
+    const baseW = DESIGN_SYSTEM.handle.width;
+    const baseH = DESIGN_SYSTEM.handle.height;
+    
+    // Very small handles to avoid cluttering the visual preview
+    const hW = isThumbnail 
+        ? (isDoor ? baseW * 0.8 : baseW * 0.5) 
+        : baseW;
+        
+    const hH = isThumbnail 
+        ? (isDoor ? baseH * 0.5 : baseH * 0.3) 
+        : (isDoor ? baseH * 1.3 : baseH);
+        
+    const hR = isThumbnail ? 0.2 : DESIGN_SYSTEM.handle.radius;
   
     const offset = (sashThickness - hW) / 2;
     const offsetPx = `${offset}px`;
   
-    const handleBaseStyle: React.CSSProperties = { 
-        position: 'absolute', top: '50%', transform: 'translateY(-50%)', zIndex: zIndex, width: `${hW}px`, height: `${hH}px`, backgroundColor: handleColor, borderRadius: `${hR}px`, boxShadow: shadow
+    const handleBaseStyle: React.Properties = { 
+        position: 'absolute', 
+        top: '50%', 
+        transform: 'translateY(-50%)', 
+        zIndex: zIndex, 
+        width: `${hW}px`, 
+        height: `${hH}px`, 
+        backgroundColor: handleColor, 
+        borderRadius: `${hR}px`, 
+        boxShadow: isThumbnail ? 'none' : shadow,
+        border: isThumbnail ? '0.2px solid #0f172a' : 'none' 
     };
   
     const Lever = ({ direction }: { direction: 'toLeft' | 'toRight' }) => (
@@ -161,18 +184,26 @@ const renderHandles = (type: OpeningDirection | undefined, sashThickness: number
             top: '50%',
             [direction === 'toLeft' ? 'right' : 'left']: '50%',
             transform: 'translateY(-50%)',
-            width: isThumbnail ? '8px' : '18px',
-            height: isThumbnail ? '3px' : '6px',
+            width: isThumbnail ? (isDoor ? '8px' : '4.5px') : '18px',
+            height: isThumbnail ? (isDoor ? '2.5px' : '1.5px') : '6px',
             backgroundColor: handleColor,
-            borderRadius: '2px',
-            boxShadow: shadow,
+            borderRadius: isThumbnail ? '0.2px' : '2px',
+            boxShadow: isThumbnail ? 'none' : shadow,
+            border: isThumbnail ? '0.2px solid #0f172a' : 'none',
             zIndex: zIndex + 1
         }} />
     );
   
     const Keyhole = () => (
         <div style={{
-            position: 'absolute', bottom: isThumbnail ? '2px' : '5px', left: '50%', transform: 'translateX(-50%)', width: isThumbnail ? '1px' : '1.5px', height: isThumbnail ? '1.5px' : '3px', backgroundColor: '#334155', borderRadius: '1px'
+            position: 'absolute', 
+            bottom: isThumbnail ? '1.5px' : '5px', 
+            left: '50%', 
+            transform: 'translateX(-50%)', 
+            width: isThumbnail ? '0.8px' : '1.5px', 
+            height: isThumbnail ? '1.8px' : '3px', 
+            backgroundColor: '#0f172a', 
+            borderRadius: '0.2px'
         }} />
     );
   
@@ -207,20 +238,20 @@ export const WindowCanvas = ({
 }: Props) => {
   const isSelected = !readOnly && selectedId === node.id;
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isDragOver, setIsDragOver] = useState(false);
 
   const frameStyle = {
       backgroundColor: DESIGN_SYSTEM.frame.bg,
-      backgroundImage: DESIGN_SYSTEM.frame.gradient, 
-      boxShadow: isThumbnail ? 'inset 0 0 2px rgba(0,0,0,0.1)' : 'inset 1px 1px 3px rgba(255,255,255,1), inset -1px -1px 3px rgba(0,0,0,0.1), 0 4px 15px rgba(0,0,0,0.05)',
-      borderColor: DESIGN_SYSTEM.frame.borderColor, 
+      backgroundImage: isThumbnail ? 'none' : DESIGN_SYSTEM.frame.gradient, 
+      boxShadow: isThumbnail ? 'inset 0 0 0 1px #94a3b8' : 'inset 1px 1px 3px rgba(255,255,255,1), inset -1px -1px 3px rgba(0,0,0,0.1), 0 4px 15px rgba(0,0,0,0.05)',
+      border: isThumbnail ? '1px solid #94a3b8' : `1px solid ${DESIGN_SYSTEM.frame.borderColor}`, 
   };
 
   const isRenovation = frameType === 'renovation';
-  const frameThickness = (isThumbnail ? 3 : (isRenovation ? 20 : 12)) * scale;
-  const mullionWidth = (isThumbnail ? 3 : 12) * scale; 
+  
+  const frameThickness = (isThumbnail ? 16 : (isRenovation ? 20 : 12)) * scale;
+  const mullionWidth = (isThumbnail ? 14 : 12) * scale; 
   const isDoor = node.openingType?.includes('Door');
-  const sashThickness = (isThumbnail ? 3 : (isDoor ? 25 : 12)) * scale;
+  const sashThickness = (isThumbnail ? (isDoor ? 22 : 14) : (isDoor ? 25 : 12)) * scale;
 
   const handleResizeStart = (e: React.MouseEvent | React.TouchEvent, index: number) => {
     if (readOnly) return;
@@ -261,7 +292,11 @@ export const WindowCanvas = ({
                   {!isThumbnail && vSegments.length > 0 && <UnifiedDimensionLine segments={vSegments} orientation="v" totalSize={height} onSegmentClick={onChildResize} />}
                 </>
             )}
-            <div className="w-full h-full relative rounded-sm border border-slate-300" style={frameStyle}>
+            <div className="w-full h-full relative rounded-sm" style={frameStyle}>
+                 {/* DOUBLE FRAME LINE LOGIC for Thumbnail Mode */}
+                 {isThumbnail && (
+                    <div className="absolute inset-[2.5px] border border-slate-300 pointer-events-none z-10" />
+                 )}
                  <div className="w-full h-full" style={{ padding: frameThickness }}>
                     <div className="w-full h-full relative bg-slate-900/5">{children}</div>
                  </div>
@@ -275,11 +310,12 @@ export const WindowCanvas = ({
     const totalFlex = node.children.reduce((a, b) => a + (b.flex || 1), 0);
     const Wrapper = isSashContainer ? 
         ({c}: {c: React.ReactNode}) => (
-            <div className="w-full h-full relative rounded-sm border border-slate-300 shadow-sm bg-white" style={frameStyle}>
+            <div className="w-full h-full relative rounded-sm shadow-sm bg-white" style={frameStyle}>
+                 {isThumbnail && <div className="absolute inset-[2.5px] border border-slate-300 pointer-events-none z-10" />}
                  <div className="w-full h-full" style={{ padding: sashThickness }}>{c}</div>
                  <div className="absolute inset-0 pointer-events-none z-20">
-                    <div className="w-full h-full relative" style={{ padding: sashThickness }}>{renderOpeningLines(node.openingType, width, height)}</div>
-                    {renderHandles(node.openingType, sashThickness, isThumbnail)}
+                    <div className="w-full h-full relative" style={{ padding: sashThickness }}>{renderOpeningLines(node.openingType, width, height, isThumbnail)}</div>
+                    {renderHandles(node.openingType, sashThickness, isThumbnail, scale)}
                  </div>
             </div>
         ) : ({c}: {c: React.ReactNode}) => <>{c}</>;
@@ -296,7 +332,11 @@ export const WindowCanvas = ({
                             {index < node.children!.length - 1 && (
                                 <div className={`relative z-20 border-slate-300 ${node.dir === 'col' ? 'w-full border-t border-b' : 'h-full border-l border-r'} ${!readOnly ? (node.dir === 'col' ? 'cursor-row-resize' : 'cursor-col-resize') : ''}`}
                                     style={{ [node.dir === 'col' ? 'height' : 'width']: mullionWidth, ...frameStyle }}
-                                    onMouseDown={(e) => !readOnly && handleResizeStart(e, index)}></div>
+                                    onMouseDown={(e) => !readOnly && handleResizeStart(e, index)}>
+                                    {isThumbnail && (
+                                        <div className={`absolute border-slate-300 pointer-events-none ${node.dir === 'col' ? 'inset-x-0 top-[2.5px] h-[1px]' : 'inset-y-0 left-[2.5px] w-[1px]'}`} />
+                                    )}
+                                </div>
                             )}
                         </React.Fragment>
                     ))}
@@ -309,32 +349,35 @@ export const WindowCanvas = ({
   const isOpening = node.openingType && node.openingType !== 'Fixed' && node.openingType !== 'Panel';
   return (
     <RootWrapper>
-        <div onClick={(e) => { e.stopPropagation(); if (!readOnly) onSelect(node.id); }} onDragOver={(e)=>{e.preventDefault(); if(node.type==='leaf')setIsDragOver(true)}} onDragLeave={()=>setIsDragOver(false)} onDrop={(e)=>{/* Drop Logic */}}
+        <div onClick={(e) => { e.stopPropagation(); if (!readOnly) onSelect(node.id); }}
           className={`w-full h-full relative transition-all ${isSelected ? 'ring-2 ring-blue-500 z-50' : ''}`}>
             <div className={`w-full h-full relative flex ${isOpening ? 'shadow-sm border border-slate-200' : ''}`} style={isOpening ? { padding: sashThickness, ...frameStyle } : {}}>
+                {isOpening && isThumbnail && <div className="absolute inset-[2.5px] border border-slate-300 pointer-events-none z-10" />}
                 <div className={`flex-1 relative overflow-hidden ${node.openingType === 'Panel' ? 'bg-slate-50' : 'bg-gradient-to-br from-[#e0f2fe] via-[#bae6fd] to-[#7dd3fc]'}`}>
-                    <div className="absolute inset-0 pointer-events-none z-10">{renderOpeningLines(node.openingType, width, height)}</div>
+                    <div className="absolute inset-0 pointer-events-none z-10">{renderOpeningLines(node.openingType, width, height, isThumbnail)}</div>
                 </div>
-                <div className="absolute inset-0 pointer-events-none z-20">{renderHandles(node.openingType, sashThickness, isThumbnail)}</div>
+                <div className="absolute inset-0 pointer-events-none z-20">{renderHandles(node.openingType, sashThickness, isThumbnail, scale)}</div>
             </div>
         </div>
     </RootWrapper>
   );
 };
 
-const renderOpeningLines = (type: OpeningDirection | undefined, w: number, h: number) => {
+const renderOpeningLines = (type: OpeningDirection | undefined, w: number, h: number, isThumbnail: boolean = false) => {
     if (!type || type === 'Fixed' || type === 'Panel') return null;
     const { color: strokeColor, strokeWidth, dashArray } = DESIGN_SYSTEM.openingLines;
-    const midH = h / 2; const midW = w / 2; const i = strokeWidth; const iw = w - i; const ih = h - i;
+    
+    const finalStrokeWidth = isThumbnail ? strokeWidth * 1.5 : strokeWidth;
+    const midH = h / 2; const midW = w / 2; const i = finalStrokeWidth / 2; const iw = w - i; const ih = h - i;
 
     return (
         <svg width="100%" height="100%" className="absolute inset-0 block pointer-events-none" viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none">
-            {type === 'TurnRight' && <path d={`M${i},${i} L${iw},${midH} L${i},${ih}`} fill="none" stroke={strokeColor} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />}
-            {type === 'TurnLeft' && <path d={`M${iw},${i} L${i},${midH} L${iw},${ih}`} fill="none" stroke={strokeColor} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />}
-            {type === 'TiltTurnRight' && <><path d={`M${i},${i} L${iw},${midH} L${i},${ih}`} fill="none" stroke={strokeColor} strokeWidth={strokeWidth} /><path d={`M${i},${ih} L${midW},${i} L${iw},${ih}`} fill="none" stroke={strokeColor} strokeWidth={strokeWidth} strokeDasharray={dashArray} /></>}
-            {type === 'TiltTurnLeft' && <><path d={`M${iw},${i} L${i},${midH} L${iw},${ih}`} fill="none" stroke={strokeColor} strokeWidth={strokeWidth} /><path d={`M${iw},${ih} L${midW},${i} L${i},${ih}`} fill="none" stroke={strokeColor} strokeWidth={strokeWidth} strokeDasharray={dashArray} /></>}
-            {type === 'DoorRight' && <path d={`M${i},${i} L${iw},${midH} L${i},${ih}`} fill="none" stroke={strokeColor} strokeWidth={strokeWidth} />}
-            {type === 'DoorLeft' && <path d={`M${iw},${i} L${i},${midH} L${iw},${ih}`} fill="none" stroke={strokeColor} strokeWidth={strokeWidth} />}
+            {type === 'TurnRight' && <path d={`M${i},${i} L${iw},${midH} L${i},${ih}`} fill="none" stroke={strokeColor} strokeWidth={finalStrokeWidth} strokeLinecap="round" strokeLinejoin="round" />}
+            {type === 'TurnLeft' && <path d={`M${iw},${i} L${i},${midH} L${iw},${ih}`} fill="none" stroke={strokeColor} strokeWidth={finalStrokeWidth} strokeLinecap="round" strokeLinejoin="round" />}
+            {type === 'TiltTurnRight' && <><path d={`M${i},${i} L${iw},${midH} L${i},${ih}`} fill="none" stroke={strokeColor} strokeWidth={finalStrokeWidth} /><path d={`M${i},${ih} L${midW},${i} L${iw},${ih}`} fill="none" stroke={strokeColor} strokeWidth={finalStrokeWidth} strokeDasharray={dashArray} /></>}
+            {type === 'TiltTurnLeft' && <><path d={`M${iw},${i} L${i},${midH} L${iw},${ih}`} fill="none" stroke={strokeColor} strokeWidth={finalStrokeWidth} /><path d={`M${iw},${ih} L${midW},${i} L${i},${ih}`} fill="none" stroke={strokeColor} strokeWidth={finalStrokeWidth} strokeDasharray={dashArray} /></>}
+            {type === 'DoorRight' && <path d={`M${i},${i} L${iw},${midH} L${i},${ih}`} fill="none" stroke={strokeColor} strokeWidth={finalStrokeWidth} />}
+            {type === 'DoorLeft' && <path d={`M${iw},${i} L${i},${midH} L${iw},${ih}`} fill="none" stroke={strokeColor} strokeWidth={finalStrokeWidth} />}
         </svg>
     );
 };

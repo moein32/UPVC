@@ -15,6 +15,7 @@ export const InvoicePrint = () => {
   const location = useLocation();
   const containerRef = useRef<HTMLDivElement>(null);
   const scaledWrapperRef = useRef<HTMLDivElement>(null);
+  
   const state = location.state as { projectDetails: ProjectDetails, items: InvoiceItem[] } | null;
   
   const [projectDetails, setProjectDetails] = useState<ProjectDetails | null>(state?.projectDetails || null);
@@ -67,60 +68,53 @@ export const InvoicePrint = () => {
     pages.push(items.slice(i, i + ITEMS_PER_PAGE));
   }
 
-  const handleDownloadPDF = async () => {
+  const generatePDF = async (isShare = false) => {
     setIsGenerating(true);
-    const pageElements = document.querySelectorAll('.invoice-page-export');
-    if (!pageElements.length || !scaledWrapperRef.current) return;
-    const originalTransform = scaledWrapperRef.current.style.transform;
-    scaledWrapperRef.current.style.transform = 'none';
+    const pageElements = document.querySelectorAll('.export-container .invoice-page');
+    if (!pageElements.length) {
+        setIsGenerating(false);
+        return;
+    }
+
     try {
-      await new Promise(resolve => setTimeout(resolve, 300));
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+
       for (let i = 0; i < pageElements.length; i++) {
          if (i > 0) pdf.addPage();
-         const canvas = await toJpeg(pageElements[i] as HTMLElement, { quality: 0.95, pixelRatio: 2.5, backgroundColor: '#ffffff' });
-         const imgProps = pdf.getImageProperties(canvas);
-         const imgHeight = (imgProps.height * pdfWidth) / imgProps.width;
-         pdf.addImage(canvas, 'JPEG', 0, 0, pdfWidth, imgHeight);
+         
+         const node = pageElements[i] as HTMLElement;
+         
+         const imgData = await toJpeg(node, {
+            quality: 1.0,
+            pixelRatio: 2.5,
+            backgroundColor: '#ffffff',
+            canvasWidth: 794,
+            canvasHeight: 1123,
+         });
+         
+         pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'SLOW');
       }
-      pdf.save(`Invoice-${projectDetails.customerName}-${Date.now()}.pdf`);
+
+      const fileName = `Invoice-${projectDetails.customerName}.pdf`;
+      if (isShare) {
+        const pdfBlob = pdf.output('blob');
+        const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({ files: [file], title: 'پیش‌فاکتور لومینا', text: projectDetails.customerName });
+        } else {
+          pdf.save(fileName);
+        }
+      } else {
+        pdf.save(fileName);
+      }
     } catch (error) {
       console.error('PDF Error:', error);
+      alert('خطا در تولید فایل PDF.');
     } finally {
-      scaledWrapperRef.current.style.transform = originalTransform;
-      setIsGenerating(false);
-    }
-  };
-
-  const handleSharePDF = async () => {
-    setIsGenerating(true);
-    const pageElements = document.querySelectorAll('.invoice-page-export');
-    if (!pageElements.length || !scaledWrapperRef.current) return;
-    const originalTransform = scaledWrapperRef.current.style.transform;
-    scaledWrapperRef.current.style.transform = 'none';
-    try {
-      await new Promise(resolve => setTimeout(resolve, 300));
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      for (let i = 0; i < pageElements.length; i++) {
-         if (i > 0) pdf.addPage();
-         const canvas = await toJpeg(pageElements[i] as HTMLElement, { quality: 0.90, pixelRatio: 2, backgroundColor: '#ffffff' });
-         const imgProps = pdf.getImageProperties(canvas);
-         const imgHeight = (imgProps.height * pdfWidth) / imgProps.width;
-         pdf.addImage(canvas, 'JPEG', 0, 0, pdfWidth, imgHeight);
-      }
-      const pdfBlob = pdf.output('blob');
-      const file = new File([pdfBlob], `Invoice.pdf`, { type: 'application/pdf' });
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({ files: [file], title: 'پیش‌فاکتور', text: `فاکتور ${projectDetails.customerName}` });
-      } else {
-        pdf.save(`Invoice-${projectDetails.customerName}.pdf`);
-      }
-    } catch (error: any) {
-       console.error('Share Error:', error);
-    } finally {
-      scaledWrapperRef.current.style.transform = originalTransform;
       setIsGenerating(false);
     }
   };
@@ -130,10 +124,10 @@ export const InvoicePrint = () => {
         <div className={`flex ${tempLayout === 'classic' ? 'flex-col items-center gap-4' : 'justify-between items-start'}`}>
             <div className={`${tempLayout === 'classic' ? 'text-center' : 'text-right'}`}>
                 <div className="inv-title-box">
-                    <h1 className="text-3xl font-black mb-2 tracking-tight text-slate-900">{invoiceConfig.companyName}</h1>
+                    <h1 className="text-3xl font-black mb-1 tracking-tight text-slate-800">{invoiceConfig.companyName}</h1>
                     {tempLayout === 'modern' && <span className="inv-badge text-[10px] font-bold">پیش‌فاکتور رسمی</span>}
                 </div>
-                <div className="text-[11px] opacity-80 space-y-1 font-medium mt-3 text-slate-700">
+                <div className="text-[10px] opacity-80 space-y-0.5 font-medium mt-2 text-slate-700">
                     <div className="flex items-center gap-2">
                         <span>آدرس:</span>
                         <span>{invoiceConfig.companyAddress || '---'}</span>
@@ -144,19 +138,19 @@ export const InvoicePrint = () => {
                     </div>
                 </div>
             </div>
-            <div className={`flex flex-col ${tempLayout === 'classic' ? 'items-center w-full border-t-2 border-slate-900 pt-4 mt-2' : 'items-end text-left'}`}>
+            <div className={`flex flex-col ${tempLayout === 'classic' ? 'items-center w-full border-t border-slate-700 pt-4 mt-1' : 'items-end text-left'}`}>
                 {tempLayout !== 'modern' && (
-                    <div className={`text-[12px] font-black px-4 py-2 mb-3 rounded-lg ${tempLayout === 'technical' ? 'bg-slate-900 text-white' : tempLayout === 'classic' ? 'border border-slate-900' : 'bg-slate-100'}`}>
+                    <div className={`text-[11px] font-black px-4 py-1.5 mb-2 rounded-lg ${tempLayout === 'technical' ? 'bg-slate-800 text-white' : tempLayout === 'classic' ? 'border border-slate-800' : 'bg-slate-100'}`}>
                         پیش‌فاکتور فروش
                     </div>
                 )}
-                <div className="text-[10px] font-bold space-y-1.5 opacity-90 text-slate-800">
+                <div className="text-[10px] font-bold space-y-1 opacity-90 text-slate-800">
                     <div className="flex gap-4 justify-between min-w-[140px]">
-                        <span>تاریخ صدور:</span>
+                        <span>تاریخ:</span>
                         <span className="font-black">{todayJalali}</span>
                     </div>
                     <div className="flex gap-4 justify-between min-w-[140px]">
-                        <span>شماره سند:</span>
+                        <span>شماره:</span>
                         <span className="font-black">{toPersianDigits(projectDetails.id.slice(-6))}</span>
                     </div>
                     <div className="flex gap-4 justify-between min-w-[140px]">
@@ -170,31 +164,153 @@ export const InvoicePrint = () => {
   );
 
   const InvoiceFooter = ({ pageNum, totalPages }: { pageNum: number, totalPages: number }) => (
-     <div className="inv-footer mt-auto">
-        <div className="inv-footer-container relative pt-6 border-t border-slate-200">
+     <div className="inv-footer shrink-0">
+        <div className="inv-footer-container relative pt-2 border-t border-slate-200">
             <div className="flex justify-between items-end">
-                <div className="max-w-[55%]">
-                    <div className="flex items-center gap-2 mb-2 opacity-60">
-                            <div className="w-1.5 h-1.5 bg-slate-900 rounded-full"></div>
-                            <span className="text-[9px] font-black text-slate-900 uppercase tracking-widest">توضیحات و شرایط</span>
-                    </div>
-                    <p className="text-[9px] leading-loose text-justify opacity-70 font-medium pl-4 text-slate-700">
-                        {invoiceConfig.footerNote || 'هزینه حمل و نقل بر عهده خریدار می‌باشد. اعتبار این پیش‌فاکتور ۷۲ ساعت از تاریخ صدور است.'}
+                <div className="max-w-[70%]">
+                    <p className="text-[9px] leading-relaxed text-justify opacity-70 font-medium text-slate-700">
+                        {invoiceConfig.footerNote || 'اعتبار این پیش‌فاکتور ۷۲ ساعت می‌باشد. نصب در محل پروژه بر عهده تیم متخصص لومینا است.'}
                     </p>
                 </div>
-                <div className="text-left flex flex-col items-end gap-4">
-                        <div className="text-[9px] font-bold opacity-80 dir-ltr text-right text-slate-700">
-                        {invoiceConfig.companyAddress && <div className="mb-1">{invoiceConfig.companyAddress}</div>}
-                        {invoiceConfig.companyPhone && <div className="opacity-70 font-mono tracking-widest">{invoiceConfig.companyPhone}</div>}
-                        </div>
-                        <div className="bg-slate-900 text-white text-[9px] font-bold px-4 py-1.5 rounded-full flex items-center gap-3 shadow-md">
-                            <span className="opacity-70 font-normal">صفحه</span>
-                            <span className="font-mono pt-0.5 tracking-wider">{toPersianDigits(pageNum)} / {toPersianDigits(totalPages)}</span>
+                <div className="text-left">
+                        <div className="bg-slate-800 text-white text-[8px] font-bold px-3 py-1 rounded-full flex items-center gap-2">
+                            <span>صفحه</span>
+                            <span>{toPersianDigits(pageNum)} / {toPersianDigits(totalPages)}</span>
                         </div>
                 </div>
             </div>
         </div>
      </div>
+  );
+
+  const InvoicePageContent = ({ pageItems, pageIndex, totalPages }: any) => (
+    <div className={`flex flex-col h-full overflow-hidden ${tempLayout === 'classic' ? 'classic-border-frame' : ''}`}>
+        <InvoiceHeader />
+        
+        {pageIndex === 0 && (
+            <div className="px-10 py-3 shrink-0">
+                <div className="inv-card p-3 grid grid-cols-2 gap-4 border border-slate-100 rounded-2xl bg-slate-50/50 shadow-sm">
+                    <div>
+                        <span className="text-[8px] font-black opacity-50 uppercase tracking-widest mb-0.5 block">مشخصات خریدار</span>
+                        <div className="text-sm font-black text-slate-900">{projectDetails.customerName}</div>
+                    </div>
+                    <div>
+                        <span className="text-[8px] font-black opacity-50 uppercase tracking-widest mb-0.5 block">محل پروژه</span>
+                        <div className="text-[10px] font-bold text-slate-600 truncate">{projectDetails.address || 'ثبت نشده'}</div>
+                    </div>
+                </div>
+            </div>
+        )}
+
+        <div className="flex-1 px-10 overflow-hidden">
+            <table className="inv-table w-full border-collapse">
+                <thead>
+                    <tr>
+                        <th className="p-1.5 w-8 text-center border-b-2 border-slate-300 text-[10px]">#</th>
+                        <th className="p-1.5 w-44 text-center border-b-2 border-slate-300 text-[10px]">نقشه فنی</th>
+                        <th className="p-1.5 text-center border-b-2 border-slate-300 text-[10px]">شرح اقلام و محاسبات فنی</th>
+                        <th className="p-1.5 w-32 text-center border-b-2 border-slate-300 text-[10px]">مبلغ نهایی (تومان)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {pageItems.map((item: any, localIndex: number) => {
+                        const globalIndex = pageIndex * ITEMS_PER_PAGE + localIndex;
+                        const brand = BRANDS.find(b => b.id === item.config.profileId);
+                        return (
+                            <tr key={item.id} className="border-b border-slate-100 last:border-0">
+                                <td className="p-1 font-bold text-[10px] opacity-40 text-center align-top pt-4">{toPersianDigits(globalIndex + 1)}</td>
+                                <td className="p-1 align-top pt-4">
+                                    <div className="relative w-40 h-40 mx-auto bg-white flex items-center justify-center border border-slate-50 rounded-lg overflow-hidden shadow-sm">
+                                        <WindowPreview 
+                                          config={item.config} 
+                                          width="100%" 
+                                          height="100%" 
+                                          isThumbnail={true} 
+                                          scale={0.42} 
+                                        />
+                                    </div>
+                                    <div className="text-center mt-1.5 text-[10px] font-black text-slate-800 bg-slate-50 py-0.5 rounded border border-slate-100">
+                                      {toPersianDigits(item.config.width)} × {toPersianDigits(item.config.height)} mm
+                                    </div>
+                                </td>
+                                <td className="p-1 align-top pt-2">
+                                    <div className="flex items-center justify-center gap-2 mb-1">
+                                        <span className="bg-slate-100 text-slate-900 px-2 py-0.5 rounded text-[9px] font-black border border-slate-200">{brand?.name}</span>
+                                        <span className="text-[9px] font-bold opacity-70">{item.config.type}</span>
+                                    </div>
+                                    <table className="w-full text-[9px] border border-slate-100 rounded overflow-hidden bg-white">
+                                        <thead className="bg-slate-50 border-b border-slate-100">
+                                            <tr>
+                                                <th className="p-1 text-right text-slate-500 w-[40%]">شرح کالا</th>
+                                                <th className="p-1 text-center text-slate-500 w-[15%]">مقدار</th>
+                                                <th className="p-1 text-center text-slate-500 w-[15%]">واحد</th>
+                                                <th className="p-1 text-left text-slate-500 w-[30%]">مبلغ کل</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {item.calculations.details?.map((detail: any, dIdx: number) => (
+                                                <tr key={dIdx} className="border-b border-slate-50 last:border-0">
+                                                    <td className="p-1 font-bold text-slate-900 truncate max-w-[120px]">{detail.name}</td>
+                                                    <td className="p-1 text-center text-slate-800 font-black">{toPersianDigits(detail.quantity)}</td>
+                                                    <td className="p-1 text-center text-slate-500 text-[8px]">{detail.unit}</td>
+                                                    <td className="p-1 text-left font-black text-slate-900">{formatPrice(detail.totalPrice)}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </td>
+                                <td className="p-1 text-center align-top pt-10">
+                                    <div className="text-base font-black text-slate-900 tracking-tight text-center">{formatPrice(item.calculations.totalPrice)}</div>
+                                    <span className="text-[9px] font-black text-slate-400 block text-center mt-1">تومان</span>
+                                </td>
+                            </tr>
+                        );
+                    })}
+                </tbody>
+            </table>
+        </div>
+
+        {pageIndex === totalPages - 1 && (
+            <div className="inv-total px-10 py-3 shrink-0 border-t border-slate-200 bg-white z-20">
+                <div className="flex gap-4 items-center">
+                    <div className="flex-1">
+                        <div className="flex justify-around items-center opacity-60">
+                            <div className="text-center">
+                                <span className="text-[8px] font-black block mb-4 uppercase tracking-widest">مهر و امضاء فروشنده</span>
+                                <div className="w-20 h-px bg-slate-300 mx-auto"></div>
+                            </div>
+                            <div className="text-center">
+                                <span className="text-[8px] font-black block mb-4 uppercase tracking-widest">تایید نهایی خریدار</span>
+                                <div className="w-20 h-px bg-slate-300 mx-auto"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="totals-box w-68 p-4 rounded-2xl flex flex-col bg-slate-100 border border-slate-200 shadow-sm">
+                        <div className="space-y-2">
+                            <div className="flex justify-between text-[11px] font-bold text-slate-500">
+                                <span>مجموع متریال:</span>
+                                <span className="text-slate-900 font-black">{formatPrice(totalMaterialPrice)}</span>
+                            </div>
+                            <div className="flex justify-between text-[11px] font-bold text-slate-500">
+                                <span>اجرت نصب ({toPersianDigits(projectDetails.installPercent)}٪):</span>
+                                <span className="text-slate-900 font-black">{formatPrice(installationCost)}</span>
+                            </div>
+                            <div className="h-px bg-slate-300 my-1 opacity-50"></div>
+                            <div className="flex justify-between items-end pt-1">
+                                <span className="text-xs font-black text-slate-900">جمع کل فاکتور:</span>
+                                <div className="text-left">
+                                    <div className="text-2xl font-black text-blue-700 leading-none tracking-tight">{formatPrice(finalPrice)}</div>
+                                    <span className="text-[8px] font-black opacity-50 block mt-1 tracking-widest text-left">تومان</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )}
+        
+        <InvoiceFooter pageNum={pageIndex + 1} totalPages={totalPages} />
+    </div>
   );
 
   return (
@@ -205,53 +321,58 @@ export const InvoicePrint = () => {
              @page { size: A4; margin: 0; }
              body { background: white; }
              .no-print { display: none !important; }
-             .invoice-page { margin: 0 !important; width: 210mm !important; min-height: 297mm !important; height: auto !important; box-shadow: none !important; border-radius: 0 !important; }
            }
-           .invoice-page { width: 794px !important; min-height: 1123px !important; background-color: #ffffff; color: #0f172a; box-sizing: border-box; position: relative; display: flex; flex-direction: column; margin-bottom: 2rem; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.1); }
-           .invoice-page * { font-family: 'Vazirmatn', sans-serif; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-           .inv-footer { padding: 0 50px 40px 50px; }
-           .layout-modern .inv-footer-container { background: #f8fafc; border: none; padding: 24px 30px; border-radius: 16px; margin-top: 20px; }
-           .layout-technical .inv-footer-container { border-top: 4px solid #1e293b; padding-top: 20px; }
-           .layout-classic .inv-footer-container { border-top: 3px double #1e293b; }
-           .layout-standard { --primary: #334155; --primary-light: #f1f5f9; --text-main: #0f172a; --text-muted: #475569; --border: #cbd5e1; --header-bg: #f8fafc; }
-           .layout-standard .inv-header { background-color: var(--header-bg); border-bottom: 2px solid var(--primary); padding: 40px; }
-           .layout-standard .inv-title-box { border-right: 4px solid var(--primary); padding-right: 15px; }
-           .layout-standard .inv-card { background: white; border: 1px solid var(--border); border-radius: 4px; }
-           .layout-standard .inv-table th { background-color: var(--primary); color: white; text-transform: uppercase; font-weight: 900; border-bottom: 2px solid var(--primary); text-align: center; }
-           .layout-standard .inv-table td { border-bottom: 1px solid var(--border); text-align: center; vertical-align: middle; }
-           .layout-standard .inv-total { background-color: var(--header-bg); border-top: 2px solid var(--primary); padding: 30px; margin-top: 20px; }
-           .layout-modern { --primary: #1e293b; --primary-light: #f8fafc; --text-main: #1e293b; --text-muted: #64748b; --border: transparent; --header-bg: #ffffff; }
-           .layout-modern .inv-header { padding: 40px 40px 10px 40px; }
-           .layout-modern .inv-badge { background-color: var(--primary); color: white; padding: 6px 16px; border-radius: 100px; }
-           .layout-modern .inv-card { background: #f5f5f5; border-radius: 12px; border: none; }
-           .layout-modern .inv-table th { color: var(--text-muted); font-weight: 700; font-size: 10px; padding-bottom: 15px; text-align: center; border-bottom: 1px solid #e2e8f0; }
-           .layout-modern .inv-table td { padding-top: 15px; padding-bottom: 15px; vertical-align: middle; text-align: center; }
-           .layout-modern .inv-total { background-color: var(--primary); color: white; border-radius: 16px; padding: 40px; margin: 20px 40px; }
+           
+           .export-container { 
+             position: absolute; 
+             top: 0; 
+             left: -10000px; 
+             width: 794px; 
+             visibility: visible;
+             pointer-events: none;
+           }
+           
+           .invoice-page { 
+             width: 794px !important; 
+             height: 1123px !important; 
+             background-color: #ffffff; 
+             color: #1e293b; 
+             box-sizing: border-box; 
+             position: relative; 
+             display: flex; 
+             flex-direction: column; 
+             overflow: hidden; 
+             padding: 0;
+             margin: 0;
+           }
+           
+           .invoice-page * { font-family: 'Vazirmatn', sans-serif; box-sizing: border-box; }
+           .inv-footer { padding: 0 40px 15px 40px; }
+           
+           .layout-standard .inv-header { background-color: #f8fafc; border-bottom: 2px solid #334155; padding: 25px 40px; }
+           .layout-standard .inv-table th { background-color: #334155; color: white; font-size: 10px; }
+           
+           .layout-modern .inv-header { padding: 25px 40px 10px 40px; }
+           .layout-modern .inv-badge { background-color: #1e293b; color: white; padding: 4px 12px; border-radius: 100px; }
+           .layout-modern .inv-total { background-color: #1e293b; color: white !important; border-radius: 20px; margin: 10px 40px; padding: 20px; }
+           .layout-modern .inv-total .totals-box { background: rgba(255,255,255,0.05); border: none; }
            .layout-modern .inv-total * { color: white !important; }
-           .layout-technical { --primary: #0f172a; --primary-light: #e2e8f0; --text-main: #0f172a; --text-muted: #475569; --border: #475569; --header-bg: #1e293b; }
-           .layout-technical .inv-header { background-color: var(--header-bg); color: white; padding: 40px; border-bottom: 4px solid #475569; }
+
+           .layout-technical .inv-header { background-color: #0f172a; color: white; padding: 25px 40px; }
            .layout-technical .inv-header * { color: white !important; }
-           .layout-technical .inv-card { border: 1px solid var(--border); border-radius: 0; background: white; }
-           .layout-technical .inv-table th { background-color: #cbd5e1; color: #0f172a; border: 1px solid var(--border); font-weight: 800; text-align: center; }
-           .layout-technical .inv-table td { border: 1px solid var(--border); text-align: center; vertical-align: middle; }
-           .layout-technical .inv-total { border-top: 4px solid #0f172a; background-color: #f1f5f9; padding: 30px; margin-top: 20px; border-bottom: 10px solid var(--header-bg); }
-           .layout-classic { --primary: #171717; --primary-light: #f3f3f3; --text-main: #171717; --text-muted: #262626; --border: #171717; --header-bg: #ffffff; }
-           .layout-classic { padding: 40px; border: none; }
-           .layout-classic .classic-border-frame { border: 2px solid var(--border); height: 100%; display: flex; flex-direction: column; }
-           .layout-classic .inv-header { border-bottom: 2px solid var(--border); padding: 30px; text-align: center; }
-           .layout-classic .inv-title-box { border: none; padding: 0; margin-bottom: 10px; }
-           .layout-classic .inv-card { border: 1px solid var(--border); border-radius: 0; }
-           .layout-classic .inv-table th { border-bottom: 1px solid var(--border); background-color: #f5f5f5; font-weight: bold; text-align: center; }
-           .layout-classic .inv-table td { border-bottom: 1px solid var(--border); text-align: center; vertical-align: middle; }
-           .layout-classic .inv-total { border-top: 2px solid var(--border); padding: 20px; background-color: #fff; margin-top: 20px; }
-           .window-preview-clean svg { filter: none !important; box-shadow: none !important; }
-           .window-preview-clean div { box-shadow: none !important; }
-           .detail-row { border-bottom: 1px solid rgba(0,0,0,0.05); padding: 6px 0; }
-           .detail-row:last-child { border-bottom: none; }
-           .detail-header { border-bottom: 2px solid #e2e8f0; margin-bottom: 4px; padding-bottom: 4px; }
-           .detail-col-text { font-size: 10px; font-weight: 600; color: #475569; }
+
+           .layout-classic .classic-border-frame { border: 2px solid #171717; margin: 15px; flex: 1; display: flex; flex-direction: column; height: calc(100% - 30px) !important; }
+           .layout-classic .inv-header { border-bottom: 1px solid #171717; padding: 20px; }
          `}
        </style>
+
+       <div className="export-container no-scrollbar">
+            {pages.map((pageItems, pageIndex) => (
+                <div key={`export-${pageIndex}`} className={`invoice-page layout-${tempLayout}`}>
+                    <InvoicePageContent pageItems={pageItems} pageIndex={pageIndex} totalPages={pages.length} />
+                </div>
+            ))}
+       </div>
 
        <div className="no-print fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-3 w-full px-4 max-w-2xl pointer-events-none">
             <div className="bg-white/90 backdrop-blur-xl shadow-2xl border border-white/50 rounded-2xl p-2 flex gap-1 pointer-events-auto">
@@ -267,11 +388,11 @@ export const InvoicePrint = () => {
             <div className="bg-slate-900/95 backdrop-blur-xl shadow-2xl rounded-full p-2 flex items-center gap-2 pointer-events-auto">
                 <button onClick={() => navigate(-1)} className="w-10 h-10 flex items-center justify-center bg-white/10 hover:bg-white/20 text-white rounded-full transition-all"><ArrowRight size={18} /></button>
                 <div className="w-px h-6 bg-white/20 mx-1"></div>
-                <button onClick={handleDownloadPDF} disabled={isGenerating} className="flex items-center gap-2 px-6 h-10 bg-blue-600 hover:bg-blue-500 text-white rounded-full font-bold text-xs transition-all disabled:opacity-50">
+                <button onClick={() => generatePDF(false)} disabled={isGenerating} className="flex items-center gap-2 px-6 h-10 bg-blue-600 hover:bg-blue-500 text-white rounded-full font-bold text-xs transition-all disabled:opacity-50">
                     {isGenerating ? <Loader2 size={16} className="animate-spin" /> : <Printer size={16} />}
                     <span>دانلود PDF</span>
                 </button>
-                <button onClick={handleSharePDF} disabled={isGenerating} className="w-10 h-10 flex items-center justify-center bg-emerald-600 hover:bg-emerald-500 text-white rounded-full transition-all disabled:opacity-50"><Share2 size={18} /></button>
+                <button onClick={() => generatePDF(true)} disabled={isGenerating} className="w-10 h-10 flex items-center justify-center bg-emerald-600 hover:bg-emerald-500 text-white rounded-full transition-all disabled:opacity-50"><Share2 size={18} /></button>
                 <div className="w-px h-6 bg-white/20 mx-1"></div>
                 <div className="flex bg-white/10 rounded-full p-1">
                     <button onClick={() => setScale(s => Math.max(0.3, s - 0.1))} className="w-8 h-8 flex items-center justify-center text-white hover:bg-white/10 rounded-full"><ZoomOut size={14} /></button>
@@ -284,121 +405,8 @@ export const InvoicePrint = () => {
        <div ref={containerRef} className="w-full flex justify-center pt-8 pb-48 overflow-visible">
             <div ref={scaledWrapperRef} className="relative origin-top transition-transform duration-200 ease-out flex flex-col gap-8" style={{ transform: `scale(${scale})`, width: '794px' }}>
                 {pages.map((pageItems, pageIndex) => (
-                    <div key={pageIndex} className={`invoice-page invoice-page-export layout-${tempLayout}`}>
-                         <div className={tempLayout === 'classic' ? 'classic-border-frame' : 'h-full flex flex-col'}>
-                             <InvoiceHeader />
-                             {pageIndex === 0 && (
-                                <div className="px-10 py-6">
-                                    <div className="inv-card p-5 grid grid-cols-2 gap-8">
-                                        <div>
-                                            <span className="text-[9px] font-black opacity-50 uppercase tracking-widest mb-1.5 block">مشخصات خریدار</span>
-                                            <div className="text-lg font-black text-center" style={{ color: 'var(--text-main)' }}>{projectDetails.customerName}</div>
-                                        </div>
-                                        <div>
-                                            <span className="text-[9px] font-black opacity-50 uppercase tracking-widest mb-1.5 block">محل پروژه</span>
-                                            <div className="text-sm font-bold text-center" style={{ color: 'var(--text-muted)' }}>{projectDetails.address || 'ثبت نشده'}</div>
-                                        </div>
-                                    </div>
-                                </div>
-                             )}
-                             <div className="flex-1 px-10">
-                                <table className="inv-table w-full border-collapse">
-                                    <thead>
-                                        <tr>
-                                            <th className="p-3 w-12 text-center rounded-r-lg">#</th>
-                                            <th className="p-3 w-40 text-center">نقشه فنی</th>
-                                            <th className="p-3 text-center">شرح اقلام و محاسبات متریال</th>
-                                            <th className="p-3 w-32 text-center rounded-l-lg">مبلغ نهایی (تومان)</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {pageItems.map((item, localIndex) => {
-                                            const globalIndex = pageIndex * ITEMS_PER_PAGE + localIndex;
-                                            const brand = BRANDS.find(b => b.id === item.config.profileId);
-                                            return (
-                                                <tr key={globalIndex}>
-                                                    <td className="p-3 font-bold text-xs opacity-50">{toPersianDigits(globalIndex + 1)}</td>
-                                                    <td className="p-3">
-                                                        <div className="window-preview-clean relative w-32 h-32 mx-auto bg-white border border-slate-200 rounded-lg flex items-center justify-center p-2">
-                                                            <WindowPreview config={item.config} width="100%" height="100%" />
-                                                        </div>
-                                                        <div className="text-center mt-2 text-[9px] font-black opacity-60 dir-ltr">{toPersianDigits(item.config.width)} × {toPersianDigits(item.config.height)} mm</div>
-                                                    </td>
-                                                    <td className="p-3 align-top">
-                                                        <div className="flex items-center justify-center gap-2 mb-3">
-                                                            <span className="bg-slate-100 text-slate-900 px-2 py-0.5 rounded text-[10px] font-black border border-slate-200">{brand?.name}</span>
-                                                            <span className="text-[10px] font-bold opacity-70">{item.config.type}</span>
-                                                        </div>
-                                                        
-                                                        {/* Material Breakdown Sub-Table */}
-                                                        <div className="w-full border rounded-lg overflow-hidden border-slate-100 bg-white">
-                                                            <div className="detail-header flex bg-slate-50 text-[8px] font-black text-slate-500 px-2 py-1.5 border-b border-slate-100">
-                                                                <div className="w-[35%] text-right">شرح کالا / متریال</div>
-                                                                <div className="w-[20%] text-center">مقدار / واحد</div>
-                                                                <div className="w-[20%] text-center">قیمت واحد</div>
-                                                                <div className="w-[25%] text-left">مبلغ کل</div>
-                                                            </div>
-                                                            <div className="px-2 pb-1">
-                                                                {item.calculations.details?.map((detail, dIdx) => (
-                                                                    <div key={dIdx} className="detail-row flex items-center w-full border-b last:border-0 border-slate-50">
-                                                                        <div className="w-[35%] font-bold text-[10px] text-right py-1.5 text-slate-900">{detail.name}</div>
-                                                                        <div className="w-[20%] text-center detail-col-text">{toPersianDigits(detail.quantity)} {detail.unit}</div>
-                                                                        <div className="w-[20%] text-center detail-col-text">{formatPrice(detail.unitPrice)}</div>
-                                                                        <div className="w-[25%] text-left font-black text-[10px] text-slate-900">{formatPrice(detail.totalPrice)}</div>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td className="p-3">
-                                                        <div className="text-sm font-black" style={{ color: 'var(--text-main)' }}>{formatPrice(item.calculations.totalPrice)}</div>
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
-                             </div>
-                             {pageIndex === pages.length - 1 && (
-                                 <div className="inv-total">
-                                    <div className="flex gap-8 items-start">
-                                        <div className="flex-1">
-                                            <div className="flex justify-between items-center px-4 opacity-70 mt-2">
-                                                <div className="text-center">
-                                                    <span className="text-[9px] font-bold block mb-4">مهر و امضاء فروشنده</span>
-                                                    <div className="w-24 h-px bg-current opacity-30 mx-auto"></div>
-                                                </div>
-                                                <div className="text-center">
-                                                    <span className="text-[9px] font-bold block mb-4">تایید خریدار</span>
-                                                    <div className="w-24 h-px bg-current opacity-30 mx-auto"></div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="w-64">
-                                            <div className="space-y-3">
-                                                <div className="flex justify-between text-xs font-bold opacity-70">
-                                                    <span>جمع متریال مصرفی:</span>
-                                                    <span>{formatPrice(totalMaterialPrice)}</span>
-                                                </div>
-                                                <div className="flex justify-between text-xs font-bold opacity-70">
-                                                    <span>اجرت نصب ({toPersianDigits(projectDetails.installPercent)}٪):</span>
-                                                    <span>{formatPrice(installationCost)}</span>
-                                                </div>
-                                                <div className="h-px bg-current opacity-20 my-2"></div>
-                                                <div className="flex justify-between items-end">
-                                                    <span className="text-sm font-black mb-1">مبلغ نهایی کل:</span>
-                                                    <div className="text-left">
-                                                        <div className="text-2xl font-black tracking-tight leading-none">{formatPrice(finalPrice)}</div>
-                                                        <span className="text-[9px] font-bold opacity-50 block mt-1 uppercase">Toman</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                 </div>
-                             )}
-                             <InvoiceFooter pageNum={pageIndex + 1} totalPages={pages.length} />
-                         </div>
+                    <div key={pageIndex} className={`invoice-page shadow-2xl layout-${tempLayout}`}>
+                        <InvoicePageContent pageItems={pageItems} pageIndex={pageIndex} totalPages={pages.length} />
                     </div>
                 ))}
             </div>
