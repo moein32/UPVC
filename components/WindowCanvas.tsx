@@ -165,7 +165,7 @@ const renderHandles = (type: OpeningDirection | undefined, sashThickness: number
     const offset = (sashThickness - hW) / 2;
     const offsetPx = `${offset}px`;
   
-    // Fix: Replace React.Properties with React.CSSProperties
+    // Fix: React.Properties is deprecated/not available, use React.CSSProperties
     const handleBaseStyle: React.CSSProperties = { 
         position: 'absolute', 
         top: '50%', 
@@ -365,7 +365,7 @@ export const WindowCanvas = ({
           className={`w-full h-full relative transition-all ${isSelected ? 'ring-2 ring-blue-500 z-50' : ''}`}>
             <div className={`w-full h-full relative flex ${isOpening ? 'shadow-sm border border-slate-200' : ''}`} style={isOpening ? { padding: sashThickness, ...frameStyle } : {}}>
                 {isOpening && isThumbnail && <div className="absolute inset-[2.5px] border border-slate-300 pointer-events-none z-10" />}
-                <div className={`flex-1 relative overflow-hidden ${isPanel ? '' : 'bg-gradient-to-br from-[#e0f2fe] via-[#bae6fd] to-[#7dd3fc]'}`} style={panelStyle}>
+                <div className={`w-full h-full relative overflow-hidden ${isPanel ? '' : 'bg-gradient-to-br from-[#e0f2fe] via-[#bae6fd] to-[#7dd3fc]'}`} style={panelStyle}>
                     {!isPanel && <div className="absolute inset-0 pointer-events-none z-10">{renderOpeningLines(node.openingType, width, height, isThumbnail)}</div>}
                     {isPanel && isThumbnail && <div className="absolute inset-0 opacity-10 border border-slate-900 pointer-events-none" />}
                 </div>
