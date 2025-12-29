@@ -26,6 +26,9 @@ export const InvoicePrint = () => {
   const [scale, setScale] = useState(1);
 
   useEffect(() => {
+     // CRITICAL FIX: Always scroll to top when entering this screen
+     window.scrollTo(0, 0);
+     
      const loadedSettings = pricingStore.getSettings();
      setSettings(loadedSettings);
      if (loadedSettings.invoice.layoutType) {
@@ -62,7 +65,6 @@ export const InvoicePrint = () => {
   const todayJalali = new Intl.DateTimeFormat('fa-IR', { dateStyle: 'full' }).format(new Date(projectDetails.date));
   const invoiceConfig = settings?.invoice || { companyName: 'فروشگاه لومینا', companyPhone: '', companyAddress: '', footerNote: '' };
 
-  // Optimized for 3 items to fit on a single A4 page
   const ITEMS_PER_PAGE = 3; 
   const pages = [];
   for (let i = 0; i < items.length; i += ITEMS_PER_PAGE) {
@@ -207,7 +209,7 @@ export const InvoicePrint = () => {
                 <thead>
                     <tr className="bg-slate-50">
                         <th className="p-1.5 w-8 text-center border-b-2 border-slate-800 text-[10px] font-black">#</th>
-                        <th className="p-1.5 w-44 text-center border-b-2 border-slate-800 text-[10px] font-black">نقشه و ابعاد</th>
+                        <th className="p-1.5 w-48 text-center border-b-2 border-slate-800 text-[10px] font-black">نقشه و ابعاد</th>
                         <th className="p-1.5 text-center border-b-2 border-slate-800 text-[10px] font-black">ریز اقلام فنی و محاسبات متریال</th>
                         <th className="p-1.5 w-32 text-center border-b-2 border-slate-800 text-[10px] font-black">جمع ردیف (تومان)</th>
                     </tr>
@@ -219,27 +221,27 @@ export const InvoicePrint = () => {
                         return (
                             <tr key={item.id} className="border-b border-slate-100 last:border-0">
                                 <td className="p-1 font-black text-[10px] text-slate-400 text-center align-top pt-4">{toPersianDigits(globalIndex + 1)}</td>
-                                <td className="p-1 align-top pt-4 flex flex-col items-center gap-1">
-                                    <div className="relative w-36 h-36 mx-auto bg-white flex items-center justify-center border border-slate-100 rounded-lg overflow-hidden shadow-sm">
+                                <td className="p-1 align-top pt-4 flex flex-col items-center justify-center gap-1.5">
+                                    <div className="relative w-40 h-40 mx-auto bg-white flex items-center justify-center border border-slate-100 rounded-lg overflow-hidden shadow-sm">
                                         <WindowPreview 
                                           config={item.config} 
                                           width="100%" 
                                           height="100%" 
                                           isThumbnail={true} 
-                                          scale={0.42} 
+                                          scale={0.46} 
                                         />
                                     </div>
-                                    <div className="text-center mt-1 text-[10px] font-black text-slate-900" style={{ direction: 'ltr' }}>
+                                    <div className="text-center mt-1 text-[11px] font-black text-slate-900" style={{ direction: 'ltr' }}>
                                       {toPersianDigits(item.config.width)} * {toPersianDigits(item.config.height)}
                                     </div>
-                                    <div className="text-center text-[10px] font-black text-blue-600 bg-blue-50 px-3 py-0.5 rounded-full border border-blue-100">
+                                    <div className="text-center text-[11px] font-black text-blue-600 bg-blue-50 px-4 py-1 rounded-full border border-blue-100">
                                       تعداد: {toPersianDigits(item.quantity)} عدد
                                     </div>
                                 </td>
                                 <td className="p-1 align-top pt-3">
-                                    <div className="flex items-center justify-center gap-2 mb-1">
-                                        <span className="bg-slate-900 text-white px-2 py-0.5 rounded text-[8px] font-black">{brand?.name}</span>
-                                        <span className="text-[9px] font-bold text-slate-500">{item.config.type}</span>
+                                    <div className="flex items-center justify-center gap-2 mb-1.5">
+                                        <span className="bg-slate-900 text-white px-2 py-0.5 rounded text-[9px] font-black">{brand?.name}</span>
+                                        <span className="text-[10px] font-bold text-slate-500">{item.config.type}</span>
                                     </div>
                                     <table className="w-full text-[8.5px] border border-slate-100 rounded-md overflow-hidden bg-white">
                                         <thead className="bg-slate-50 border-b border-slate-100">
