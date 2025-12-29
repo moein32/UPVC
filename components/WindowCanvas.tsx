@@ -165,7 +165,8 @@ const renderHandles = (type: OpeningDirection | undefined, sashThickness: number
     const offset = (sashThickness - hW) / 2;
     const offsetPx = `${offset}px`;
   
-    const handleBaseStyle: React.Properties = { 
+    // Fix: Replace React.Properties with React.CSSProperties
+    const handleBaseStyle: React.CSSProperties = { 
         position: 'absolute', 
         top: '50%', 
         transform: 'translateY(-50%)', 

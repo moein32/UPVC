@@ -39,7 +39,7 @@ export const InvoicePrint = () => {
         if (!containerRef.current) return;
         const screenW = window.innerWidth;
         const targetW = 840; 
-        const newScale = Math.min((screenW - 32) / targetW, 1);
+        const newScale = Math.min((screenW - 48) / targetW, 1);
         setScale(Math.max(newScale, 0.4));
     };
 
@@ -52,7 +52,7 @@ export const InvoicePrint = () => {
       return (
         <div className="h-screen flex items-center justify-center bg-slate-50 flex-col gap-4 text-slate-400">
           <Loader2 className="animate-spin" size={32} />
-          <p className="font-bold text-sm">در حال پردازش داده‌ها...</p>
+          <p className="font-bold text-sm">در حال بارگذاری فاکتور...</p>
         </div>
       );
   }
@@ -121,7 +121,7 @@ export const InvoicePrint = () => {
 
   const InvoiceHeader = () => (
     <div className={`inv-header shrink-0 px-10 py-8 ${tempLayout === 'classic' ? 'border-b-2 border-slate-900' : ''}`}>
-        <div className={`flex justify-between items-start`}>
+        <div className="flex justify-between items-start">
             <div className="text-right">
                 <div className="inv-title-box">
                     <h1 className={`${tempLayout === 'classic' ? 'text-3xl font-black' : 'text-2xl font-black'} mb-1 tracking-tight text-slate-800`}>{invoiceConfig.companyName}</h1>
@@ -132,12 +132,15 @@ export const InvoicePrint = () => {
                     <div className="flex items-center gap-2"><span>تلفن تماس:</span><span>{toPersianDigits(invoiceConfig.companyPhone) || '---'}</span></div>
                 </div>
             </div>
-            <div className={`flex flex-col items-end text-left`}>
-                {tempLayout !== 'modern' && (
-                    <div className={`text-[11px] font-black px-4 py-1.5 mb-3 rounded-lg ${tempLayout === 'technical' ? 'bg-slate-800 text-white' : tempLayout === 'classic' ? 'border-2 border-slate-900 text-slate-900' : 'bg-slate-100'}`}>
-                        {tempLayout === 'classic' ? 'صورتحساب فروش کالا' : 'پیش‌فاکتور فروش کالا و خدمات'}
-                    </div>
-                )}
+            <div className="flex flex-col items-end text-left">
+                <div className={`text-[11px] font-black px-4 py-1.5 mb-3 rounded-lg ${
+                    tempLayout === 'technical' ? 'bg-slate-800 text-white' : 
+                    tempLayout === 'classic' ? 'border-2 border-slate-900 text-slate-900' : 
+                    tempLayout === 'modern' ? 'bg-transparent text-slate-400' :
+                    'bg-slate-100 text-slate-800'
+                }`}>
+                    {tempLayout === 'classic' ? 'صورتحساب فروش کالا' : 'پیش‌فاکتور فروش کالا و خدمات'}
+                </div>
                 <div className="text-[10px] font-bold space-y-1 opacity-95 text-slate-900">
                     <div className="flex gap-4 justify-between min-w-[150px]"><span>تاریخ:</span><span className="font-black">{todayJalali}</span></div>
                     <div className="flex gap-4 justify-between min-w-[150px]"><span>شماره:</span><span className="font-black">{toPersianDigits(projectDetails.id.slice(-6))}</span></div>
@@ -168,12 +171,12 @@ export const InvoicePrint = () => {
   );
 
   const InvoicePageContent = ({ pageItems, pageIndex, totalPages }: any) => (
-    <div className={`flex flex-col h-full overflow-hidden`}>
+    <div className="flex flex-col h-full overflow-hidden">
         <InvoiceHeader />
         
         {pageIndex === 0 && (
             <div className="px-10 py-3 shrink-0">
-                <div className={`${tempLayout === 'classic' ? 'border-2 border-slate-900' : 'inv-card border-2 border-slate-100 bg-slate-50/50'} p-3 grid grid-cols-2 gap-4 rounded-xl`}>
+                <div className={`${tempLayout === 'classic' ? 'border-2 border-slate-900' : 'border-2 border-slate-100 bg-slate-50/50'} p-3 grid grid-cols-2 gap-4 rounded-xl`}>
                     <div>
                         <span className="text-[8px] font-black opacity-60 uppercase mb-0.5 block">خریدار</span>
                         <div className="text-sm font-black text-slate-900">{projectDetails.customerName}</div>
@@ -193,7 +196,7 @@ export const InvoicePrint = () => {
                         <th className={`p-1.5 w-8 text-center border-b-2 border-slate-800 text-[10px] font-black ${tempLayout === 'classic' ? 'border-l-2 border-slate-900' : ''}`}>#</th>
                         <th className={`p-1.5 w-48 text-center border-b-2 border-slate-800 text-[10px] font-black ${tempLayout === 'classic' ? 'border-l-2 border-slate-900' : ''}`}>نقشه و ابعاد</th>
                         <th className={`p-1.5 text-center border-b-2 border-slate-800 text-[10px] font-black ${tempLayout === 'classic' ? 'border-l-2 border-slate-900' : ''}`}>ریز اقلام فنی و محاسبات متریال</th>
-                        <th className={`p-1.5 w-32 text-center border-b-2 border-slate-800 text-[10px] font-black`}>جمع ردیف (تومان)</th>
+                        <th className="p-1.5 w-32 text-center border-b-2 border-slate-800 text-[10px] font-black">جمع ردیف (تومان)</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -220,7 +223,7 @@ export const InvoicePrint = () => {
                                         <span className="text-[10px] font-bold text-slate-500">{item.config.type}</span>
                                     </div>
                                     <table className={`w-full text-[8.5px] border ${tempLayout === 'classic' ? 'border-slate-900' : 'border-slate-100'} rounded-md overflow-hidden bg-white`}>
-                                        <thead className={`${tempLayout === 'classic' ? 'bg-slate-50 border-b border-slate-900' : 'bg-slate-50 border-b border-slate-100'}`}>
+                                        <thead className={tempLayout === 'classic' ? 'bg-slate-50 border-b border-slate-900' : 'bg-slate-50 border-b border-slate-100'}>
                                             <tr>
                                                 <th className={`p-1 text-right text-slate-600 font-black ${tempLayout === 'classic' ? 'border-l border-slate-900' : ''}`}>شرح کالا</th>
                                                 <th className={`p-1 text-center text-slate-600 font-black ${tempLayout === 'classic' ? 'border-l border-slate-900' : ''}`}>مقدار</th>
@@ -263,7 +266,7 @@ export const InvoicePrint = () => {
                             <div className="w-20 h-0.5 bg-slate-300 mx-auto"></div>
                         </div>
                     </div>
-                    {/* Price Box Adjustment for Layouts */}
+                    
                     <div className={`totals-box w-72 p-4 rounded-2xl flex flex-col shadow-lg ${
                         tempLayout === 'standard' ? 'bg-white border-2 border-slate-200 text-slate-900' : 
                         tempLayout === 'classic' ? 'bg-slate-50 border-2 border-slate-900 text-slate-900 shadow-none' :
@@ -296,7 +299,7 @@ export const InvoicePrint = () => {
   );
 
   return (
-    <div className="min-h-screen bg-[#edf2f7] flex flex-col items-center font-['Vazirmatn'] relative pb-40">
+    <div className="min-h-screen bg-[#edf2f7] flex flex-col items-center font-['Vazirmatn'] relative pb-40 overflow-x-hidden">
        <style>
          {`
            @media print {
@@ -305,24 +308,18 @@ export const InvoicePrint = () => {
              .no-print { display: none !important; }
              #root > div { padding: 0 !important; background: white !important; }
              .invoice-page { margin: 0 !important; box-shadow: none !important; border: none !important; width: 100% !important; height: 1123px !important; }
-             .origin-top { transform: scale(1) !important; }
            }
            .export-container { position: absolute; top: 0; left: -10000px; width: 794px; pointer-events: none; }
            .invoice-page { width: 794px !important; height: 1123px !important; background-color: #ffffff; color: #1e293b; position: relative; display: flex; flex-direction: column; overflow: hidden; padding: 0; margin: 0; }
-           
            .layout-standard .inv-header { background-color: #fcfcfc; border-bottom: 2px solid #e2e8f0; }
-           .layout-modern .inv-header { padding-bottom: 0; }
            .layout-technical .inv-header { background-color: #1e293b; color: white; }
            .layout-technical .inv-header * { color: white !important; }
-           
-           /* Classic Overrides */
-           .layout-classic { background-color: #ffffff; }
            .layout-classic .inv-table th { background-color: #f8fafc; color: #000; }
            .layout-classic .inv-total { border-top: 2px solid #000; }
          `}
        </style>
 
-       <div className="export-container no-scrollbar">
+       <div className="export-container no-scrollbar no-print">
             {pages.map((pageItems, pageIndex) => (
                 <div key={`export-${pageIndex}`} className={`invoice-page layout-${tempLayout}`}>
                     <InvoicePageContent pageItems={pageItems} pageIndex={pageIndex} totalPages={pages.length} />
@@ -331,48 +328,51 @@ export const InvoicePrint = () => {
        </div>
 
        {/* FLOATING ZOOM CONTROLS - TOP RIGHT */}
-       <div className="no-print fixed top-20 right-4 z-50 flex flex-col gap-2 bg-white/80 backdrop-blur-xl rounded-2xl shadow-xl border border-white/40 p-1 pointer-events-auto">
+       <div className="no-print fixed top-24 right-6 z-[60] flex flex-col gap-2 bg-white/90 backdrop-blur-xl rounded-2xl shadow-xl border border-white/40 p-1">
             <button onClick={() => setScale(s => Math.min(2, s + 0.1))} className="w-10 h-10 flex items-center justify-center text-slate-700 hover:bg-slate-100 rounded-xl transition-all"><ZoomIn size={18} /></button>
             <button onClick={() => setScale(1)} className="w-10 h-10 flex items-center justify-center text-slate-700 hover:bg-slate-100 rounded-xl transition-all"><Maximize size={18} /></button>
             <button onClick={() => setScale(s => Math.max(0.3, s - 0.1))} className="w-10 h-10 flex items-center justify-center text-slate-700 hover:bg-slate-100 rounded-xl transition-all"><ZoomOut size={18} /></button>
        </div>
 
        {/* MODERN ACTION OVERLAY */}
-       <div className="no-print fixed bottom-6 left-0 right-0 z-50 px-6 flex flex-col items-center gap-4 pointer-events-none">
+       <div className="no-print fixed bottom-6 left-0 right-0 z-[60] px-6 flex flex-col items-center gap-4 pointer-events-none">
             
             {/* Layout Switcher */}
-            <div className="bg-white/80 backdrop-blur-2xl shadow-2xl border border-white/50 rounded-2xl p-1 flex gap-1 pointer-events-auto max-w-full overflow-x-auto no-scrollbar">
+            <div className="bg-white/90 backdrop-blur-2xl shadow-2xl border border-white/50 rounded-2xl p-1 flex gap-1 pointer-events-auto max-w-full overflow-x-auto no-scrollbar">
                 {['standard', 'modern', 'technical', 'classic'].map((layout) => (
-                    <button key={layout} onClick={() => setTempLayout(layout as InvoiceLayoutType)} className={`px-3 py-1.5 rounded-xl text-[10px] font-black transition-all whitespace-nowrap ${tempLayout === layout ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 hover:bg-slate-100'}`}>
+                    <button key={layout} onClick={() => setTempLayout(layout as InvoiceLayoutType)} className={`px-4 py-2 rounded-xl text-[10px] font-black transition-all whitespace-nowrap ${tempLayout === layout ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 hover:bg-slate-100'}`}>
                         {layout === 'standard' ? 'استاندارد' : layout === 'modern' ? 'مدرن' : layout === 'technical' ? 'فنی' : 'کلاسیک'}
                     </button>
                 ))}
             </div>
 
-            {/* ACTION DOCK */}
-            <div className="flex items-center justify-center gap-3 w-full max-w-[320px] pointer-events-auto">
-                <button onClick={() => navigate(-1)} className="w-12 h-12 flex items-center justify-center bg-white shadow-xl rounded-full text-slate-800 border border-white/40 active:scale-90 transition-all">
+            {/* ACTION DOCK - Centered with max-width for mobile */}
+            <div className="flex items-center justify-center gap-3 w-full max-w-[340px] pointer-events-auto">
+                {/* Back Button */}
+                <button onClick={() => navigate(-1)} className="w-12 h-12 flex items-center justify-center bg-white shadow-xl rounded-full text-slate-800 border border-white/40 active:scale-90 transition-all shrink-0">
                     <ArrowRight size={20} />
                 </button>
 
-                <div className="flex-1 bg-slate-900/95 backdrop-blur-2xl shadow-2xl rounded-full p-1.5 flex items-center justify-between border border-white/10">
-                    <button onClick={handlePrint} className="w-10 h-10 flex items-center justify-center bg-white/10 hover:bg-white/20 text-white rounded-full transition-all">
+                {/* Main Action Bar */}
+                <div className="flex-1 bg-slate-900/95 backdrop-blur-2xl shadow-2xl rounded-full p-1.5 flex items-center justify-between border border-white/10 gap-2">
+                    <button onClick={handlePrint} title="چاپ مستقیم" className="w-11 h-11 flex items-center justify-center bg-white/10 hover:bg-white/20 text-white rounded-full transition-all shrink-0">
                         <Printer size={18} />
                     </button>
                     
-                    <button onClick={() => generatePDF(false)} disabled={isGenerating} className="flex-1 mx-1 flex items-center justify-center gap-2 h-10 bg-blue-600 hover:bg-blue-500 text-white rounded-full font-black text-[10px] transition-all disabled:opacity-50">
+                    <button onClick={() => generatePDF(false)} disabled={isGenerating} className="flex-1 flex items-center justify-center gap-2 h-11 bg-blue-600 hover:bg-blue-500 text-white rounded-full font-black text-[10px] transition-all disabled:opacity-50 shadow-lg shadow-blue-500/20">
                         {isGenerating ? <Loader2 size={16} className="animate-spin" /> : <FileDown size={16} />}
-                        <span>ذخیره PDF</span>
+                        <span className="whitespace-nowrap">ذخیره PDF</span>
                     </button>
 
-                    <button onClick={() => generatePDF(true)} disabled={isGenerating} className="w-10 h-10 flex items-center justify-center bg-emerald-600 hover:bg-emerald-500 text-white rounded-full transition-all disabled:opacity-50">
+                    <button onClick={() => generatePDF(true)} disabled={isGenerating} title="اشتراک‌گذاری" className="w-11 h-11 flex items-center justify-center bg-emerald-600 hover:bg-emerald-500 text-white rounded-full transition-all disabled:opacity-50 shadow-lg shadow-emerald-500/20 shrink-0">
                         <Share2 size={18} />
                     </button>
                 </div>
             </div>
        </div>
 
-       <div ref={containerRef} className="w-full flex justify-center pt-8 overflow-visible">
+       {/* RENDERED VIEW */}
+       <div ref={containerRef} className="w-full flex justify-center pt-8 px-4 overflow-visible">
             <div ref={scaledWrapperRef} className="relative origin-top transition-transform duration-300 ease-out flex flex-col gap-10" style={{ transform: `scale(${scale})`, width: '794px' }}>
                 {pages.map((pageItems, pageIndex) => (
                     <div key={pageIndex} className={`invoice-page shadow-2xl layout-${tempLayout} border border-slate-200`}>
