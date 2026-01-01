@@ -14,6 +14,9 @@ import { Projects } from './screens/Projects';
 import { Settings } from './screens/Settings';
 import { FinancialManagement } from './screens/FinancialManagement';
 import { ProjectFinancials } from './screens/ProjectFinancials';
+import { CuttingOptimization } from './screens/CuttingOptimization';
+import { InventoryManagement } from './screens/InventoryManagement';
+import { ProductionControl } from './screens/ProductionControl';
 
 function App() {
   const { i18n } = useTranslation();
@@ -40,6 +43,9 @@ function App() {
         <Route path="/settings" element={<Settings />} />
         <Route path="/financial-mgmt" element={<FinancialManagement />} />
         <Route path="/project-financials/:id" element={<ProjectFinancials />} />
+        <Route path="/optimization" element={<CuttingOptimization />} />
+        <Route path="/inventory" element={<InventoryManagement />} />
+        <Route path="/production-control" element={<ProductionControl />} />
       </Routes>
     </HashRouter>
   );

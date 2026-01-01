@@ -69,8 +69,11 @@ export const InvoicePrint = () => {
     pages.push(items.slice(i, i + ITEMS_PER_PAGE));
   }
 
+  // Optimized for Android: prioritizes PDF generation over native print
   const handlePrint = () => {
-    window.print();
+    // In Android WebView, window.print() often fails. 
+    // We'll show a toast or just trigger the high-quality PDF generation.
+    generatePDF(false);
   };
 
   const generatePDF = async (isShare = false) => {
@@ -101,12 +104,20 @@ export const InvoicePrint = () => {
       }
 
       const fileName = `Invoice-${projectDetails.customerName}.pdf`;
-      if (isShare) {
+      
+      // Android Specific Sharing Logic
+      if (isShare || /Android/i.test(navigator.userAgent)) {
         const pdfBlob = pdf.output('blob');
         const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({ files: [file], title: 'فاکتور لومینا', text: projectDetails.customerName });
+        
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({ 
+            files: [file], 
+            title: 'فاکتور لومینا', 
+            text: `فاکتور مشتری: ${projectDetails.customerName}` 
+          });
         } else {
+          // Fallback to standard save if sharing is not available
           pdf.save(fileName);
         }
       } else {
@@ -114,6 +125,7 @@ export const InvoicePrint = () => {
       }
     } catch (error) {
       console.error('PDF Error:', error);
+      alert('خطا در تولید فایل PDF. لطفا مجددا تلاش کنید.');
     } finally {
       setIsGenerating(false);
     }

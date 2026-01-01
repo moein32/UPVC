@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowRight, Plus, Trash2, Calendar, CreditCard, Banknote, ShieldCheck, CheckCircle, Factory, FileText } from 'lucide-react';
+import { ArrowRight, Plus, Trash2, Calendar, CreditCard, Banknote, ShieldCheck, CheckCircle, Factory, FileText, Info } from 'lucide-react';
 import { pricingStore } from '../services/pricingStore';
 import { SavedProject, Payment } from '../types';
 import { formatPrice, toPersianDigits, toEnglishDigits } from '../utils/formatting';
@@ -25,13 +25,6 @@ export const ProjectFinancials = () => {
     if (loaded) setProject(loaded);
     else navigate('/financial-mgmt');
   }, [id, navigate]);
-
-  const handleUpdateStatus = (status: SavedProject['status']) => {
-    if (!project) return;
-    const updated = { ...project, status };
-    setProject(updated);
-    pricingStore.saveProject(updated);
-  };
 
   const handleAddPayment = () => {
     if (!project || !amount) return;
@@ -78,9 +71,18 @@ export const ProjectFinancials = () => {
   const balance = project.totalPrice - totalPaid;
   const isSettled = balance <= 0;
 
+  const getStatusLabel = (s: string) => {
+      switch(s) {
+          case 'Draft': return 'پیش‌فاکتور';
+          case 'Contract': return 'قرارداد رسمی';
+          case 'Production': return 'در حال تولید';
+          case 'Produced': return 'تولید شده';
+          default: return s;
+      }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 pb-32">
-      {/* Header */}
       <div className="bg-slate-900 text-white p-6 pt-12 rounded-b-[40px] shadow-2xl">
         <div className="flex items-center justify-between mb-8">
            <button onClick={() => navigate('/financial-mgmt')} className="p-2 bg-white/10 rounded-xl"><ArrowRight size={20}/></button>
@@ -109,34 +111,16 @@ export const ProjectFinancials = () => {
       </div>
 
       <div className="p-6">
-        {/* Project Status Workflow */}
-        <div className="mb-10">
-           <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">وضعیت فرآیند پروژه</h3>
-           <div className="flex justify-between items-center relative">
-              <div className="absolute top-1/2 left-0 right-0 h-1 bg-slate-200 -translate-y-1/2 z-0"></div>
-              
-              <StatusBtn 
-                isActive={project.status === 'Draft'} 
-                done={true} 
-                icon={FileText} 
-                label="پیش‌فاکتور" 
-                onClick={() => handleUpdateStatus('Draft')} 
-              />
-              <StatusBtn 
-                isActive={project.status === 'Contract'} 
-                done={project.status === 'Contract' || project.status === 'Production'} 
-                icon={ShieldCheck} 
-                label="قرارداد" 
-                onClick={() => handleUpdateStatus('Contract')} 
-              />
-              <StatusBtn 
-                isActive={project.status === 'Production'} 
-                done={project.status === 'Production'} 
-                icon={Factory} 
-                label="تولید" 
-                onClick={() => handleUpdateStatus('Production')} 
-              />
+        {/* Read-Only Status Indicator */}
+        <div className="mb-10 bg-white p-5 rounded-3xl border border-slate-100 flex items-center justify-between">
+           <div className="flex items-center gap-3">
+               <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl"><Info size={20}/></div>
+               <div>
+                   <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">وضعیت فعلی پروژه</p>
+                   <p className="font-black text-slate-900">{getStatusLabel(project.status)}</p>
+               </div>
            </div>
+           <button onClick={() => navigate('/projects')} className="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg">مدیریت وضعیت</button>
         </div>
 
         {/* Payments List */}
@@ -175,7 +159,6 @@ export const ProjectFinancials = () => {
         </div>
       </div>
 
-      {/* Add Payment Modal */}
       {showAddPayment && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
            <div className="bg-white w-full max-w-md rounded-t-[40px] sm:rounded-[40px] p-8 shadow-2xl animate-in slide-in-from-bottom duration-300">
@@ -197,7 +180,7 @@ export const ProjectFinancials = () => {
                           <InputField label="بانک صادرکننده" value={bankName} onChange={(e:any) => setBankName(e.target.value)} />
                           <InputField label="شماره چک" value={checkNum} onChange={(e:any) => setCheckNum(e.target.value)} />
                        </div>
-                       <InputField label="تاریخ سررسید (مثلا ۱۴۰۳/۰۵/۲۰)" value={dueDate} onChange={(e:any) => setDueDate(e.target.value)} />
+                       <InputField label="تاریخ سررسید" value={dueDate} onChange={(e:any) => setDueDate(e.target.value)} />
                     </>
                  )}
               </div>
@@ -209,15 +192,3 @@ export const ProjectFinancials = () => {
     </div>
   );
 };
-
-const StatusBtn = ({ isActive, done, icon: Icon, label, onClick }: any) => (
-  <div className="flex flex-col items-center gap-2 z-10">
-     <button 
-       onClick={onClick}
-       className={`w-12 h-12 rounded-full flex items-center justify-center transition-all border-4 ${isActive ? 'bg-blue-600 text-white border-blue-100 scale-110' : done ? 'bg-emerald-500 text-white border-white' : 'bg-slate-200 text-slate-400 border-white'}`}
-     >
-        <Icon size={20} />
-     </button>
-     <span className={`text-[10px] font-bold ${isActive ? 'text-blue-600' : 'text-slate-400'}`}>{label}</span>
-  </div>
-);

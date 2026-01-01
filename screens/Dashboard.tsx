@@ -1,10 +1,14 @@
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Settings as SettingsIcon, Layers, Bell, Hammer, FolderOpen, Download, Banknote } from 'lucide-react';
+import { Plus, Settings as SettingsIcon, Layers, Bell, Hammer, FolderOpen, Download, Banknote, Scissors, Package, Activity } from 'lucide-react';
 import { GlassCard } from '../components/UIComponents';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
+/**
+ * Dashboard screen component
+ * Features a high-impact premium design with glassmorphism and gradient cards.
+ */
 export const Dashboard = () => {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
@@ -29,95 +33,122 @@ export const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen pb-24 px-6 pt-12">
+    <div className="min-h-screen pb-24 px-6 pt-12 bg-[#f8fafc] font-['Vazirmatn']">
       <header className="flex justify-between items-center mb-10">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 mb-1">{t('app_name')}</h1>
-          <p className="text-slate-500 text-sm font-medium">{today}</p>
+          <h1 className="text-2xl font-black text-slate-900 mb-1">{t('app_name')}</h1>
+          <p className="text-slate-500 text-xs font-black uppercase tracking-widest">{today}</p>
         </div>
         <div className="relative">
-          <button className="p-3 bg-white rounded-full shadow-lg shadow-slate-200 text-slate-600">
+          <button className="p-3 bg-white rounded-2xl shadow-lg shadow-slate-200 text-slate-600 active:scale-90 transition-transform">
             <Bell size={20} />
           </button>
-          <span className="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full border-2 border-slate-50"></span>
+          <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white shadow-sm"></span>
         </div>
       </header>
       
       {deferredPrompt && (
-        <div className="mb-6 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-4 flex items-center justify-between text-white shadow-lg shadow-blue-500/30">
+        <div className="mb-6 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-[2rem] p-5 flex items-center justify-between text-white shadow-xl shadow-blue-500/20">
             <div className="flex items-center gap-3">
-                <div className="bg-white/20 p-2 rounded-lg"><Download size={24} /></div>
+                <div className="bg-white/20 p-2.5 rounded-xl"><Download size={22} /></div>
                 <div>
-                    <h3 className="font-bold text-sm">نصب اپلیکیشن</h3>
-                    <p className="text-xs text-blue-100">دسترسی سریع و تمام صفحه</p>
+                    <h3 className="font-black text-sm">نصب اپلیکیشن لومینا</h3>
+                    <p className="text-[10px] text-blue-100 opacity-80">دسترسی سریع و تمام‌صفحه به سیستم</p>
                 </div>
             </div>
-            <button onClick={handleInstallClick} className="bg-white text-blue-600 px-4 py-2 rounded-xl text-xs font-bold shadow-sm active:scale-95 transition-transform">نصب کنید</button>
+            <button onClick={handleInstallClick} className="bg-white text-blue-600 px-5 py-2.5 rounded-xl text-[10px] font-black shadow-lg active:scale-95 transition-transform">نصب کنید</button>
         </div>
       )}
 
       {/* Primary Action: New Project */}
       <div 
         onClick={() => navigate('/project-setup')}
-        className="w-full h-44 bg-gradient-to-br from-slate-800 to-slate-900 rounded-3xl p-6 relative overflow-hidden shadow-2xl shadow-slate-900/20 mb-8 cursor-pointer group"
+        className="w-full h-48 bg-gradient-to-br from-slate-800 to-slate-900 rounded-[2.5rem] p-8 relative overflow-hidden shadow-2xl shadow-slate-900/30 mb-8 cursor-pointer group active:scale-[0.98] transition-all"
       >
         <div className={`relative z-10 h-full flex flex-col justify-between items-start ${i18n.language === 'en' ? 'text-left' : 'text-right'}`}>
-          <div className="p-3 bg-white/10 backdrop-blur-md w-fit rounded-xl text-white"><Plus size={24} /></div>
+          <div className="p-3.5 bg-white/10 backdrop-blur-md w-fit rounded-2xl text-white shadow-inner"><Plus size={26} /></div>
           <div className="w-full">
-            <h2 className="text-white text-xl font-bold mb-1">{t('new_project')}</h2>
-            <p className="text-slate-400 text-[11px]">{t('new_project_desc')}</p>
+            <h2 className="text-white text-2xl font-black mb-1 leading-none">{t('new_project')}</h2>
+            <p className="text-slate-400 text-[11px] font-medium opacity-80">{t('new_project_desc')}</p>
           </div>
         </div>
-        <div className="absolute left-[-20px] top-[-20px] w-40 h-40 bg-blue-500/20 rounded-full blur-3xl group-hover:bg-blue-500/30 transition-all"></div>
-        <img src="https://images.unsplash.com/photo-1503708928676-1cb796a0891e?w=400&q=80" alt="Window" className="absolute left-[-40px] bottom-[-40px] w-48 h-48 object-cover opacity-20 rotate-12 mix-blend-overlay rounded-full" />
+        <div className="absolute left-[-20px] top-[-20px] w-44 h-44 bg-blue-500/10 rounded-full blur-[80px] group-hover:bg-blue-500/20 transition-all"></div>
+        <img src="https://images.unsplash.com/photo-1503708928676-1cb796a0891e?w=400&q=80" alt="Window" className="absolute left-[-40px] bottom-[-40px] w-56 h-56 object-cover opacity-10 rotate-12 mix-blend-overlay rounded-full" />
       </div>
 
-      <h3 className="text-slate-800 font-bold mb-4 text-lg">پنل مدیریت</h3>
+      <div className="flex items-center justify-between mb-5">
+        <h3 className="text-slate-900 font-black text-sm uppercase tracking-widest">پنل مدیریت و ابزارها</h3>
+      </div>
       
       {/* Management Grid */}
       <div className="grid grid-cols-2 gap-4 mb-8">
-        {/* Financial Mgmt - Synchronized Icon */}
-        <GlassCard onClick={() => navigate('/financial-mgmt')} className="col-span-1 flex flex-col items-center justify-center text-center gap-3 py-6 active:scale-95 transition-transform cursor-pointer">
-          <div className="p-4 bg-blue-50 text-blue-600 rounded-2xl mb-1 shadow-sm">
-            <Banknote size={24} />
+        {/* Production Control */}
+        <div onClick={() => navigate('/production-control')} className="col-span-2 bg-gradient-to-r from-blue-600 to-blue-700 rounded-[2rem] flex items-center justify-between px-8 py-7 active:scale-[0.98] transition-transform cursor-pointer text-white shadow-xl shadow-blue-500/30 relative overflow-hidden group">
+          <div className="flex items-center gap-5 relative z-10">
+            <div className="p-3.5 bg-white/20 backdrop-blur-md rounded-2xl border border-white/20 shadow-inner"><Activity size={26} /></div>
+            <div>
+              <span className="font-black text-base block mb-0.5">کنترل تولید کارگاه</span>
+              <span className="text-[10px] text-blue-100 font-medium opacity-70">مدیریت خط تولید و کسر از انبار</span>
+            </div>
           </div>
-          <span className="font-bold text-slate-700 text-xs">مدیریت مالی</span>
+          <div className="bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest relative z-10 border border-white/10">Live</div>
+          <div className="absolute right-0 top-0 bottom-0 w-24 bg-white/5 skew-x-[25deg] translate-x-12 group-hover:translate-x-0 transition-transform duration-700"></div>
+        </div>
+
+        {/* Financial Mgmt */}
+        <GlassCard onClick={() => navigate('/financial-mgmt')} className="col-span-1 flex flex-col items-center justify-center gap-3 py-8 active:scale-95 transition-transform cursor-pointer border-slate-100">
+          <div className="p-4 bg-rose-50 text-rose-600 rounded-2xl mb-1 shadow-sm border border-rose-100">
+            <Banknote size={26} />
+          </div>
+          <span className="font-black text-xs text-slate-800">مدیریت مالی</span>
         </GlassCard>
 
         {/* Projects List */}
-        <GlassCard onClick={() => navigate('/projects')} className="col-span-1 flex flex-col items-center justify-center text-center gap-3 py-6 active:scale-95 transition-transform cursor-pointer">
-          <div className="p-4 bg-teal-50 text-teal-600 rounded-2xl mb-1 shadow-sm"><FolderOpen size={24} /></div>
-          <span className="font-bold text-slate-700 text-xs">لیست پروژه‌ها</span>
+        <GlassCard onClick={() => navigate('/projects')} className="col-span-1 flex flex-col items-center justify-center gap-3 py-8 active:scale-95 transition-transform cursor-pointer border-slate-100">
+          <div className="p-4 bg-teal-50 text-teal-600 rounded-2xl mb-1 shadow-sm border border-teal-100"><FolderOpen size={26} /></div>
+          <span className="font-black text-xs text-slate-800">لیست پروژه‌ها</span>
         </GlassCard>
 
         {/* Profile Prices */}
-        <GlassCard onClick={() => navigate('/profiles')} className="flex flex-col items-center justify-center text-center gap-3 py-6 active:scale-95 transition-transform cursor-pointer">
-          <div className="p-4 bg-indigo-50 text-indigo-600 rounded-2xl mb-1 shadow-sm"><Layers size={24} /></div>
-          <span className="font-bold text-slate-700 text-xs">قیمت پروفیل</span>
+        <GlassCard onClick={() => navigate('/profiles')} className="flex flex-col items-center justify-center gap-3 py-8 active:scale-95 transition-transform cursor-pointer border-slate-100">
+          <div className="p-4 bg-indigo-50 text-indigo-600 rounded-2xl mb-1 shadow-sm border border-indigo-100"><Layers size={26} /></div>
+          <span className="font-black text-xs text-slate-800">قیمت پروفیل</span>
         </GlassCard>
 
         {/* Glass & Hardware */}
-        <GlassCard onClick={() => navigate('/glass-hardware')} className="flex flex-col items-center justify-center text-center gap-3 py-6 active:scale-95 transition-transform cursor-pointer">
-          <div className="p-4 bg-orange-50 text-orange-600 rounded-2xl mb-1 shadow-sm"><Hammer size={24} /></div>
-          <span className="font-bold text-slate-700 text-xs">شیشه و یراق</span>
+        <GlassCard onClick={() => navigate('/glass-hardware')} className="flex flex-col items-center justify-center gap-3 py-8 active:scale-95 transition-transform cursor-pointer border-slate-100">
+          <div className="p-4 bg-orange-50 text-orange-600 rounded-2xl mb-1 shadow-sm border border-orange-100"><Hammer size={26} /></div>
+          <span className="font-black text-xs text-slate-800">شیشه و یراق</span>
+        </GlassCard>
+
+        {/* Cutting Optimization */}
+        <GlassCard onClick={() => navigate('/optimization')} className="flex flex-col items-center justify-center gap-3 py-8 active:scale-95 transition-transform cursor-pointer border-slate-100">
+          <div className="p-4 bg-violet-50 text-violet-600 rounded-2xl mb-1 shadow-sm border border-violet-100"><Scissors size={26} /></div>
+          <span className="font-black text-xs text-slate-800">بهینه‌سازی برش</span>
+        </GlassCard>
+
+        {/* Inventory Mgmt */}
+        <GlassCard onClick={() => navigate('/inventory')} className="flex flex-col items-center justify-center gap-3 py-8 active:scale-95 transition-transform cursor-pointer border-slate-100">
+          <div className="p-4 bg-emerald-50 text-emerald-600 rounded-2xl mb-1 shadow-sm border border-emerald-100"><Package size={26} /></div>
+          <span className="font-black text-xs text-slate-800">انبارگردانی</span>
         </GlassCard>
 
         {/* Settings */}
-        <GlassCard onClick={() => navigate('/settings')} className="col-span-2 flex items-center justify-between px-6 py-4 active:scale-95 transition-transform cursor-pointer bg-white/40">
+        <div onClick={() => navigate('/settings')} className="col-span-2 flex items-center justify-between px-7 py-5 active:scale-[0.98] transition-transform cursor-pointer bg-white border border-slate-100 rounded-[1.5rem] shadow-sm hover:border-blue-100 transition-colors">
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-purple-50 text-purple-600 rounded-xl"><SettingsIcon size={20} /></div>
-            <span className="font-bold text-slate-700 text-sm">تنظیمات نرم‌افزار</span>
+            <div className="p-3 bg-slate-50 text-slate-500 rounded-xl"><SettingsIcon size={20} /></div>
+            <span className="font-black text-slate-800 text-sm">تنظیمات نرم‌افزار</span>
           </div>
-          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Version 1.2.0</div>
-        </GlassCard>
+          <div className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Version 1.2.0</div>
+        </div>
       </div>
 
-      <div className="bg-white/50 backdrop-blur-sm rounded-2xl p-4 border border-white/60 flex items-center justify-between shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-          <p className="text-sm font-medium text-slate-600">{t('system_status')}</p>
+      <div className="bg-white/70 backdrop-blur-md rounded-[1.5rem] p-5 border border-white flex items-center justify-between shadow-sm">
+        <div className="flex items-center gap-4">
+          <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse shadow-sm shadow-green-200"></div>
+          <p className="text-xs font-black text-slate-600">{t('system_status')}</p>
         </div>
-        <span className="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1 rounded-lg">{t('online')}</span>
+        <span className="text-[10px] font-black text-slate-500 bg-slate-100 px-4 py-1.5 rounded-xl uppercase tracking-wider">{t('online')}</span>
       </div>
     </div>
   );

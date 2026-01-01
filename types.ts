@@ -69,7 +69,7 @@ export interface ProjectDetails {
   installPercent: number;
   companyName: string; 
   date: string;
-  status: 'Draft' | 'Contract' | 'Production';
+  status: 'Draft' | 'Contract' | 'Production' | 'Produced';
   defaultProfileId?: string; 
 }
 

@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { ArrowRight, Folder, Calendar } from 'lucide-react';
+
+import React, { useState, useEffect, useMemo } from 'react';
+import { ArrowRight, Folder, Calendar, CheckCircle2, Clock, Factory, ChevronDown, MoreVertical } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { pricingStore } from '../services/pricingStore';
 import { SavedProject } from '../types';
@@ -13,64 +14,118 @@ export const Projects = () => {
     setProjects(pricingStore.getProjects());
   }, []);
 
-  const openProject = (project: SavedProject) => {
-    // Navigate to breakdown/invoice for this project
-    navigate('/breakdown', { 
-      state: { 
-        projectDetails: project, 
-        items: project.items 
-      } 
-    });
+  const handleUpdateStatus = (id: string, newStatus: SavedProject['status']) => {
+    const updated = projects.map(p => p.id === id ? { ...p, status: newStatus } : p);
+    setProjects(updated);
+    const target = updated.find(p => p.id === id);
+    if (target) pricingStore.saveProject(target);
   };
 
+  const activeProjects = useMemo(() => 
+    projects.filter(p => p.status !== 'Produced'), 
+  [projects]);
+
+  const producedProjects = useMemo(() => 
+    projects.filter(p => p.status === 'Produced'), 
+  [projects]);
+
+  const getStatusBadge = (status: string) => {
+    switch(status) {
+      case 'Draft': return <span className="text-[9px] font-black text-slate-400 bg-slate-50 px-2 py-1 rounded-lg uppercase tracking-tight">پیش‌فاکتور</span>;
+      case 'Contract': return <span className="text-[9px] font-black text-blue-600 bg-blue-50 px-2 py-1 rounded-lg uppercase tracking-tight">قرارداد نهایی</span>;
+      case 'Production': return <span className="text-[9px] font-black text-amber-600 bg-amber-50 px-2 py-1 rounded-lg uppercase tracking-tight">آماده تولید</span>;
+      case 'Produced': return <span className="text-[9px] font-black text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg uppercase tracking-tight">تولید شده</span>;
+      default: return null;
+    }
+  };
+
+  const renderProjectCard = (p: SavedProject) => (
+    <div 
+      key={p.id} 
+      className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 hover:border-blue-100 transition-all group"
+    >
+      <div className="flex justify-between items-start mb-4">
+        <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/breakdown', { state: { projectDetails: p, items: p.items } })}>
+          <div className={`p-3 rounded-xl ${p.status === 'Produced' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'}`}>
+            <Folder size={24} />
+          </div>
+          <div>
+            <h3 className="font-black text-slate-900 leading-none mb-1">{p.customerName}</h3>
+            <p className="text-[10px] text-slate-400 font-bold">{p.address || 'بدون آدرس'}</p>
+          </div>
+        </div>
+        <div className="flex flex-col items-end gap-2">
+            {getStatusBadge(p.status)}
+            <div className="relative">
+                <select 
+                    value={p.status}
+                    onChange={(e) => handleUpdateStatus(p.id, e.target.value as any)}
+                    className="bg-slate-100 text-[10px] font-black py-1 px-3 rounded-lg border-none focus:ring-2 focus:ring-blue-500 outline-none appearance-none cursor-pointer"
+                >
+                    <option value="Draft">پیش‌فاکتور</option>
+                    <option value="Contract">قرارداد نهایی</option>
+                    <option value="Production">آماده تولید</option>
+                    <option value="Produced">تولید شده</option>
+                </select>
+                <ChevronDown size={10} className="absolute left-1.5 top-2.5 text-slate-400 pointer-events-none" />
+            </div>
+        </div>
+      </div>
+      
+      <div className="h-px bg-slate-50 my-3"></div>
+      
+      <div className="flex justify-between items-center text-sm">
+        <div className="flex items-center gap-1.5 text-slate-400 text-[10px] font-bold">
+          <Calendar size={14} />
+          <span>{toPersianDigits(new Date(p.date).toLocaleDateString('fa-IR'))}</span>
+        </div>
+        <div className="font-black text-slate-800 text-sm">
+          {formatPrice(p.totalPrice)} <span className="text-[9px] font-bold text-slate-400 mr-1">تومان</span>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="min-h-screen bg-slate-50 p-6 pt-10">
-      <div className="flex items-center mb-8">
-        <button onClick={() => navigate(-1)} className="p-2 ml-4 bg-white rounded-xl shadow-sm text-slate-700">
-          <ArrowRight size={20} />
-        </button>
-        <h1 className="text-xl font-bold text-slate-900">پروژه‌های من</h1>
+    <div className="min-h-screen bg-[#f8fafc] p-6 pt-12 pb-32 font-['Vazirmatn']">
+      <div className="flex items-center justify-between mb-10">
+        <div className="flex items-center gap-4">
+            <button onClick={() => navigate(-1)} className="p-3 bg-white rounded-2xl shadow-sm text-slate-700 active:scale-90 transition-transform">
+            <ArrowRight size={22} />
+            </button>
+            <h1 className="text-xl font-black text-slate-900 tracking-tight">مدیریت پروژه‌ها</h1>
+        </div>
+        <div className="bg-blue-600 text-white px-3 py-1.5 rounded-full text-[10px] font-black">
+            {toPersianDigits(projects.length)} کل
+        </div>
       </div>
 
       {projects.length === 0 ? (
-        <div className="flex flex-col items-center justify-center mt-20 text-slate-400">
-          <Folder size={64} strokeWidth={1} className="mb-4 opacity-50" />
-          <p>هنوز پروژه‌ای ثبت نشده است</p>
+        <div className="flex flex-col items-center justify-center py-32 text-slate-300">
+          <Folder size={64} strokeWidth={1} className="mb-4 opacity-20" />
+          <p className="font-bold">هنوز پروژه‌ای ثبت نشده است</p>
         </div>
       ) : (
-        <div className="grid gap-4">
-          {projects.map((p) => (
-            <div 
-              key={p.id} 
-              onClick={() => openProject(p)}
-              className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 active:scale-[0.98] transition-transform cursor-pointer"
-            >
-              <div className="flex justify-between items-start mb-3">
-                <div className="flex items-center gap-3">
-                  <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
-                    <Folder size={24} />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-slate-900">{p.customerName}</h3>
-                    <p className="text-xs text-slate-400">{p.address || 'بدون آدرس'}</p>
-                  </div>
-                </div>
-                <span className="text-xs font-bold bg-green-100 text-green-700 px-2 py-1 rounded-md">{toPersianDigits(p.items.length)} آیتم</span>
-              </div>
-              
-              <div className="h-px bg-slate-100 my-3"></div>
-              
-              <div className="flex justify-between items-center text-sm">
-                <div className="flex items-center gap-1 text-slate-400 text-xs">
-                  <Calendar size={14} />
-                  <span>{toPersianDigits(new Date(p.date).toLocaleDateString('fa-IR'))}</span>
-                </div>
-                <div className="font-bold text-slate-800">
-                  {formatPrice(p.totalPrice)} <span className="text-xs font-normal text-slate-400">تومان</span>
-                </div>
+        <div className="space-y-12">
+          {/* Active Projects Section */}
+          <div>
+            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 px-2">پروژه‌های جاری</h3>
+            <div className="grid gap-4">
+                {activeProjects.length > 0 ? activeProjects.map(renderProjectCard) : (
+                    <div className="text-center py-8 bg-slate-50 rounded-3xl border border-dashed border-slate-200 text-slate-400 text-[10px] font-bold">پروژه فعالی یافت نشد.</div>
+                )}
+            </div>
+          </div>
+
+          {/* Produced Projects Section */}
+          {producedProjects.length > 0 && (
+            <div>
+              <h3 className="text-xs font-black text-emerald-600/60 uppercase tracking-widest mb-4 px-2">پروژه‌های تولید شده اخیر</h3>
+              <div className="grid gap-4 opacity-75">
+                  {producedProjects.map(renderProjectCard)}
               </div>
             </div>
-          ))}
+          )}
         </div>
       )}
     </div>

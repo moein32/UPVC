@@ -15,13 +15,18 @@ const DraggableIcon = ({ type, value, dir, count, label, icon, isActive, onClick
   return (
     <div 
       className={`
-        flex flex-col items-center justify-center gap-1 p-2 rounded-lg cursor-grab active:cursor-grabbing transition-all select-none
+        flex flex-col items-center justify-center gap-1 p-2 rounded-lg cursor-pointer transition-all select-none
         ${isActive ? 'bg-orange-500 text-white shadow-lg scale-105' : 'hover:bg-slate-700 text-slate-300'}
       `}
+      // On mobile/Android, we primarily rely on onClick
+      onClick={(e) => {
+        e.preventDefault();
+        onClick({ type, value, dir, count });
+      }}
+      // Keeping drag for desktop compatibility
       draggable
       onDragStart={(e) => onDragStart(e, type, value, dir, count)}
       onDragEnd={onDragEnd}
-      onClick={() => onClick({ type, value, dir, count })}
     >
       <div className="w-8 h-8 flex items-center justify-center">
         {icon}
@@ -184,7 +189,7 @@ export const UnitDesigner = () => {
 
   // --- UI Control State ---
   const [isPanelOpen, setIsPanelOpen] = useState(false);
-  const [unitCount, setUnitCount] = useState(1); // Added for quantity support
+  const [unitCount, setUnitCount] = useState(1); 
 
   // --- External Data ---
   const [brands, setBrands] = useState<ProfileBrand[]>([]);
@@ -248,7 +253,7 @@ export const UnitDesigner = () => {
   // --- Responsive Auto-Fit Logic ---
   const fitToScreen = () => {
     if (!canvasAreaRef.current) return;
-    const padding = 120; // Increased padding to accommodate outer dimensions
+    const padding = 120;
     const areaW = canvasAreaRef.current.clientWidth - padding;
     const areaH = canvasAreaRef.current.clientHeight - padding;
     if (areaW <= 0 || areaH <= 0) return;
@@ -256,7 +261,6 @@ export const UnitDesigner = () => {
     const baseH = config.height / 4;
     const scaleW = areaW / baseW;
     const scaleH = areaH / baseH;
-    // Multiplier reduced from 1.05 to ~0.85 to ensure it's not over-zoomed and fully visible
     const newZoom = Math.min(scaleW, scaleH) * 0.85; 
     setZoomLevel(Math.max(newZoom, 0.15));
   };
@@ -353,7 +357,9 @@ export const UnitDesigner = () => {
           if (!targetNode) return;
           if (activeTool.type === 'opening') {
                handleUpdateNode(id, { openingType: activeTool.value as any });
-               setActiveTool(null);
+               // On mobile, we might want to keep the tool active for multiple clicks
+               // but for a clear UX we clear it or just let the user re-tap.
+               // setActiveTool(null); 
           } else if (activeTool.type === 'split') {
               if (targetNode.type === 'leaf') {
                   const count = activeTool.count || 2;
@@ -370,7 +376,6 @@ export const UnitDesigner = () => {
                       children: newChildren, 
                       openingType: (existingOpening && existingOpening !== 'Fixed' && !existingOpening.includes('Panel')) ? existingOpening : undefined
                   });
-                  setActiveTool(null);
               }
           }
       } else {
@@ -379,7 +384,7 @@ export const UnitDesigner = () => {
   };
 
   const toggleTool = (tool: any) => {
-      if (activeTool && activeTool.value === tool.value && activeTool.type === tool.type) {
+      if (activeTool && activeTool.value === tool.value && activeTool.dir === tool.dir && activeTool.count === tool.count) {
           setActiveTool(null);
       } else {
           setActiveTool(tool);
@@ -387,8 +392,9 @@ export const UnitDesigner = () => {
   };
 
   const handleDragEnd = () => {
+    // Standard delay to ensure drop target is hit
     setTimeout(() => {
-        setActiveTool(null);
+        // We don't necessarily want to clear tool on mobile if it was a tap
     }, 100);
   };
 
@@ -659,7 +665,7 @@ export const UnitDesigner = () => {
       const newItem: InvoiceItem = {
           id: Date.now().toString(),
           config: { ...config },
-          quantity: unitCount, // Support for multi-quantity
+          quantity: unitCount, 
           calculations
       };
       const updatedItems = [...projectItems];
@@ -791,7 +797,7 @@ export const UnitDesigner = () => {
            <button onClick={fitToScreen} className="p-2 text-slate-600 hover:bg-slate-100 rounded" title="Fit to Screen"><RefreshCcw size={16}/></button>
            <button onClick={() => setZoomLevel(z => Math.max(z - 0.1, 0.1))} className="p-2 text-slate-600 hover:bg-slate-100 rounded"><ZoomOut size={20}/></button>
         </div>
-        <div className="flex-1 overflow-auto flex items-center justify-center p-1 cursor-grab active:cursor-grabbing">
+        <div className="flex-1 overflow-auto flex items-center justify-center p-1 cursor-default">
              <div className="transition-transform duration-300 ease-out origin-center" style={{ transform: `scale(${zoomLevel})` }}>
                 <div className="relative select-none" style={{ width: config.width / 4, height: config.height / 4 }}>
                   {config.layout && (
@@ -803,14 +809,11 @@ export const UnitDesigner = () => {
         <div className="absolute inset-0 opacity-5 pointer-events-none" style={{ backgroundImage: 'linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
       </div>
 
-      {/* FLOATING ACTION PANEL - REDESIGNED */}
+      {/* FLOATING ACTION PANEL */}
       <div className="fixed bottom-0 left-0 right-0 z-40 p-4 pointer-events-none">
           <div className="max-w-xl mx-auto flex flex-col items-center gap-3">
-              
-              {/* Expandable Settings Card */}
               <div className={`w-full bg-white/90 backdrop-blur-2xl border border-white/60 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] overflow-hidden transition-all duration-500 pointer-events-auto ${isPanelOpen ? 'max-h-[500px] p-6' : 'max-h-0 p-0 border-none opacity-0'}`}>
                   <div className="space-y-6">
-                      {/* Dimensions Section */}
                       <div className={`p-4 rounded-3xl border transition-colors ${!isRootSelected ? 'bg-orange-50 border-orange-200' : 'bg-slate-50 border-slate-100'}`}>
                         <div className="flex items-center justify-between mb-3">
                             <span className={`text-[10px] font-black uppercase tracking-widest ${!isRootSelected ? 'text-orange-600' : 'text-slate-500'}`}>{isRootSelected ? t('global_dims') : t('section_dims')}</span>
@@ -847,7 +850,6 @@ export const UnitDesigner = () => {
                         </div>
                       </div>
 
-                      {/* Selectors Section */}
                       <div className="grid grid-cols-1 gap-3">
                           <div className="bg-blue-50/50 p-2 pl-4 rounded-2xl border border-blue-100 flex items-center gap-3">
                               <div className="p-2.5 bg-blue-100 text-blue-600 rounded-xl"><Box size={20} /></div>
@@ -883,7 +885,6 @@ export const UnitDesigner = () => {
                   </div>
               </div>
 
-              {/* Persistent Action Bar */}
               <div className="w-full flex items-center gap-2 pointer-events-auto">
                   <button 
                     onClick={() => setIsPanelOpen(!isPanelOpen)}
@@ -892,8 +893,7 @@ export const UnitDesigner = () => {
                      {isPanelOpen ? <ChevronDown size={24}/> : <SlidersHorizontal size={22}/>}
                   </button>
                   
-                  <div className="flex-1 flex gap-2 h-14 bg-white/95 backdrop-blur-xl border border-white/40 p-1.5 rounded-full shadow-[0_15px_40px_rgba(0,0,0,0.1)]">
-                      {/* Quantity Picker Box */}
+                  <div className="flex-1 flex gap-2 h-14 bg-white/95 backdrop-blur-xl border border-white/40 p-1.5 rounded-full shadow-[0_15px_40px_rgba(0,0,0,0.15)]">
                       <div className="flex items-center bg-slate-100 rounded-full px-2 py-1 border border-slate-200">
                           <button 
                             onClick={() => setUnitCount(prev => Math.max(1, prev - 1))}
