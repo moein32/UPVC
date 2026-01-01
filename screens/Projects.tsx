@@ -39,52 +39,57 @@ export const Projects = () => {
     }
   };
 
-  const renderProjectCard = (p: SavedProject) => (
-    <div 
-      key={p.id} 
-      className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 hover:border-blue-100 transition-all group"
-    >
-      <div className="flex justify-between items-start mb-4">
-        <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/breakdown', { state: { projectDetails: p, items: p.items } })}>
-          <div className={`p-3 rounded-xl ${p.status === 'Produced' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'}`}>
-            <Folder size={24} />
-          </div>
-          <div>
-            <h3 className="font-black text-slate-900 leading-none mb-1">{p.customerName}</h3>
-            <p className="text-[10px] text-slate-400 font-bold">{p.address || 'بدون آدرس'}</p>
-          </div>
-        </div>
-        <div className="flex flex-col items-end gap-2">
-            {getStatusBadge(p.status)}
-            <div className="relative">
-                <select 
-                    value={p.status}
-                    onChange={(e) => handleUpdateStatus(p.id, e.target.value as any)}
-                    className="bg-slate-100 text-[10px] font-black py-1 px-3 rounded-lg border-none focus:ring-2 focus:ring-blue-500 outline-none appearance-none cursor-pointer"
-                >
-                    <option value="Draft">پیش‌فاکتور</option>
-                    <option value="Contract">قرارداد نهایی</option>
-                    <option value="Production">آماده تولید</option>
-                    <option value="Produced">تولید شده</option>
-                </select>
-                <ChevronDown size={10} className="absolute left-1.5 top-2.5 text-slate-400 pointer-events-none" />
+  const renderProjectCard = (p: SavedProject) => {
+    const isProduced = p.status === 'Produced';
+    
+    return (
+      <div 
+        key={p.id} 
+        className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 hover:border-blue-100 transition-all group"
+      >
+        <div className="flex justify-between items-start mb-4">
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/breakdown', { state: { projectDetails: p, items: p.items } })}>
+            <div className={`p-3 rounded-xl ${isProduced ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'}`}>
+              <Folder size={24} />
             </div>
+            <div>
+              <h3 className="font-black text-slate-900 leading-none mb-1">{p.customerName}</h3>
+              <p className="text-[10px] text-slate-400 font-bold">{p.address || 'بدون آدرس'}</p>
+            </div>
+          </div>
+          <div className="flex flex-col items-end gap-2">
+              {getStatusBadge(p.status)}
+              <div className="relative">
+                  <select 
+                      value={p.status}
+                      disabled={isProduced}
+                      onChange={(e) => handleUpdateStatus(p.id, e.target.value as any)}
+                      className={`text-[10px] font-black py-1 px-3 rounded-lg border-none focus:ring-2 focus:ring-blue-500 outline-none appearance-none transition-all ${isProduced ? 'bg-emerald-50 text-emerald-600 cursor-not-allowed opacity-80' : 'bg-slate-100 text-slate-700 cursor-pointer'}`}
+                  >
+                      <option value="Draft">پیش‌فاکتور</option>
+                      <option value="Contract">قرارداد نهایی</option>
+                      <option value="Production">آماده تولید</option>
+                      <option value="Produced">تولید شده</option>
+                  </select>
+                  {!isProduced && <ChevronDown size={10} className="absolute left-1.5 top-2.5 text-slate-400 pointer-events-none" />}
+              </div>
+          </div>
+        </div>
+        
+        <div className="h-px bg-slate-50 my-3"></div>
+        
+        <div className="flex justify-between items-center text-sm">
+          <div className="flex items-center gap-1.5 text-slate-400 text-[10px] font-bold">
+            <Calendar size={14} />
+            <span>{toPersianDigits(new Date(p.date).toLocaleDateString('fa-IR'))}</span>
+          </div>
+          <div className="font-black text-slate-800 text-sm">
+            {formatPrice(p.totalPrice)} <span className="text-[9px] font-bold text-slate-400 mr-1">تومان</span>
+          </div>
         </div>
       </div>
-      
-      <div className="h-px bg-slate-50 my-3"></div>
-      
-      <div className="flex justify-between items-center text-sm">
-        <div className="flex items-center gap-1.5 text-slate-400 text-[10px] font-bold">
-          <Calendar size={14} />
-          <span>{toPersianDigits(new Date(p.date).toLocaleDateString('fa-IR'))}</span>
-        </div>
-        <div className="font-black text-slate-800 text-sm">
-          {formatPrice(p.totalPrice)} <span className="text-[9px] font-bold text-slate-400 mr-1">تومان</span>
-        </div>
-      </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="min-h-screen bg-[#f8fafc] p-6 pt-12 pb-32 font-['Vazirmatn']">
