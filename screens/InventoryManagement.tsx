@@ -54,7 +54,8 @@ const MetricCard = ({ label, value, unit, icon: Icon, colorClass }: any) => (
   </div>
 );
 
-const BrandStockCard = ({ brand, inventory }: { brand: ProfileBrand, inventory: InventoryItem[] }) => {
+// Added React.FC to handle key prop correctly
+const BrandStockCard: React.FC<{ brand: ProfileBrand, inventory: InventoryItem[] }> = ({ brand, inventory }) => {
   const brandItems = inventory.filter(i => i.brandId === brand.id);
   const totalStock = brandItems.reduce((acc, i) => acc + i.currentStock, 0);
 
@@ -301,7 +302,7 @@ export const InventoryManagement = () => {
                             <InventoryItemCard 
                                 key={item.id}
                                 item={item}
-                                onUpdate={(delta) => updateStock(item.id, delta, item)}
+                                onUpdate={(delta: number) => updateStock(item.id, delta, item)}
                                 color={activeTab === 'profiles' ? 'blue' : activeTab === 'galvanized' ? 'indigo' : activeTab === 'glass' ? 'emerald' : 'amber'}
                             />
                         ));
@@ -345,7 +346,7 @@ const getItemsByTab = (tab: InventoryTab, selectedBrandId: string, brands: Profi
     }
     if (tab === 'glass') {
         const GLASS_SHEET_SIZES = { long: { width: 3210, height: 2250, label: 'جام بلند' }, short: { width: 2250, height: 1605, label: 'جام کوتاه' } };
-        const SINGLE_PANE_GLASS_TYPES = [ { id: 'sp_4_simple', name: 'شیشه ۴ میل ساده' }, { id: 'sp_6_simple', name: 'شیشه ۶ میل ساده' }, { id: 'sp_4_reflex', name: 'شیشه ۴ میل رفلکس' } ];
+        const SINGLE_PANE_GLASS_TYPES = [ { id: 'sp_4_simple', name: 'شیشه ۴ میل ساده' }, { id: 'sp_6_simple', name: 'شیشه ۴ میل ساده' }, { id: 'sp_4_reflex', name: 'شیشه ۴ میل رفلکس' } ];
         const items: InventoryItem[] = [];
         SINGLE_PANE_GLASS_TYPES.forEach(g => {
             ['long', 'short'].forEach(type => {

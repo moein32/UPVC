@@ -17,6 +17,14 @@ interface ShortageItem {
   message: string;
 }
 
+// Interface for material calculation results
+interface MaterialTotals {
+  profiles: Record<string, number>;
+  galvanized: number;
+  glassArea: number;
+  hardwareSets: Record<string, number>;
+}
+
 export const ProductionControl = () => {
   const navigate = useNavigate();
   const [projects, setProjects] = useState<SavedProject[]>([]);
@@ -44,11 +52,11 @@ export const ProductionControl = () => {
     projects.find(p => p.id === selectedProjectId), 
   [projects, selectedProjectId]);
 
-  // MATERIAL CALCULATION LOGIC
-  const projectMaterials = useMemo(() => {
+  // MATERIAL CALCULATION LOGIC - explicitly typed to fix 'unknown' errors
+  const projectMaterials = useMemo<MaterialTotals | null>(() => {
     if (!selectedProject) return null;
     
-    const totals = {
+    const totals: MaterialTotals = {
       profiles: {} as Record<string, number>,
       galvanized: 0,
       glassArea: 0,
@@ -354,7 +362,10 @@ export const ProductionControl = () => {
                       <div className="grid grid-cols-2 gap-4">
                           <div className="bg-slate-900 rounded-3xl p-5 text-white">
                               <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest block mb-1">کل پروفیل مصرفی</span>
-                              <div className="text-xl font-black">{toPersianDigits(projectMaterials?.profiles ? Object.values(projectMaterials.profiles).reduce((a,b)=>a+b, 0).toFixed(1) : 0)} <span className="text-xs font-bold opacity-40">متر</span></div>
+                              <div className="text-xl font-black">
+                                {toPersianDigits(projectMaterials?.profiles ? Object.values(projectMaterials.profiles).reduce((acc: number, val: number) => acc + val, 0).toFixed(1) : 0)} 
+                                <span className="text-xs font-bold opacity-40">متر</span>
+                              </div>
                           </div>
                           <div className="bg-slate-900 rounded-3xl p-5 text-white">
                               <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest block mb-1">مساحت شیشه (خام)</span>
