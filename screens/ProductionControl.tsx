@@ -1,11 +1,23 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { ArrowRight, Activity, Play, CheckCircle2, Factory, Layers, Grid, Box, Hammer, AlertTriangle, ChevronLeft, Loader2, Scissors, Zap, Info, ShoppingCart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+// Add missing framer-motion imports
 import { motion, AnimatePresence } from 'framer-motion';
 import { pricingStore } from '../services/pricingStore';
 import { SavedProject, ProfileBrand } from '../types';
 import { toPersianDigits, formatPrice } from '../utils/formatting';
+
+// Fix: Define InventoryItem locally to ensure correct typing for arithmetic operations
+interface InventoryItem {
+  id: string;
+  name: string;
+  currentStock: number;
+  minStock: number;
+  unit: string;
+  category: string;
+  brandId?: string;
+  [key: string]: any;
+}
 
 interface ShortageItem {
   id: string;
@@ -31,7 +43,8 @@ export const ProductionControl = () => {
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [productionStage, setProductionStage] = useState(0); 
   const [isProcessing, setIsProcessing] = useState(false);
-  const [inventory, setInventory] = useState<any[]>([]);
+  // Fix: Explicitly type the inventory state
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
 
   const stages = [
     { id: 1, label: 'برش پروفیل و گالوانیزه', icon: Scissors, color: 'blue' },
@@ -89,7 +102,8 @@ export const ProductionControl = () => {
     const list: ShortageItem[] = [];
     
     // 1. Check Profiles
-    Object.entries(projectMaterials.profiles).forEach(([name, req]) => {
+    // Fix: Cast entries to [string, number][] to avoid unknown type errors in subtraction
+    (Object.entries(projectMaterials.profiles) as [string, number][]).forEach(([name, req]) => {
         // Find by name in inventory
         const invItem = inventory.find(i => i.name === name || i.id.includes(name));
         const stock = invItem?.currentStock || 0;
@@ -143,7 +157,8 @@ export const ProductionControl = () => {
     }
 
     // 4. Check Hardware
-    Object.entries(projectMaterials.hardwareSets).forEach(([name, req]) => {
+    // Fix: Cast entries to [string, number][] to avoid unknown type errors in subtraction
+    (Object.entries(projectMaterials.hardwareSets) as [string, number][]).forEach(([name, req]) => {
         const invItem = inventory.find(i => i.name === name || i.id.includes(name));
         const stock = invItem?.currentStock || 0;
         if (stock < req) {
@@ -169,7 +184,8 @@ export const ProductionControl = () => {
     if (!canStartProduction || !selectedProject || !projectMaterials) return;
     
     setIsProcessing(true);
-    const newInventory = [...inventory];
+    // Fix: Cast the copy to InventoryItem[]
+    const newInventory = [...inventory] as InventoryItem[];
     const offcutsToAdd: any[] = [];
 
     selectedProject.items.forEach(unit => {
@@ -177,6 +193,7 @@ export const ProductionControl = () => {
             if (detail.name.includes('پروفیل')) {
                 const invIdx = newInventory.findIndex(i => i.name === detail.name);
                 if (invIdx >= 0) {
+                    // Fix: Now correctly handles number subtraction as newInventory is typed
                     newInventory[invIdx].currentStock = Math.max(0, newInventory[invIdx].currentStock - (detail.quantity * unit.quantity));
                 }
                 
@@ -363,7 +380,8 @@ export const ProductionControl = () => {
                           <div className="bg-slate-900 rounded-3xl p-5 text-white">
                               <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest block mb-1">کل پروفیل مصرفی</span>
                               <div className="text-xl font-black">
-                                {toPersianDigits(projectMaterials?.profiles ? Object.values(projectMaterials.profiles).reduce((acc: number, val: number) => acc + val, 0).toFixed(1) : 0)} 
+                                {/* Fix: Cast Object.values to number[] to avoid "Property 'toFixed' does not exist on type 'unknown'" error */}
+                                {toPersianDigits(projectMaterials?.profiles ? (Object.values(projectMaterials.profiles) as number[]).reduce((acc: number, val: number) => acc + val, 0).toFixed(1) : 0)} 
                                 <span className="text-xs font-bold opacity-40">متر</span>
                               </div>
                           </div>
