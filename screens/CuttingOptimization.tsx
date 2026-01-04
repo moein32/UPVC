@@ -237,10 +237,12 @@ export const CuttingOptimization = () => {
         <div ref={printRef} style={{ width: '794px' }}>
             {(() => {
                 const flatBars = (Object.values(groupedBars) as OptimizedBar[][]).flat();
-                // Fix: Explicitly define the type for the 'pages' array to resolve property 'length' error on unknown type
+                // Fix: Explicitly define the type for the 'pages' array and store its length in a local variable 
+                // to resolve the TypeScript error "Property 'length' does not exist on type 'unknown'" within the JSX scope.
                 const pages: OptimizedBar[][] = [];
                 // BARS_PER_PAGE Reduced to 16 to ensure footer space
                 for (let i = 0; i < flatBars.length; i += 16) pages.push(flatBars.slice(i, i + 16));
+                const totalPagesCount = pages.length;
                 return pages.map((pageBars, pageIdx) => (
                     <div key={pageIdx} className="pdf-page-container" style={{ 
                         width: '794px', height: '1123px', padding: '40px', backgroundColor: '#ffffff', 
@@ -256,7 +258,7 @@ export const CuttingOptimization = () => {
                             <div style={{ textAlign: 'left', fontSize: '10px', color: '#64748b', fontWeight: 'bold' }}>
                                 <div style={{ fontSize: '12px', color: '#1e3a8a', fontWeight: '900' }}>LUMINA CORE v4.5</div>
                                 <div>تاریخ صدور: {toPersianDigits(new Date().toLocaleDateString('fa-IR'))}</div>
-                                <div>صفحه {toPersianDigits(pageIdx + 1)} از {toPersianDigits(pages.length)}</div>
+                                <div>صفحه {toPersianDigits(pageIdx + 1)} از {toPersianDigits(totalPagesCount)}</div>
                             </div>
                         </div>
 
