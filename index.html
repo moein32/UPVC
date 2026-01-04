@@ -5,18 +5,22 @@
     <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover" />
     <meta name="theme-color" content="#001f3f" />
     
-    <!-- PWA & Icon Settings -->
+    <!-- PWA Settings -->
     <link rel="manifest" href="/manifest.json">
-    <link rel="shortcut icon" type="image/png" href="/icons/icon-192x192.png?v=2">
+    <link rel="shortcut icon" type="image/png" href="/icons/icon-192x192.png?v=3">
     
-    <!-- iOS Specific Settings (Single Apple Touch Icon with Versioning) -->
-    <link rel="apple-touch-icon" href="/icons/icon-192x192.png?v=2">
+    <!-- iOS Specific Settings (The "Magic" for iPhone/iPad) -->
+    <!-- فقط یک تگ واحد برای آیکون اپل با ورژن جدید برای حذف کش قبلی -->
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png?v=3">
     
-    <!-- iOS Meta Tags for Home Screen App -->
+    <!-- فعال‌سازی حالت تمام‌صفحه در سافاری -->
     <meta name="apple-mobile-web-app-capable" content="yes">
+    
+    <!-- تنظیم نوار وضعیت به حالت شفاف مدرن -->
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <!-- نام نمایشی زیر آیکون در صفحه اصلی آیفون -->
     <meta name="apple-mobile-web-app-title" content="Lumina UPVC">
-    <meta name="mobile-web-app-capable" content="yes">
     
     <title>Lumina UPVC</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -36,6 +40,8 @@
         margin: 0;
         padding: 0;
         -webkit-tap-highlight-color: transparent;
+        /* جلوگیری از اسکرول کشسانی در iOS برای تجربه اپلیکیشن‌گونه */
+        overscroll-behavior-y: none;
       }
       
       .no-scrollbar::-webkit-scrollbar { display: none; }
