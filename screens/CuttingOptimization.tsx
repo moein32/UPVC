@@ -237,7 +237,8 @@ export const CuttingOptimization = () => {
         <div ref={printRef} style={{ width: '794px' }}>
             {(() => {
                 const flatBars = (Object.values(groupedBars) as OptimizedBar[][]).flat();
-                const pages = [];
+                // Fix: Explicitly define the type for the 'pages' array to resolve property 'length' error on unknown type
+                const pages: OptimizedBar[][] = [];
                 // BARS_PER_PAGE Reduced to 16 to ensure footer space
                 for (let i = 0; i < flatBars.length; i += 16) pages.push(flatBars.slice(i, i + 16));
                 return pages.map((pageBars, pageIdx) => (
