@@ -60,20 +60,37 @@ export const Dashboard = () => {
         </div>
       )}
 
-      {/* Primary Action: New Project */}
+      {/* Primary Action: New Project - Redesigned with Premium Background */}
       <div 
         onClick={() => navigate('/project-setup')}
-        className="w-full h-48 bg-gradient-to-br from-slate-800 to-slate-900 rounded-[2.5rem] p-8 relative overflow-hidden shadow-2xl shadow-slate-900/30 mb-8 cursor-pointer group active:scale-[0.98] transition-all"
+        className="w-full h-56 bg-slate-900 rounded-[3rem] relative overflow-hidden shadow-[0_30px_60px_-15px_rgba(0,31,63,0.3)] mb-10 cursor-pointer group active:scale-[0.97] transition-all duration-500"
       >
-        <div className={`relative z-10 h-full flex flex-col justify-between items-start ${i18n.language === 'en' ? 'text-left' : 'text-right'}`}>
-          <div className="p-3.5 bg-white/10 backdrop-blur-md w-fit rounded-2xl text-white shadow-inner"><Plus size={26} /></div>
+        {/* Background Image Layer */}
+        <div className="absolute inset-0 z-0">
+          <img 
+            src="https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&q=80" 
+            alt="Modern Window Architecture" 
+            className="w-full h-full object-cover opacity-60 group-hover:scale-110 transition-transform duration-1000 ease-out"
+          />
+          {/* Advanced Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-900/80 to-transparent"></div>
+        </div>
+
+        {/* Content Layer */}
+        <div className={`relative z-10 h-full p-8 flex flex-col justify-between items-start ${i18n.language === 'en' ? 'text-left' : 'text-right'}`}>
+          <div className="p-4 bg-white/10 backdrop-blur-2xl w-fit rounded-[1.5rem] text-white border border-white/20 shadow-[0_8px_32px_0_rgba(255,255,255,0.1)] group-hover:bg-blue-600 group-hover:border-blue-500 transition-all duration-500">
+            <Plus size={28} strokeWidth={3} />
+          </div>
           <div className="w-full">
-            <h2 className="text-white text-2xl font-black mb-1 leading-none">{t('new_project')}</h2>
-            <p className="text-slate-400 text-[11px] font-medium opacity-80">{t('new_project_desc')}</p>
+            <h2 className="text-white text-3xl font-black mb-1.5 leading-none drop-shadow-md">{t('new_project')}</h2>
+            <p className="text-blue-200/70 text-[12px] font-bold tracking-tight">{t('new_project_desc')}</p>
           </div>
         </div>
-        <div className="absolute left-[-20px] top-[-20px] w-44 h-44 bg-blue-500/10 rounded-full blur-[80px] group-hover:bg-blue-500/20 transition-all"></div>
-        <img src="https://images.unsplash.com/photo-1503708928676-1cb796a0891e?w=400&q=80" alt="Window" className="absolute left-[-40px] bottom-[-40px] w-56 h-56 object-cover opacity-10 rotate-12 mix-blend-overlay rounded-full" />
+
+        {/* Decorative Elements */}
+        <div className="absolute -left-10 -top-10 w-48 h-48 bg-blue-500/20 rounded-full blur-[100px] pointer-events-none group-hover:bg-blue-400/30 transition-all duration-700"></div>
+        <div className="absolute right-0 bottom-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-[60px] pointer-events-none"></div>
       </div>
 
       <div className="flex items-center justify-between mb-5">
