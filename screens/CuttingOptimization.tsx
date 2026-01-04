@@ -204,7 +204,7 @@ export const CuttingOptimization = () => {
     const targetRef = type === 'profile' ? printRef : glassPrintRef;
     if (!targetRef.current) return;
     try {
-        await new Promise(resolve => setTimeout(resolve, 1200));
+        await new Promise(resolve => setTimeout(resolve, 1500));
         const pdf = new jsPDF('p', 'mm', 'a4');
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = pdf.internal.pageSize.getHeight();
@@ -212,10 +212,16 @@ export const CuttingOptimization = () => {
         for (let i = 0; i < pages.length; i++) {
             if (i > 0) pdf.addPage();
             const node = pages[i] as HTMLElement;
-            const imgData = await toJpeg(node, { quality: 1, pixelRatio: 3.5, backgroundColor: '#ffffff' });
+            const imgData = await toJpeg(node, { 
+              quality: 1, 
+              pixelRatio: 4, 
+              backgroundColor: '#ffffff',
+              canvasWidth: 794,
+              canvasHeight: 1123 
+            });
             pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
         }
-        pdf.save(`${type === 'profile' ? 'Profile_Opt' : 'Glass_Opt'}_${selectedProject?.customerName || 'Lumina'}.pdf`);
+        pdf.save(`${type === 'profile' ? 'Profile_Cutting' : 'Glass_Cutting'}_${selectedProject?.customerName || 'Lumina'}.pdf`);
     } catch (err) { console.error('PDF Error:', err); } finally { setIsGeneratingPDF(false); }
   };
 
@@ -232,14 +238,16 @@ export const CuttingOptimization = () => {
             {(() => {
                 const flatBars = (Object.values(groupedBars) as OptimizedBar[][]).flat();
                 const pages = [];
-                for (let i = 0; i < flatBars.length; i += 18) pages.push(flatBars.slice(i, i + 18));
+                // BARS_PER_PAGE Reduced to 16 to ensure footer space
+                for (let i = 0; i < flatBars.length; i += 16) pages.push(flatBars.slice(i, i + 16));
                 return pages.map((pageBars, pageIdx) => (
                     <div key={pageIdx} className="pdf-page-container" style={{ 
                         width: '794px', height: '1123px', padding: '40px', backgroundColor: '#ffffff', 
-                        display: 'flex', flexDirection: 'column', direction: 'rtl', border: '1px solid #e2e8f0' 
+                        display: 'flex', flexDirection: 'column', direction: 'rtl', border: '1px solid #e2e8f0',
+                        boxSizing: 'border-box', overflow: 'hidden'
                     }}>
                         {/* Header v4.5 */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '3px solid #0f172a', paddingBottom: '12px', marginBottom: '25px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '3px solid #0f172a', paddingBottom: '12px', marginBottom: '20px', flexShrink: 0 }}>
                             <div style={{ textAlign: 'right' }}>
                                 <h1 style={{ fontSize: '20px', fontWeight: '900', color: '#0f172a', margin: 0 }}>نقشه اجرایی برش و بهینه‌سازی (Profile Optimization)</h1>
                                 <p style={{ fontSize: '11px', color: '#64748b', fontWeight: 'bold', marginTop: '4px' }}>پروژه: {selectedProject?.customerName} | کد رهگیری: {toPersianDigits(selectedProject?.id || '')}</p>
@@ -252,15 +260,15 @@ export const CuttingOptimization = () => {
                         </div>
 
                         {/* Bars Content */}
-                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px', overflow: 'hidden' }}>
                             {pageBars.map((bar, bIdx) => {
                                 const color = getProfileColors(bar.type);
                                 const SVG_WIDTH = 714;
                                 const scaleX = (val: number) => (val / stockLength) * SVG_WIDTH;
 
                                 return (
-                                    <div key={bIdx} style={{ marginBottom: '4px' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px', fontSize: '10px', fontWeight: '900' }}>
+                                    <div key={bIdx} style={{ marginBottom: '2px' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px', fontSize: '10px', fontWeight: '900' }}>
                                             <div style={{ color: '#334155' }}>
                                                 <span style={{ color: color, fontSize: '14px', marginLeft: '6px' }}>●</span>
                                                 {getFarsiType(bar.type)} <span style={{color: '#94a3b8', fontSize: '8px', marginRight: '8px'}}>شاخه {toPersianDigits(bar.id)}</span>
@@ -271,7 +279,7 @@ export const CuttingOptimization = () => {
                                             </div>
                                         </div>
 
-                                        <svg width={SVG_WIDTH} height="32" viewBox={`0 0 ${SVG_WIDTH} 100`} style={{ display: 'block' }}>
+                                        <svg width={SVG_WIDTH} height="30" viewBox={`0 0 ${SVG_WIDTH} 100`} style={{ display: 'block' }}>
                                             <defs>
                                                 <pattern id={`hatch-pdf-${pageIdx}-${bIdx}`} patternUnits="userSpaceOnUse" width="8" height="8" patternTransform="rotate(45)">
                                                     <line x1="0" y1="0" x2="0" y2="8" stroke="#cbd5e1" strokeWidth="2" />
@@ -341,19 +349,19 @@ export const CuttingOptimization = () => {
                             })}
                         </div>
 
-                        {/* Standard Engineering Footer */}
-                        <div style={{ marginTop: 'auto', paddingTop: '20px', borderTop: '2.5px solid #0f172a' }}>
+                        {/* Standard Engineering Footer - FIXED AT BOTTOM */}
+                        <div style={{ marginTop: '20px', paddingTop: '15px', borderTop: '2.5px solid #0f172a', flexShrink: 0 }}>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px', marginBottom: '15px' }}>
-                                <div style={{ border: '1px solid #e2e8f0', height: '75px', borderRadius: '12px', padding: '10px', textAlign: 'center' }}>
-                                    <div style={{ fontSize: '9px', fontWeight: '900', color: '#64748b', marginBottom: '30px' }}>کنترل کیفی و ابعاد (QC)</div>
+                                <div style={{ border: '1px solid #e2e8f0', height: '70px', borderRadius: '12px', padding: '8px', textAlign: 'center' }}>
+                                    <div style={{ fontSize: '9px', fontWeight: '900', color: '#64748b', marginBottom: '25px' }}>کنترل کیفی و ابعاد (QC)</div>
                                     <div style={{ fontSize: '8px', color: '#cbd5e1' }}>مهر و امضا</div>
                                 </div>
-                                <div style={{ border: '1px solid #e2e8f0', height: '75px', borderRadius: '12px', padding: '10px', textAlign: 'center' }}>
-                                    <div style={{ fontSize: '9px', fontWeight: '900', color: '#64748b', marginBottom: '30px' }}>مسئول ایستگاه برش</div>
+                                <div style={{ border: '1px solid #e2e8f0', height: '70px', borderRadius: '12px', padding: '8px', textAlign: 'center' }}>
+                                    <div style={{ fontSize: '9px', fontWeight: '900', color: '#64748b', marginBottom: '25px' }}>مسئول ایستگاه برش</div>
                                     <div style={{ fontSize: '8px', color: '#cbd5e1' }}>امضا</div>
                                 </div>
-                                <div style={{ border: '1px solid #e2e8f0', height: '75px', borderRadius: '12px', padding: '10px', textAlign: 'center' }}>
-                                    <div style={{ fontSize: '9px', fontWeight: '900', color: '#64748b', marginBottom: '30px' }}>تایید مهندسی فروش</div>
+                                <div style={{ border: '1px solid #e2e8f0', height: '70px', borderRadius: '12px', padding: '8px', textAlign: 'center' }}>
+                                    <div style={{ fontSize: '9px', fontWeight: '900', color: '#64748b', marginBottom: '25px' }}>تایید مهندسی فروش</div>
                                     <div style={{ fontSize: '8px', color: '#cbd5e1' }}>مهر و امضا</div>
                                 </div>
                             </div>
@@ -372,8 +380,12 @@ export const CuttingOptimization = () => {
       <div className="fixed top-0 left-[-10000px] pointer-events-none z-[-100]">
         <div ref={glassPrintRef} style={{ width: '794px' }}>
             {optimizedSheets.map((sheet, sIdx) => (
-                <div key={sIdx} className="pdf-page-container" style={{ width: '794px', height: '1123px', padding: '40px', backgroundColor: '#ffffff', display: 'flex', flexDirection: 'column', direction: 'rtl' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '3px solid #0f172a', paddingBottom: '12px', marginBottom: '30px' }}>
+                <div key={sIdx} className="pdf-page-container" style={{ 
+                    width: '794px', height: '1123px', padding: '40px', backgroundColor: '#ffffff', 
+                    display: 'flex', flexDirection: 'column', direction: 'rtl',
+                    boxSizing: 'border-box', overflow: 'hidden'
+                }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '3px solid #0f172a', paddingBottom: '12px', marginBottom: '30px', flexShrink: 0 }}>
                         <div style={{ textAlign: 'right' }}>
                             <h1 style={{ fontSize: '18px', fontWeight: '900', color: '#0f172a', margin: 0 }}>نقشه برش جام شیشه #{toPersianDigits(sheet.id)}</h1>
                             <p style={{ fontSize: '10px', color: '#64748b', fontWeight: 'bold' }}>پروژه: {selectedProject?.customerName}</p>
@@ -384,7 +396,7 @@ export const CuttingOptimization = () => {
                         </div>
                     </div>
 
-                    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                         <svg width="714" height="600" viewBox={`0 0 ${glassSheetWidth} ${glassSheetHeight}`} style={{ border: '1px solid #cbd5e1' }}>
                             <defs>
                                 <pattern id="glass-hatch-pdf" patternUnits="userSpaceOnUse" width="40" height="40" patternTransform="rotate(45)">
@@ -411,7 +423,7 @@ export const CuttingOptimization = () => {
                         </svg>
                     </div>
 
-                    <div style={{ marginTop: '20px', borderTop: '1.5px solid #f1f5f9', paddingTop: '15px', display: 'flex', justifyContent: 'space-between', fontSize: '9px', color: '#94a3b8', fontWeight: 'bold' }}>
+                    <div style={{ marginTop: '20px', borderTop: '1.5px solid #f1f5f9', paddingTop: '15px', display: 'flex', justifyContent: 'space-between', fontSize: '9px', color: '#94a3b8', fontWeight: 'bold', flexShrink: 0 }}>
                         <div>متراژ مصرفی جام: {toPersianDigits((sheet.usedArea/1000000).toFixed(2))} m² | ضایعات: {toPersianDigits(sheet.wastePercent.toFixed(1))}%</div>
                         <div style={{ color: '#0f172a' }}>LUMINA PRECISION BLUEPRINT v4.5</div>
                     </div>
