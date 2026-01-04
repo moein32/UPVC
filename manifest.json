@@ -1,17 +1,30 @@
+
 {
-  "short_name": "Lumina",
   "name": "Lumina UPVC Designer",
+  "short_name": "Lumina",
+  "description": "Premium UPVC window and door pricing calculator featuring AI optimization.",
   "icons": [
     {
       "src": "./logo.svg",
       "type": "image/svg+xml",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icon-192x192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "./icon-512x512.png",
+      "type": "image/png",
       "sizes": "512x512"
     }
   ],
-  "start_url": ".",
-  "scope": ".",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "theme_color": "#1e293b",
-  "background_color": "#f1f5f9",
+  "theme_color": "#0f172a",
+  "background_color": "#f8fafc",
   "orientation": "portrait"
 }

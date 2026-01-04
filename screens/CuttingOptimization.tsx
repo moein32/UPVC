@@ -236,9 +236,8 @@ export const CuttingOptimization = () => {
       <div className="fixed top-0 left-[-10000px] pointer-events-none z-[-100]">
         <div ref={printRef} style={{ width: '794px' }}>
             {(() => {
-                const flatBars = (Object.values(groupedBars) as OptimizedBar[][]).flat();
-                // Fix: Explicitly define the type for the 'pages' array and store its length in a local variable 
-                // to resolve the TypeScript error "Property 'length' does not exist on type 'unknown'" within the JSX scope.
+                // Fix: Explicitly cast flatBars to OptimizedBar[] to resolve TypeScript 'unknown' error
+                const flatBars = (Object.values(groupedBars) as OptimizedBar[][]).flat() as OptimizedBar[];
                 const pages: OptimizedBar[][] = [];
                 // BARS_PER_PAGE Reduced to 16 to ensure footer space
                 for (let i = 0; i < flatBars.length; i += 16) pages.push(flatBars.slice(i, i + 16));
@@ -530,7 +529,8 @@ export const CuttingOptimization = () => {
                     <div className="space-y-4 mb-8">
                         {activeMode === 'profile' ? (
                             <div className="grid grid-cols-2 gap-3">
-                                {Object.entries(groupedBars).map(([type, bars]) => (
+                                {/* Fix: Explicitly cast to [string, OptimizedBar[]][] to fix 'unknown' type error */}
+                                {(Object.entries(groupedBars) as [string, OptimizedBar[]][]).map(([type, bars]) => (
                                     <div key={type} className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
                                         <span className="text-[9px] font-black text-slate-400 block mb-1 uppercase tracking-tight">{getFarsiType(type)}</span>
                                         <div className="text-lg font-black text-slate-900">{toPersianDigits(bars.length)} <span className="text-[10px] opacity-40">شاخه</span></div>

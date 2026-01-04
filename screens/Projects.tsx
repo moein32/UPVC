@@ -15,6 +15,12 @@ export const Projects = () => {
   }, []);
 
   const handleUpdateStatus = (id: string, newStatus: SavedProject['status']) => {
+    // Safety check: Cannot manually set to Produced from here anymore
+    if (newStatus === 'Produced') {
+        alert('تغییر وضعیت به "تولید شده" تنها از طریق بخش "کنترل تولید کارگاه" و پس از تایید کسر از انبار امکان‌پذیر است.');
+        return;
+    }
+    
     const updated = projects.map(p => p.id === id ? { ...p, status: newStatus } : p);
     setProjects(updated);
     const target = updated.find(p => p.id === id);
@@ -69,7 +75,7 @@ export const Projects = () => {
                       <option value="Draft">پیش‌فاکتور</option>
                       <option value="Contract">قرارداد نهایی</option>
                       <option value="Production">آماده تولید</option>
-                      <option value="Produced">تولید شده</option>
+                      {isProduced && <option value="Produced">تولید شده</option>}
                   </select>
                   {!isProduced && <ChevronDown size={10} className="absolute left-1.5 top-2.5 text-slate-400 pointer-events-none" />}
               </div>

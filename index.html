@@ -4,20 +4,24 @@
   <head>
     <meta charset="UTF-8" />
     <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover" />
-    <meta name="theme-color" content="#001f3f" />
+    <meta name="theme-color" content="#0f172a" />
+    
+    <!-- PWA Settings -->
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/logo.svg">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Lumina">
+    <meta name="mobile-web-app-capable" content="yes">
+    
     <title>Lumina UPVC</title>
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Fonts with CORS support for screenshot libraries -->
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100..900&display=swap" rel="stylesheet" crossorigin="anonymous">
     
-    <!-- PDF Generation Libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
-
     <style>
       :root { --color-navy: #001f3f; }
       body {
@@ -27,26 +31,11 @@
         unicode-bidi: embed;
         margin: 0;
         padding: 0;
+        -webkit-tap-highlight-color: transparent;
       }
       
-      .design-grid {
-        background-color: #f8fafc;
-        background-image: 
-          linear-gradient(to right, #cbd5e1 1px, transparent 1px),
-          linear-gradient(to bottom, #cbd5e1 1px, transparent 1px);
-        background-size: 20px 20px;
-      }
-
-      /* PDF Export Root for off-screen rendering */
-      #pdf-export-root {
-        position: absolute;
-        left: -9999px;
-        top: 0;
-        width: 1000px;
-        background: white;
-        z-index: -100;
-        direction: rtl;
-      }
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
       @media print {
         .no-print { display: none !important; }
@@ -66,7 +55,9 @@
     "i18next": "https://esm.sh/i18next@^25.7.2",
     "jspdf": "https://esm.sh/jspdf@^2.5.1",
     "html-to-image": "https://esm.sh/html-to-image@^1.11.13",
-    "html2canvas": "https://esm.sh/html2canvas@^1.4.1"
+    "html2canvas": "https://esm.sh/html2canvas@^1.4.1",
+    "vite": "https://esm.sh/vite@^7.3.0",
+    "vite-plugin-pwa": "https://esm.sh/vite-plugin-pwa@^1.2.0"
   }
 }
 </script>
@@ -74,6 +65,7 @@
   <body>
     <div id="root"></div>
     <div id="pdf-export-root"></div>
+    <script type="module" src="/registerSW.js"></script>
     <script type="module" src="/index.tsx"></script>
   </body>
 </html>
