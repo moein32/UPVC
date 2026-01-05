@@ -1,14 +1,17 @@
-
 import { GoogleGenAI } from "@google/genai";
-import { WindowConfig, ProfileBrand } from "../types";
+import { WindowConfig } from "../types";
 
-// Always use const ai = new GoogleGenAI({apiKey: process.env.API_KEY});
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// در Vite باید از import.meta.env استفاده کنی تا Vercel ارور نده
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+const genAI = new GoogleGenAI(apiKey);
 
 export const getOptimizationSuggestions = async (config: WindowConfig, brandName: string) => {
   try {
+    // استفاده از مدل پایدار gemini-1.5-flash که در متد جدید پشتیبانی می‌شود
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
     const prompt = `
-      به عنوان یک مهندس ساختمان متخصص در پنجره های UPVC عمل کن.
+      به عنوان یک مهندس ساختمان متخصص در پنجره های UPVC در سیستم NexWin عمل کن.
       این پیکربندی پنجره را تحلیل کن:
       - ابعاد: ${config.width}mm در ${config.height}mm
       - نوع بازشو: ${config.type}
@@ -18,19 +21,14 @@ export const getOptimizationSuggestions = async (config: WindowConfig, brandName
       لطفاً ۲ پیشنهاد کوتاه و لیست‌وار ارائه بده:
       ۱. یک پیشنهاد برای کاهش هزینه (مهندسی ارزش).
       ۲. یک پیشنهاد برای بهبود عایق‌بندی حرارتی (صرفه‌جویی انرژی).
-      پاسخ را کاملاً به زبان فارسی و رسمی بنویس. از تیترهای مارک‌داون استفاده نکن.
+      پاسخ را کاملاً به زبان فارسی و صمیمانه بنویس.
     `;
 
-    // Updated model to 'gemini-3-flash-preview' for basic text tasks
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: prompt,
-    });
-
-    // Access the .text property directly
-    return response.text;
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    return response.text();
   } catch (error) {
     console.error("Gemini AI Error:", error);
-    return "هوش مصنوعی در حال حاضر در دسترس نیست. لطفا اتصال اینترنت خود را بررسی کنید.";
+    return "هوش مصنوعی NexWin در حال حاضر در دسترس نیست. لطفا اتصال اینترنت خود را بررسی کنید.";
   }
 };
