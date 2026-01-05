@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowRight, Printer, Loader2, Share2, ZoomIn, ZoomOut, Maximize, FileDown } from 'lucide-react';
+import { ArrowRight, Printer, Loader2, Share2, FileDown } from 'lucide-react';
 import { toJpeg } from 'html-to-image';
 import { jsPDF } from 'jspdf';
 import { WindowPreview } from '../components/WindowPreview';
@@ -14,7 +14,6 @@ export const InvoicePrint = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const containerRef = useRef<HTMLDivElement>(null);
-  const scaledWrapperRef = useRef<HTMLDivElement>(null);
   
   const state = location.state as { projectDetails: ProjectDetails, items: InvoiceItem[] } | null;
   
@@ -61,7 +60,7 @@ export const InvoicePrint = () => {
   const installationCost = Math.round(totalMaterialPrice * (projectDetails.installPercent / 100));
   const finalPrice = totalMaterialPrice + installationCost;
   const todayJalali = new Intl.DateTimeFormat('fa-IR', { dateStyle: 'full' }).format(new Date(projectDetails.date));
-  const invoiceConfig = settings?.invoice || { companyName: 'فروشگاه لومینا', companyPhone: '', companyAddress: '', footerNote: '' };
+  const invoiceConfig = settings?.invoice || { companyName: 'فروشگاه نکس‌وین', companyPhone: '', companyAddress: '', footerNote: '' };
 
   const ITEMS_PER_PAGE = 3; 
   const pages = [];
@@ -69,10 +68,7 @@ export const InvoicePrint = () => {
     pages.push(items.slice(i, i + ITEMS_PER_PAGE));
   }
 
-  // Optimized for Android: prioritizes PDF generation over native print
   const handlePrint = () => {
-    // In Android WebView, window.print() often fails. 
-    // We'll show a toast or just trigger the high-quality PDF generation.
     generatePDF(false);
   };
 
@@ -105,7 +101,6 @@ export const InvoicePrint = () => {
 
       const fileName = `Invoice-${projectDetails.customerName}.pdf`;
       
-      // Android Specific Sharing Logic
       if (isShare || /Android/i.test(navigator.userAgent)) {
         const pdfBlob = pdf.output('blob');
         const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
@@ -113,11 +108,10 @@ export const InvoicePrint = () => {
         if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
           await navigator.share({ 
             files: [file], 
-            title: 'فاکتور لومینا', 
+            title: 'فاکتور نکس‌وین', 
             text: `فاکتور مشتری: ${projectDetails.customerName}` 
           });
         } else {
-          // Fallback to standard save if sharing is not available
           pdf.save(fileName);
         }
       } else {
@@ -137,7 +131,7 @@ export const InvoicePrint = () => {
             <div className="text-right">
                 <div className="inv-title-box">
                     <h1 className={`${tempLayout === 'classic' ? 'text-2xl font-black' : 'text-xl font-black'} mb-0.5 tracking-tight text-slate-800`}>{invoiceConfig.companyName}</h1>
-                    {tempLayout === 'modern' && <span className="inv-badge text-[9px] font-bold text-blue-600">پیش‌فاکتور رسمی لومینا</span>}
+                    {tempLayout === 'modern' && <span className="inv-badge text-[9px] font-bold text-blue-600">پیش‌فاکتور رسمی نکس‌وین</span>}
                 </div>
                 <div className="text-[9px] opacity-80 space-y-0.5 font-bold mt-1.5 text-slate-700">
                     <div className="flex items-center gap-2"><span>آدرس:</span><span>{invoiceConfig.companyAddress || '---'}</span></div>
@@ -150,7 +144,7 @@ export const InvoicePrint = () => {
                     tempLayout === 'classic' ? 'border-2 border-slate-900 text-slate-900' : 
                     'bg-slate-100 text-slate-800'
                 }`}>
-                    {tempLayout === 'classic' ? 'صورتحساب فروش نهایی' : 'پیش‌فاکتور فروش کالا و خدمات فنی'}
+                    {tempLayout === 'classic' ? 'صورتحساب فروش نهایی' : 'پیش‌فاکتور فروش کالا و خدمات فنی نکس‌وین'}
                 </div>
                 <div className="text-[9px] font-bold space-y-0.5 opacity-95 text-slate-900">
                     <div className="flex gap-4 justify-between min-w-[140px]"><span>تاریخ صدور:</span><span className="font-black">{todayJalali}</span></div>
@@ -167,7 +161,7 @@ export const InvoicePrint = () => {
             <div className="flex justify-between items-end">
                 <div className="max-w-[80%]">
                     <p className="text-[8px] leading-relaxed text-justify opacity-60 font-bold text-slate-800">
-                        {invoiceConfig.footerNote || 'اعتبار این پیش‌فاکتور ۷۲ ساعت می‌باشد. کلیه قیمت‌ها به تومان بوده و نصب در محل پروژه بر عهده تیم لومینا است.'}
+                        {invoiceConfig.footerNote || 'اعتبار این پیش‌فاکتور نکس‌وین ۷۲ ساعت می‌باشد. کلیه قیمت‌ها به تومان بوده و نصب در محل پروژه بر عهده تیم متخصص نکس‌وین است.'}
                     </p>
                 </div>
                 <div className="text-left">
@@ -180,8 +174,11 @@ export const InvoicePrint = () => {
      </div>
   );
 
-  const InvoicePageContent = ({ pageItems, pageIndex, totalPages }: any) => (
-    <div className={`flex flex-col h-full overflow-hidden bg-white`}>
+  const InvoicePageContent = ({ pageItems, pageIndex, totalPages }: { pageItems: InvoiceItem[], pageIndex: number, totalPages: number }) => {
+    const isLastPage = pageIndex === totalPages - 1;
+
+    return (
+      <div className="bg-white w-full h-full flex flex-col overflow-hidden">
         <InvoiceHeader />
         
         {pageIndex === 0 && (
@@ -242,11 +239,12 @@ export const InvoicePrint = () => {
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {item.calculations.details?.slice(0, 5).map((detail: any, dIdx: number) => (
+                                                {/* Increased slice to 10 to show requested system items (Bead, Galv, Hardware) */}
+                                                {item.calculations.details?.slice(0, 10).map((detail: any, dIdx: number) => (
                                                     <tr key={dIdx} className="border-b border-slate-50 last:border-0">
                                                         <td className="p-1 font-bold text-slate-800">{detail.name}</td>
-                                                        <td className="p-1 text-center text-slate-900 font-black">{toPersianDigits(detail.quantity)} {detail.unit}</td>
-                                                        <td className="p-1 text-left font-black text-slate-900">{formatPrice(detail.unitPrice)}</td>
+                                                        <td className="p-1 text-center text-slate-900 font-black whitespace-nowrap">{toPersianDigits(detail.quantity)} {detail.unit}</td>
+                                                        <td className="p-1 text-left font-black text-slate-900 whitespace-nowrap">{formatPrice(detail.unitPrice)}</td>
                                                     </tr>
                                                 ))}
                                             </tbody>
@@ -263,10 +261,9 @@ export const InvoicePrint = () => {
             </table>
         </div>
 
-        {pageIndex === totalPages - 1 && (
+        {isLastPage && (
             <div className="inv-total px-10 py-2 shrink-0 border-t-2 border-slate-200 bg-white">
                 <div className="flex gap-4 items-center">
-                    {/* Signatures */}
                     <div className="flex-1 flex justify-around items-center opacity-40">
                         <div className="text-center">
                             <span className="text-[8px] font-black block mb-8 text-slate-500">مهر و امضاء فروشنده</span>
@@ -278,7 +275,6 @@ export const InvoicePrint = () => {
                         </div>
                     </div>
                     
-                    {/* Compact Total Box */}
                     <div className={`totals-box w-60 p-3.5 rounded-2xl flex flex-col shadow-lg ${
                         tempLayout === 'standard' ? 'bg-white border border-slate-200 text-slate-900' : 
                         tempLayout === 'classic' ? 'bg-slate-50 border-2 border-slate-900 text-slate-900 shadow-none' :
@@ -307,47 +303,12 @@ export const InvoicePrint = () => {
             </div>
         )}
         <InvoiceFooter pageNum={pageIndex + 1} totalPages={totalPages} />
-    </div>
-  );
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col items-center font-['Vazirmatn'] relative pb-40 overflow-x-hidden">
-       <style>
-         {`
-           @media print {
-             @page { size: A4; margin: 0; }
-             body { background: white !important; -webkit-print-color-adjust: exact; }
-             .no-print { display: none !important; }
-             #root > div { padding: 0 !important; background: white !important; }
-             .invoice-page { margin: 0 !important; box-shadow: none !important; border: none !important; width: 100% !important; height: 1123px !important; }
-             .origin-top { transform: scale(1) !important; }
-           }
-           .export-container { position: absolute; top: 0; left: -10000px; width: 794px; pointer-events: none; }
-           .invoice-page { width: 794px !important; height: 1123px !important; background-color: #ffffff; color: #1e293b; position: relative; display: flex; flex-direction: column; overflow: hidden; padding: 0; margin: 0; }
-           
-           .layout-standard .inv-header { background-color: #fafafa; border-bottom: 2px solid #f1f5f9; }
-           .layout-technical .inv-header { background-color: #1e293b; color: white; }
-           .layout-technical .inv-header * { color: white !important; }
-           .layout-classic .inv-total { border-top-width: 3px; border-color: #000; }
-         `}
-       </style>
-
-       <div className="export-container no-scrollbar no-print">
-            {pages.map((pageItems, pageIndex) => (
-                <div key={`export-${pageIndex}`} className={`invoice-page layout-${tempLayout}`}>
-                    <InvoicePageContent pageItems={pageItems} pageIndex={pageIndex} totalPages={pages.length} />
-                </div>
-            ))}
-       </div>
-
-       {/* FLOATING ZOOM CONTROLS */}
-       <div className="no-print fixed top-24 right-6 z-50 flex flex-col gap-2 bg-white/80 backdrop-blur-xl rounded-2xl shadow-xl border border-white/40 p-1">
-            <button onClick={() => setScale(s => Math.min(2, s + 0.1))} className="w-10 h-10 flex items-center justify-center text-slate-700 hover:bg-slate-100 rounded-xl transition-all"><ZoomIn size={18} /></button>
-            <button onClick={() => setScale(1)} className="w-10 h-10 flex items-center justify-center text-slate-700 hover:bg-slate-100 rounded-xl transition-all"><Maximize size={18} /></button>
-            <button onClick={() => setScale(s => Math.max(0.3, s - 0.1))} className="w-10 h-10 flex items-center justify-center text-slate-700 hover:bg-slate-100 rounded-xl transition-all"><ZoomOut size={18} /></button>
-       </div>
-
-       {/* MODERN ACTION OVERLAY */}
        <div className="no-print fixed bottom-6 left-0 right-0 z-50 px-6 flex flex-col items-center gap-4 pointer-events-none">
             <div className="bg-white/80 backdrop-blur-2xl shadow-2xl border border-white/50 rounded-2xl p-1 flex gap-1 pointer-events-auto max-w-full overflow-x-auto no-scrollbar">
                 {['standard', 'modern', 'technical', 'classic'].map((layout) => (
@@ -379,10 +340,18 @@ export const InvoicePrint = () => {
             </div>
        </div>
 
+       <div className="export-container no-print absolute top-[-10000px] left-[-10000px]">
+            {pages.map((pageItems, pageIndex) => (
+                <div key={pageIndex} className={`invoice-page layout-${tempLayout}`} style={{ width: '794px', height: '1123px', position: 'relative', backgroundColor: '#fff' }}>
+                    <InvoicePageContent pageItems={pageItems} pageIndex={pageIndex} totalPages={pages.length} />
+                </div>
+            ))}
+       </div>
+
        <div ref={containerRef} className="w-full flex justify-center pt-8 overflow-visible">
-            <div ref={scaledWrapperRef} className="relative origin-top transition-transform duration-300 ease-out flex flex-col gap-10" style={{ transform: `scale(${scale})`, width: '794px' }}>
+            <div className="relative origin-top transition-transform duration-300 ease-out flex flex-col gap-10" style={{ transform: `scale(${scale})`, width: '794px' }}>
                 {pages.map((pageItems, pageIndex) => (
-                    <div key={pageIndex} className={`invoice-page shadow-2xl layout-${tempLayout} border border-slate-200`}>
+                    <div key={pageIndex} className={`invoice-page shadow-2xl layout-${tempLayout} border border-slate-200`} style={{ width: '794px', height: '1123px', position: 'relative', backgroundColor: '#fff', overflow: 'hidden' }}>
                         <InvoicePageContent pageItems={pageItems} pageIndex={pageIndex} totalPages={pages.length} />
                     </div>
                 ))}

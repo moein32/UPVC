@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { ArrowRight, Activity, FileText, Layout, Grid, AlertTriangle, ChevronLeft, Loader2, Printer, CheckCircle2, Package, Search, QrCode, Download, Info, X, Factory, Building2, ShieldCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -42,14 +41,12 @@ export const ProductionControl = () => {
     projects.find(p => p.id === selectedProjectId), 
   [projects, selectedProjectId]);
 
-  // --- Logic for Material Analysis ---
   const analysisReport = useMemo(() => {
       if (!selectedProject || !inventory.length) return null;
       const needed: Record<string, { req: number, stock: number, unit: string, isShort: boolean, invId?: string }> = {};
       
       selectedProject.items.forEach(unit => {
           unit.calculations.details.forEach(d => {
-              // Fix: Explicitly handle lookup and initialization to avoid type union/optionality errors
               let current = needed[d.name];
               if (!current) {
                   current = { req: 0, stock: 0, unit: d.unit, isShort: false, invId: undefined };
@@ -68,7 +65,6 @@ export const ProductionControl = () => {
       return needed;
   }, [selectedProject, inventory]);
 
-  // --- Action: Confirm Production & Deduct Stock ---
   const handleConfirmProduction = async () => {
     if (!selectedProject || !analysisReport) return;
     
@@ -77,9 +73,7 @@ export const ProductionControl = () => {
     setIsProcessingProduction(true);
     
     try {
-        // 1. Update Inventory Object
         const updatedInventory = [...inventory];
-        // Fix: Explicitly cast Object.entries to resolve 'unknown' type errors during deduction loop
         (Object.entries(analysisReport) as [string, any][]).forEach(([name, data]) => {
             if (data.invId) {
                 const itemIdx = updatedInventory.findIndex(i => i.id === data.invId);
@@ -89,15 +83,12 @@ export const ProductionControl = () => {
             }
         });
 
-        // 2. Save updated inventory to localStorage
         localStorage.setItem('lumina_inventory_v3', JSON.stringify(updatedInventory));
         setInventory(updatedInventory);
 
-        // 3. Update Project Status to 'Produced'
         const updatedProject = { ...selectedProject, status: 'Produced' as const };
         pricingStore.saveProject(updatedProject);
         
-        // 4. Refresh local state
         loadData();
         alert('تولید با موفقیت ثبت شد و موجودی انبار به‌روزرسانی گردید.');
         setActiveTab(null);
@@ -108,7 +99,6 @@ export const ProductionControl = () => {
     }
   };
 
-  // --- PDF Export Helpers ---
   const extractGlassPanes = (node: WindowNode, w: number, h: number, unitId: string): any[] => {
       let panes: any[] = [];
       if (node.type === 'container' && node.children) {
@@ -169,9 +159,8 @@ export const ProductionControl = () => {
   return (
     <div className="min-h-screen bg-[#f8fafc] pb-32 font-['Vazirmatn']">
       
-      {/* EXPORT ENGINES (Hidden) */}
+      {/* EXPORT ENGINES */}
       <div className="fixed top-0 left-[-10000px] pointer-events-none">
-          {/* Technical Blueprint Grid (4 per page) */}
           <div ref={pdfRef} style={{ width: '794px' }}>
               {(() => {
                   const items = selectedProject?.items || [];
@@ -181,10 +170,10 @@ export const ProductionControl = () => {
                     <div key={pIdx} className="blueprint-page" style={{ width: '794px', height: '1123px', padding: '40px', backgroundColor: '#fff', display: 'flex', flexDirection: 'column', direction: 'rtl' }}>
                         <div style={{ borderBottom: '3px solid #0f172a', paddingBottom: '15px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                            <div>
-                               <h1 style={{ fontSize: '20px', fontWeight: '900', margin: 0 }}>نقشه فنی و لیست قطعات اجرایی</h1>
+                               <h1 style={{ fontSize: '20px', fontWeight: '900', margin: 0 }}>نقشه فنی و لیست قطعات اجرایی (NexWin Designer)</h1>
                                <p style={{ fontSize: '10px', fontWeight: 'bold', color: '#64748b', marginTop: '5px' }}>پروژه: {selectedProject?.customerName} | تاریخ: {toPersianDigits(today)}</p>
                            </div>
-                           <div style={{ textAlign: 'left', fontSize: '10px', fontWeight: '900' }}>{settings?.invoice.companyName}</div>
+                           <div style={{ textAlign: 'left', fontSize: '10px', fontWeight: '900' }}>{settings?.invoice.companyName || 'NEXWIN UPVC'}</div>
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr', gap: '20px', flex: 1 }}>
                             {page.map((item, idx) => (
@@ -221,7 +210,6 @@ export const ProductionControl = () => {
               })()}
           </div>
 
-          {/* Glass Labels (8 per A4) */}
           <div ref={labelsRef} style={{ width: '794px' }}>
               {(() => {
                   const labelPages = [];
@@ -231,8 +219,8 @@ export const ProductionControl = () => {
                           {page.map((glass, gIdx) => (
                               <div key={gIdx} style={{ border: '2px solid #0f172a', padding: '15px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', borderRadius: '12px' }}>
                                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>
-                                      <span style={{ fontSize: '11px', fontWeight: '900' }}>{settings?.invoice.companyName || 'LUMINA UPVC'}</span>
-                                      <span style={{ fontSize: '8px', fontWeight: 'bold', color: '#64748b' }}>GLASS LABEL SYSTEM</span>
+                                      <span style={{ fontSize: '11px', fontWeight: '900' }}>{settings?.invoice.companyName || 'NEXWIN UPVC'}</span>
+                                      <span style={{ fontSize: '8px', fontWeight: 'bold', color: '#64748b' }}>NEXWIN LABEL SYSTEM</span>
                                   </div>
                                   <div style={{ textAlign: 'center', padding: '10px 0' }}>
                                       <div style={{ fontSize: '40px', fontWeight: '900', color: '#0f172a' }}>{toPersianDigits(glass.w)} × {toPersianDigits(glass.h)}</div>
@@ -253,12 +241,11 @@ export const ProductionControl = () => {
           </div>
       </div>
 
-      {/* HEADER */}
       <div className="bg-white px-6 pt-12 pb-6 shadow-sm sticky top-0 z-40 border-b border-slate-100">
         <div className="flex items-center justify-between">
            <button onClick={() => navigate('/dashboard')} className="p-2.5 bg-slate-50 rounded-2xl text-slate-700 active:scale-90 transition-transform"><ArrowRight size={20}/></button>
            <div className="text-center">
-               <h1 className="text-xl font-black text-slate-900 tracking-tight">کنترل تولید کارگاه</h1>
+               <h1 className="text-xl font-black text-slate-900 tracking-tight">کنترل تولید (NexWin)</h1>
                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Workshop Control Center</p>
            </div>
            <div className="p-2.5 bg-blue-50 text-blue-600 rounded-2xl animate-pulse"><Activity size={20}/></div>
@@ -268,7 +255,7 @@ export const ProductionControl = () => {
       <div className="p-6">
           {/* STEP 1: Selection */}
           <div className="mb-10">
-              <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 px-1">پروژه‌های آماده پردازش</h3>
+              <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 px-1">پروژه‌های آماده پردازش در نکس‌وین</h3>
               <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2">
                   {projects.length === 0 ? (
                       <div className="w-full py-16 bg-white rounded-[2.5rem] border border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-300">
@@ -296,7 +283,6 @@ export const ProductionControl = () => {
               </div>
           </div>
 
-          {/* STEP 2: Actions */}
           <AnimatePresence>
             {selectedProject && (
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
@@ -326,7 +312,6 @@ export const ProductionControl = () => {
                       </GlassCard>
                   </div>
 
-                  {/* PREVIEWS */}
                   {activeTab === 'blueprints' && (
                       <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm space-y-6">
                           <div className="flex justify-between items-center">
@@ -347,7 +332,7 @@ export const ProductionControl = () => {
                   {activeTab === 'labels' && (
                       <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm space-y-6">
                            <div className="flex justify-between items-center">
-                              <h3 className="font-black text-slate-800 text-base">سیستم لیبل‌زنی هوشمند</h3>
+                              <h3 className="font-black text-slate-800 text-base">سیستم لیبل‌زنی هوشمند نکس‌وین</h3>
                               <PrimaryButton onClick={downloadLabels} loading={isGenerating} icon={Printer}>چاپ لیبل‌ها</PrimaryButton>
                           </div>
                           <div className="p-10 bg-slate-50 rounded-3xl border border-dashed border-slate-200 text-center flex flex-col items-center">
@@ -361,7 +346,6 @@ export const ProductionControl = () => {
           </AnimatePresence>
       </div>
 
-      {/* MODAL: ANALYSIS & DEDUCTION */}
       <AnimatePresence>
           {activeTab === 'analysis' && analysisReport && (
               <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
@@ -387,7 +371,6 @@ export const ProductionControl = () => {
                       ) : null}
 
                       <div className="space-y-3 mb-8">
-                          {/* Fix: Explicitly cast entries to handle unknown material data in loop */}
                           {(Object.entries(analysisReport) as [string, any][]).map(([name, data]) => (
                               <div key={name} className={`flex items-center justify-between p-5 rounded-2xl border ${data.isShort ? 'bg-rose-50 border-rose-200' : 'bg-slate-50 border-slate-100'}`}>
                                   <div className="flex items-center gap-4">

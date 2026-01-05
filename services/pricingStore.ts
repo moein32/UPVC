@@ -1,4 +1,3 @@
-
 import { ProfileBrand, GlassType, HardwareItem, HardwareBrand, ProfileComponent, AppSettings, SavedProject } from '../types';
 
 const DEFAULT_COMPONENTS: ProfileComponent[] = [
@@ -100,7 +99,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   priceCoefficient: 0,
   currency: 'تومان',
   invoice: {
-    companyName: 'گروه صنعتی لومینا',
+    companyName: 'گروه صنعتی نکس‌وین (NexWin)',
     companyLogo: '',
     companyAddress: 'تهران، میدان آزادی',
     companyPhone: '021-12345678',
@@ -110,80 +109,86 @@ const DEFAULT_SETTINGS: AppSettings = {
 };
 
 const DEFAULT_PROJECT: SavedProject = {
-  id: 'demo-project-v3', // Incremented ID to force fresh demo for users
-  customerName: 'پروژه نمونه (تست نهایی)',
-  address: 'تهران، سعادت آباد، بلوار دریا',
-  installPercent: 10,
-  companyName: 'گروه صنعتی لومینا',
+  id: 'nexwin-demo-v4', 
+  customerName: 'نمایشگاه مرکزی نکس‌وین',
+  address: 'تهران، بزرگراه ستاری، مجتمع کوروش، طبقه تجاری',
+  installPercent: 12,
+  companyName: 'گروه صنعتی نکس‌وین (NexWin)',
   date: new Date().toISOString(),
-  status: 'Draft',
+  status: 'Contract',
   defaultProfileId: 'vistabest',
-  totalPrice: 20437500, 
+  totalPrice: 42850000, 
   payments: [],
   items: [
     {
-      id: 'item-demo-1',
+      id: 'demo-item-1',
       config: {
-        id: 'conf-1', width: 1500, height: 1500, profileId: 'vistabest', glassId: 'double_4_4', hardwareId: 'h1', type: 'Fixed', mullions: 0, frameType: 'standard',
-        layout: { id: 'root', type: 'leaf', openingType: 'Fixed', flex: 1 }
+        id: 'conf-d1', width: 1500, height: 1200, profileId: 'vistabest', glassId: 'double_4_4', hardwareId: 'h0', type: 'پنجره دو لنگه ثابت', mullions: 1, frameType: 'standard',
+        layout: { id: 'root1', type: 'container', dir: 'row', flex: 1, children: [{id:'c1-1', type:'leaf', openingType:'Fixed', flex:1}, {id:'c1-2', type:'leaf', openingType:'Fixed', flex:1}] }
       },
-      // Fix: Add missing quantity property (defaults to 1 for demo)
-      quantity: 1,
+      quantity: 3,
       calculations: {
-        profileMeters: 6, profilePrice: 3000000, glassArea: 2.25, glassPrice: 1462500, sashCount: 0, hardwarePrice: 0, totalPrice: 4462500, unitPrice: 4462500,
+        profileMeters: 6.9, profilePrice: 3800000, glassArea: 1.8, glassPrice: 1170000, sashCount: 0, hardwarePrice: 0, totalPrice: 4970000, unitPrice: 4970000,
         details: [
-          { rowId: 1, name: 'پروفیل فریم', unit: 'متر طول', quantity: 6, unitPrice: 450000, totalPrice: 2700000 },
-          { rowId: 2, name: 'زهوار دوجداره', unit: 'متر طول', quantity: 6, unitPrice: 60000, totalPrice: 360000 },
-          { rowId: 3, name: 'گالوانیزه تقویتی', unit: 'متر طول', quantity: 6, unitPrice: 150000, totalPrice: 900000 },
-          { rowId: 4, name: 'شیشه دوجداره ۴-۴', unit: 'متر مربع', quantity: 2.25, unitPrice: 650000, totalPrice: 1462500 }
+          { rowId: 1, name: 'پروفیل فریم', unit: 'متر طول', quantity: 5.4, unitPrice: 450000, totalPrice: 2430000 },
+          { rowId: 2, name: 'پروفیل مولیون (وادار)', unit: 'متر طول', quantity: 1.5, unitPrice: 460000, totalPrice: 690000 },
+          { rowId: 3, name: 'زهوار دوجداره', unit: 'متر طول', quantity: 6.9, unitPrice: 60000, totalPrice: 414000 },
+          { rowId: 4, name: 'گالوانیزه تقویتی', unit: 'متر طول', quantity: 6.9, unitPrice: 150000, totalPrice: 1035000 },
+          { rowId: 5, name: 'شیشه دوجداره ۴-۴', unit: 'متر مربع', quantity: 1.8, unitPrice: 650000, totalPrice: 1170000 }
         ]
       }
     },
     {
-      id: 'item-demo-2',
+      id: 'demo-item-2',
       config: {
-        id: 'conf-2', width: 2000, height: 1500, profileId: 'vistabest', glassId: 'double_4_4', hardwareId: 'h1', type: 'Custom', mullions: 1, frameType: 'standard',
-        layout: {
-            id: 'root', type: 'container', dir: 'row', 
-            children: [
-                { id: 'c1', type: 'leaf', openingType: 'TurnRight', flex: 1 },
-                { id: 'c2', type: 'leaf', openingType: 'TiltTurnLeft', flex: 1 }
-            ]
-        }
+        id: 'conf-d2', width: 800, height: 1400, profileId: 'vistabest', glassId: 'double_4_4', hardwareId: 'h1', type: 'پنجره تک لنگه بازشو با کتیبه', mullions: 1, frameType: 'standard',
+        layout: { id: 'root2', type: 'container', dir: 'col', flex: 1, children: [{id:'c2-1', type:'leaf', openingType:'Fixed', flex:400}, {id:'c2-2', type:'leaf', openingType:'TurnRight', flex:1000}] }
       },
-      // Fix: Add missing quantity property (defaults to 1 for demo)
-      quantity: 1,
+      quantity: 5,
       calculations: {
-        profileMeters: 12, profilePrice: 6000000, glassArea: 2.5, glassPrice: 1625000, sashCount: 2, hardwarePrice: 1300000, totalPrice: 8925000, unitPrice: 8925000,
+        profileMeters: 8.8, profilePrice: 4800000, glassArea: 1.12, glassPrice: 728000, sashCount: 1, hardwarePrice: 450000, totalPrice: 5978000, unitPrice: 5978000,
         details: [
-             { rowId: 1, name: 'پروفیل فریم', unit: 'متر طول', quantity: 7, unitPrice: 450000, totalPrice: 3150000 },
-             { rowId: 2, name: 'پروفیل لنگه پنجره', unit: 'متر طول', quantity: 8, unitPrice: 460000, totalPrice: 3680000 },
-             { rowId: 3, name: 'پروفیل مولیون', unit: 'متر طول', quantity: 1.5, unitPrice: 460000, totalPrice: 690000 },
-             { rowId: 4, name: 'گالوانیزه تقویتی', unit: 'متر طول', quantity: 16.5, unitPrice: 150000, totalPrice: 2475000 },
-             { rowId: 5, name: 'زهوار شیشه', unit: 'متر طول', quantity: 16, unitPrice: 60000, totalPrice: 960000 },
-             { rowId: 6, name: 'شیشه دوجداره ۴-۴', unit: 'متر مربع', quantity: 2.5, unitPrice: 650000, totalPrice: 1625000 },
-             { rowId: 7, name: 'یراق تک حالته', unit: 'دست', quantity: 1, unitPrice: 450000, totalPrice: 450000 },
-             { rowId: 8, name: 'یراق دو حالته', unit: 'دست', quantity: 1, unitPrice: 850000, totalPrice: 850000 }
+          { rowId: 1, name: 'پروفیل فریم', unit: 'متر طول', quantity: 4.4, unitPrice: 450000, totalPrice: 1980000 },
+          { rowId: 2, name: 'پروفیل لنگه پنجره', unit: 'متر طول', quantity: 3.6, unitPrice: 460000, totalPrice: 1656000 },
+          { rowId: 3, name: 'پروفیل مولیون', unit: 'متر طول', quantity: 0.8, unitPrice: 460000, totalPrice: 368000 },
+          { rowId: 4, name: 'شیشه دوجداره ۴-۴', unit: 'متر مربع', quantity: 1.12, unitPrice: 650000, totalPrice: 728000 },
+          { rowId: 5, name: 'یراق تک حالته', unit: 'دست', quantity: 1, unitPrice: 450000, totalPrice: 450000 }
         ]
       }
     },
     {
-      id: 'item-demo-3',
+      id: 'demo-item-3',
       config: {
-        id: 'conf-3', width: 900, height: 2100, profileId: 'wintech', glassId: 'double_4_4', hardwareId: 'h5', type: 'Door', mullions: 0, frameType: 'standard',
-        layout: { id: 'root', type: 'leaf', openingType: 'DoorRight', flex: 1 }
+        id: 'conf-d3', width: 900, height: 2200, profileId: 'vistabest', glassId: 'double_4_4', hardwareId: 'h5', type: 'درب بالکنی با مولیون افقی', mullions: 1, frameType: 'standard',
+        layout: { id: 'root3', type: 'container', dir: 'col', openingType: 'DoorRight', flex: 1, children: [{id:'c3-1', type:'leaf', openingType:'Fixed', flex:1400}, {id:'c3-2', type:'leaf', openingType:'Fixed', flex:800}] }
       },
-      // Fix: Add missing quantity property (defaults to 1 for demo)
-      quantity: 1,
+      quantity: 2,
       calculations: {
-        profileMeters: 6, profilePrice: 4000000, glassArea: 1.5, glassPrice: 975000, sashCount: 1, hardwarePrice: 1200000, totalPrice: 6175000, unitPrice: 6175000,
+        profileMeters: 13.3, profilePrice: 7200000, glassArea: 1.98, glassPrice: 1287000, sashCount: 1, hardwarePrice: 1200000, totalPrice: 9687000, unitPrice: 9687000,
         details: [
-            { rowId: 1, name: 'پروفیل فریم', unit: 'متر طول', quantity: 6, unitPrice: 420000, totalPrice: 2520000 },
-            { rowId: 2, name: 'پروفیل لنگه درب', unit: 'متر طول', quantity: 6, unitPrice: 420000, totalPrice: 2520000 },
-            { rowId: 3, name: 'گالوانیزه تقویتی', unit: 'متر طول', quantity: 12, unitPrice: 140000, totalPrice: 1680000 },
-            { rowId: 4, name: 'زهوار شیشه', unit: 'متر طول', quantity: 6, unitPrice: 55000, totalPrice: 330000 },
-            { rowId: 5, name: 'شیشه دوجداره', unit: 'متر مربع', quantity: 1.5, unitPrice: 650000, totalPrice: 975000 },
-            { rowId: 6, name: 'یراق درب سوئیچی', unit: 'دست', quantity: 1, unitPrice: 1200000, totalPrice: 1200000 }
+          { rowId: 1, name: 'پروفیل فریم', unit: 'متر طول', quantity: 6.2, unitPrice: 450000, totalPrice: 2790000 },
+          { rowId: 2, name: 'پروفیل لنگه درب', unit: 'متر طول', quantity: 6.2, unitPrice: 480000, totalPrice: 2976000 },
+          { rowId: 3, name: 'پروفیل مولیون', unit: 'متر طول', quantity: 0.9, unitPrice: 460000, totalPrice: 414000 },
+          { rowId: 4, name: 'شیشه دوجداره ۴-۴', unit: 'متر مربع', quantity: 1.98, unitPrice: 650000, totalPrice: 1287000 },
+          { rowId: 5, name: 'یراق درب بالکنی', unit: 'دست', quantity: 1, unitPrice: 1200000, totalPrice: 1200000 }
+        ]
+      }
+    },
+    {
+      id: 'demo-item-4',
+      config: {
+        id: 'conf-d4', width: 2400, height: 1500, profileId: 'vistabest', glassId: 'double_4_4', hardwareId: 'h2', type: 'پنجره سه لنگه (وسط دوحالته)', mullions: 2, frameType: 'standard',
+        layout: { id: 'root4', type: 'container', dir: 'row', flex: 1, children: [{id:'c4-1', type:'leaf', openingType:'Fixed', flex:1}, {id:'c4-2', type:'leaf', openingType:'TiltTurnRight', flex:1}, {id:'c4-3', type:'leaf', openingType:'Fixed', flex:1}] }
+      },
+      quantity: 4,
+      calculations: {
+        profileMeters: 15.4, profilePrice: 8400000, glassArea: 3.6, glassPrice: 2340000, sashCount: 1, hardwarePrice: 850000, totalPrice: 11590000, unitPrice: 11590000,
+        details: [
+          { rowId: 1, name: 'پروفیل فریم', unit: 'متر طول', quantity: 7.8, unitPrice: 450000, totalPrice: 3510000 },
+          { rowId: 2, name: 'پروفیل مولیون', unit: 'متر طول', quantity: 3.0, unitPrice: 460000, totalPrice: 138000 },
+          { rowId: 3, name: 'پروفیل لنگه پنجره', unit: 'متر طول', quantity: 4.6, unitPrice: 460000, totalPrice: 2116000 },
+          { rowId: 4, name: 'شیشه دوجداره ۴-۴', unit: 'متر مربع', quantity: 3.6, unitPrice: 650000, totalPrice: 2340000 },
+          { rowId: 5, name: 'یراق دو حالته', unit: 'دست', quantity: 1, unitPrice: 850000, totalPrice: 850000 }
         ]
       }
     }
@@ -260,11 +265,10 @@ export const pricingStore = {
     const stored = localStorage.getItem('lumina_projects');
     let projects: SavedProject[] = stored ? JSON.parse(stored) : [];
     
-    // Check if demo project exists or needs updating
     const demoExists = projects.some(p => p.id === DEFAULT_PROJECT.id);
     if (!demoExists) {
-        // Remove old demo projects to keep it clean
-        projects = projects.filter(p => !p.id.startsWith('demo-project'));
+        // Keep the demo at the top but avoid duplicates from older versions
+        projects = projects.filter(p => !p.id.startsWith('demo-project') && p.id !== 'nexwin-demo-v4');
         projects.unshift(DEFAULT_PROJECT);
         localStorage.setItem('lumina_projects', JSON.stringify(projects));
     }

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { ArrowRight, RefreshCw, Download, Settings as SettingsIcon, Package, Loader2, FileText, X, Layout, PieChart, Layers, CheckCircle2, Printer } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -221,7 +220,7 @@ export const CuttingOptimization = () => {
             });
             pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
         }
-        pdf.save(`${type === 'profile' ? 'Profile_Cutting' : 'Glass_Cutting'}_${selectedProject?.customerName || 'Lumina'}.pdf`);
+        pdf.save(`${type === 'profile' ? 'Profile_Cutting' : 'Glass_Cutting'}_${selectedProject?.customerName || 'NexWin'}.pdf`);
     } catch (err) { console.error('PDF Error:', err); } finally { setIsGeneratingPDF(false); }
   };
 
@@ -232,14 +231,12 @@ export const CuttingOptimization = () => {
   return (
     <div className="min-h-screen bg-[#f8fafc] pb-32 font-['Vazirmatn']">
       
-      {/* 1. ENGINEERING BLUEPRINT ENGINE - PROFILE (EXACT MATCH TO REF) */}
+      {/* 1. ENGINEERING BLUEPRINT ENGINE - PROFILE */}
       <div className="fixed top-0 left-[-10000px] pointer-events-none z-[-100]">
         <div ref={printRef} style={{ width: '794px' }}>
             {(() => {
-                // Fix: Explicitly cast flatBars to OptimizedBar[] to resolve TypeScript 'unknown' error
                 const flatBars = (Object.values(groupedBars) as OptimizedBar[][]).flat() as OptimizedBar[];
                 const pages: OptimizedBar[][] = [];
-                // BARS_PER_PAGE Reduced to 16 to ensure footer space
                 for (let i = 0; i < flatBars.length; i += 16) pages.push(flatBars.slice(i, i + 16));
                 const totalPagesCount = pages.length;
                 return pages.map((pageBars, pageIdx) => (
@@ -248,14 +245,14 @@ export const CuttingOptimization = () => {
                         display: 'flex', flexDirection: 'column', direction: 'rtl', border: '1px solid #e2e8f0',
                         boxSizing: 'border-box', overflow: 'hidden'
                     }}>
-                        {/* Header v4.5 */}
+                        {/* Header Updated to NexWin Precision */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '3px solid #0f172a', paddingBottom: '12px', marginBottom: '20px', flexShrink: 0 }}>
                             <div style={{ textAlign: 'right' }}>
-                                <h1 style={{ fontSize: '20px', fontWeight: '900', color: '#0f172a', margin: 0 }}>نقشه اجرایی برش و بهینه‌سازی (Profile Optimization)</h1>
+                                <h1 style={{ fontSize: '20px', fontWeight: '900', color: '#0f172a', margin: 0 }}>نقشه اجرایی برش و بهینه‌سازی (NexWin Precision)</h1>
                                 <p style={{ fontSize: '11px', color: '#64748b', fontWeight: 'bold', marginTop: '4px' }}>پروژه: {selectedProject?.customerName} | کد رهگیری: {toPersianDigits(selectedProject?.id || '')}</p>
                             </div>
                             <div style={{ textAlign: 'left', fontSize: '10px', color: '#64748b', fontWeight: 'bold' }}>
-                                <div style={{ fontSize: '12px', color: '#1e3a8a', fontWeight: '900' }}>LUMINA CORE v4.5</div>
+                                <div style={{ fontSize: '12px', color: '#1e3a8a', fontWeight: '900' }}>NEXWIN CORE v4.8</div>
                                 <div>تاریخ صدور: {toPersianDigits(new Date().toLocaleDateString('fa-IR'))}</div>
                                 <div>صفحه {toPersianDigits(pageIdx + 1)} از {toPersianDigits(totalPagesCount)}</div>
                             </div>
@@ -288,7 +285,6 @@ export const CuttingOptimization = () => {
                                                 </pattern>
                                             </defs>
                                             
-                                            {/* Track Background */}
                                             <rect x="0" y="30" width={SVG_WIDTH} height="40" fill="#f8fafc" stroke="#e2e8f0" strokeWidth="0.5" />
                                             
                                             {(() => {
@@ -318,11 +314,9 @@ export const CuttingOptimization = () => {
                                                                 </g>
                                                             ) : (
                                                                 <g>
-                                                                    {/* Angle Mark */}
                                                                     <text x={x + w/2} y="22" fill={color} fontSize="12" fontWeight="900" textAnchor="middle" style={{ fontFamily: 'Vazirmatn' }}>
                                                                         ∠ {toPersianDigits(piece.angle || '90/90')}
                                                                     </text>
-                                                                    {/* Length | UnitID */}
                                                                     <text x={x + w/2} y="55" fill="white" fontSize="26" fontWeight="900" textAnchor="middle" style={{ fontFamily: 'Vazirmatn' }}>
                                                                         {toPersianDigits(piece.length)}
                                                                     </text>
@@ -336,7 +330,6 @@ export const CuttingOptimization = () => {
                                                 })
                                             })()}
 
-                                            {/* Waste Hatch */}
                                             <rect x={scaleX(bar.usedLength)} y="30" width={scaleX(bar.waste)} height="40" fill="#f1f5f9" />
                                             <rect x={scaleX(bar.usedLength)} y="30" width={scaleX(bar.waste)} height="40" fill={`url(#hatch-pdf-${pageIdx}-${bIdx})`} />
                                             
@@ -351,7 +344,7 @@ export const CuttingOptimization = () => {
                             })}
                         </div>
 
-                        {/* Standard Engineering Footer - FIXED AT BOTTOM */}
+                        {/* Standard Engineering Footer Updated to NexWin */}
                         <div style={{ marginTop: '20px', paddingTop: '15px', borderTop: '2.5px solid #0f172a', flexShrink: 0 }}>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px', marginBottom: '15px' }}>
                                 <div style={{ border: '1px solid #e2e8f0', height: '70px', borderRadius: '12px', padding: '8px', textAlign: 'center' }}>
@@ -369,7 +362,7 @@ export const CuttingOptimization = () => {
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', color: '#94a3b8', fontWeight: 'bold' }}>
                                 <div>ابعاد بر اساس کسر تیغه اره {toPersianDigits(bladeKerf)}mm می‌باشد. کلیه واحدها به میلی‌متر (mm) است.</div>
-                                <div style={{ color: '#0f172a' }}>LUMINA PRECISION BLUEPRINT v4.5</div>
+                                <div style={{ color: '#0f172a' }}>NEXWIN INDUSTRIAL ENGINE v4.8</div>
                             </div>
                         </div>
                     </div>
@@ -389,11 +382,11 @@ export const CuttingOptimization = () => {
                 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '3px solid #0f172a', paddingBottom: '12px', marginBottom: '30px', flexShrink: 0 }}>
                         <div style={{ textAlign: 'right' }}>
-                            <h1 style={{ fontSize: '18px', fontWeight: '900', color: '#0f172a', margin: 0 }}>نقشه برش جام شیشه #{toPersianDigits(sheet.id)}</h1>
+                            <h1 style={{ fontSize: '18px', fontWeight: '900', color: '#0f172a', margin: 0 }}>نقشه برش جام شیشه (NexWin Glass) #{toPersianDigits(sheet.id)}</h1>
                             <p style={{ fontSize: '10px', color: '#64748b', fontWeight: 'bold' }}>پروژه: {selectedProject?.customerName}</p>
                         </div>
                         <div style={{ textAlign: 'left', fontSize: '10px', color: '#64748b' }}>
-                            <div style={{ fontSize: '12px', color: '#10b981', fontWeight: '900' }}>LUMINA GLASS ENGINE</div>
+                            <div style={{ fontSize: '12px', color: '#10b981', fontWeight: '900' }}>NEXWIN GLASS ENGINE</div>
                             <div>ابعاد جام: {toPersianDigits(glassSheetWidth)}x{toPersianDigits(glassSheetHeight)} mm</div>
                         </div>
                     </div>
@@ -427,19 +420,19 @@ export const CuttingOptimization = () => {
 
                     <div style={{ marginTop: '20px', borderTop: '1.5px solid #f1f5f9', paddingTop: '15px', display: 'flex', justifyContent: 'space-between', fontSize: '9px', color: '#94a3b8', fontWeight: 'bold', flexShrink: 0 }}>
                         <div>متراژ مصرفی جام: {toPersianDigits((sheet.usedArea/1000000).toFixed(2))} m² | ضایعات: {toPersianDigits(sheet.wastePercent.toFixed(1))}%</div>
-                        <div style={{ color: '#0f172a' }}>LUMINA PRECISION BLUEPRINT v4.5</div>
+                        <div style={{ color: '#0f172a' }}>NEXWIN INDUSTRIAL ENGINE v4.8</div>
                     </div>
                 </div>
             ))}
         </div>
       </div>
 
-      {/* HEADER UI */}
+      {/* HEADER UI Updated to NexWin Designer */}
       <div className="bg-slate-900 text-white px-6 pt-12 pb-6 shadow-2xl sticky top-0 z-50 rounded-b-[2.5rem]">
         <div className="flex items-center justify-between mb-6">
            <button onClick={() => navigate('/dashboard')} className="p-3 bg-white/10 rounded-2xl active:scale-90 transition-transform"><ArrowRight size={22}/></button>
            <div className="text-center">
-                <h1 className="text-xl font-black tracking-tight">بهینه‌سازی و نقشه فنی</h1>
+                <h1 className="text-xl font-black tracking-tight">طراح نکس‌وین (NexWin Designer)</h1>
                 <p className="text-[9px] font-bold uppercase tracking-widest opacity-40 mt-1">Workshop Layout Engine</p>
            </div>
            <div className="w-10"></div>
@@ -506,7 +499,7 @@ export const CuttingOptimization = () => {
         </PrimaryButton>
       </div>
 
-      {/* SUMMARY MODAL */}
+      {/* SUMMARY MODAL Updated to NexWin */}
       <AnimatePresence>
         {showSummary && (
             <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm">
@@ -522,14 +515,13 @@ export const CuttingOptimization = () => {
                         <div className={`w-16 h-16 mx-auto mb-4 rounded-3xl flex items-center justify-center ${activeMode === 'profile' ? 'bg-blue-50 text-blue-600' : 'bg-emerald-50 text-emerald-600'}`}>
                             {activeMode === 'profile' ? <Layers size={32}/> : <Layout size={32}/>}
                         </div>
-                        <h2 className="text-xl font-black text-slate-900">خلاصه گزارش {activeMode === 'profile' ? 'پروفیل' : 'شیشه'}</h2>
+                        <h2 className="text-xl font-black text-slate-900">خلاصه گزارش نکس‌وین (NexWin)</h2>
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Industrial Layout Summary</p>
                     </div>
 
                     <div className="space-y-4 mb-8">
                         {activeMode === 'profile' ? (
                             <div className="grid grid-cols-2 gap-3">
-                                {/* Fix: Explicitly cast to [string, OptimizedBar[]][] to fix 'unknown' type error */}
                                 {(Object.entries(groupedBars) as [string, OptimizedBar[]][]).map(([type, bars]) => (
                                     <div key={type} className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
                                         <span className="text-[9px] font-black text-slate-400 block mb-1 uppercase tracking-tight">{getFarsiType(type)}</span>

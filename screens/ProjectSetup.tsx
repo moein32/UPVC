@@ -9,7 +9,6 @@ export const ProjectSetup = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Initialize state lazily to prevent re-render loops from useEffect dependencies
   const [brands, setBrands] = useState<ProfileBrand[]>([]);
   
   const [details, setDetails] = useState<ProjectDetails>(() => {
@@ -21,7 +20,7 @@ export const ProjectSetup = () => {
       customerName: '',
       address: '',
       installPercent: 15,
-      companyName: 'گروه صنعتی لومینا', // Default
+      companyName: 'گروه صنعتی نکس‌وین (NexWin)', 
       date: new Date().toISOString(),
       status: 'Draft',
       defaultProfileId: ''
@@ -37,34 +36,27 @@ export const ProjectSetup = () => {
     const loadedBrands = pricingStore.getBrands();
     setBrands(loadedBrands);
     
-    // Set default profile if new project and none selected yet
-    // Only set if we have brands and no profileId is currently set
     if (!isEdit && !details.defaultProfileId && loadedBrands.length > 0) {
         setDetails(d => ({ ...d, defaultProfileId: loadedBrands[0].id }));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Run once on mount
+  }, []); 
 
   const handleSave = () => {
-    // Validate
     if(!details.customerName) {
         alert("لطفا نام مشتری را وارد کنید.");
         return;
     }
 
     if (isEdit) {
-      // Edit Mode
       const existingProject = pricingStore.getProjects().find((p: any) => p.id === details.id);
       if (existingProject) {
         const updatedProject = { ...existingProject, ...details };
         pricingStore.saveProject(updatedProject);
-        // Navigate back to breakdown
         navigate('/breakdown', { state: { projectDetails: details, items: existingProject.items } });
       } else {
         alert("خطا: پروژه اصلی یافت نشد.");
       }
     } else {
-      // New Project Mode
       const newDetails = { ...details, id: Date.now().toString() };
       navigate('/designer', { state: { projectDetails: newDetails, items: [] } });
     }
@@ -88,7 +80,7 @@ export const ProjectSetup = () => {
         <div className="space-y-4">
             <InputField 
                 label="نام تولید کننده (سربرگ فاکتور)"
-                placeholder="مثال: گروه صنعتی لومینا"
+                placeholder="مثال: گروه صنعتی نکس‌وین"
                 value={details.companyName}
                 onChange={(e: any) => setDetails({...details, companyName: e.target.value})}
                 suffix={<Briefcase size={16}/>}

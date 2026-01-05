@@ -7,8 +7,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'icons/icon-192x192.png', 'icons/icon-512x512.png'],
       manifest: {
-        name: 'Lumina UPVC Designer',
-        short_name: 'Lumina',
+        name: 'NexWin UPVC Designer',
+        short_name: 'NexWin',
         description: 'Next-Gen UPVC Pricing & Design Tool',
         theme_color: '#001f3f',
         background_color: '#f8fafc',

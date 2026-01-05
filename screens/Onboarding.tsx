@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 const steps = [
   {
     id: 1,
-    title: "خوش آمدید به لومینا",
+    title: "خوش آمدید به نکس‌وین (NexWin)",
     description: "نسل جدید طراحی و محاسبه قیمت درب و پنجره‌های UPVC با دقت مهندسی.",
     image: <Sparkles size={80} className="text-amber-500" />,
     bg: "from-slate-800 to-slate-900"

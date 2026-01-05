@@ -18,12 +18,10 @@ const DraggableIcon = ({ type, value, dir, count, label, icon, isActive, onClick
         flex flex-col items-center justify-center gap-1 p-2 rounded-lg cursor-pointer transition-all select-none
         ${isActive ? 'bg-orange-500 text-white shadow-lg scale-105' : 'hover:bg-slate-700 text-slate-300'}
       `}
-      // On mobile/Android, we primarily rely on onClick
       onClick={(e) => {
         e.preventDefault();
         onClick({ type, value, dir, count });
       }}
-      // Keeping drag for desktop compatibility
       draggable
       onDragStart={(e) => onDragStart(e, type, value, dir, count)}
       onDragEnd={onDragEnd}
@@ -357,9 +355,6 @@ export const UnitDesigner = () => {
           if (!targetNode) return;
           if (activeTool.type === 'opening') {
                handleUpdateNode(id, { openingType: activeTool.value as any });
-               // On mobile, we might want to keep the tool active for multiple clicks
-               // but for a clear UX we clear it or just let the user re-tap.
-               // setActiveTool(null); 
           } else if (activeTool.type === 'split') {
               if (targetNode.type === 'leaf') {
                   const count = activeTool.count || 2;
@@ -392,9 +387,7 @@ export const UnitDesigner = () => {
   };
 
   const handleDragEnd = () => {
-    // Standard delay to ensure drop target is hit
     setTimeout(() => {
-        // We don't necessarily want to clear tool on mobile if it was a tap
     }, 100);
   };
 
@@ -588,46 +581,65 @@ export const UnitDesigner = () => {
     const beadM = stats.beadMeters / 1000;
     const glassA = stats.glassArea / 1000000; 
     const panelA = stats.panelArea / 1000000;
+    
+    // Total profiles for Galv Reinforcement
     const galoM = frameM + mullionM + sashWindowM + sashDoorM;
+    
     const brand = brands.find(b => b.id === config.profileId);
     const glassType = glassList.find(g => g.id === config.glassId);
     const hwItems = pricingStore.getHardware();
     const panelType = hwItems.find(h => h.id === 'panel_upvc');
     const panelPricePerM2 = panelType?.pricePerSet || 1500000;
+    
     const frameCompId = config.frameType === 'renovation' ? 'renovation' : 'frame';
     const framePrice = brand?.components.find(c => c.id === frameCompId)?.price || 0;
     const frameName = config.frameType === 'renovation' ? 'پروفیل فریم بازسازی' : 'پروفیل فریم';
     const mullionPrice = brand?.components.find(c => c.id === 'mullion')?.price || 0;
     const sashWindowPrice = brand?.components.find(c => c.id === 'sash_window')?.price || 0;
     const sashDoorPrice = brand?.components.find(c => c.id === 'sash_door')?.price || 0;
-    const beadPrice = brand?.components.find(c => c.id === 'bead')?.price || 0;
+    const beadPrice = brand?.components.find(c => c.id === 'bead')?.price || 60000;
     const galoPrice = brand?.components.find(c => c.id === 'galvanized')?.price || 150000;
     const glassPricePerM2 = glassType?.pricePerSqm || 0;
+    
     const details: InvoiceDetail[] = [];
     let rowId = 1;
+    
+    // 1. PROFILES
     const frameTotal = frameM * framePrice;
     if (frameM > 0) details.push({ rowId: rowId++, name: frameName, unit: 'متر طول', quantity: Number(frameM.toFixed(2)), unitPrice: framePrice, totalPrice: Math.round(frameTotal) });
+    
     const sashWinTotal = sashWindowM * sashWindowPrice;
     if (sashWindowM > 0) details.push({ rowId: rowId++, name: 'پروفیل لنگه پنجره', unit: 'متر طول', quantity: Number(sashWindowM.toFixed(2)), unitPrice: sashWindowPrice, totalPrice: Math.round(sashWinTotal) });
+    
     const sashDoorTotal = sashDoorM * sashDoorPrice;
     if (sashDoorM > 0) details.push({ rowId: rowId++, name: 'پروفیل لنگه درب', unit: 'متر طول', quantity: Number(sashDoorM.toFixed(2)), unitPrice: sashDoorPrice, totalPrice: Math.round(sashDoorTotal) });
+    
     const mullionTotal = mullionM * mullionPrice;
     if (mullionM > 0) details.push({ rowId: rowId++, name: 'پروفیل مولیون (وادار)', unit: 'متر طول', quantity: Number(mullionM.toFixed(2)), unitPrice: mullionPrice, totalPrice: Math.round(mullionTotal) });
-    const beadTotal = beadM * beadPrice;
-    if (beadM > 0) details.push({ rowId: rowId++, name: 'پروفیل زهوار شیشه', unit: 'متر طول', quantity: Number(beadM.toFixed(2)), unitPrice: beadPrice, totalPrice: Math.round(beadTotal) });
-    const galoTotal = galoM * galoPrice;
-    if (galoM > 0) details.push({ rowId: rowId++, name: 'گالوانیزه تقویتی', unit: 'متر طول', quantity: Number(galoM.toFixed(2)), unitPrice: galoPrice, totalPrice: Math.round(galoTotal) });
+    
+    // 2. GLASS & PANELS
     const glassTotal = glassA * glassPricePerM2;
     if (glassA > 0) details.push({ rowId: rowId++, name: glassType?.name || 'شیشه دوجداره', unit: 'متر مربع', quantity: Number(glassA.toFixed(2)), unitPrice: glassPricePerM2, totalPrice: Math.round(glassTotal) });
+    
     const panelTotal = panelA * panelPricePerM2;
     if (panelA > 0) details.push({ rowId: rowId++, name: panelType?.name || 'پنل UPVC', unit: 'متر مربع', quantity: Number(panelA.toFixed(2)), unitPrice: panelPricePerM2, totalPrice: Math.round(panelTotal) });
+    
+    // 3. SYSTEMATIC ITEMS (BEAD & REINFORCEMENT) - Requested Upgrade
+    const beadTotal = beadM * beadPrice;
+    if (beadM > 0) details.push({ rowId: rowId++, name: 'زهوار (Bead)', unit: 'متر طول', quantity: Number(beadM.toFixed(2)), unitPrice: beadPrice, totalPrice: Math.round(beadTotal) });
+    
+    const galoTotal = galoM * galoPrice;
+    if (galoM > 0) details.push({ rowId: rowId++, name: 'گالوانیزه (Reinforcement)', unit: 'متر طول', quantity: Number(galoM.toFixed(2)), unitPrice: galoPrice, totalPrice: Math.round(galoTotal) });
+
+    // 4. HARDWARES (SPECIFIC LABELS)
     let hardwareTotalSum = 0;
     const hardwareMap = [
-      { type: 'Turn', label: 'یراق تک حالته', count: stats.hardware.Turn },
-      { type: 'TiltTurn', label: 'یراق دو حالته', count: stats.hardware.TiltTurn },
+      { type: 'Turn', label: 'یراق تک‌حالته', count: stats.hardware.Turn },
+      { type: 'TiltTurn', label: 'یراق دو‌حالته', count: stats.hardware.TiltTurn },
       { type: 'Sliding', label: 'یراق کشویی', count: stats.hardware.Sliding },
-      { type: 'Door', label: 'یراق بازشو دربی (سوئیچی)', count: stats.hardware.Door },
+      { type: 'Door', label: 'یراق درب بالکنی (سوئیچی)', count: stats.hardware.Door },
     ];
+    
     hardwareMap.forEach(hwEntry => {
       if (hwEntry.count > 0) {
         const match = hwItems.find(item => item.type === hwEntry.type);
@@ -644,9 +656,11 @@ export const UnitDesigner = () => {
         });
       }
     });
+
     const totalProfileMeters = frameM + mullionM + sashWindowM + sashDoorM;
     const profileCost = frameTotal + sashWinTotal + sashDoorTotal + mullionTotal + galoTotal + beadTotal;
     const unitPrice = Math.round(profileCost + glassTotal + hardwareTotalSum + panelTotal);
+    
     return {
         profileMeters: Number(totalProfileMeters.toFixed(2)),
         profilePrice: Math.round(profileCost),
@@ -809,7 +823,6 @@ export const UnitDesigner = () => {
         <div className="absolute inset-0 opacity-5 pointer-events-none" style={{ backgroundImage: 'linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
       </div>
 
-      {/* FLOATING ACTION PANEL */}
       <div className="fixed bottom-0 left-0 right-0 z-40 p-4 pointer-events-none">
           <div className="max-w-xl mx-auto flex flex-col items-center gap-3">
               <div className={`w-full bg-white/90 backdrop-blur-2xl border border-white/60 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] overflow-hidden transition-all duration-500 pointer-events-auto ${isPanelOpen ? 'max-h-[500px] p-6' : 'max-h-0 p-0 border-none opacity-0'}`}>

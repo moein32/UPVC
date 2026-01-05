@@ -5,7 +5,7 @@ import { initReactI18next } from 'react-i18next';
 const resources = {
   fa: {
     translation: {
-      "app_name": "لومینا",
+      "app_name": "نکس‌وین",
       "welcome": "خوش آمدید",
       "dashboard": "داشبورد",
       "new_project": "پروژه جدید",
@@ -64,7 +64,7 @@ const resources = {
   },
   en: {
     translation: {
-      "app_name": "Lumina",
+      "app_name": "NexWin",
       "welcome": "Welcome",
       "dashboard": "Dashboard",
       "new_project": "New Project",
@@ -123,7 +123,7 @@ const resources = {
   },
   ar: {
     translation: {
-      "app_name": "لومینا",
+      "app_name": "نکس‌وین",
       "welcome": "أهلا بك",
       "dashboard": "لوحة القيادة",
       "new_project": "مشروع جديد",
