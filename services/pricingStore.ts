@@ -1,3 +1,4 @@
+
 import { ProfileBrand, GlassType, HardwareItem, HardwareBrand, ProfileComponent, AppSettings, SavedProject } from '../types';
 
 const DEFAULT_COMPONENTS: ProfileComponent[] = [
@@ -137,60 +138,6 @@ const DEFAULT_PROJECT: SavedProject = {
           { rowId: 5, name: 'شیشه دوجداره ۴-۴', unit: 'متر مربع', quantity: 1.8, unitPrice: 650000, totalPrice: 1170000 }
         ]
       }
-    },
-    {
-      id: 'demo-item-2',
-      config: {
-        id: 'conf-d2', width: 800, height: 1400, profileId: 'vistabest', glassId: 'double_4_4', hardwareId: 'h1', type: 'پنجره تک لنگه بازشو با کتیبه', mullions: 1, frameType: 'standard',
-        layout: { id: 'root2', type: 'container', dir: 'col', flex: 1, children: [{id:'c2-1', type:'leaf', openingType:'Fixed', flex:400}, {id:'c2-2', type:'leaf', openingType:'TurnRight', flex:1000}] }
-      },
-      quantity: 5,
-      calculations: {
-        profileMeters: 8.8, profilePrice: 4800000, glassArea: 1.12, glassPrice: 728000, sashCount: 1, hardwarePrice: 450000, totalPrice: 5978000, unitPrice: 5978000,
-        details: [
-          { rowId: 1, name: 'پروفیل فریم', unit: 'متر طول', quantity: 4.4, unitPrice: 450000, totalPrice: 1980000 },
-          { rowId: 2, name: 'پروفیل لنگه پنجره', unit: 'متر طول', quantity: 3.6, unitPrice: 460000, totalPrice: 1656000 },
-          { rowId: 3, name: 'پروفیل مولیون', unit: 'متر طول', quantity: 0.8, unitPrice: 460000, totalPrice: 368000 },
-          { rowId: 4, name: 'شیشه دوجداره ۴-۴', unit: 'متر مربع', quantity: 1.12, unitPrice: 650000, totalPrice: 728000 },
-          { rowId: 5, name: 'یراق تک حالته', unit: 'دست', quantity: 1, unitPrice: 450000, totalPrice: 450000 }
-        ]
-      }
-    },
-    {
-      id: 'demo-item-3',
-      config: {
-        id: 'conf-d3', width: 900, height: 2200, profileId: 'vistabest', glassId: 'double_4_4', hardwareId: 'h5', type: 'درب بالکنی با مولیون افقی', mullions: 1, frameType: 'standard',
-        layout: { id: 'root3', type: 'container', dir: 'col', openingType: 'DoorRight', flex: 1, children: [{id:'c3-1', type:'leaf', openingType:'Fixed', flex:1400}, {id:'c3-2', type:'leaf', openingType:'Fixed', flex:800}] }
-      },
-      quantity: 2,
-      calculations: {
-        profileMeters: 13.3, profilePrice: 7200000, glassArea: 1.98, glassPrice: 1287000, sashCount: 1, hardwarePrice: 1200000, totalPrice: 9687000, unitPrice: 9687000,
-        details: [
-          { rowId: 1, name: 'پروفیل فریم', unit: 'متر طول', quantity: 6.2, unitPrice: 450000, totalPrice: 2790000 },
-          { rowId: 2, name: 'پروفیل لنگه درب', unit: 'متر طول', quantity: 6.2, unitPrice: 480000, totalPrice: 2976000 },
-          { rowId: 3, name: 'پروفیل مولیون', unit: 'متر طول', quantity: 0.9, unitPrice: 460000, totalPrice: 414000 },
-          { rowId: 4, name: 'شیشه دوجداره ۴-۴', unit: 'متر مربع', quantity: 1.98, unitPrice: 650000, totalPrice: 1287000 },
-          { rowId: 5, name: 'یراق درب بالکنی', unit: 'دست', quantity: 1, unitPrice: 1200000, totalPrice: 1200000 }
-        ]
-      }
-    },
-    {
-      id: 'demo-item-4',
-      config: {
-        id: 'conf-d4', width: 2400, height: 1500, profileId: 'vistabest', glassId: 'double_4_4', hardwareId: 'h2', type: 'پنجره سه لنگه (وسط دوحالته)', mullions: 2, frameType: 'standard',
-        layout: { id: 'root4', type: 'container', dir: 'row', flex: 1, children: [{id:'c4-1', type:'leaf', openingType:'Fixed', flex:1}, {id:'c4-2', type:'leaf', openingType:'TiltTurnRight', flex:1}, {id:'c4-3', type:'leaf', openingType:'Fixed', flex:1}] }
-      },
-      quantity: 4,
-      calculations: {
-        profileMeters: 15.4, profilePrice: 8400000, glassArea: 3.6, glassPrice: 2340000, sashCount: 1, hardwarePrice: 850000, totalPrice: 11590000, unitPrice: 11590000,
-        details: [
-          { rowId: 1, name: 'پروفیل فریم', unit: 'متر طول', quantity: 7.8, unitPrice: 450000, totalPrice: 3510000 },
-          { rowId: 2, name: 'پروفیل مولیون', unit: 'متر طول', quantity: 3.0, unitPrice: 460000, totalPrice: 138000 },
-          { rowId: 3, name: 'پروفیل لنگه پنجره', unit: 'متر طول', quantity: 4.6, unitPrice: 460000, totalPrice: 2116000 },
-          { rowId: 4, name: 'شیشه دوجداره ۴-۴', unit: 'متر مربع', quantity: 3.6, unitPrice: 650000, totalPrice: 2340000 },
-          { rowId: 5, name: 'یراق دو حالته', unit: 'دست', quantity: 1, unitPrice: 850000, totalPrice: 850000 }
-        ]
-      }
     }
   ]
 };
@@ -228,15 +175,17 @@ export const pricingStore = {
     localStorage.setItem('lumina_glass', JSON.stringify(glass));
   },
 
-  addGlass: (newItem: GlassType) => {
-    const list = pricingStore.getGlass();
-    list.push(newItem);
-    localStorage.setItem('lumina_glass', JSON.stringify(list));
+  // Fix: Added missing addGlass method
+  addGlass: (item: GlassType) => {
+    const glass = pricingStore.getGlass();
+    glass.push(item);
+    pricingStore.saveGlass(glass);
   },
-  
+
+  // Fix: Added missing deleteGlass method
   deleteGlass: (id: string) => {
-    const list = pricingStore.getGlass().filter(i => i.id !== id);
-    localStorage.setItem('lumina_glass', JSON.stringify(list));
+    const glass = pricingStore.getGlass().filter(g => g.id !== id);
+    pricingStore.saveGlass(glass);
   },
 
   getHardware: (): HardwareItem[] => {
@@ -247,19 +196,24 @@ export const pricingStore = {
   saveHardware: (hw: HardwareItem[]) => {
     localStorage.setItem('lumina_hardware', JSON.stringify(hw));
   },
-  
-  addHardware: (newItem: HardwareItem) => {
-    const list = pricingStore.getHardware();
-    list.push(newItem);
-    localStorage.setItem('lumina_hardware', JSON.stringify(list));
+
+  // Fix: Added missing getHardwareBrands method
+  getHardwareBrands: (): HardwareBrand[] => {
+    return HARDWARE_BRANDS;
   },
 
+  // Fix: Added missing addHardware method
+  addHardware: (item: HardwareItem) => {
+    const hw = pricingStore.getHardware();
+    hw.push(item);
+    pricingStore.saveHardware(hw);
+  },
+
+  // Fix: Added missing deleteHardware method
   deleteHardware: (id: string) => {
-    const list = pricingStore.getHardware().filter(i => i.id !== id);
-    localStorage.setItem('lumina_hardware', JSON.stringify(list));
+    const hw = pricingStore.getHardware().filter(h => h.id !== id);
+    pricingStore.saveHardware(hw);
   },
-
-  getHardwareBrands: () => HARDWARE_BRANDS,
 
   getProjects: (): SavedProject[] => {
     const stored = localStorage.getItem('lumina_projects');
@@ -267,12 +221,9 @@ export const pricingStore = {
     
     const demoExists = projects.some(p => p.id === DEFAULT_PROJECT.id);
     if (!demoExists) {
-        // Keep the demo at the top but avoid duplicates from older versions
-        projects = projects.filter(p => !p.id.startsWith('demo-project') && p.id !== 'nexwin-demo-v4');
-        projects.unshift(DEFAULT_PROJECT);
-        localStorage.setItem('lumina_projects', JSON.stringify(projects));
+        // Return with demo unshifted but don't force write back every time unless necessary
+        return [DEFAULT_PROJECT, ...projects];
     }
-    
     return projects;
   },
   

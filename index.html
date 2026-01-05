@@ -17,12 +17,15 @@
     
     <title>NexWin</title>
     
-    <!-- Fonts -->
+    <!-- Critical Connection Pre-optimization -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100..900&display=swap" rel="stylesheet" crossorigin="anonymous">
+    <link rel="preconnect" href="https://esm.sh" crossorigin>
     
-    <!-- Tailwind CSS (CDN for simplicity, ideally should be build-time) -->
+    <!-- Optimized Font Loading -->
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100..900&display=swap&font-display=swap" rel="stylesheet" crossorigin="anonymous">
+    
+    <!-- Tailwind CSS Engine -->
     <script src="https://cdn.tailwindcss.com"></script>
     
     <style>
@@ -36,6 +39,8 @@
         padding: 0;
         -webkit-tap-highlight-color: transparent;
         overscroll-behavior-y: none;
+        /* Prevent layout shift during font load */
+        text-rendering: optimizeLegibility;
       }
       
       .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -68,7 +73,7 @@
   <body>
     <div id="root"></div>
     <div id="pdf-export-root"></div>
-    <script type="module" src="/registerSW.js"></script>
-    <script type="module" src="/index.tsx"></script>
+    <script type="module" src="/registerSW.js" async></script>
+    <script type="module" src="/index.tsx" defer></script>
   </body>
 </html>
