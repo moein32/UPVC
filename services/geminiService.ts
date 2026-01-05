@@ -1,13 +1,12 @@
 import { GoogleGenAI } from "@google/genai";
 import { WindowConfig } from "../types";
 
-// در Vite باید از import.meta.env استفاده کنی تا Vercel ارور نده
+// استفاده از import.meta.env به جای process.env برای رفع خطای Vercel
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 const genAI = new GoogleGenAI(apiKey);
 
 export const getOptimizationSuggestions = async (config: WindowConfig, brandName: string) => {
   try {
-    // استفاده از مدل پایدار gemini-1.5-flash که در متد جدید پشتیبانی می‌شود
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     const prompt = `
