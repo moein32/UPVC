@@ -2,12 +2,23 @@ import { GoogleGenAI } from "@google/genai";
 import { WindowConfig } from "../types";
 
 /**
+ * Declaring process globally for the TypeScript compiler to prevent 
+ * build-time errors (TS2591) on platforms like Vercel.
+ */
+declare var process: {
+  env: {
+    API_KEY: string;
+    [key: string]: string | undefined;
+  };
+};
+
+/**
  * Generates optimization suggestions for UPVC window configurations using Gemini AI.
  * Follows the latest SDK standards for performance and compatibility.
  */
 export const getOptimizationSuggestions = async (config: WindowConfig, brandName: string): Promise<string> => {
   try {
-    // Initialization using the mandatory process.env.API_KEY
+    // Initialization using the mandatory process.env.API_KEY as per SDK guidelines
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
     const prompt = `
@@ -16,7 +27,7 @@ export const getOptimizationSuggestions = async (config: WindowConfig, brandName
       - ابعاد: ${config.width}mm در ${config.height}mm
       - نوع بازشو: ${config.type}
       - پروفیل: ${brandName}
-      - شیشه: ${config.glassType}
+      - شناسه شیشه: ${config.glassId}
 
       لطفاً ۲ پیشنهاد کوتاه و لیست‌وار ارائه بده:
       ۱. یک پیشنهاد برای کاهش هزینه (مهندسی ارزش).
@@ -33,6 +44,6 @@ export const getOptimizationSuggestions = async (config: WindowConfig, brandName
     return response.text || "پیشنهادی یافت نشد.";
   } catch (error) {
     console.error("Gemini AI Error:", error);
-    return "هوش مصنوعی NexWin در حال حاضر در دسترس نیست. لطفا تنظیمات API_KEY را در Vercel بررسی کنید.";
+    return "هوش مصنوعی NexWin در حال حاضر در دسترس نیست. لطفا تنظیمات API_KEY را در پنل Vercel بررسی کنید.";
   }
 };
