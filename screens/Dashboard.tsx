@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Plus, Settings as SettingsIcon, Layers, Bell, Hammer, FolderOpen, Download, Banknote, Scissors, Package, Activity } from 'lucide-react';
 import { GlassCard } from '../components/UIComponents';
@@ -31,7 +32,7 @@ export const Dashboard = () => {
     <div className="min-h-screen pb-24 px-6 pt-12 bg-[#f8fafc] font-['Vazirmatn']">
       <header className="flex justify-between items-center mb-10">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 mb-1">نکس‌وین (NexWin Designer)</h1>
+          <h1 className="text-2xl font-black text-slate-900 mb-1">نکس‌وین</h1>
           <p className="text-slate-500 text-xs font-black uppercase tracking-widest">{today}</p>
         </div>
         <div className="relative">
@@ -47,7 +48,7 @@ export const Dashboard = () => {
             <div className="flex items-center gap-3">
                 <div className="bg-white/20 p-2.5 rounded-xl"><Download size={22} /></div>
                 <div>
-                    <h3 className="font-black text-sm">نصب اپلیکیشن نکس‌وین (NexWin)</h3>
+                    <h3 className="font-black text-sm">نصب اپلیکیشن نکس‌وین</h3>
                     <p className="text-[10px] text-blue-100 opacity-80">دسترسی سریع و تمام‌صفحه به سیستم</p>
                 </div>
             </div>
