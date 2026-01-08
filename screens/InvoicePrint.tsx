@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowRight, Printer, Loader2, Share2, FileDown } from 'lucide-react';
+import { ArrowRight, Printer, Loader2, Share2, FileDown, ZoomIn, ZoomOut, Maximize, Minimize, Home } from 'lucide-react';
 import { toJpeg } from 'html-to-image';
 import { jsPDF } from 'jspdf';
 import { WindowPreview } from '../components/WindowPreview';
@@ -14,6 +14,7 @@ export const InvoicePrint = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const containerRef = useRef<HTMLDivElement>(null);
+  const mainWrapperRef = useRef<HTMLDivElement>(null);
   
   const state = location.state as { projectDetails: ProjectDetails, items: InvoiceItem[] } | null;
   
@@ -23,6 +24,7 @@ export const InvoicePrint = () => {
   const [tempLayout, setTempLayout] = useState<InvoiceLayoutType>('standard');
   const [isGenerating, setIsGenerating] = useState(false);
   const [scale, setScale] = useState(1);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
      window.scrollTo(0, 0);
@@ -35,7 +37,7 @@ export const InvoicePrint = () => {
 
   useLayoutEffect(() => {
     const handleResize = () => {
-        if (!containerRef.current) return;
+        if (!containerRef.current || isFullscreen) return;
         const screenW = window.innerWidth;
         const targetW = 840; 
         const newScale = Math.min((screenW - 32) / targetW, 1);
@@ -45,6 +47,22 @@ export const InvoicePrint = () => {
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
+  }, [isFullscreen]);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+        mainWrapperRef.current?.requestFullscreen();
+        setIsFullscreen(true);
+    } else {
+        document.exitFullscreen();
+        setIsFullscreen(false);
+    }
+  };
+
+  useEffect(() => {
+    const fsChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', fsChange);
+    return () => document.removeEventListener('fullscreenchange', fsChange);
   }, []);
 
   if (!projectDetails || items.length === 0) {
@@ -308,7 +326,44 @@ export const InvoicePrint = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col items-center font-['Vazirmatn'] relative pb-40 overflow-x-hidden">
+    <div ref={mainWrapperRef} className="min-h-screen bg-slate-100 flex flex-col items-center font-['Vazirmatn'] relative pb-40 overflow-x-hidden">
+       {/* RESTORED TOP ACTION TOOLBAR */}
+       <div className="no-print sticky top-0 left-0 right-0 z-[60] px-6 py-4 bg-white/70 backdrop-blur-2xl border-b border-slate-200/60 flex items-center justify-between shadow-sm w-full">
+            <div className="flex items-center gap-3">
+                <button onClick={() => navigate(-1)} className="w-11 h-11 flex items-center justify-center bg-white shadow-sm rounded-2xl text-slate-700 border border-slate-200 active:scale-90 transition-all hover:bg-slate-50">
+                    <ArrowRight size={20} />
+                </button>
+                <button onClick={() => navigate('/dashboard')} className="w-11 h-11 flex items-center justify-center bg-white shadow-sm rounded-2xl text-slate-700 border border-slate-200 active:scale-90 transition-all hover:bg-slate-50">
+                    <Home size={18} />
+                </button>
+            </div>
+
+            <div className="flex items-center gap-4 bg-slate-100/80 p-1 rounded-2xl border border-slate-200 shadow-inner">
+                <button 
+                  onClick={() => setScale(prev => Math.max(0.2, prev - 0.1))} 
+                  className="w-10 h-10 flex items-center justify-center bg-white text-slate-600 rounded-xl shadow-sm hover:text-blue-600 transition-colors"
+                >
+                    <ZoomOut size={18} />
+                </button>
+                <div className="px-2 min-w-[60px] text-center">
+                    <span className="text-xs font-black text-slate-900">{Math.round(scale * 100)}%</span>
+                </div>
+                <button 
+                  onClick={() => setScale(prev => Math.min(2, prev + 0.1))} 
+                  className="w-10 h-10 flex items-center justify-center bg-white text-slate-600 rounded-xl shadow-sm hover:text-blue-600 transition-colors"
+                >
+                    <ZoomIn size={18} />
+                </button>
+            </div>
+
+            <button 
+                onClick={toggleFullscreen} 
+                className="w-11 h-11 flex items-center justify-center bg-slate-900 text-white shadow-lg rounded-2xl active:scale-90 transition-all hover:bg-slate-800"
+            >
+                {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
+            </button>
+       </div>
+
        <div className="no-print fixed bottom-6 left-0 right-0 z-50 px-6 flex flex-col items-center gap-4 pointer-events-none">
             <div className="bg-white/80 backdrop-blur-2xl shadow-2xl border border-white/50 rounded-2xl p-1 flex gap-1 pointer-events-auto max-w-full overflow-x-auto no-scrollbar">
                 {['standard', 'modern', 'technical', 'classic'].map((layout) => (
@@ -319,22 +374,18 @@ export const InvoicePrint = () => {
             </div>
 
             <div className="flex items-center justify-center gap-3 w-full max-w-[340px] pointer-events-auto">
-                <button onClick={() => navigate(-1)} className="w-12 h-12 flex items-center justify-center bg-white shadow-xl rounded-full text-slate-800 border border-white/40 active:scale-90 transition-all">
-                    <ArrowRight size={20} />
-                </button>
-
-                <div className="flex-1 bg-slate-900/95 backdrop-blur-2xl shadow-2xl rounded-full p-1.5 flex items-center justify-between border border-white/10">
-                    <button onClick={handlePrint} className="w-10 h-10 flex items-center justify-center bg-white/10 hover:bg-white/20 text-white rounded-full transition-all">
-                        <Printer size={18} />
+                <div className="flex-1 bg-slate-900/95 backdrop-blur-2xl shadow-2xl rounded-[2rem] p-1.5 flex items-center justify-between border border-white/10">
+                    <button onClick={handlePrint} className="w-12 h-12 flex items-center justify-center bg-white/10 hover:bg-white/20 text-white rounded-full transition-all">
+                        <Printer size={20} />
                     </button>
                     
-                    <button onClick={() => generatePDF(false)} disabled={isGenerating} className="flex-1 mx-2 flex items-center justify-center gap-2 h-10 bg-blue-600 hover:bg-blue-500 text-white rounded-full font-black text-[10px] transition-all disabled:opacity-50">
-                        {isGenerating ? <Loader2 size={16} className="animate-spin" /> : <FileDown size={16} />}
+                    <button onClick={() => generatePDF(false)} disabled={isGenerating} className="flex-1 mx-2 flex items-center justify-center gap-2 h-12 bg-blue-600 hover:bg-blue-500 text-white rounded-full font-black text-[11px] transition-all disabled:opacity-50 shadow-lg shadow-blue-500/20">
+                        {isGenerating ? <Loader2 size={18} className="animate-spin" /> : <FileDown size={18} />}
                         <span>ذخیره PDF</span>
                     </button>
 
-                    <button onClick={() => generatePDF(true)} disabled={isGenerating} className="w-10 h-10 flex items-center justify-center bg-emerald-600 hover:bg-emerald-500 text-white rounded-full transition-all disabled:opacity-50">
-                        <Share2 size={18} />
+                    <button onClick={() => generatePDF(true)} disabled={isGenerating} className="w-12 h-12 flex items-center justify-center bg-emerald-600 hover:bg-emerald-500 text-white rounded-full transition-all disabled:opacity-50">
+                        <Share2 size={20} />
                     </button>
                 </div>
             </div>
@@ -348,10 +399,10 @@ export const InvoicePrint = () => {
             ))}
        </div>
 
-       <div ref={containerRef} className="w-full flex justify-center pt-8 overflow-visible">
+       <div ref={containerRef} className="w-full flex justify-center pt-10 overflow-visible">
             <div className="relative origin-top transition-transform duration-300 ease-out flex flex-col gap-10" style={{ transform: `scale(${scale})`, width: '794px' }}>
                 {pages.map((pageItems, pageIndex) => (
-                    <div key={pageIndex} className={`invoice-page shadow-2xl layout-${tempLayout} border border-slate-200`} style={{ width: '794px', height: '1123px', position: 'relative', backgroundColor: '#fff', overflow: 'hidden' }}>
+                    <div key={pageIndex} className={`invoice-page shadow-2xl layout-${tempLayout} border border-slate-200 mb-10`} style={{ width: '794px', height: '1123px', position: 'relative', backgroundColor: '#fff', overflow: 'hidden' }}>
                         <InvoicePageContent pageItems={pageItems} pageIndex={pageIndex} totalPages={pages.length} />
                     </div>
                 ))}
