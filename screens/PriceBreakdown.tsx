@@ -53,13 +53,20 @@ export const PriceBreakdown = () => {
   const handleDeleteItem = (index: number) => {
     if (window.confirm('آیا از حذف این آیتم مطمئن هستید؟')) {
       const updatedItems = items.filter((_, i) => i !== index);
-      setItems(updatedItems);
+      
+      // Calculate unified total price including installation for storage sync
+      const totalMaterialPrice = updatedItems.reduce((acc, item) => acc + (item.calculations.unitPrice * item.quantity), 0);
+      const installationCost = Math.round(totalMaterialPrice * (projectDetails.installPercent / 100));
+      const finalProjectPrice = totalMaterialPrice + installationCost;
+
       const projectToSave = {
         ...projectDetails,
         items: updatedItems,
-        totalPrice: updatedItems.reduce((acc, item) => acc + (item.calculations.totalPrice * item.quantity), 0),
+        totalPrice: finalProjectPrice,
       };
+      
       pricingStore.saveProject(projectToSave);
+      setItems(updatedItems);
       setProjectDetails(projectToSave);
     }
   };

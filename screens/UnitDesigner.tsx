@@ -688,25 +688,28 @@ export const UnitDesigner = () => {
       const updatedItems = [...projectItems];
       if (editIndex !== undefined) {
           updatedItems[editIndex] = newItem;
-          setProjectItems(updatedItems);
-          const projectToSave = {
-            ...projectDetails,
-            items: updatedItems,
-            totalPrice: updatedItems.reduce((acc, i) => acc + (i.calculations.totalPrice * i.quantity), 0)
-          };
-          pricingStore.saveProject(projectToSave);
-          setLastSavedId(newItem.id);
-          navigate('/breakdown', { state: { projectDetails, items: updatedItems } });
       } else {
           updatedItems.push(newItem);
-          setProjectItems(updatedItems);
-          const projectToSave = {
-            ...projectDetails,
-            items: updatedItems,
-            totalPrice: updatedItems.reduce((acc, i) => acc + (i.calculations.totalPrice * i.quantity), 0)
-          };
-          pricingStore.saveProject(projectToSave);
-          setLastSavedId(newItem.id);
+      }
+
+      // Calculate the final price including installation for storage synchronization
+      const totalMaterialPrice = updatedItems.reduce((acc, i) => acc + (i.calculations.totalPrice * i.quantity), 0);
+      const installationCost = Math.round(totalMaterialPrice * (projectDetails.installPercent / 100));
+      const finalProjectPrice = totalMaterialPrice + installationCost;
+
+      const projectToSave = {
+        ...projectDetails,
+        items: updatedItems,
+        totalPrice: finalProjectPrice // Unified calculation: Final price includes installation to match Projects list and Invoice
+      };
+      
+      pricingStore.saveProject(projectToSave);
+      setProjectItems(updatedItems);
+      setLastSavedId(newItem.id);
+
+      if (editIndex !== undefined) {
+          navigate('/breakdown', { state: { projectDetails, items: updatedItems } });
+      } else {
           setConfig(prev => ({
               ...prev,
               id: Date.now().toString(),

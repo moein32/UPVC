@@ -35,6 +35,14 @@ export const Projects = () => {
     projects.filter(p => p.status === 'Produced'), 
   [projects]);
 
+  // Unified Price Calculation: Total Material + Installation Cost
+  const getProjectFinalPrice = (p: SavedProject) => {
+    const totalMaterialPrice = p.items.reduce((acc, item) => 
+        acc + (item.calculations.unitPrice * item.quantity), 0);
+    const installationCost = Math.round(totalMaterialPrice * (p.installPercent / 100));
+    return totalMaterialPrice + installationCost;
+  };
+
   const getStatusBadge = (status: string) => {
     switch(status) {
       case 'Draft': return <span className="text-[9px] font-black text-slate-400 bg-slate-50 px-2 py-1 rounded-lg uppercase tracking-tight">پیش‌فاکتور</span>;
@@ -47,6 +55,7 @@ export const Projects = () => {
 
   const renderProjectCard = (p: SavedProject) => {
     const isProduced = p.status === 'Produced';
+    const finalPrice = getProjectFinalPrice(p);
     
     return (
       <div 
@@ -89,8 +98,11 @@ export const Projects = () => {
             <Calendar size={14} />
             <span>{toPersianDigits(new Date(p.date).toLocaleDateString('fa-IR'))}</span>
           </div>
-          <div className="font-black text-slate-800 text-sm">
-            {formatPrice(p.totalPrice)} <span className="text-[9px] font-bold text-slate-400 mr-1">تومان</span>
+          <div className="text-left">
+            <div className="text-[9px] font-bold text-slate-400 mb-0.5">مبلغ نهایی (با نصب)</div>
+            <div className="font-black text-blue-600 text-base">
+              {formatPrice(finalPrice)} <span className="text-[9px] font-bold text-slate-400 mr-1">تومان</span>
+            </div>
           </div>
         </div>
       </div>
