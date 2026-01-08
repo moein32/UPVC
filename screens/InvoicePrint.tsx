@@ -215,75 +215,72 @@ export const InvoicePrint = () => {
         )}
 
         <div className="flex-1 px-10 pt-1 overflow-hidden flex flex-col">
-            <div className={`inv-table w-full flex-1 flex flex-col ${tempLayout === 'classic' ? 'border-2 border-slate-900' : ''}`}>
+            <div className={`inv-table w-full border-collapse flex-1 flex flex-col ${tempLayout === 'classic' ? 'border-2 border-slate-900' : ''}`}>
+                {/* Fixed Header Row */}
                 <div className="block w-full">
-                    <div className={`grid grid-cols-12 w-full ${tempLayout === 'classic' ? 'bg-slate-100 border-b-2 border-slate-900' : 'bg-slate-50 border-b border-slate-100'}`}>
-                        <div className="p-2 col-span-3 text-center text-[10px] font-black border-x border-slate-100">نقشه فنی و ابعاد (mm)</div>
-                        <div className="p-2 col-span-7 text-center text-[10px] font-black">ریز اقلام فنی و محاسبات قیمت متریال</div>
-                        <div className="p-2 col-span-2 text-center text-[10px] font-black border-r border-slate-100">جمع (تومان)</div>
+                    <div className={`flex w-full ${tempLayout === 'classic' ? 'bg-slate-100 border-b-2 border-slate-900 font-black' : 'bg-slate-50 border-b border-slate-100 font-black'}`}>
+                        <div className="p-2 w-12 text-center text-[9px] shrink-0 border-l border-slate-100">#</div>
+                        <div className="p-2 w-80 text-center text-[9px] shrink-0 border-x border-slate-100">نقشه فنی و ابعاد (mm)</div>
+                        <div className="p-2 flex-1 text-center text-[9px]">ریز اقلام فنی و محاسبات متریال</div>
+                        <div className="p-2 w-32 text-center text-[9px] shrink-0 border-r border-slate-100">جمع (تومان)</div>
                     </div>
                 </div>
-                <div className="block w-full flex-1 overflow-hidden">
+                
+                {/* Scrollable/Flexible Body */}
+                <div className="block w-full flex-1">
                     {pageItems.map((item, localIndex) => {
                         const globalIndex = pageIndex * ITEMS_PER_PAGE + localIndex;
                         const brand = BRANDS.find(b => b.id === item.config.profileId);
                         return (
-                            <div key={item.id} className={`grid grid-cols-12 w-full items-stretch border-b ${tempLayout === 'classic' ? 'border-slate-900' : 'border-slate-100'} last:border-0 h-[calc(100%/3)]`}>
-                                {/* TECHNICAL DRAWING SECTION: 3 COLS */}
-                                <div className="p-2 col-span-3 shrink-0 flex flex-col items-center justify-center gap-2 border-x border-slate-100">
-                                    <div className="flex items-center gap-1 mb-1">
-                                        <span className="text-[8px] font-black text-slate-300">ردیف:</span>
-                                        <span className="text-[10px] font-black text-slate-900">{toPersianDigits(globalIndex + 1)}</span>
+                            <div key={item.id} className={`flex w-full items-stretch border-b ${tempLayout === 'classic' ? 'border-slate-900' : 'border-slate-100'} last:border-0 h-[calc(100%/3)] overflow-hidden`}>
+                                {/* Row Number Column */}
+                                <div className="p-2 w-12 flex flex-col items-center justify-center font-black text-[9px] text-slate-400 shrink-0 border-l border-slate-100">{toPersianDigits(globalIndex + 1)}</div>
+                                
+                                {/* 1. Technical Drawing Column (Fixed w-80) */}
+                                <div className="p-2 w-80 shrink-0 flex flex-col items-center justify-center gap-2 border-x border-slate-100 bg-slate-50/5">
+                                    <div className="relative w-64 h-56 mx-auto bg-white flex items-center justify-center border border-slate-50 rounded-xl overflow-hidden shadow-sm">
+                                        <WindowPreview config={item.config} width="100%" height="100%" isThumbnail={true} scale={0.65} />
                                     </div>
-                                    <div className="relative w-full aspect-square max-w-[160px] bg-white flex items-center justify-center border border-slate-50 rounded-xl overflow-hidden shadow-sm">
-                                        <WindowPreview config={item.config} width="100%" height="100%" isThumbnail={true} scale={0.58} />
-                                    </div>
-                                    <div className="text-center mt-1">
-                                        <div className="text-[11px] font-black text-slate-900" style={{ direction: 'ltr' }}>
+                                    <div className="flex items-center gap-3 mt-1">
+                                        <div className="text-center text-[12px] font-black text-slate-900 bg-slate-50 px-3 py-1 rounded-lg border border-slate-100" style={{ direction: 'ltr' }}>
                                             {toPersianDigits(item.config.width)} × {toPersianDigits(item.config.height)}
                                         </div>
-                                        <div className="text-[9px] font-black text-blue-600 bg-blue-50 px-3 py-0.5 rounded-full border border-blue-100 mt-1">
+                                        <div className="text-center text-[10px] font-black text-blue-600 bg-blue-50 px-3 py-1 rounded-lg border border-blue-100">
                                             تعداد: {toPersianDigits(item.quantity)} عدد
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* MATERIAL CALCULATION SECTION: 7 COLS */}
-                                <div className="p-3 col-span-7 flex flex-col justify-center overflow-hidden">
+                                {/* 2. Technical Details Column (Flexible flex-1) */}
+                                <div className="p-4 flex-1 flex flex-col justify-center overflow-hidden">
                                     <div className="flex items-center justify-start gap-2 mb-2 px-1">
-                                        <span className={`px-2 py-0.5 rounded text-[9px] font-black ${tempLayout === 'classic' ? 'bg-slate-200 text-slate-900 border border-slate-900' : 'bg-slate-900 text-white'}`}>
-                                            {brand?.name}
-                                        </span>
-                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-tight truncate">
-                                            {item.config.type}
-                                        </span>
+                                        <span className={`px-2 py-0.5 rounded text-[9px] font-black ${tempLayout === 'classic' ? 'bg-slate-200 text-slate-900 border border-slate-900' : 'bg-slate-900 text-white'}`}>{brand?.name}</span>
+                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-tight truncate">{item.config.type}</span>
                                     </div>
                                     <div className="bg-white py-1 space-y-1">
                                         {(item.calculations.details && item.calculations.details.length > 0) ? (
                                             item.calculations.details.slice(0, 10).map((detail, dIdx) => (
-                                                <div key={dIdx} className="flex items-baseline w-full text-[11px] leading-tight group break-words">
-                                                    <span className="shrink-0 text-slate-600 font-medium">{detail.name}:</span>
-                                                    <span className="mr-1.5 shrink-0 text-slate-500 font-normal">
+                                                <div key={dIdx} className="flex items-baseline w-full text-[10px] leading-tight group break-words text-slate-700">
+                                                    <span className="shrink-0 font-medium">{detail.name}:</span>
+                                                    <span className="mr-1 shrink-0 font-normal">
                                                         {toPersianDigits(detail.quantity)} {detail.unit} × {formatPrice(detail.unitPrice)}
                                                     </span>
-                                                    <div className="flex-1 border-b border-dotted border-slate-200 mx-1.5 mb-1.5 opacity-50"></div>
+                                                    <div className="flex-1 border-b border-dotted border-slate-200 mx-1.5 mb-1 opacity-50"></div>
                                                     <span className="shrink-0 font-black text-slate-900">
                                                         {formatPrice(detail.totalPrice)}
                                                     </span>
                                                 </div>
                                             ))
                                         ) : (
-                                            <div className="p-4 text-center text-[10px] text-slate-300 font-bold italic">داده‌ای یافت نشد</div>
+                                            <div className="p-4 text-center text-[10px] text-slate-300 font-bold italic">جزییات فنی یافت نشد</div>
                                         )}
                                     </div>
                                 </div>
 
-                                {/* TOTAL SECTION: 2 COLS */}
-                                <div className="p-2 col-span-2 shrink-0 flex flex-col items-center justify-center text-center border-r border-slate-100 bg-slate-50/30">
-                                    <div className="text-[13px] font-black text-slate-900 tracking-tighter">
-                                        {formatPrice(item.calculations.totalPrice * item.quantity)}
-                                    </div>
-                                    <div className="text-[7px] font-black text-slate-400 mt-1 uppercase tracking-widest leading-none">مجموع تیپ</div>
+                                {/* 3. Row Total Column (Fixed w-32) */}
+                                <div className="p-2 w-32 shrink-0 flex flex-col items-center justify-center text-center border-r border-slate-100 bg-slate-50/20">
+                                    <div className="text-[14px] font-black text-slate-900 tracking-tight leading-none">{formatPrice(item.calculations.totalPrice * item.quantity)}</div>
+                                    <div className="text-[7px] font-black text-slate-400 mt-2 uppercase tracking-widest leading-none">مجموع ردیف</div>
                                 </div>
                             </div>
                         );
@@ -340,7 +337,7 @@ export const InvoicePrint = () => {
 
   return (
     <div ref={mainWrapperRef} className="min-h-screen bg-slate-100 flex flex-col items-center font-['Vazirmatn'] relative pb-40 overflow-x-hidden">
-       {/* ACTION TOOLBAR: ZOOM & FULLSCREEN */}
+       {/* PREMIUM STICKY ACTION TOOLBAR */}
        <div className="no-print sticky top-0 left-0 right-0 z-[60] px-6 py-4 bg-white/80 backdrop-blur-2xl border-b border-slate-200/60 flex items-center justify-between shadow-sm w-full">
             <div className="flex items-center gap-3">
                 <button onClick={() => navigate(-1)} className="w-11 h-11 flex items-center justify-center bg-white shadow-sm rounded-2xl text-slate-700 border border-slate-200 active:scale-90 transition-all hover:bg-slate-50">
