@@ -201,7 +201,7 @@ export const InvoicePrint = () => {
                 <thead className="block w-full">
                     <tr className={`flex w-full ${tempLayout === 'classic' ? 'bg-slate-100 border-b-2 border-slate-900' : 'bg-slate-50 border-b border-slate-100'}`}>
                         <th className="p-2 w-10 text-center text-[9px] font-black shrink-0">#</th>
-                        <th className="p-2 w-56 text-center text-[9px] font-black shrink-0 border-x border-slate-100">نقشه فنی و ابعاد (mm)</th>
+                        <th className="p-2 w-80 text-center text-[9px] font-black shrink-0 border-x border-slate-100">نقشه فنی و ابعاد (mm)</th>
                         <th className="p-2 flex-1 text-center text-[9px] font-black shrink-0">ریز اقلام فنی و محاسبات متریال</th>
                         <th className="p-2 w-32 text-center text-[9px] font-black shrink-0 border-r border-slate-100">جمع (تومان)</th>
                     </tr>
@@ -213,46 +213,46 @@ export const InvoicePrint = () => {
                         return (
                             <tr key={item.id} className={`flex w-full items-stretch border-b ${tempLayout === 'classic' ? 'border-slate-900' : 'border-slate-100'} last:border-0 h-[calc(100%/3)]`}>
                                 <td className="p-2 w-10 flex flex-col items-center justify-center font-black text-[9px] text-slate-400 shrink-0">{toPersianDigits(globalIndex + 1)}</td>
-                                <td className="p-2 w-56 shrink-0 flex flex-col items-center justify-center gap-2 border-x border-slate-100">
-                                    <div className="relative w-44 h-44 mx-auto bg-white flex items-center justify-center border border-slate-100 rounded-xl overflow-hidden shadow-sm">
-                                        <WindowPreview config={item.config} width="100%" height="100%" isThumbnail={true} scale={0.52} />
+                                <td className="p-2 w-80 shrink-0 flex flex-col items-center justify-center gap-2 border-x border-slate-100">
+                                    <div className="relative w-64 h-56 mx-auto bg-white flex items-center justify-center border border-slate-50 rounded-xl overflow-hidden shadow-sm">
+                                        <WindowPreview config={item.config} width="100%" height="100%" isThumbnail={true} scale={0.65} />
                                     </div>
-                                    <div className="text-center mt-1 text-[11px] font-black text-slate-900" style={{ direction: 'ltr' }}>
-                                      {toPersianDigits(item.config.width)} * {toPersianDigits(item.config.height)}
-                                    </div>
-                                    <div className="text-center text-[9px] font-black text-blue-600 bg-blue-50 px-3 py-0.5 rounded-full border border-blue-100">
-                                      تعداد: {toPersianDigits(item.quantity)} عدد
+                                    <div className="flex items-center gap-3 mt-1">
+                                        <div className="text-center text-[12px] font-black text-slate-900 bg-slate-50 px-4 py-1 rounded-lg border border-slate-100" style={{ direction: 'ltr' }}>
+                                            {toPersianDigits(item.config.width)} * {toPersianDigits(item.config.height)}
+                                        </div>
+                                        <div className="text-center text-[10px] font-black text-blue-600 bg-blue-50 px-4 py-1 rounded-lg border border-blue-100">
+                                            تعداد: {toPersianDigits(item.quantity)} عدد
+                                        </div>
                                     </div>
                                 </td>
-                                <td className="p-2 flex-1 flex flex-col justify-center gap-2">
-                                    <div className="flex items-center justify-center gap-2 mb-1">
-                                        <span className={`px-3 py-0.5 rounded-md text-[8px] font-black ${tempLayout === 'classic' ? 'bg-slate-200 text-slate-900 border border-slate-900' : 'bg-slate-900 text-white'}`}>{brand?.name}</span>
-                                        <span className="text-[9px] font-bold text-slate-500">{item.config.type}</span>
+                                <td className="p-2 px-3 flex-1 flex flex-col justify-center overflow-hidden">
+                                    <div className="flex items-center justify-start gap-2 mb-1.5 px-1">
+                                        <span className={`px-3 py-0.5 rounded-md text-[9px] font-black ${tempLayout === 'classic' ? 'bg-slate-200 text-slate-900 border border-slate-900' : 'bg-slate-900 text-white'}`}>{brand?.name}</span>
+                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-tight">{item.config.type}</span>
                                     </div>
-                                    <div className="border border-slate-100 rounded-xl overflow-hidden bg-white shadow-sm mx-2">
-                                        <table className="w-full text-[8px]">
-                                            <thead className="bg-slate-50 border-b border-slate-100">
-                                                <tr>
-                                                    <th className="p-1 text-right text-slate-600 font-black">شرح کالا</th>
-                                                    <th className="p-1 text-center text-slate-600 font-black">مقدار</th>
-                                                    <th className="p-1 text-left text-slate-600 font-black">فی</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {/* Increased slice to 10 to show requested system items (Bead, Galv, Hardware) */}
-                                                {item.calculations.details?.slice(0, 10).map((detail: any, dIdx: number) => (
-                                                    <tr key={dIdx} className="border-b border-slate-50 last:border-0">
-                                                        <td className="p-1 font-bold text-slate-800">{detail.name}</td>
-                                                        <td className="p-1 text-center text-slate-900 font-black whitespace-nowrap">{toPersianDigits(detail.quantity)} {detail.unit}</td>
-                                                        <td className="p-1 text-left font-black text-slate-900 whitespace-nowrap">{formatPrice(detail.unitPrice)}</td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
+                                    <div className="bg-white py-1 space-y-0.5">
+                                        {(item.calculations.details && item.calculations.details.length > 0) ? (
+                                            item.calculations.details.slice(0, 10).map((detail: any, dIdx: number) => (
+                                                <div key={dIdx} className="flex items-baseline w-full text-[10.5px] leading-relaxed group">
+                                                    <span className="shrink-0 text-slate-500 font-normal">{detail.name}:</span>
+                                                    <span className="mr-1 shrink-0 text-slate-600 font-medium">
+                                                        {toPersianDigits(detail.quantity)} {detail.unit} × {formatPrice(detail.unitPrice)}
+                                                    </span>
+                                                    <div className="flex-1 border-b border-dotted border-slate-300 mx-1.5 mb-1.5"></div>
+                                                    <span className="shrink-0 font-black text-slate-900">
+                                                        {formatPrice(detail.totalPrice)}
+                                                    </span>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="p-4 text-center text-[10px] text-slate-300 font-bold italic">جزییات فنی یافت نشد</div>
+                                        )}
                                     </div>
                                 </td>
                                 <td className="p-2 w-32 shrink-0 flex flex-col items-center justify-center text-center border-r border-slate-100">
-                                    <div className="text-[13px] font-black text-slate-900 tracking-tight">{formatPrice(item.calculations.totalPrice * item.quantity)}</div>
+                                    <div className="text-[14px] font-black text-slate-900 tracking-tight">{formatPrice(item.calculations.totalPrice * item.quantity)}</div>
+                                    <div className="text-[7px] font-black text-slate-400 mt-1 uppercase tracking-widest">مجموع ردیف</div>
                                 </td>
                             </tr>
                         );

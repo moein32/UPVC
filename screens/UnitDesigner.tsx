@@ -609,10 +609,10 @@ export const UnitDesigner = () => {
     if (frameM > 0) details.push({ rowId: rowId++, name: frameName, unit: 'متر طول', quantity: Number(frameM.toFixed(2)), unitPrice: framePrice, totalPrice: Math.round(frameTotal) });
     
     const sashWinTotal = sashWindowM * sashWindowPrice;
-    if (sashWindowM > 0) details.push({ rowId: rowId++, name: 'پروفیل لنگه پنجره', unit: 'متر طول', quantity: Number(sashWindowM.toFixed(2)), unitPrice: sashWindowPrice, totalPrice: Math.round(sashWinTotal) });
+    if (sashWindowM > 0) details.push({ rowId: rowId++, name: 'پروفیل سش (Sash) پنجره', unit: 'متر طول', quantity: Number(sashWindowM.toFixed(2)), unitPrice: sashWindowPrice, totalPrice: Math.round(sashWinTotal) });
     
     const sashDoorTotal = sashDoorM * sashDoorPrice;
-    if (sashDoorM > 0) details.push({ rowId: rowId++, name: 'پروفیل لنگه درب', unit: 'متر طول', quantity: Number(sashDoorM.toFixed(2)), unitPrice: sashDoorPrice, totalPrice: Math.round(sashDoorTotal) });
+    if (sashDoorM > 0) details.push({ rowId: rowId++, name: 'پروفیل سش (Sash) درب', unit: 'متر طول', quantity: Number(sashDoorM.toFixed(2)), unitPrice: sashDoorPrice, totalPrice: Math.round(sashDoorTotal) });
     
     const mullionTotal = mullionM * mullionPrice;
     if (mullionM > 0) details.push({ rowId: rowId++, name: 'پروفیل مولیون (وادار)', unit: 'متر طول', quantity: Number(mullionM.toFixed(2)), unitPrice: mullionPrice, totalPrice: Math.round(mullionTotal) });
@@ -624,14 +624,15 @@ export const UnitDesigner = () => {
     const panelTotal = panelA * panelPricePerM2;
     if (panelA > 0) details.push({ rowId: rowId++, name: panelType?.name || 'پنل UPVC', unit: 'متر مربع', quantity: Number(panelA.toFixed(2)), unitPrice: panelPricePerM2, totalPrice: Math.round(panelTotal) });
     
-    // 3. SYSTEMATIC ITEMS (BEAD & REINFORCEMENT) - Requested Upgrade
+    // 3. SYSTEMATIC ITEMS (BEAD & REINFORCEMENT)
     const beadTotal = beadM * beadPrice;
-    if (beadM > 0) details.push({ rowId: rowId++, name: 'زهوار (Bead)', unit: 'متر طول', quantity: Number(beadM.toFixed(2)), unitPrice: beadPrice, totalPrice: Math.round(beadTotal) });
+    if (beadM > 0) details.push({ rowId: rowId++, name: 'زهوار (Beading) پروفیل', unit: 'متر طول', quantity: Number(beadM.toFixed(2)), unitPrice: beadPrice, totalPrice: Math.round(beadTotal) });
     
     const galoTotal = galoM * galoPrice;
     if (galoM > 0) details.push({ rowId: rowId++, name: 'گالوانیزه (Reinforcement)', unit: 'متر طول', quantity: Number(galoM.toFixed(2)), unitPrice: galoPrice, totalPrice: Math.round(galoTotal) });
 
-    // 4. HARDWARES (SPECIFIC LABELS)
+    // 4. HARDWARES (WITH BRAND NAMES)
+    const hwBrands = pricingStore.getHardwareBrands();
     let hardwareTotalSum = 0;
     const hardwareMap = [
       { type: 'Turn', label: 'یراق تک‌حالته', count: stats.hardware.Turn },
@@ -643,12 +644,14 @@ export const UnitDesigner = () => {
     hardwareMap.forEach(hwEntry => {
       if (hwEntry.count > 0) {
         const match = hwItems.find(item => item.type === hwEntry.type);
+        const brandMatch = hwBrands.find(b => b.id === match?.brandId);
+        const brandName = brandMatch?.name || '';
         const price = match?.pricePerSet || 0;
         const total = hwEntry.count * price;
         hardwareTotalSum += total;
         details.push({ 
           rowId: rowId++, 
-          name: hwEntry.label, 
+          name: `${hwEntry.label} برند ${brandName}`, 
           unit: 'دست', 
           quantity: hwEntry.count, 
           unitPrice: price, 
