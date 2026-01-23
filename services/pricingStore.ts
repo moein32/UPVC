@@ -3,9 +3,11 @@ import { ProfileBrand, GlassType, HardwareItem, HardwareBrand, ProfileComponent,
 
 const DEFAULT_COMPONENTS: ProfileComponent[] = [
   { id: 'frame', name: 'پروفیل فریم (Frame)', unit: 'm', price: 0 },
+  { id: 'monorail_frame', name: 'پروفیل فریم تک‌ریل (Monorail)', unit: 'm', price: 0 },
   { id: 'sash_window', name: 'پروفیل لنگه پنجره (Sash)', unit: 'm', price: 0 },
   { id: 'sash_door', name: 'پروفیل لنگه درب (Door Sash)', unit: 'm', price: 0 },
   { id: 'mullion', name: 'پروفیل مولیون (Mullion)', unit: 'm', price: 0 },
+  { id: 'floating_mullion', name: 'مولیون متحرک (French Mullion)', unit: 'm', price: 0 },
   { id: 'bead', name: 'زهوار (Bead)', unit: 'm', price: 0 },
   { id: 'renovation', name: 'پروفیل بازسازی', unit: 'm', price: 0 },
   { id: 'galvanized', name: 'گالوانیزه تقویتی (Reinforcement)', unit: 'm', price: 150000 },
@@ -22,6 +24,8 @@ const INITIAL_BRANDS: ProfileBrand[] = [
     components: DEFAULT_COMPONENTS.map(c => ({ 
         ...c, 
         price: c.id === 'frame' ? 450000 : 
+               c.id === 'monorail_frame' ? 620000 :
+               c.id === 'floating_mullion' ? 510000 :
                c.id === 'galvanized' ? 150000 : 
                c.id === 'bead' ? 60000 : 
                460000 
@@ -36,7 +40,9 @@ const INITIAL_BRANDS: ProfileBrand[] = [
     warrantyYears: 10,
     components: DEFAULT_COMPONENTS.map(c => ({ 
         ...c, 
-        price: c.id === 'galvanized' ? 140000 : 
+        price: c.id === 'monorail_frame' ? 580000 :
+               c.id === 'floating_mullion' ? 480000 :
+               c.id === 'galvanized' ? 140000 : 
                c.id === 'bead' ? 55000 : 
                420000 
     }))
@@ -50,7 +56,9 @@ const INITIAL_BRANDS: ProfileBrand[] = [
     warrantyYears: 10,
     components: DEFAULT_COMPONENTS.map(c => ({ 
         ...c, 
-        price: c.id === 'galvanized' ? 130000 : 
+        price: c.id === 'monorail_frame' ? 520000 :
+               c.id === 'floating_mullion' ? 440000 :
+               c.id === 'galvanized' ? 130000 : 
                c.id === 'bead' ? 50000 : 
                380000 
     }))
@@ -64,7 +72,9 @@ const INITIAL_BRANDS: ProfileBrand[] = [
     warrantyYears: 5,
     components: DEFAULT_COMPONENTS.map(c => ({ 
         ...c, 
-        price: c.id === 'galvanized' ? 120000 : 
+        price: c.id === 'monorail_frame' ? 380000 :
+               c.id === 'floating_mullion' ? 320000 :
+               c.id === 'galvanized' ? 120000 : 
                c.id === 'bead' ? 40000 : 
                280000 
     }))

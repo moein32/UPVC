@@ -36,7 +36,26 @@ export interface HardwareItem {
   pricePerSet: number;
 }
 
-export type OpeningDirection = 'Fixed' | 'TurnLeft' | 'TurnRight' | 'TiltTurnLeft' | 'TiltTurnRight' | 'SlidingLeft' | 'SlidingRight' | 'DoorLeft' | 'DoorRight' | 'Panel' | 'PanelV' | 'PanelH';
+export type OpeningDirection = 
+  | 'Fixed' 
+  | 'TurnLeft' 
+  | 'TurnRight' 
+  | 'TiltTurnLeft' 
+  | 'TiltTurnRight' 
+  | 'SlidingLeft' 
+  | 'SlidingRight' 
+  | 'DoorLeft' 
+  | 'DoorRight' 
+  | 'Panel' 
+  | 'PanelV' 
+  | 'PanelH'
+  | 'SlidingMonorailLeft'
+  | 'SlidingMonorailRight'
+  | 'SlidingDoubleRail'
+  | 'FrenchWindowLeft'
+  | 'FrenchWindowRight'
+  | 'VWSliding'
+  | 'Awning';
 
 export interface WindowNode {
   id: string;
@@ -45,6 +64,9 @@ export interface WindowNode {
   children?: WindowNode[]; 
   openingType?: OpeningDirection; 
   flex?: number; 
+  systemType?: 'Casement' | 'Sliding'; 
+  slidingRailType?: 'Monorail' | 'DoubleRail'; 
+  isFrenchWindow?: boolean; 
 }
 
 export interface WindowConfig {

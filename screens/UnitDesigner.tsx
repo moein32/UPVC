@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowRight, Save, Trash2, SplitSquareHorizontal, SplitSquareVertical, PlusCircle, Maximize, ZoomIn, ZoomOut, RefreshCcw, Hand, MousePointer2, Receipt, Check, Edit3, Grid, XCircle, Undo, Redo, LayoutTemplate, Home, Box, Layers, Settings, ChevronDown, ChevronUp, SlidersHorizontal, AlignJustify, AlignCenter, Minus, Plus } from 'lucide-react';
+import { ArrowRight, Save, Trash2, SplitSquareHorizontal, SplitSquareVertical, PlusCircle, Maximize, ZoomIn, ZoomOut, RefreshCcw, Hand, MousePointer2, Receipt, Check, Edit3, Grid, XCircle, Undo, Redo, LayoutTemplate, Home, Box, Layers, Settings, ChevronDown, ChevronUp, SlidersHorizontal, AlignJustify, AlignCenter, Minus, Plus, Sidebar, Monitor, MoveRight } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { InputField, SelectField, PrimaryButton } from '../components/UIComponents';
@@ -9,13 +9,77 @@ import { WindowConfig, ProjectDetails, InvoiceItem, ProfileBrand, GlassType, Har
 import { pricingStore } from '../services/pricingStore';
 import { toPersianDigits, formatPrice, toEnglishDigits } from '../utils/formatting';
 
-// --- Helper Components for Toolbar ---
+// --- DATA: 36 SLIDING TYPOLOGIES DATABASE ---
+interface Typology {
+    id: string;
+    label: string;
+    sashes: number;
+    openings: OpeningDirection[];
+}
+
+const SLIDING_DATA: Record<string, Record<string, Typology[]>> = {
+    Monorail: {
+        '2-Sash': [
+            { id: 'M2-01', label: 'Fixed + Slide R', sashes: 2, openings: ['Fixed', 'SlidingMonorailRight'] },
+            { id: 'M2-02', label: 'Slide L + Fixed', sashes: 2, openings: ['SlidingMonorailLeft', 'Fixed'] },
+            { id: 'M2-03', label: 'Panel + Slide R', sashes: 2, openings: ['PanelV', 'SlidingMonorailRight'] },
+        ],
+        '3-Sash': [
+            { id: 'M3-01', label: 'F + S + F', sashes: 3, openings: ['Fixed', 'SlidingMonorailRight', 'Fixed'] },
+            { id: 'M3-02', label: 'S + F + S', sashes: 3, openings: ['SlidingMonorailRight', 'Fixed', 'SlidingMonorailLeft'] },
+            { id: 'M3-03', label: 'P + S + P', sashes: 3, openings: ['PanelV', 'SlidingMonorailRight', 'PanelV'] },
+        ],
+        '4-Sash': [
+            { id: 'M4-01', label: 'F + S + S + F', sashes: 4, openings: ['Fixed', 'SlidingMonorailRight', 'SlidingMonorailLeft', 'Fixed'] },
+            { id: 'M4-02', label: 'S + F + F + S', sashes: 4, openings: ['SlidingMonorailRight', 'Fixed', 'Fixed', 'SlidingMonorailLeft'] },
+            { id: 'M4-03', label: 'P + S + S + P', sashes: 4, openings: ['PanelV', 'SlidingMonorailRight', 'SlidingMonorailLeft', 'PanelV'] },
+        ]
+    },
+    DoubleRail: {
+        '2-Sash': [
+            { id: 'D2-01', label: 'S + F', sashes: 2, openings: ['SlidingRight', 'Fixed'] },
+            { id: 'D2-02', label: 'F + S', sashes: 2, openings: ['Fixed', 'SlidingLeft'] },
+            { id: 'D2-03', label: 'S + S', sashes: 2, openings: ['SlidingRight', 'SlidingLeft'] },
+        ],
+        '3-Sash': [
+            { id: 'D3-01', label: 'S + F + S', sashes: 3, openings: ['SlidingRight', 'Fixed', 'SlidingLeft'] },
+            { id: 'D3-02', label: 'F + S + F', sashes: 3, openings: ['Fixed', 'SlidingRight', 'Fixed'] },
+            { id: 'D3-03', label: 'S + S + S', sashes: 3, openings: ['SlidingRight', 'SlidingRight', 'SlidingRight'] },
+        ],
+        '4-Sash': [
+            { id: 'D4-01', label: 'S + F + F + S', sashes: 4, openings: ['SlidingRight', 'Fixed', 'Fixed', 'SlidingLeft'] },
+            { id: 'D4-02', label: 'F + S + S + F', sashes: 4, openings: ['Fixed', 'SlidingLeft', 'SlidingRight', 'Fixed'] },
+            { id: 'D4-03', label: 'S + S + S + S', sashes: 4, openings: ['SlidingRight', 'SlidingRight', 'SlidingLeft', 'SlidingLeft'] },
+        ]
+    }
+};
+
+// --- Constant for engineering deductions (MasterWin) ---
+const SLIDING_OVERLAP = 35; // mm
+const PROFILE_WIDTH_CONSTANT = 60; // mm
+
+const TypologyIcon = ({ typology, isActive, onClick }: { typology: Typology, isActive: boolean, onClick: (t: Typology) => void }) => (
+    <div 
+        onClick={() => onClick(typology)}
+        className={`flex flex-col items-center gap-1.5 p-2 rounded-xl cursor-pointer border-2 transition-all ${isActive ? 'bg-blue-600 border-blue-400 scale-105 shadow-lg' : 'bg-slate-700/50 border-transparent hover:bg-slate-700'}`}
+    >
+        <div className="w-12 h-8 bg-white/10 rounded flex gap-0.5 p-0.5 relative overflow-hidden">
+            {typology.openings.map((op, idx) => (
+                <div key={idx} className="flex-1 bg-white/20 rounded-sm relative flex items-center justify-center">
+                    {op.includes('Sliding') && <MoveRight size={8} className={`text-white opacity-60 ${op.includes('Left') ? 'rotate-180' : ''}`} />}
+                    {op === 'Fixed' && <div className="w-1 h-1 rounded-full bg-white opacity-20" />}
+                </div>
+            ))}
+        </div>
+        <span className="text-[7px] font-black text-white/60 uppercase tracking-tighter">{typology.id}</span>
+    </div>
+);
 
 const DraggableIcon = ({ type, value, dir, count, label, icon, isActive, onClick, onDragStart, onDragEnd }: any) => {
   return (
     <div 
       className={`
-        flex flex-col items-center justify-center gap-1 p-2 rounded-lg cursor-pointer transition-all select-none
+        flex flex-col items-center justify-center gap-1 p-2 rounded-lg cursor-pointer transition-all select-none min-w-[64px]
         ${isActive ? 'bg-orange-500 text-white shadow-lg scale-105' : 'hover:bg-slate-700 text-slate-300'}
       `}
       onClick={(e) => {
@@ -29,7 +93,7 @@ const DraggableIcon = ({ type, value, dir, count, label, icon, isActive, onClick
       <div className="w-8 h-8 flex items-center justify-center">
         {icon}
       </div>
-      <span className="text-[9px] font-medium max-w-[50px] text-center leading-tight">{label}</span>
+      <span className="text-[9px] font-medium max-w-[60px] text-center leading-tight">{label}</span>
     </div>
   );
 };
@@ -91,6 +155,48 @@ const SlidingIcon = ({ dir }: { dir: 'left' | 'right' }) => (
     <rect x="3" y="3" width="18" height="18" rx="2" opacity="0.3" />
     <rect x={dir === 'left' ? "4" : "11"} y="4" width="9" height="16" rx="1" fill="currentColor" fillOpacity="0.1" />
     <path d={dir === 'left' ? "M16 12H10M10 12L13 9M10 12L13 15" : "M8 12H14M14 12L11 9M14 12L11 15"} strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const SlidingMonoIcon = ({ dir }: { dir: 'left' | 'right' }) => (
+  <svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="1.8">
+    <rect x="3" y="3" width="18" height="18" rx="2" opacity="0.2" />
+    <rect x={dir === 'left' ? "4" : "11"} y="4" width="9" height="16" rx="1" fill="currentColor" fillOpacity="0.3" />
+    <line x1="3" y1="20" x2="21" y2="20" opacity="0.5" />
+    <path d={dir === 'left' ? "M14 12H10M10 12L12 10M10 12L12 14" : "M10 12H14M14 12L12 10M14 12L12 14"} strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const SlidingDoubleIcon = () => (
+  <svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="1.8">
+    <rect x="3" y="3" width="18" height="18" rx="2" opacity="0.1" />
+    <rect x="4" y="4" width="8" height="16" rx="1" fill="currentColor" fillOpacity="0.1" />
+    <rect x="12" y="4" width="8" height="16" rx="1" fill="currentColor" fillOpacity="0.1" />
+    <path d="M7 12h10M7 12l2-2M7 12l2 2M17 12l-2-2M17 12l-2 2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const FrenchIcon = ({ dir }: { dir: 'left' | 'right' }) => (
+  <svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="1.5">
+    <rect x="3" y="3" width="18" height="18" rx="2" opacity="0.2" />
+    <path d={dir === 'right' ? "M18 6L12 12L18 18 M6 6L12 12L6 18" : "M6 6L12 12L6 18 M18 6L12 12L18 18"} opacity="0.8" />
+    <line x1="12" y1="3" x2="12" y2="21" strokeDasharray="2 2" opacity="0.4" />
+  </svg>
+);
+
+const VWIcon = () => (
+  <svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="1.8">
+    <rect x="3" y="3" width="18" height="18" rx="2" opacity="0.3" />
+    <path d="M18 6L6 12L18 18" opacity="0.5" />
+    <path d="M4 19h16" strokeLinecap="round" opacity="0.6" />
+    <circle cx="12" cy="12" r="2" fill="currentColor" />
+  </svg>
+);
+
+const AwningIcon = () => (
+  <svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="1.8">
+    <rect x="3" y="3" width="18" height="18" rx="2" />
+    <path d="M6 18L12 6L18 18" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
 
@@ -158,12 +264,12 @@ const SquareIcon = () => (
   </svg>
 );
 
-// --- Default Data ---
 const createDefaultLayout = (): WindowNode => ({
   id: 'root',
   type: 'leaf',
   openingType: 'Fixed',
-  flex: 1
+  flex: 1,
+  systemType: 'Casement'
 });
 
 export const UnitDesigner = () => {
@@ -185,11 +291,11 @@ export const UnitDesigner = () => {
   const [editIndex, setEditIndex] = useState<number | undefined>(locationState.editIndex);
   const [lastSavedId, setLastSavedId] = useState<string | null>(null);
 
-  // --- UI Control State ---
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [unitCount, setUnitCount] = useState(1); 
+  const [systemMode, setSystemMode] = useState<'Casement' | 'Sliding'>('Casement');
+  const [slidingRailMode, setSlidingRailMode] = useState<'Monorail' | 'DoubleRail'>('DoubleRail');
 
-  // --- External Data ---
   const [brands, setBrands] = useState<ProfileBrand[]>([]);
   const [glassList, setGlassList] = useState<GlassType[]>([]);
   const [hardwareList, setHardwareList] = useState<HardwareItem[]>([]);
@@ -200,7 +306,6 @@ export const UnitDesigner = () => {
     setHardwareList(pricingStore.getHardware());
   }, []);
 
-  // --- Configuration State ---
   const [config, setConfig] = useState<WindowConfig>({
     id: Date.now().toString(),
     width: 1200,
@@ -214,7 +319,6 @@ export const UnitDesigner = () => {
     frameType: 'standard'
   });
 
-  // --- Undo/Redo History ---
   const [history, setHistory] = useState<WindowNode[]>([]);
   const [future, setFuture] = useState<WindowNode[]>([]);
 
@@ -248,7 +352,6 @@ export const UnitDesigner = () => {
   const [selectedNodeDims, setSelectedNodeDims] = useState<{w: number, h: number, editableW: boolean, editableH: boolean} | null>(null);
   const [localDims, setLocalDims] = useState<{w: string, h: string, id: string | null}>({ w: '', h: '', id: null });
 
-  // --- Responsive Auto-Fit Logic ---
   const fitToScreen = () => {
     if (!canvasAreaRef.current) return;
     const padding = 120;
@@ -273,7 +376,6 @@ export const UnitDesigner = () => {
     };
   }, [config.width, config.height]);
 
-  // Load Edit Data
   useEffect(() => {
     if (editIndex !== undefined && editIndex >= 0 && projectItems[editIndex]) {
       const item = projectItems[editIndex];
@@ -295,7 +397,6 @@ export const UnitDesigner = () => {
     }
   }, [editIndex, projectItems, brands, glassList, projectDetails.defaultProfileId]);
 
-  // --- Tree Logic ---
   const findParent = (root: WindowNode, id: string): WindowNode | null => {
       if (root.children) {
           if (root.children.some(c => c.id === id)) return root;
@@ -344,9 +445,29 @@ export const UnitDesigner = () => {
      setConfig(prev => ({
        ...prev,
        layout: updateNodeInTree(prev.layout!, selectedNodeId, (node) => ({
-         id: node.id, type: 'leaf', openingType: 'Fixed', flex: 1
+         id: node.id, type: 'leaf', openingType: 'Fixed', flex: 1, systemType: 'Casement'
        }))
      }));
+  };
+
+  const applyTypology = (typology: Typology) => {
+      if (!selectedNodeId || !config.layout) return;
+      pushToHistory(config.layout);
+      
+      const newChildren = typology.openings.map((op, i) => ({
+          id: Date.now() + `_${i}_${Math.random()}`,
+          type: 'leaf' as const,
+          openingType: op,
+          flex: 1
+      }));
+
+      handleUpdateNode(selectedNodeId, {
+          type: 'container',
+          dir: 'row',
+          children: newChildren,
+          systemType: 'Sliding',
+          slidingRailType: slidingRailMode
+      });
   };
 
   const handleCanvasNodeClick = (id: string) => {
@@ -354,7 +475,11 @@ export const UnitDesigner = () => {
           const targetNode = findNode(config.layout!, id);
           if (!targetNode) return;
           if (activeTool.type === 'opening') {
-               handleUpdateNode(id, { openingType: activeTool.value as any });
+               const isFrench = activeTool.value.includes('FrenchWindow');
+               handleUpdateNode(id, { 
+                   openingType: activeTool.value as any,
+                   isFrenchWindow: isFrench 
+               });
           } else if (activeTool.type === 'split') {
               if (targetNode.type === 'leaf') {
                   const count = activeTool.count || 2;
@@ -369,7 +494,8 @@ export const UnitDesigner = () => {
                       type: 'container', 
                       dir: activeTool.dir as 'row' | 'col', 
                       children: newChildren, 
-                      openingType: (existingOpening && existingOpening !== 'Fixed' && !existingOpening.includes('Panel')) ? existingOpening : undefined
+                      openingType: (existingOpening && existingOpening !== 'Fixed' && !existingOpening.includes('Panel')) ? existingOpening : undefined,
+                      systemType: 'Casement'
                   });
               }
           }
@@ -394,7 +520,7 @@ export const UnitDesigner = () => {
   const calculateNodeDimensions = (node: WindowNode, w: number, h: number, targetId: string): {w: number, h: number} | null => {
       if (node.id === targetId) return { w, h };
       if (node.children) {
-          const totalFlex = node.children.reduce((a, b) => a + (b.flex || 1), 0);
+          const totalFlex = node.children.reduce((sum, c) => sum + (c.flex || 1), 0) || 1;
           for (const child of node.children) {
               const ratio = (child.flex || 1) / totalFlex;
               const childW = node.dir === 'row' ? w * ratio : w;
@@ -514,11 +640,14 @@ export const UnitDesigner = () => {
         sashWindowMeters: 0,
         sashDoorMeters: 0,
         mullionMeters: 0,
+        floatingMullionMeters: 0,
+        monorailFrameMeters: 0,
         glassArea: 0,
         panelArea: 0,
         beadMeters: 0,
         hardware: { Turn: 0, TiltTurn: 0, Sliding: 0, Door: 0 }
     };
+
     const processHardware = (type: OpeningDirection | undefined) => {
         if (!type) return;
         if (type.startsWith('Turn')) stats.hardware.Turn += 1;
@@ -526,6 +655,40 @@ export const UnitDesigner = () => {
         else if (type.startsWith('Sliding')) stats.hardware.Sliding += 1;
         else if (type.startsWith('Door')) stats.hardware.Door += 1;
     };
+
+    // SLIDING SYSTEM LOGIC (Precision Deductions with Overlap)
+    if (node.systemType === 'Sliding' && node.children) {
+        const numSashes = node.children.length;
+        // Overlap Logic: 2 sashes meet once, 3 sashes meet twice (MasterWin standard)
+        const overlapsCount = numSashes === 2 ? 1 : numSashes - 1;
+        // Formula: LeafWidth = (TotalWidth + (Overlaps * OverlapWidth)) / NumSashes
+        const leafW = (w + (overlapsCount * SLIDING_OVERLAP)) / numSashes;
+        const leafH = h;
+        
+        if (node.slidingRailType === 'Monorail') {
+            stats.monorailFrameMeters += (w + h) * 2;
+        }
+
+        node.children.forEach(child => {
+            const isLeafOpening = child.openingType?.includes('Sliding');
+            if (isLeafOpening) {
+                stats.sashWindowMeters += (leafW + leafH) * 2;
+                processHardware(child.openingType);
+            }
+            if (child.openingType?.includes('Panel')) {
+                stats.panelArea += leafW * leafH;
+            } else {
+                // Deducting profile widths for actual glass size
+                const gW = leafW - (PROFILE_WIDTH_CONSTANT * 2);
+                const gH = leafH - (PROFILE_WIDTH_CONSTANT * 2);
+                stats.glassArea += Math.max(0, gW * gH);
+            }
+            stats.beadMeters += (leafW + leafH) * 2;
+        });
+        return stats;
+    }
+
+    // CASEMENT / STANDARD TREE LOGIC
     if (node.type === 'container') {
         if (node.openingType && node.openingType !== 'Fixed') {
              processHardware(node.openingType);
@@ -533,10 +696,18 @@ export const UnitDesigner = () => {
              if (node.openingType.includes('Door')) stats.sashDoorMeters += perimeter;
              else stats.sashWindowMeters += perimeter;
         }
+
         if (node.children) {
-            const totalFlex = node.children.reduce((a, b) => a + (b.flex || 1), 0);
-            if (node.dir === 'row') stats.mullionMeters += (node.children.length - 1) * h;
-            else stats.mullionMeters += (node.children.length - 1) * w;
+            const totalFlex = node.children.reduce((sum, c) => sum + (c.flex || 1), 0) || 1;
+            
+            // French Window / Floating Mullion Logic
+            if (node.isFrenchWindow) {
+                stats.floatingMullionMeters += h;
+            } else {
+                if (node.dir === 'row') stats.mullionMeters += (node.children.length - 1) * h;
+                else stats.mullionMeters += (node.children.length - 1) * w;
+            }
+
             node.children.forEach(child => {
                 const ratio = (child.flex || 1) / totalFlex;
                 const childW = node.dir === 'row' ? w * ratio : w;
@@ -545,6 +716,8 @@ export const UnitDesigner = () => {
                 stats.sashWindowMeters += childStats.sashWindowMeters;
                 stats.sashDoorMeters += childStats.sashDoorMeters;
                 stats.mullionMeters += childStats.mullionMeters;
+                stats.floatingMullionMeters += childStats.floatingMullionMeters;
+                stats.monorailFrameMeters += childStats.monorailFrameMeters;
                 stats.glassArea += childStats.glassArea;
                 stats.panelArea += childStats.panelArea;
                 stats.beadMeters += childStats.beadMeters;
@@ -573,17 +746,18 @@ export const UnitDesigner = () => {
          profileMeters: 0, profilePrice: 0, glassArea: 0, glassPrice: 0, sashCount: 0, hardwarePrice: 0, totalPrice: 0, unitPrice: 0, details: []
     };
     const stats = calculateWindowStats(config.layout, config.width, config.height);
-    const frameMeters = (config.width + config.height) * 2;
-    const frameM = frameMeters / 1000;
+    
+    const frameM = stats.monorailFrameMeters > 0 ? 0 : ((config.width + config.height) * 2) / 1000;
+    const monorailFrameM = stats.monorailFrameMeters / 1000;
     const mullionM = stats.mullionMeters / 1000;
+    const floatingMullionM = stats.floatingMullionMeters / 1000;
     const sashWindowM = stats.sashWindowMeters / 1000;
     const sashDoorM = stats.sashDoorMeters / 1000;
     const beadM = stats.beadMeters / 1000;
     const glassA = stats.glassArea / 1000000; 
     const panelA = stats.panelArea / 1000000;
     
-    // Total profiles for Galv Reinforcement
-    const galoM = frameM + mullionM + sashWindowM + sashDoorM;
+    const galoM = frameM + monorailFrameM + mullionM + floatingMullionM + sashWindowM + sashDoorM;
     
     const brand = brands.find(b => b.id === config.profileId);
     const glassType = glassList.find(g => g.id === config.glassId);
@@ -593,8 +767,11 @@ export const UnitDesigner = () => {
     
     const frameCompId = config.frameType === 'renovation' ? 'renovation' : 'frame';
     const framePrice = brand?.components.find(c => c.id === frameCompId)?.price || 0;
+    const monorailPrice = brand?.components.find(c => c.id === 'monorail_frame')?.price || 0;
     const frameName = config.frameType === 'renovation' ? 'پروفیل فریم بازسازی' : 'پروفیل فریم';
+    
     const mullionPrice = brand?.components.find(c => c.id === 'mullion')?.price || 0;
+    const floatingMullionPrice = brand?.components.find(c => c.id === 'floating_mullion')?.price || 0;
     const sashWindowPrice = brand?.components.find(c => c.id === 'sash_window')?.price || 0;
     const sashDoorPrice = brand?.components.find(c => c.id === 'sash_door')?.price || 0;
     const beadPrice = brand?.components.find(c => c.id === 'bead')?.price || 60000;
@@ -604,41 +781,26 @@ export const UnitDesigner = () => {
     const details: InvoiceDetail[] = [];
     let rowId = 1;
     
-    // 1. PROFILES
-    const frameTotal = frameM * framePrice;
-    if (frameM > 0) details.push({ rowId: rowId++, name: frameName, unit: 'متر طول', quantity: Number(frameM.toFixed(2)), unitPrice: framePrice, totalPrice: Math.round(frameTotal) });
+    if (frameM > 0) details.push({ rowId: rowId++, name: frameName, unit: 'متر طول', quantity: Number(frameM.toFixed(2)), unitPrice: framePrice, totalPrice: Math.round(frameM * framePrice) });
+    if (monorailFrameM > 0) details.push({ rowId: rowId++, name: 'پروفیل فریم کشویی تک‌ریل (Monorail)', unit: 'متر طول', quantity: Number(monorailFrameM.toFixed(2)), unitPrice: monorailPrice, totalPrice: Math.round(monorailFrameM * monorailPrice) });
+    if (sashWindowM > 0) details.push({ rowId: rowId++, name: 'پروفیل سش (Sash) بازشو', unit: 'متر طول', quantity: Number(sashWindowM.toFixed(2)), unitPrice: sashWindowPrice, totalPrice: Math.round(sashWindowM * sashWindowPrice) });
+    if (sashDoorM > 0) details.push({ rowId: rowId++, name: 'پروفیل سش (Sash) درب', unit: 'متر طول', quantity: Number(sashDoorM.toFixed(2)), unitPrice: sashDoorPrice, totalPrice: Math.round(sashDoorM * sashDoorPrice) });
+    if (mullionM > 0) details.push({ rowId: rowId++, name: 'پروفیل مولیون (وادار)', unit: 'متر طول', quantity: Number(mullionM.toFixed(2)), unitPrice: mullionPrice, totalPrice: Math.round(mullionM * mullionPrice) });
+    if (floatingMullionM > 0) details.push({ rowId: rowId++, name: 'مولیون متحرک (French Window)', unit: 'متر طول', quantity: Number(floatingMullionM.toFixed(2)), unitPrice: floatingMullionPrice, totalPrice: Math.round(floatingMullionM * floatingMullionPrice) });
     
-    const sashWinTotal = sashWindowM * sashWindowPrice;
-    if (sashWindowM > 0) details.push({ rowId: rowId++, name: 'پروفیل سش (Sash) پنجره', unit: 'متر طول', quantity: Number(sashWindowM.toFixed(2)), unitPrice: sashWindowPrice, totalPrice: Math.round(sashWinTotal) });
+    if (glassA > 0) details.push({ rowId: rowId++, name: glassType?.name || 'شیشه دوجداره', unit: 'متر مربع', quantity: Number(glassA.toFixed(2)), unitPrice: glassPricePerM2, totalPrice: Math.round(glassA * glassPricePerM2) });
+    if (panelA > 0) details.push({ rowId: rowId++, name: panelType?.name || 'پنل UPVC', unit: 'متر مربع', quantity: Number(panelA.toFixed(2)), unitPrice: panelPricePerM2, totalPrice: Math.round(panelA * panelPricePerM2) });
     
-    const sashDoorTotal = sashDoorM * sashDoorPrice;
-    if (sashDoorM > 0) details.push({ rowId: rowId++, name: 'پروفیل سش (Sash) درب', unit: 'متر طول', quantity: Number(sashDoorM.toFixed(2)), unitPrice: sashDoorPrice, totalPrice: Math.round(sashDoorTotal) });
-    
-    const mullionTotal = mullionM * mullionPrice;
-    if (mullionM > 0) details.push({ rowId: rowId++, name: 'پروفیل مولیون (وادار)', unit: 'متر طول', quantity: Number(mullionM.toFixed(2)), unitPrice: mullionPrice, totalPrice: Math.round(mullionTotal) });
-    
-    // 2. GLASS & PANELS
-    const glassTotal = glassA * glassPricePerM2;
-    if (glassA > 0) details.push({ rowId: rowId++, name: glassType?.name || 'شیشه دوجداره', unit: 'متر مربع', quantity: Number(glassA.toFixed(2)), unitPrice: glassPricePerM2, totalPrice: Math.round(glassTotal) });
-    
-    const panelTotal = panelA * panelPricePerM2;
-    if (panelA > 0) details.push({ rowId: rowId++, name: panelType?.name || 'پنل UPVC', unit: 'متر مربع', quantity: Number(panelA.toFixed(2)), unitPrice: panelPricePerM2, totalPrice: Math.round(panelTotal) });
-    
-    // 3. SYSTEMATIC ITEMS (BEAD & REINFORCEMENT)
-    const beadTotal = beadM * beadPrice;
-    if (beadM > 0) details.push({ rowId: rowId++, name: 'زهوار (Beading) پروفیل', unit: 'متر طول', quantity: Number(beadM.toFixed(2)), unitPrice: beadPrice, totalPrice: Math.round(beadTotal) });
-    
-    const galoTotal = galoM * galoPrice;
-    if (galoM > 0) details.push({ rowId: rowId++, name: 'گالوانیزه (Reinforcement)', unit: 'متر طول', quantity: Number(galoM.toFixed(2)), unitPrice: galoPrice, totalPrice: Math.round(galoTotal) });
+    if (beadM > 0) details.push({ rowId: rowId++, name: 'زهوار (Beading) پروفیل', unit: 'متر طول', quantity: Number(beadM.toFixed(2)), unitPrice: beadPrice, totalPrice: Math.round(beadM * beadPrice) });
+    if (galoM > 0) details.push({ rowId: rowId++, name: 'گالوانیزه تقویتی (Reinforcement)', unit: 'متر طول', quantity: Number(galoM.toFixed(2)), unitPrice: galoPrice, totalPrice: Math.round(galoM * galoPrice) });
 
-    // 4. HARDWARES (WITH BRAND NAMES)
     const hwBrands = pricingStore.getHardwareBrands();
     let hardwareTotalSum = 0;
     const hardwareMap = [
       { type: 'Turn', label: 'یراق تک‌حالته', count: stats.hardware.Turn },
       { type: 'TiltTurn', label: 'یراق دو‌حالته', count: stats.hardware.TiltTurn },
       { type: 'Sliding', label: 'یراق کشویی', count: stats.hardware.Sliding },
-      { type: 'Door', label: 'یراق درب بالکنی (سوئیچی)', count: stats.hardware.Door },
+      { type: 'Door', label: 'یراق درب بالکنی', count: stats.hardware.Door },
     ];
     
     hardwareMap.forEach(hwEntry => {
@@ -649,26 +811,17 @@ export const UnitDesigner = () => {
         const price = match?.pricePerSet || 0;
         const total = hwEntry.count * price;
         hardwareTotalSum += total;
-        details.push({ 
-          rowId: rowId++, 
-          name: `${hwEntry.label} برند ${brandName}`, 
-          unit: 'دست', 
-          quantity: hwEntry.count, 
-          unitPrice: price, 
-          totalPrice: Math.round(total) 
-        });
+        details.push({ rowId: rowId++, name: `${hwEntry.label} برند ${brandName}`, unit: 'دست', quantity: hwEntry.count, unitPrice: price, totalPrice: Math.round(total) });
       }
     });
 
-    const totalProfileMeters = frameM + mullionM + sashWindowM + sashDoorM;
-    const profileCost = frameTotal + sashWinTotal + sashDoorTotal + mullionTotal + galoTotal + beadTotal;
-    const unitPrice = Math.round(profileCost + glassTotal + hardwareTotalSum + panelTotal);
+    const unitPrice = details.reduce((acc, d) => acc + d.totalPrice, 0);
     
     return {
-        profileMeters: Number(totalProfileMeters.toFixed(2)),
-        profilePrice: Math.round(profileCost),
+        profileMeters: Number(galoM.toFixed(2)),
+        profilePrice: Math.round(unitPrice - (glassA * glassPricePerM2 + panelA * panelPricePerM2 + hardwareTotalSum)),
         glassArea: Number(glassA.toFixed(2)),
-        glassPrice: Math.round(glassTotal + panelTotal),
+        glassPrice: Math.round(glassA * glassPricePerM2 + panelA * panelPricePerM2),
         sashCount: stats.hardware.Turn + stats.hardware.TiltTurn + stats.hardware.Sliding + stats.hardware.Door,
         hardwarePrice: Math.round(hardwareTotalSum),
         totalPrice: unitPrice,
@@ -692,7 +845,6 @@ export const UnitDesigner = () => {
           updatedItems.push(newItem);
       }
 
-      // Calculate the final price including installation for storage synchronization
       const totalMaterialPrice = updatedItems.reduce((acc, i) => acc + (i.calculations.totalPrice * i.quantity), 0);
       const installationCost = Math.round(totalMaterialPrice * (projectDetails.installPercent / 100));
       const finalProjectPrice = totalMaterialPrice + installationCost;
@@ -700,7 +852,7 @@ export const UnitDesigner = () => {
       const projectToSave = {
         ...projectDetails,
         items: updatedItems,
-        totalPrice: finalProjectPrice // Unified calculation: Final price includes installation to match Projects list and Invoice
+        totalPrice: finalProjectPrice 
       };
       
       pricingStore.saveProject(projectToSave);
@@ -754,25 +906,44 @@ export const UnitDesigner = () => {
 
       <div className="bg-slate-800 text-white z-20 shadow-md flex flex-col shrink-0">
         <div className="flex border-b border-slate-700">
-          <button onClick={() => setActiveTab('openings')} className={`flex-1 py-3 text-xs font-bold transition-colors ${activeTab === 'openings' ? 'bg-slate-700 text-white border-b-2 border-orange-500' : 'text-slate-400 hover:text-slate-200'}`}>{t('opening')}</button>
-          <button onClick={() => setActiveTab('splits')} className={`flex-1 py-3 text-xs font-bold transition-colors ${activeTab === 'splits' ? 'bg-slate-700 text-white border-b-2 border-orange-500' : 'text-slate-400 hover:text-slate-200'}`}>{t('splits')}</button>
-          <button onClick={() => setActiveTab('tools')} className={`flex-1 py-3 text-xs font-bold transition-colors ${activeTab === 'tools' ? 'bg-slate-700 text-white border-b-2 border-orange-500' : 'text-slate-400 hover:text-slate-200'}`}>{t('tools')}</button>
+          <div className="flex-1 flex p-1 bg-slate-900/50 rounded-lg m-2">
+              <button 
+                onClick={() => setSystemMode('Casement')} 
+                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-[10px] font-black transition-all ${systemMode === 'Casement' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400'}`}
+              >
+                  <Sidebar size={14} /> لولایی (Casement)
+              </button>
+              <button 
+                onClick={() => setSystemMode('Sliding')} 
+                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-[10px] font-black transition-all ${systemMode === 'Sliding' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400'}`}
+              >
+                  <Monitor size={14} /> کشویی (Sliding)
+              </button>
+          </div>
         </div>
-        <div className="p-3 h-20 overflow-x-auto overflow-y-hidden no-scrollbar bg-slate-800">
-           {activeTab === 'openings' && (
+        
+        <div className="flex border-b border-slate-700 bg-slate-800/50">
+          <button onClick={() => setActiveTab('openings')} className={`flex-1 py-3 text-[11px] font-bold transition-colors ${activeTab === 'openings' ? 'bg-slate-700 text-white border-b-2 border-orange-500' : 'text-slate-400 hover:text-slate-200'}`}>{t('opening')}</button>
+          <button onClick={() => setActiveTab('splits')} className={`flex-1 py-3 text-[11px] font-bold transition-colors ${activeTab === 'splits' ? 'bg-slate-700 text-white border-b-2 border-orange-500' : 'text-slate-400 hover:text-slate-200'}`}>{t('splits')}</button>
+          <button onClick={() => setActiveTab('tools')} className={`flex-1 py-3 text-[11px] font-bold transition-colors ${activeTab === 'tools' ? 'bg-slate-700 text-white border-b-2 border-orange-500' : 'text-slate-400 hover:text-slate-200'}`}>{t('tools')}</button>
+        </div>
+
+        <div className="p-3 h-32 overflow-x-auto no-scrollbar bg-slate-800 relative">
+           {activeTab === 'openings' && systemMode === 'Casement' && (
               <div className="flex items-center gap-4 h-full">
                   <div className="flex items-center gap-2 pr-2 border-r border-slate-600/50 h-full">
-                      <div className="flex items-center justify-center h-full w-6"><span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }} className="text-[9px] text-slate-500 font-bold whitespace-nowrap">پنجره</span></div>
                       <DraggableIcon type="opening" value="Fixed" label={t('fixed')} icon={<FixedIcon />} isActive={activeTool?.value === 'Fixed'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} />
                       <DraggableIcon type="opening" value="TurnLeft" label={t('turn_left')} icon={<TurnLeftIcon />} isActive={activeTool?.value === 'TurnLeft'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} />
                       <DraggableIcon type="opening" value="TurnRight" label={t('turn_right')} icon={<TurnRightIcon />} isActive={activeTool?.value === 'TurnRight'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} />
                       <DraggableIcon type="opening" value="TiltTurnLeft" label={t('tilt_turn_left')} icon={<TiltTurnLeftIcon />} isActive={activeTool?.value === 'TiltTurnLeft'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} />
                       <DraggableIcon type="opening" value="TiltTurnRight" label={t('tilt_turn_right')} icon={<TiltTurnRightIcon />} isActive={activeTool?.value === 'TiltTurnRight'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} />
-                      <DraggableIcon type="opening" value="SlidingLeft" label={t('sliding_left')} icon={<SlidingIcon dir="left"/>} isActive={activeTool?.value === 'SlidingLeft'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} />
-                      <DraggableIcon type="opening" value="SlidingRight" label={t('sliding_right')} icon={<SlidingIcon dir="right"/>} isActive={activeTool?.value === 'SlidingRight'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} />
+                      <DraggableIcon type="opening" value="Awning" label="کلنگی (بالا)" icon={<AwningIcon />} isActive={activeTool?.value === 'Awning'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} />
+                  </div>
+                  <div className="flex items-center gap-2 px-2 border-r border-slate-600/50 h-full">
+                      <DraggableIcon type="opening" value="FrenchWindowLeft" label="فرانسوی چپ" icon={<FrenchIcon dir="left"/>} isActive={activeTool?.value === 'FrenchWindowLeft'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} />
+                      <DraggableIcon type="opening" value="FrenchWindowRight" label="فرانسوی راست" icon={<FrenchIcon dir="right"/>} isActive={activeTool?.value === 'FrenchWindowRight'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} />
                   </div>
                   <div className="flex items-center gap-2 pl-2 h-full">
-                       <div className="flex items-center justify-center h-full w-6"><span style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }} className="text-[9px] text-slate-500 font-bold whitespace-nowrap">درب</span></div>
                        <DraggableIcon type="opening" value="DoorLeft" label={t('door') + ' راست'} icon={<DoorRightIcon />} isActive={activeTool?.value === 'DoorLeft'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} />
                        <DraggableIcon type="opening" value="DoorRight" label={t('door') + ' چپ'} icon={<DoorLeftIcon />} isActive={activeTool?.value === 'DoorRight'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} />
                   </div>
@@ -782,6 +953,28 @@ export const UnitDesigner = () => {
                   </div>
               </div>
            )}
+
+           {activeTab === 'openings' && systemMode === 'Sliding' && (
+               <div className="flex flex-col h-full gap-2">
+                   <div className="flex gap-2 p-1 bg-slate-900/40 rounded-lg w-fit">
+                       <button onClick={() => setSlidingRailMode('Monorail')} className={`px-4 py-1 rounded text-[9px] font-black transition-all ${slidingRailMode === 'Monorail' ? 'bg-blue-500 text-white' : 'text-slate-500'}`}>MONORAIL (۹ تیپ)</button>
+                       <button onClick={() => setSlidingRailMode('DoubleRail')} className={`px-4 py-1 rounded text-[9px] font-black transition-all ${slidingRailMode === 'DoubleRail' ? 'bg-blue-500 text-white' : 'text-slate-500'}`}>DOUBLE RAIL (۲۷ تیپ)</button>
+                   </div>
+                   <div className="flex gap-4 items-center overflow-x-auto no-scrollbar pb-1">
+                        {Object.entries(SLIDING_DATA[slidingRailMode]).map(([category, typologies]) => (
+                            <div key={category} className="flex flex-col gap-1 pr-3 first:pr-0 border-r border-slate-700 last:border-0">
+                                <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">{category}</span>
+                                <div className="flex gap-2">
+                                    {typologies.map(t => (
+                                        <TypologyIcon key={t.id} typology={t} isActive={false} onClick={applyTypology} />
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                   </div>
+               </div>
+           )}
+
            {activeTab === 'splits' && (
               <div className="flex items-center gap-4 h-full">
                   <DraggableIcon type="split" dir="row" count={2} label={t('split_v_2')} icon={<SplitVerticalIcon count={2} />} isActive={activeTool?.dir === 'row' && activeTool.count === 2} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} />

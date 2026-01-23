@@ -139,7 +139,7 @@ const collectFlattenedSegments = (node: WindowNode, totalSize: number, targetDir
     }
 };
 
-// --- CORE HANDLES LOGIC (Ultra-Small for Invoices) ---
+// --- CORE HANDLES LOGIC ---
 
 const renderHandles = (type: OpeningDirection | undefined, sashThickness: number, isThumbnail: boolean = false, scale: number = 1) => {
     if (!type || type === 'Fixed' || type.includes('Panel')) return null;
@@ -147,25 +147,16 @@ const renderHandles = (type: OpeningDirection | undefined, sashThickness: number
     const { color: handleColor, shadow, zIndex } = DESIGN_SYSTEM.handle;
     const isDoor = type.includes('Door');
     
-    // REDUCED BASE SIZES FOR THUMBNAILS (Premium Look)
     const baseW = DESIGN_SYSTEM.handle.width;
     const baseH = DESIGN_SYSTEM.handle.height;
     
-    // Very small handles to avoid cluttering the visual preview
-    const hW = isThumbnail 
-        ? (isDoor ? baseW * 0.8 : baseW * 0.5) 
-        : baseW;
-        
-    const hH = isThumbnail 
-        ? (isDoor ? baseH * 0.5 : baseH * 0.3) 
-        : (isDoor ? baseH * 1.3 : baseH);
-        
+    const hW = isThumbnail ? (isDoor ? baseW * 0.8 : baseW * 0.5) : baseW;
+    const hH = isThumbnail ? (isDoor ? baseH * 0.5 : baseH * 0.3) : (isDoor ? baseH * 1.3 : baseH);
     const hR = isThumbnail ? 0.2 : DESIGN_SYSTEM.handle.radius;
   
     const offset = (sashThickness - hW) / 2;
     const offsetPx = `${offset}px`;
   
-    // Fix: React.Properties is deprecated/not available, use React.CSSProperties
     const handleBaseStyle: React.CSSProperties = { 
         position: 'absolute', 
         top: '50%', 
@@ -210,11 +201,14 @@ const renderHandles = (type: OpeningDirection | undefined, sashThickness: number
   
     return (
       <>
-          {(type === 'TurnRight' || type === 'TiltTurnRight') && (
+          {(type === 'TurnRight' || type === 'TiltTurnRight' || type === 'FrenchWindowRight' || type === 'VWSliding') && (
               <div style={{...handleBaseStyle, right: offsetPx}}><Lever direction="toLeft" /></div>
           )}
-          {(type === 'TurnLeft' || type === 'TiltTurnLeft') && (
+          {(type === 'TurnLeft' || type === 'TiltTurnLeft' || type === 'FrenchWindowLeft') && (
               <div style={{...handleBaseStyle, left: offsetPx}}><Lever direction="toRight" /></div>
+          )}
+          {type === 'Awning' && (
+              <div style={{...handleBaseStyle, top: 'auto', bottom: offsetPx, left: '50%', transform: 'translateX(-50%) rotate(90deg)'}}><Lever direction="toLeft" /></div>
           )}
           {type === 'DoorRight' && (
               <div style={{...handleBaseStyle, right: offsetPx}}><Lever direction="toLeft" /><Keyhole /></div>
@@ -222,8 +216,8 @@ const renderHandles = (type: OpeningDirection | undefined, sashThickness: number
           {type === 'DoorLeft' && (
               <div style={{...handleBaseStyle, left: offsetPx}}><Lever direction="toRight" /><Keyhole /></div>
           )}
-          {(type === 'SlidingRight' || type === 'SlidingLeft') && (
-               <div style={{...handleBaseStyle, [type === 'SlidingRight' ? 'right' : 'left']: '2px', height: `${hH*0.8}px`}}></div>
+          {(type === 'SlidingRight' || type === 'SlidingLeft' || type === 'SlidingMonorailRight' || type === 'SlidingMonorailLeft' || type === 'SlidingDoubleRail') && (
+               <div style={{...handleBaseStyle, [type.includes('Right') ? 'right' : 'left']: '2px', height: `${hH*0.8}px`}}></div>
           )}
       </>
     );
@@ -248,11 +242,19 @@ export const WindowCanvas = ({
   };
 
   const isRenovation = frameType === 'renovation';
+  const isMonorail = node.slidingRailType === 'Monorail';
+  
+  // Differentiate frame thickness for monorail (fixed sashes have no sash profile, just frame)
+  const isFixedInMonorail = isMonorail && node.openingType === 'Fixed';
   
   const frameThickness = (isThumbnail ? 16 : (isRenovation ? 20 : 12)) * scale;
   const mullionWidth = (isThumbnail ? 14 : 12) * scale; 
   const isDoor = node.openingType?.includes('Door');
-  const sashThickness = (isThumbnail ? (isDoor ? 22 : 14) : (isDoor ? 25 : 12)) * scale;
+  
+  // Technical Distinction: Fixed sashes in monorail are thinner visually
+  const sashThickness = isFixedInMonorail 
+    ? frameThickness * 0.4 
+    : (isThumbnail ? (isDoor ? 22 : 14) : (isDoor ? 25 : 12)) * scale;
 
   const handleResizeStart = (e: React.MouseEvent | React.TouchEvent, index: number) => {
     if (readOnly) return;
@@ -294,7 +296,6 @@ export const WindowCanvas = ({
                 </>
             )}
             <div className="w-full h-full relative rounded-sm" style={frameStyle}>
-                 {/* DOUBLE FRAME LINE LOGIC for Thumbnail Mode */}
                  {isThumbnail && (
                     <div className="absolute inset-[2.5px] border border-slate-300 pointer-events-none z-10" />
                  )}
@@ -308,14 +309,18 @@ export const WindowCanvas = ({
 
   if (node.type === 'container' && node.children) {
     const isSashContainer = node.openingType && node.openingType !== 'Fixed';
-    const totalFlex = node.children.reduce((a, b) => a + (b.flex || 1), 0);
+    const totalFlex = node.children.reduce((sum, c) => sum + (c.flex || 1), 0) || 1;
+    
+    // Technical rendering for French window opening (no middle mullion)
+    const isFrench = node.isFrenchWindow;
+    
     const Wrapper = isSashContainer ? 
         ({c}: {c: React.ReactNode}) => (
             <div className="w-full h-full relative rounded-sm shadow-sm bg-white" style={frameStyle}>
                  {isThumbnail && <div className="absolute inset-[2.5px] border border-slate-300 pointer-events-none z-10" />}
                  <div className="w-full h-full" style={{ padding: sashThickness }}>{c}</div>
                  <div className="absolute inset-0 pointer-events-none z-20">
-                    <div className="w-full h-full relative" style={{ padding: sashThickness }}>{renderOpeningLines(node.openingType, width, height, isThumbnail)}</div>
+                    <div className="w-full h-full relative" style={{ padding: sashThickness }}>{renderOpeningLines(node.openingType, width, height, isThumbnail, isFrench)}</div>
                     {renderHandles(node.openingType, sashThickness, isThumbnail, scale)}
                  </div>
             </div>
@@ -330,7 +335,8 @@ export const WindowCanvas = ({
                             <div className="relative min-w-0 min-h-0 flex flex-col" style={{ flex: child.flex || 1 }}>
                                 <WindowCanvas {...{node: child, selectedId, onSelect, onUpdateNode, onChildResize, width: node.dir === 'row' ? width * ((child.flex || 1)/totalFlex) : width, height: node.dir === 'col' ? height * ((child.flex || 1)/totalFlex) : height, depth: depth + 1, readOnly, isThumbnail, scale, showDimensions, frameType}} />
                             </div>
-                            {index < node.children!.length - 1 && (
+                            {/* In French Window systems, the middle mullion is hidden (floating) */}
+                            {index < node.children!.length - 1 && !isFrench && (
                                 <div className={`relative z-20 border-slate-300 ${node.dir === 'col' ? 'w-full border-t border-b' : 'h-full border-l border-r'} ${!readOnly ? (node.dir === 'col' ? 'cursor-row-resize' : 'cursor-col-resize') : ''}`}
                                     style={{ [node.dir === 'col' ? 'height' : 'width']: mullionWidth, ...frameStyle }}
                                     onMouseDown={(e) => !readOnly && handleResizeStart(e, index)}>
@@ -350,7 +356,6 @@ export const WindowCanvas = ({
   const isOpening = node.openingType && node.openingType !== 'Fixed' && !node.openingType.includes('Panel');
   const isPanel = node.openingType && node.openingType.includes('Panel');
   
-  // Real-looking grooved textures for panels
   const panelStyle: React.CSSProperties = isPanel ? {
     backgroundColor: '#f8fafc',
     backgroundImage: node.openingType === 'PanelV' 
@@ -376,7 +381,7 @@ export const WindowCanvas = ({
   );
 };
 
-const renderOpeningLines = (type: OpeningDirection | undefined, w: number, h: number, isThumbnail: boolean = false) => {
+const renderOpeningLines = (type: OpeningDirection | undefined, w: number, h: number, isThumbnail: boolean = false, isFrench: boolean = false) => {
     if (!type || type === 'Fixed' || type.includes('Panel')) return null;
     const { color: strokeColor, strokeWidth, dashArray } = DESIGN_SYSTEM.openingLines;
     
@@ -385,12 +390,50 @@ const renderOpeningLines = (type: OpeningDirection | undefined, w: number, h: nu
 
     return (
         <svg width="100%" height="100%" className="absolute inset-0 block pointer-events-none" viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none">
+            {/* Standard Casement Rendering */}
             {type === 'TurnRight' && <path d={`M${i},${i} L${iw},${midH} L${i},${ih}`} fill="none" stroke={strokeColor} strokeWidth={finalStrokeWidth} strokeLinecap="round" strokeLinejoin="round" />}
             {type === 'TurnLeft' && <path d={`M${iw},${i} L${i},${midH} L${iw},${ih}`} fill="none" stroke={strokeColor} strokeWidth={finalStrokeWidth} strokeLinecap="round" strokeLinejoin="round" />}
             {type === 'TiltTurnRight' && <><path d={`M${i},${i} L${iw},${midH} L${i},${ih}`} fill="none" stroke={strokeColor} strokeWidth={finalStrokeWidth} /><path d={`M${i},${ih} L${midW},${i} L${iw},${ih}`} fill="none" stroke={strokeColor} strokeWidth={finalStrokeWidth} strokeDasharray={dashArray} /></>}
             {type === 'TiltTurnLeft' && <><path d={`M${iw},${i} L${i},${midH} L${iw},${ih}`} fill="none" stroke={strokeColor} strokeWidth={finalStrokeWidth} /><path d={`M${iw},${ih} L${midW},${i} L${i},${ih}`} fill="none" stroke={strokeColor} strokeWidth={finalStrokeWidth} strokeDasharray={dashArray} /></>}
             {type === 'DoorRight' && <path d={`M${i},${i} L${iw},${midH} L${i},${ih}`} fill="none" stroke={strokeColor} strokeWidth={finalStrokeWidth} />}
             {type === 'DoorLeft' && <path d={`M${iw},${i} L${i},${midH} L${iw},${ih}`} fill="none" stroke={strokeColor} strokeWidth={finalStrokeWidth} />}
+            
+            {/* French Opening Logic (Two arrows meeting) */}
+            {isFrench && (
+                <g>
+                   <path d={`M${i},${i} L${midW},${midH} L${i},${ih}`} fill="none" stroke={strokeColor} strokeWidth={finalStrokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+                   <path d={`M${iw},${i} L${midW},${midH} L${iw},${ih}`} fill="none" stroke={strokeColor} strokeWidth={finalStrokeWidth} strokeLinecap="round" strokeLinejoin="round" />
+                </g>
+            )}
+
+            {/* Sliding Rendering (Horizontal Small Arrows) */}
+            {(type === 'SlidingRight' || type === 'SlidingMonorailRight') && (
+                <g transform={`translate(${midW - 15}, ${midH - 10}) scale(1.5)`}>
+                    <path d="M0,0 L10,5 L0,10" fill="none" stroke={strokeColor} strokeWidth={finalStrokeWidth / 1.5} strokeLinecap="round" strokeLinejoin="round" />
+                    <line x1="-5" y1="5" x2="8" y2="5" stroke={strokeColor} strokeWidth={finalStrokeWidth / 1.5} />
+                </g>
+            )}
+            {(type === 'SlidingLeft' || type === 'SlidingMonorailLeft') && (
+                <g transform={`translate(${midW + 15}, ${midH - 10}) scale(1.5)`}>
+                    <path d="M0,0 L-10,5 L0,10" fill="none" stroke={strokeColor} strokeWidth={finalStrokeWidth / 1.5} strokeLinecap="round" strokeLinejoin="round" />
+                    <line x1="5" y1="5" x2="-8" y2="5" stroke={strokeColor} strokeWidth={finalStrokeWidth / 1.5} />
+                </g>
+            )}
+            {type === 'SlidingDoubleRail' && (
+                <g transform={`translate(${midW}, ${midH})`}>
+                    <path d="M-15,-10 L-25,-5 L-15,0 M-25,-5 L5,-5" fill="none" stroke={strokeColor} strokeWidth={finalStrokeWidth / 1.5} strokeLinecap="round" />
+                    <path d="M15,0 L25,5 L15,10 M25,5 L-5,5" fill="none" stroke={strokeColor} strokeWidth={finalStrokeWidth / 1.5} strokeLinecap="round" />
+                </g>
+            )}
+
+            {type === 'Awning' && <path d={`M${i},${ih} L${midW},${i} L${iw},${ih}`} fill="none" stroke={strokeColor} strokeWidth={finalStrokeWidth} strokeLinecap="round" strokeLinejoin="round" />}
+            
+            {type === 'VWSliding' && (
+                <g>
+                    <path d={`M${iw},${i} L${i},${midH} L${iw},${ih}`} fill="none" stroke={strokeColor} strokeWidth={finalStrokeWidth} strokeDasharray={dashArray} />
+                    <path d={`M${midW+10},${ih-20} L${midW-10},${ih-20} L${midW},${ih-25} M${midW-10},${ih-20} L${midW},${ih-15}`} fill="none" stroke={strokeColor} strokeWidth={finalStrokeWidth} />
+                </g>
+            )}
         </svg>
     );
 };
