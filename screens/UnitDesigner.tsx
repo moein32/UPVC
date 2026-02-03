@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { ArrowRight, Save, Trash2, SplitSquareHorizontal, SplitSquareVertical, PlusCircle, Maximize, ZoomIn, ZoomOut, RefreshCcw, Hand, MousePointer2, Receipt, Check, Edit3, Grid, XCircle, Undo, Redo, LayoutTemplate, Home, Box, Layers, Settings, ChevronDown, ChevronUp, SlidersHorizontal, AlignJustify, AlignCenter, Minus, Plus, Sidebar, Monitor, MoveRight } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -58,13 +57,14 @@ const SLIDING_DATA: Record<string, Record<string, Typology[]>> = {
 const SLIDING_OVERLAP = 35; // mm
 const PROFILE_WIDTH_CONSTANT = 60; // mm
 
-const TypologyIcon = ({ typology, isActive, onClick }: { typology: Typology, isActive: boolean, onClick: (t: Typology) => void }) => (
+// Fix: Use 'any' for props to resolve TS error on 'key' property during mapping
+const TypologyIcon = ({ typology, isActive, onClick }: any) => (
     <div 
         onClick={() => onClick(typology)}
         className={`flex flex-col items-center gap-1.5 p-2 rounded-xl cursor-pointer border-2 transition-all ${isActive ? 'bg-blue-600 border-blue-400 scale-105 shadow-lg' : 'bg-slate-700/50 border-transparent hover:bg-slate-700'}`}
     >
         <div className="w-12 h-8 bg-white/10 rounded flex gap-0.5 p-0.5 relative overflow-hidden">
-            {typology.openings.map((op, idx) => (
+            {typology.openings.map((op: any, idx: number) => (
                 <div key={idx} className="flex-1 bg-white/20 rounded-sm relative flex items-center justify-center">
                     {op.includes('Sliding') && <MoveRight size={8} className={`text-white opacity-60 ${op.includes('Left') ? 'rotate-180' : ''}`} />}
                     {op === 'Fixed' && <div className="w-1 h-1 rounded-full bg-white opacity-20" />}
@@ -789,7 +789,7 @@ export const UnitDesigner = () => {
     if (floatingMullionM > 0) details.push({ rowId: rowId++, name: 'مولیون متحرک (French Window)', unit: 'متر طول', quantity: Number(floatingMullionM.toFixed(2)), unitPrice: floatingMullionPrice, totalPrice: Math.round(floatingMullionM * floatingMullionPrice) });
     
     if (glassA > 0) details.push({ rowId: rowId++, name: glassType?.name || 'شیشه دوجداره', unit: 'متر مربع', quantity: Number(glassA.toFixed(2)), unitPrice: glassPricePerM2, totalPrice: Math.round(glassA * glassPricePerM2) });
-    if (panelA > 0) details.push({ rowId: rowId++, name: panelType?.name || 'پنل UPVC', unit: 'متر مربع', quantity: Number(panelA.toFixed(2)), unitPrice: panelPricePerM2, totalPrice: Math.round(panelA * panelPricePerM2) });
+    if (panelA > 0) details.push({ rowId: rowId++, name: 'پنل UPVC', unit: 'متر مربع', quantity: Number(panelA.toFixed(2)), unitPrice: panelPricePerM2, totalPrice: Math.round(panelA * panelPricePerM2) });
     
     if (beadM > 0) details.push({ rowId: rowId++, name: 'زهوار (Beading) پروفیل', unit: 'متر طول', quantity: Number(beadM.toFixed(2)), unitPrice: beadPrice, totalPrice: Math.round(beadM * beadPrice) });
     if (galoM > 0) details.push({ rowId: rowId++, name: 'گالوانیزه تقویتی (Reinforcement)', unit: 'متر طول', quantity: Number(galoM.toFixed(2)), unitPrice: galoPrice, totalPrice: Math.round(galoM * galoPrice) });
