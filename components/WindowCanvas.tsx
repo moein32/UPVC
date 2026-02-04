@@ -146,11 +146,12 @@ const renderHandles = (type: OpeningDirection | undefined, sashThickness: number
   
     const { color: handleColor, shadow, zIndex } = DESIGN_SYSTEM.handle;
     const isDoor = type.includes('Door');
+    const isSliding = type.includes('Sliding');
     
     const baseW = DESIGN_SYSTEM.handle.width;
     const baseH = DESIGN_SYSTEM.handle.height;
     
-    const hW = isThumbnail ? (isDoor ? baseW * 0.8 : baseW * 0.5) : baseW;
+    const hW = isThumbnail ? (isDoor ? baseW * 0.8 : baseW * 0.5) : (isSliding ? baseW * 0.7 : baseW);
     const hH = isThumbnail ? (isDoor ? baseH * 0.5 : baseH * 0.3) : (isDoor ? baseH * 1.3 : baseH);
     const hR = isThumbnail ? 0.2 : DESIGN_SYSTEM.handle.radius;
   
@@ -198,6 +199,32 @@ const renderHandles = (type: OpeningDirection | undefined, sashThickness: number
             borderRadius: '0.2px'
         }} />
     );
+
+    // MasterWin Sliding Handle Styling
+    if (isSliding) {
+        const side = type.includes('Right') ? 'right' : 'left';
+        return (
+            <div style={{
+                ...handleBaseStyle,
+                [side]: '4px',
+                width: isThumbnail ? '2px' : '4px',
+                height: isThumbnail ? '12px' : '40px',
+                backgroundColor: 'rgba(255,255,255,0.9)',
+                border: '0.5px solid rgba(0,0,0,0.2)',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+            }}>
+                <div style={{
+                    position: 'absolute',
+                    top: '20%',
+                    bottom: '20%',
+                    left: '1px',
+                    right: '1px',
+                    backgroundColor: 'rgba(0,0,0,0.05)',
+                    borderRadius: '1px'
+                }} />
+            </div>
+        );
+    }
   
     return (
       <>
@@ -215,9 +242,6 @@ const renderHandles = (type: OpeningDirection | undefined, sashThickness: number
           )}
           {type === 'DoorLeft' && (
               <div style={{...handleBaseStyle, left: offsetPx}}><Lever direction="toRight" /><Keyhole /></div>
-          )}
-          {(type === 'SlidingRight' || type === 'SlidingLeft' || type === 'SlidingMonorailRight' || type === 'SlidingMonorailLeft' || type === 'SlidingDoubleRail') && (
-               <div style={{...handleBaseStyle, [type.includes('Right') ? 'right' : 'left']: '2px', height: `${hH*0.8}px`}}></div>
           )}
       </>
     );

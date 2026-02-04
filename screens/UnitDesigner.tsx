@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { ArrowRight, Save, Trash2, SplitSquareHorizontal, SplitSquareVertical, PlusCircle, Maximize, ZoomIn, ZoomOut, RefreshCcw, Hand, MousePointer2, Receipt, Check, Edit3, Grid, XCircle, Undo, Redo, LayoutTemplate, Home, Box, Layers, Settings, ChevronDown, ChevronUp, SlidersHorizontal, AlignJustify, AlignCenter, Minus, Plus, Sidebar, Monitor, MoveRight } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -645,7 +646,11 @@ export const UnitDesigner = () => {
         glassArea: 0,
         panelArea: 0,
         beadMeters: 0,
-        hardware: { Turn: 0, TiltTurn: 0, Sliding: 0, Door: 0 }
+        hardware: { Turn: 0, TiltTurn: 0, Sliding: 0, Door: 0 },
+        // MasterWin Expansion
+        brushStripMeters: 0,
+        rollerCount: 0,
+        slidingHandleCount: 0
     };
 
     const processHardware = (type: OpeningDirection | undefined) => {
@@ -656,32 +661,48 @@ export const UnitDesigner = () => {
         else if (type.startsWith('Door')) stats.hardware.Door += 1;
     };
 
-    // SLIDING SYSTEM LOGIC (Precision Deductions with Overlap)
+    // SLIDING SYSTEM LOGIC (MasterWin Precise Deductions)
     if (node.systemType === 'Sliding' && node.children) {
         const numSashes = node.children.length;
-        // Overlap Logic: 2 sashes meet once, 3 sashes meet twice (MasterWin standard)
-        const overlapsCount = numSashes === 2 ? 1 : numSashes - 1;
-        // Formula: LeafWidth = (TotalWidth + (Overlaps * OverlapWidth)) / NumSashes
-        const leafW = (w + (overlapsCount * SLIDING_OVERLAP)) / numSashes;
-        const leafH = h;
+        // MasterWin Overlap Logic
+        const overlapsCount = numSashes === 4 ? 2 : (numSashes === 2 ? 1 : 2);
+        
+        // LeafW = (TotalWidth - (2 * FrameWidth) + (Overlaps * 35)) / NumSashes
+        const leafW = (w - (2 * PROFILE_WIDTH_CONSTANT) + (overlapsCount * SLIDING_OVERLAP)) / numSashes;
+        const leafH = h - (2 * PROFILE_WIDTH_CONSTANT);
         
         if (node.slidingRailType === 'Monorail') {
             stats.monorailFrameMeters += (w + h) * 2;
         }
+        
+        // Add Interlock to mullionMeters
+        stats.mullionMeters += overlapsCount * leafH;
 
         node.children.forEach(child => {
-            const isLeafOpening = child.openingType?.includes('Sliding');
-            if (isLeafOpening) {
+            const isOpening = child.openingType?.includes('Sliding');
+            const isFixed = child.openingType === 'Fixed';
+            
+            if (isOpening) {
                 stats.sashWindowMeters += (leafW + leafH) * 2;
+                stats.brushStripMeters += ((leafW + leafH) * 2) * 4;
+                stats.rollerCount += 2;
+                stats.slidingHandleCount += 1;
                 processHardware(child.openingType);
-            }
-            if (child.openingType?.includes('Panel')) {
-                stats.panelArea += leafW * leafH;
-            } else {
-                // Deducting profile widths for actual glass size
+                
                 const gW = leafW - (PROFILE_WIDTH_CONSTANT * 2);
                 const gH = leafH - (PROFILE_WIDTH_CONSTANT * 2);
                 stats.glassArea += Math.max(0, gW * gH);
+            } else if (isFixed) {
+                // Fixed sashes in sliding systems have no sash profile per MasterWin
+                // Glass = Leaf size minus 40mm
+                const gW = leafW - 40;
+                const gH = leafH - 40;
+                stats.glassArea += Math.max(0, gW * gH);
+            }
+            
+            if (child.openingType?.includes('Panel')) {
+                stats.panelArea += leafW * leafH;
+                stats.glassArea = Math.max(0, stats.glassArea - (leafW * leafH));
             }
             stats.beadMeters += (leafW + leafH) * 2;
         });
@@ -725,6 +746,10 @@ export const UnitDesigner = () => {
                 stats.hardware.TiltTurn += childStats.hardware.TiltTurn;
                 stats.hardware.Sliding += childStats.hardware.Sliding;
                 stats.hardware.Door += childStats.hardware.Door;
+                // Accumulate MasterWin additions
+                stats.brushStripMeters += childStats.brushStripMeters;
+                stats.rollerCount += childStats.rollerCount;
+                stats.slidingHandleCount += childStats.slidingHandleCount;
             });
         }
     } else {
@@ -785,7 +810,7 @@ export const UnitDesigner = () => {
     if (monorailFrameM > 0) details.push({ rowId: rowId++, name: 'پروفیل فریم کشویی تک‌ریل (Monorail)', unit: 'متر طول', quantity: Number(monorailFrameM.toFixed(2)), unitPrice: monorailPrice, totalPrice: Math.round(monorailFrameM * monorailPrice) });
     if (sashWindowM > 0) details.push({ rowId: rowId++, name: 'پروفیل سش (Sash) بازشو', unit: 'متر طول', quantity: Number(sashWindowM.toFixed(2)), unitPrice: sashWindowPrice, totalPrice: Math.round(sashWindowM * sashWindowPrice) });
     if (sashDoorM > 0) details.push({ rowId: rowId++, name: 'پروفیل سش (Sash) درب', unit: 'متر طول', quantity: Number(sashDoorM.toFixed(2)), unitPrice: sashDoorPrice, totalPrice: Math.round(sashDoorM * sashDoorPrice) });
-    if (mullionM > 0) details.push({ rowId: rowId++, name: 'پروفیل مولیون (وادار)', unit: 'متر طول', quantity: Number(mullionM.toFixed(2)), unitPrice: mullionPrice, totalPrice: Math.round(mullionM * mullionPrice) });
+    if (mullionM > 0) details.push({ rowId: rowId++, name: 'پروفیل مولیون و Interlock', unit: 'متر طول', quantity: Number(mullionM.toFixed(2)), unitPrice: mullionPrice, totalPrice: Math.round(mullionM * mullionPrice) });
     if (floatingMullionM > 0) details.push({ rowId: rowId++, name: 'مولیون متحرک (French Window)', unit: 'متر طول', quantity: Number(floatingMullionM.toFixed(2)), unitPrice: floatingMullionPrice, totalPrice: Math.round(floatingMullionM * floatingMullionPrice) });
     
     if (glassA > 0) details.push({ rowId: rowId++, name: glassType?.name || 'شیشه دوجداره', unit: 'متر مربع', quantity: Number(glassA.toFixed(2)), unitPrice: glassPricePerM2, totalPrice: Math.round(glassA * glassPricePerM2) });
@@ -794,12 +819,18 @@ export const UnitDesigner = () => {
     if (beadM > 0) details.push({ rowId: rowId++, name: 'زهوار (Beading) پروفیل', unit: 'متر طول', quantity: Number(beadM.toFixed(2)), unitPrice: beadPrice, totalPrice: Math.round(beadM * beadPrice) });
     if (galoM > 0) details.push({ rowId: rowId++, name: 'گالوانیزه تقویتی (Reinforcement)', unit: 'متر طول', quantity: Number(galoM.toFixed(2)), unitPrice: galoPrice, totalPrice: Math.round(galoM * galoPrice) });
 
+    // MasterWin BOM Extensions
+    const brushM = stats.brushStripMeters / 1000;
+    if (brushM > 0) details.push({ rowId: rowId++, name: 'لاستیک مویی (Brush Strip)', unit: 'متر', quantity: Number(brushM.toFixed(2)), unitPrice: 15000, totalPrice: Math.round(brushM * 15000) });
+    if (stats.rollerCount > 0) details.push({ rowId: rowId++, name: 'غلتک بلبرینگی کشویی', unit: 'عدد', quantity: stats.rollerCount, unitPrice: 85000, totalPrice: Math.round(stats.rollerCount * 85000) });
+    if (stats.slidingHandleCount > 0) details.push({ rowId: rowId++, name: 'دستگیره کشویی مخصوص', unit: 'عدد', quantity: stats.slidingHandleCount, unitPrice: 120000, totalPrice: Math.round(stats.slidingHandleCount * 120000) });
+
     const hwBrands = pricingStore.getHardwareBrands();
     let hardwareTotalSum = 0;
     const hardwareMap = [
       { type: 'Turn', label: 'یراق تک‌حالته', count: stats.hardware.Turn },
       { type: 'TiltTurn', label: 'یراق دو‌حالته', count: stats.hardware.TiltTurn },
-      { type: 'Sliding', label: 'یراق کشویی', count: stats.hardware.Sliding },
+      { type: 'Sliding', label: 'یراق کشویی لولایی', count: stats.hardware.Sliding }, // Label tweak for clarity
       { type: 'Door', label: 'یراق درب بالکنی', count: stats.hardware.Door },
     ];
     
