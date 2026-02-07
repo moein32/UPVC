@@ -5,6 +5,7 @@ import { ArrowRight, Printer, Loader2, Share2, FileDown, ZoomIn, ZoomOut, Maximi
 import { toJpeg } from 'html-to-image';
 import { jsPDF } from 'jspdf';
 import { WindowPreview } from '../components/WindowPreview';
+import { WindowCanvas } from '../components/WindowCanvas';
 import { ProjectDetails, InvoiceItem, AppSettings, InvoiceLayoutType } from '../types';
 import { BRANDS } from '../constants';
 import { toPersianDigits, formatPrice } from '../utils/formatting';
@@ -86,10 +87,6 @@ export const InvoicePrint = () => {
     pages.push(items.slice(i, i + ITEMS_PER_PAGE));
   }
 
-  const handlePrint = () => {
-    generatePDF(false);
-  };
-
   const generatePDF = async (isShare = false) => {
     setIsGenerating(true);
     const pageElements = document.querySelectorAll('.export-container .invoice-page');
@@ -143,6 +140,17 @@ export const InvoicePrint = () => {
     }
   };
 
+  const shortenTechnicalTerm = (name: string) => {
+    return name
+      .replace('پروفیل فریم استاندارد نوسازی', 'فریم نوسازی')
+      .replace('پروفیل فریم', 'فریم')
+      .replace('پروفیل سش (Sash) بازشو', 'لنگه بازشو')
+      .replace('پروفیل سش (Sash) درب', 'لنگه درب')
+      .replace('پروفیل مولیون (Mullion)', 'مولیون')
+      .replace('زهوار (Beading) پروفیل', 'زهوار')
+      .replace('گالوانیزه تقویتی (Reinforcement)', 'گالوانیزه');
+  };
+
   const InvoiceHeader = () => (
     <div className={`inv-header shrink-0 px-10 pt-8 pb-4 ${tempLayout === 'classic' ? 'border-b-2 border-slate-900' : ''}`}>
         <div className={`flex justify-between items-start`}>
@@ -173,25 +181,6 @@ export const InvoicePrint = () => {
     </div>
   );
 
-  const InvoiceFooter = ({ pageNum, totalPages }: { pageNum: number, totalPages: number }) => (
-     <div className="inv-footer shrink-0 px-10 pb-6 pt-2">
-        <div className="inv-footer-container relative pt-3 border-t border-slate-100">
-            <div className="flex justify-between items-end">
-                <div className="max-w-[80%]">
-                    <p className="text-[8px] leading-relaxed text-justify opacity-40 font-bold text-slate-800">
-                        {invoiceConfig.footerNote || 'اعتبار این پیش‌فاکتور نکس‌وین ۷۲ ساعت می‌باشد. کلیه محاسبات بر اساس استانداردهای مهندسی UPVC انجام شده است. هرگونه تغییر در ابعاد پس از تایید نهایی بر عهده مشتری می‌باشد.'}
-                    </p>
-                </div>
-                <div className="text-left">
-                    <div className={`${tempLayout === 'classic' ? 'bg-slate-200 text-slate-800 border border-slate-900' : 'bg-slate-900 text-white'} text-[8px] font-black px-3 py-0.5 rounded-full flex items-center gap-2 shadow-sm`}>
-                        <span>صفحه {toPersianDigits(pageNum)} از {toPersianDigits(totalPages)}</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-     </div>
-  );
-
   const InvoicePageContent = ({ pageItems, pageIndex, totalPages }: { pageItems: InvoiceItem[], pageIndex: number, totalPages: number }) => {
     const isLastPage = pageIndex === totalPages - 1;
 
@@ -219,25 +208,25 @@ export const InvoicePrint = () => {
                 {/* Minimalist Table Header */}
                 <div className={`flex w-full shrink-0 ${tempLayout === 'classic' ? 'bg-slate-100 border-b-2 border-slate-900' : 'bg-slate-50 border-b border-slate-100'}`}>
                     <div className="p-3 w-12 text-center text-[9px] font-black text-slate-500 border-l border-slate-100 shrink-0">#</div>
-                    <div className="p-3 w-72 text-center text-[9px] font-black text-slate-500 border-x border-slate-100 shrink-0">نقشه فنی و مشخصات ابعادی</div>
-                    <div className="p-3 flex-1 text-center text-[9px] font-black text-slate-500">جزئیات متریال و ریز اقلام فنی</div>
+                    <div className="p-3 w-72 text-center text-[9px] font-black text-slate-500 border-x border-slate-100 shrink-0">نقشه فنی و ابعاد</div>
+                    <div className="p-3 flex-1 text-center text-[9px] font-black text-slate-500">لیست متریال و قطعات مهندسی</div>
                     <div className="p-3 w-36 text-center text-[9px] font-black text-slate-500 border-r border-slate-100 shrink-0">مبلغ نهایی (تومان)</div>
                 </div>
                 
-                {/* Table Body with Safe Margin */}
                 <div className="flex-1 flex flex-col">
                     {pageItems.map((item, localIndex) => {
                         const globalIndex = pageIndex * ITEMS_PER_PAGE + localIndex;
                         const brand = BRANDS.find(b => b.id === item.config.profileId);
+                        const isSliding = item.config.layout?.systemType === 'Sliding';
+
                         return (
                             <div key={item.id} className={`flex w-full items-stretch flex-1 border-b last:border-0 ${tempLayout === 'classic' ? 'border-slate-900' : 'border-slate-100'}`}>
-                                {/* Row ID */}
                                 <div className="p-2 w-12 flex flex-col items-center justify-center text-[10px] font-black text-slate-300 shrink-0 border-l border-slate-100">{toPersianDigits(globalIndex + 1)}</div>
                                 
-                                {/* Technical Drawing Column */}
                                 <div className="p-3 w-72 shrink-0 flex flex-col items-center justify-center gap-3 border-x border-slate-100 bg-slate-50/10">
                                     <div className="relative w-60 h-44 mx-auto bg-white flex items-center justify-center border border-slate-50 rounded-xl overflow-hidden">
-                                        <WindowPreview config={item.config} width="100%" height="100%" isThumbnail={true} scale={0.7} />
+                                        {/* Fix: Removed non-existent isForPrint prop to resolve TypeScript error */}
+                                        <WindowCanvas node={item.config.layout!} width={item.config.width} height={item.config.height} selectedId={null} onSelect={()=>{}} onUpdateNode={()=>{}} isRoot={true} readOnly={true} scale={0.65} frameType={item.config.frameType} />
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <div className="text-[11px] font-black text-slate-800 bg-white px-2.5 py-1 rounded-lg border border-slate-100 shadow-sm" style={{ direction: 'ltr' }}>
@@ -249,31 +238,35 @@ export const InvoicePrint = () => {
                                     </div>
                                 </div>
 
-                                {/* Minimalist Material Breakdown Table */}
                                 <div className="p-4 flex-1 flex flex-col justify-center overflow-hidden">
                                     <div className="flex items-center gap-2 mb-3">
                                         <span className={`px-2 py-0.5 rounded text-[9px] font-black ${tempLayout === 'classic' ? 'bg-slate-200 text-slate-900 border border-slate-900' : 'bg-slate-900 text-white'}`}>{brand?.name}</span>
                                         <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest truncate">{item.config.type}</span>
                                     </div>
-                                    <div className="space-y-0 border border-slate-100 rounded-lg overflow-hidden">
-                                        {item.calculations.details.slice(0, 10).map((detail, dIdx) => (
-                                            <div key={dIdx} className={`flex items-center justify-between px-3 py-1 text-[9px] ${dIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/60'}`}>
-                                                <div className="flex-1 font-bold text-slate-700">{detail.name}</div>
-                                                <div className="w-24 text-center font-medium text-slate-400">
-                                                    {toPersianDigits(detail.quantity)} {detail.unit}
-                                                </div>
-                                                <div className="w-28 text-left font-black text-slate-800">
-                                                    {formatPrice(detail.totalPrice)} <span className="text-[7px] text-slate-300 font-medium">تومان</span>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
+                                    
+                                    <table className="w-full border-collapse">
+                                        <tbody>
+                                            {item.calculations.details
+                                                .filter(d => {
+                                                    // Interlock logic: Hide if not sliding
+                                                    if (d.name.includes('Interlock') && !isSliding) return false;
+                                                    return true;
+                                                })
+                                                .slice(0, 10)
+                                                .map((detail, dIdx) => (
+                                                <tr key={dIdx} className={`border-b border-slate-50 last:border-0 ${dIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'}`}>
+                                                    <td className="py-1 px-2 text-[9px] font-bold text-slate-700">{shortenTechnicalTerm(detail.name)}</td>
+                                                    <td className="py-1 px-2 text-[9px] text-center text-slate-400">{toPersianDigits(detail.quantity)} {detail.unit}</td>
+                                                    <td className="py-1 px-2 text-[9px] text-left font-black text-slate-800">{formatPrice(detail.totalPrice)}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
                                 </div>
 
-                                {/* Row Total Price */}
                                 <div className="p-4 w-36 shrink-0 flex flex-col items-center justify-center text-center border-r border-slate-100 bg-slate-50/30">
                                     <div className="text-sm font-black text-slate-900 tracking-tight">{formatPrice(item.calculations.totalPrice * item.quantity)}</div>
-                                    <div className="text-[8px] font-black text-slate-400 mt-1 uppercase tracking-widest opacity-60">جمع کل ردیف</div>
+                                    <div className="text-[8px] font-black text-slate-400 mt-1 uppercase tracking-widest opacity-60">مجموع ردیف</div>
                                 </div>
                             </div>
                         );
@@ -323,7 +316,22 @@ export const InvoicePrint = () => {
                 </div>
             </div>
         )}
-        <InvoiceFooter pageNum={pageIndex + 1} totalPages={pages.length} />
+        <div className="inv-footer shrink-0 px-10 pb-6 pt-2">
+           <div className="inv-footer-container relative pt-3 border-t border-slate-100">
+               <div className="flex justify-between items-end">
+                   <div className="max-w-[80%]">
+                       <p className="text-[8px] leading-relaxed text-justify opacity-40 font-bold text-slate-800">
+                           {invoiceConfig.footerNote || 'اعتبار این پیش‌فاکتور نکس‌وین ۷۲ ساعت می‌باشد. کلیه محاسبات بر اساس استانداردهای مهندسی UPVC انجام شده است. هرگونه تغییر در ابعاد پس از تایید نهایی بر عهده مشتری می‌باشد.'}
+                       </p>
+                   </div>
+                   <div className="text-left">
+                       <div className={`${tempLayout === 'classic' ? 'bg-slate-200 text-slate-800 border border-slate-900' : 'bg-slate-900 text-white'} text-[8px] font-black px-3 py-0.5 rounded-full flex items-center gap-2 shadow-sm`}>
+                           <span>صفحه {toPersianDigits(pageIndex + 1)} از {toPersianDigits(pages.length)}</span>
+                       </div>
+                   </div>
+               </div>
+           </div>
+        </div>
       </div>
     );
   };
@@ -379,7 +387,7 @@ export const InvoicePrint = () => {
 
             <div className="flex items-center justify-center gap-3 w-full max-w-[340px] pointer-events-auto">
                 <div className="flex-1 bg-slate-900/95 backdrop-blur-2xl shadow-2xl rounded-[2rem] p-2 flex items-center justify-between border border-white/10">
-                    <button onClick={handlePrint} className="w-12 h-12 flex items-center justify-center bg-white/10 text-white rounded-full transition-all">
+                    <button onClick={() => window.print()} className="w-12 h-12 flex items-center justify-center bg-white/10 text-white rounded-full transition-all">
                         <Printer size={20} />
                     </button>
                     
