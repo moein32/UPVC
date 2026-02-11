@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { ArrowRight, RefreshCw, Download, Settings as SettingsIcon, Package, Loader2, FileText, X, Layout, PieChart, Layers, CheckCircle2, Printer } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -201,7 +202,10 @@ export const CuttingOptimization = () => {
   const downloadPDF = async (type: 'profile' | 'glass') => {
     setIsGeneratingPDF(true);
     const targetRef = type === 'profile' ? printRef : glassPrintRef;
-    if (!targetRef.current) return;
+    if (!targetRef.current) {
+        setIsGeneratingPDF(false);
+        return;
+    }
     try {
         await new Promise(resolve => setTimeout(resolve, 1500));
         const pdf = new jsPDF('p', 'mm', 'a4');
@@ -213,7 +217,7 @@ export const CuttingOptimization = () => {
             const node = pages[i] as HTMLElement;
             const imgData = await toJpeg(node, { 
               quality: 1, 
-              pixelRatio: 4, 
+              pixelRatio: 3, 
               backgroundColor: '#ffffff',
               canvasWidth: 794,
               canvasHeight: 1123 
@@ -371,56 +375,114 @@ export const CuttingOptimization = () => {
         </div>
       </div>
 
-      {/* 2. GLASS PDF ENGINE */}
+      {/* 2. INDUSTRIAL GLASS PDF ENGINE ( بازطراحی صنعتی ) */}
       <div className="fixed top-0 left-[-10000px] pointer-events-none z-[-100]">
         <div ref={glassPrintRef} style={{ width: '794px' }}>
             {optimizedSheets.map((sheet, sIdx) => (
                 <div key={sIdx} className="pdf-page-container" style={{ 
-                    width: '794px', height: '1123px', padding: '40px', backgroundColor: '#ffffff', 
+                    width: '794px', height: '1123px', padding: '50px', backgroundColor: '#ffffff', 
                     display: 'flex', flexDirection: 'column', direction: 'rtl',
                     boxSizing: 'border-box', overflow: 'hidden'
                 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '3px solid #0f172a', paddingBottom: '12px', marginBottom: '30px', flexShrink: 0 }}>
+                    {/* INDUSTRIAL HEADER */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '4px solid #000000', paddingBottom: '15px', marginBottom: '30px', flexShrink: 0 }}>
                         <div style={{ textAlign: 'right' }}>
-                            <h1 style={{ fontSize: '18px', fontWeight: '900', color: '#0f172a', margin: 0 }}>نقشه برش جام شیشه (NexWin Glass) #{toPersianDigits(sheet.id)}</h1>
-                            <p style={{ fontSize: '10px', color: '#64748b', fontWeight: 'bold' }}>پروژه: {selectedProject?.customerName}</p>
+                            <h1 style={{ fontSize: '22px', fontWeight: '900', color: '#000000', margin: 0 }}>نقشه برش جام شیشه (NexWin Glass)</h1>
+                            <div style={{ display: 'flex', gap: '20px', marginTop: '8px' }}>
+                                <p style={{ fontSize: '12px', color: '#000', fontWeight: '900' }}>پروژه: {selectedProject?.customerName}</p>
+                                <p style={{ fontSize: '12px', color: '#000', fontWeight: '900' }}>جام شماره: {toPersianDigits(sheet.id)}</p>
+                            </div>
                         </div>
-                        <div style={{ textAlign: 'left', fontSize: '10px', color: '#64748b' }}>
-                            <div style={{ fontSize: '12px', color: '#10b981', fontWeight: '900' }}>NEXWIN GLASS ENGINE</div>
-                            <div>ابعاد جام: {toPersianDigits(glassSheetWidth)}x{toPersianDigits(glassSheetHeight)} mm</div>
+                        <div style={{ textAlign: 'left', fontSize: '11px', color: '#000', fontWeight: '900' }}>
+                            <div style={{ fontSize: '14px', color: '#000', fontWeight: '900', marginBottom: '4px' }}>واحد اندازه‌گیری: میلی‌متر (mm)</div>
+                            <div>ابعاد جام: {toPersianDigits(glassSheetWidth)} × {toPersianDigits(glassSheetHeight)}</div>
                         </div>
                     </div>
 
-                    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                        <svg width="714" height="600" viewBox={`0 0 ${glassSheetWidth} ${glassSheetHeight}`} style={{ border: '1px solid #cbd5e1' }}>
-                            <defs>
-                                <pattern id="glass-hatch-pdf" patternUnits="userSpaceOnUse" width="40" height="40" patternTransform="rotate(45)">
-                                    <line x1="0" y1="0" x2="0" y2="40" stroke="#f1f5f9" strokeWidth="8" />
-                                </pattern>
-                            </defs>
-                            <rect x="0" y="0" width={glassSheetWidth} height={glassSheetHeight} fill="url(#glass-hatch-pdf)" />
-                            {sheet.pieces.map((p, pIdx) => {
-                                const isNarrow = p.w < 500;
-                                return (
-                                    <g key={pIdx}>
-                                        <rect x={p.x} y={p.y} width={p.w} height={p.h} fill="#f0f9ff" stroke="#0f172a" strokeWidth="4" />
-                                        <text 
-                                            x={p.x + p.w/2} y={p.y + p.h/2} 
-                                            fill="#0f172a" fontSize={isNarrow ? "140" : "160"} fontWeight="900" textAnchor="middle" 
-                                            transform={isNarrow ? `rotate(-90, ${p.x + p.w/2}, ${p.y + p.h/2})` : ""}
-                                            style={{ fontFamily: 'Vazirmatn' }}
-                                        >
-                                            {toPersianDigits(p.w)}×{toPersianDigits(p.h)} - ی{toPersianDigits(p.unitId)}
-                                        </text>
-                                    </g>
-                                )
-                            })}
-                        </svg>
+                    {/* MAIN BLUEPRINT AREA */}
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                        <div style={{ position: 'relative', width: '694px', height: '650px', border: '3px solid #000' }}>
+                            {/* Point Zero Marker (Origin) */}
+                            <div style={{ position: 'absolute', top: '-25px', right: '-25px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                <div style={{ fontSize: '10px', fontWeight: '900', marginBottom: '2px' }}>مبدأ برش (0,0)</div>
+                                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="3">
+                                    <path d="M12 2L12 22M12 2L5 9M12 2L19 9" />
+                                </svg>
+                            </div>
+
+                            <svg width="100%" height="100%" viewBox={`0 0 ${glassSheetWidth} ${glassSheetHeight}`} style={{ display: 'block' }}>
+                                <defs>
+                                    <pattern id="industrial-glass-waste" patternUnits="userSpaceOnUse" width="80" height="80" patternTransform="rotate(45)">
+                                        <line x1="0" y1="0" x2="0" y2="80" stroke="#eeeeee" strokeWidth="20" />
+                                    </pattern>
+                                </defs>
+                                
+                                {/* Background as Waste */}
+                                <rect x="0" y="0" width={glassSheetWidth} height={glassSheetHeight} fill="url(#industrial-glass-waste)" />
+                                <text x={glassSheetWidth/2} y={glassSheetHeight/2} fill="#cccccc" fontSize="300" fontWeight="900" textAnchor="middle" style={{ fontFamily: 'Vazirmatn', opacity: 0.5 }}>ضـایـعـات</text>
+
+                                {/* Pieces */}
+                                {sheet.pieces.map((p, pIdx) => {
+                                    const isVertical = p.w < p.h * 0.6;
+                                    return (
+                                        <g key={pIdx}>
+                                            <rect x={p.x} y={p.y} width={p.w} height={p.h} fill="#ffffff" stroke="#000000" strokeWidth="6" />
+                                            
+                                            {/* Large Centered Dimensions */}
+                                            <text 
+                                                x={p.x + p.w/2} y={p.y + p.h/2 - 20} 
+                                                fill="#000000" fontSize={p.w < 500 ? "130" : "180"} fontWeight="900" textAnchor="middle" 
+                                                transform={isVertical ? `rotate(-90, ${p.x + p.w/2}, ${p.y + p.h/2 - 20})` : ""}
+                                                style={{ fontFamily: 'Vazirmatn' }}
+                                            >
+                                                {toPersianDigits(p.w)} × {toPersianDigits(p.h)}
+                                            </text>
+
+                                            {/* Identifier */}
+                                            <text 
+                                                x={p.x + p.w/2} y={p.y + p.h/2 + 130} 
+                                                fill="#000000" fontSize="90" fontWeight="900" textAnchor="middle" 
+                                                transform={isVertical ? `rotate(-90, ${p.x + p.w/2}, ${p.y + p.h/2 + 130})` : ""}
+                                                style={{ fontFamily: 'Vazirmatn' }}
+                                            >
+                                                واحد {toPersianDigits(p.unitId)} - {p.label}
+                                            </text>
+
+                                            {/* Piece Sequence Number */}
+                                            <circle cx={p.x + 60} cy={p.y + 60} r="45" fill="#000" />
+                                            <text x={p.x + 60} y={p.y + 75} fill="#fff" fontSize="50" fontWeight="900" textAnchor="middle">{toPersianDigits(pIdx + 1)}</text>
+                                        </g>
+                                    )
+                                })}
+                            </svg>
+                        </div>
                     </div>
 
-                    <div style={{ marginTop: '20px', borderTop: '1.5px solid #f1f5f9', paddingTop: '15px', display: 'flex', justifyContent: 'space-between', fontSize: '9px', color: '#94a3b8', fontWeight: 'bold', flexShrink: 0 }}>
-                        <div>متراژ مصرفی جام: {toPersianDigits((sheet.usedArea/1000000).toFixed(2))} m² | ضایعات: {toPersianDigits(sheet.wastePercent.toFixed(1))}%</div>
-                        <div style={{ color: '#0f172a' }}>NEXWIN INDUSTRIAL ENGINE v4.8</div>
+                    {/* INDUSTRIAL FOOTER */}
+                    <div style={{ marginTop: '40px', borderTop: '4px solid #000', paddingTop: '20px', flexShrink: 0 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 180px)', gap: '15px' }}>
+                                <div style={{ border: '2px solid #000', padding: '10px', textAlign: 'center' }}>
+                                    <span style={{ fontSize: '10px', fontWeight: '900', display: 'block', marginBottom: '2px' }}>متراژ مفید (Area)</span>
+                                    <span style={{ fontSize: '16px', fontWeight: '900' }}>{toPersianDigits((sheet.usedArea/1000000).toFixed(2))} m²</span>
+                                </div>
+                                <div style={{ border: '2px solid #000', padding: '10px', textAlign: 'center' }}>
+                                    <span style={{ fontSize: '10px', fontWeight: '900', display: 'block', marginBottom: '2px' }}>راندمان (Yield)</span>
+                                    <span style={{ fontSize: '16px', fontWeight: '900' }}>{toPersianDigits((100 - sheet.wastePercent).toFixed(1))}%</span>
+                                </div>
+                                <div style={{ border: '2px solid #000', padding: '10px', textAlign: 'center' }}>
+                                    <span style={{ fontSize: '10px', fontWeight: '900', display: 'block', marginBottom: '2px' }}>تعداد قطعه</span>
+                                    <span style={{ fontSize: '16px', fontWeight: '900' }}>{toPersianDigits(sheet.pieces.length)} عدد</span>
+                                </div>
+                            </div>
+                            <div style={{ textAlign: 'left', fontSize: '10px', fontWeight: '900' }}>
+                                <div style={{ fontSize: '14px', marginBottom: '4px' }}>NEXWIN GLASS v4.9</div>
+                                <div style={{ color: '#666' }}>Optimized Industrial Output</div>
+                            </div>
+                        </div>
+                        <div style={{ fontSize: '10px', fontWeight: '900', textAlign: 'center', borderTop: '1px dashed #000', paddingTop: '10px' }}>
+                            تاییدیه نهایی کارگاه: .................................................... | امضای مسئول برش: ....................................................
+                        </div>
                     </div>
                 </div>
             ))}
