@@ -332,6 +332,7 @@ const DesktopLayout = ({ state, handlers }: any) => {
 const MobileLayout = ({ state, handlers }: any) => {
     const { t } = useTranslation();
     const [isPanelOpen, setIsPanelOpen] = useState(false);
+    const [isToolSheetOpen, setIsToolSheetOpen] = useState(false);
     const { 
         config, projectDetails, projectItems, unitCount, lastSavedId, editIndex, 
         systemMode, slidingRailMode, activeTab, activeTool, zoomLevel,
@@ -361,38 +362,9 @@ const MobileLayout = ({ state, handlers }: any) => {
                 </div>
             </div>
 
-            {/* NEW: Mobile Design Toolbar */}
-            <div className="bg-white/90 backdrop-blur-md px-2 py-1 shadow-sm border-b border-slate-200 shrink-0 no-scrollbar overflow-x-auto">
-                <div className="flex items-center gap-1">
-                    <ToolBtn icon={systemMode === 'Casement' ? Monitor : Sidebar} label={systemMode === 'Casement' ? 'کشویی' : 'لولایی'} onClick={() => { setSystemMode(prev => prev === 'Casement' ? 'Sliding' : 'Casement'); toggleTool(null); }} isCollapsed={true}/>
-                    <div className="w-px h-10 bg-slate-200 mx-1"></div>
-
-                    {systemMode === 'Casement' ? (
-                        <>
-                            <DraggableIcon type="opening" value="Fixed" label={t('fixed')} icon={<FixedIcon />} isActive={activeTool?.value === 'Fixed'} onClick={toggleTool} onDragStart={()=>{}} onDragEnd={()=>{}} isCollapsed={true} />
-                            <DraggableIcon type="opening" value="TurnRight" label={t('turn_right')} icon={<TurnRightIcon />} isActive={activeTool?.value === 'TurnRight'} onClick={toggleTool} onDragStart={()=>{}} onDragEnd={()=>{}} isCollapsed={true}/>
-                            <DraggableIcon type="opening" value="TiltTurnRight" label={t('tilt_turn_right')} icon={<TiltTurnRightIcon />} isActive={activeTool?.value === 'TiltTurnRight'} onClick={toggleTool} onDragStart={()=>{}} onDragEnd={()=>{}} isCollapsed={true}/>
-                            <DraggableIcon type="opening" value="Awning" label="کلنگی (بالا)" icon={<AwningIcon />} isActive={activeTool?.value === 'Awning'} onClick={toggleTool} onDragStart={()=>{}} onDragEnd={()=>{}} isCollapsed={true}/>
-                            <div className="w-px h-10 bg-slate-200 mx-1"></div>
-                            <DraggableIcon type="split" dir="row" count={2} label={t('split_v_2')} icon={<SplitVerticalIcon count={2} />} isActive={activeTool?.dir === 'row' && activeTool.count === 2} onClick={toggleTool} onDragStart={()=>{}} onDragEnd={()=>{}} isCollapsed={true}/>
-                            <DraggableIcon type="split" dir="col" count={2} label={t('split_h_2')} icon={<SplitHorizontalIcon count={2} />} isActive={activeTool?.dir === 'col' && activeTool.count === 2} onClick={toggleTool} onDragStart={()=>{}} onDragEnd={()=>{}} isCollapsed={true}/>
-                        </>
-                    ) : (
-                        <div className="flex items-center gap-1">
-                           {SLIDING_DATA['DoubleRail']['2-Sash'].map(t => <div key={t.id} className="transform scale-90"><TypologyIcon typology={t} isActive={false} onClick={applyTypology} /></div>)}
-                           {SLIDING_DATA['DoubleRail']['3-Sash'].map(t => <div key={t.id} className="transform scale-90"><TypologyIcon typology={t} isActive={false} onClick={applyTypology} /></div>)}
-                        </div>
-                    )}
-
-                    <div className="w-px h-10 bg-slate-200 mx-1"></div>
-                    <ToolBtn icon={Trash2} label={t('delete_item')} color="text-red-400" onClick={handleDelete} isCollapsed={true}/>
-                    <ToolBtn icon={MousePointer2} label={t('select')} onClick={() => toggleTool(null)} isActive={activeTool === null} isCollapsed={true}/>
-                </div>
-            </div>
-
             {/* 2. Canvas */}
             <div className="flex-1 relative bg-slate-100 overflow-hidden flex flex-col min-h-0">
-                <div className="flex-1 overflow-auto flex items-center justify-center p-1 cursor-default">
+                <div className="flex-1 overflow-auto flex items-center justify-center p-1 cursor-default" onClick={() => setIsToolSheetOpen(true)}>
                     <div className="transition-transform duration-300 ease-out origin-center" style={{ transform: `scale(${zoomLevel})` }}>
                         <div className="relative select-none" style={{ width: config.width / 4, height: config.height / 4 }}>
                             {config.layout && (
@@ -431,7 +403,7 @@ const MobileLayout = ({ state, handlers }: any) => {
                 </div>
             </div>
 
-            {/* Bottom Sheet for Properties */}
+            {/* Bottom Sheets */}
             <AnimatePresence>
                 {isPanelOpen && (
                      <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: 'spring', damping: 30, stiffness: 300 }} className="fixed bottom-24 left-4 right-4 z-30 p-6 bg-white/90 backdrop-blur-2xl border border-white/60 rounded-[2.5rem] shadow-2xl space-y-4">
@@ -443,6 +415,22 @@ const MobileLayout = ({ state, handlers }: any) => {
                          <SelectField label="نوع فریم" value={config.frameType || 'standard'} onChange={(e:any) => setConfig({ ...config, frameType: e.target.value })} options={[{ label: 'فریم استاندارد', value: 'standard' }, { label: 'فریم بازسازی', value: 'renovation' }]} />
                      </motion.div>
                 )}
+                 {isToolSheetOpen && (
+                     <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: 'spring', damping: 30, stiffness: 300 }} className="fixed bottom-0 left-0 right-0 z-50 bg-slate-800 rounded-t-3xl shadow-2xl p-4">
+                        <div className="w-10 h-1 bg-slate-600 rounded-full mx-auto mb-4"></div>
+                        <div className="flex justify-between items-center mb-2">
+                           <h3 className="text-white font-bold">ابزارها</h3>
+                           <button onClick={() => setIsToolSheetOpen(false)} className="p-2 text-slate-400"><X size={20} /></button>
+                        </div>
+                        {/* Tool Content for Mobile */}
+                        <div className="h-40 overflow-x-auto no-scrollbar flex items-center gap-4">
+                            <DraggableIcon type="opening" value="Fixed" label={t('fixed')} icon={<FixedIcon />} isActive={false} onClick={(tool:any) => { handleCanvasNodeClick(selectedNodeId || 'root'); toggleTool(tool); setIsToolSheetOpen(false); }} />
+                            <DraggableIcon type="opening" value="TurnRight" label={t('turn_right')} icon={<TurnRightIcon />} isActive={false} onClick={(tool:any) => { handleCanvasNodeClick(selectedNodeId || 'root'); toggleTool(tool); setIsToolSheetOpen(false); }} />
+                            {/* ... more tools ... */}
+                            <DraggableIcon type="split" dir="row" count={2} label={t('split_v_2')} icon={<SplitVerticalIcon count={2} />} isActive={false} onClick={(tool:any) => { handleCanvasNodeClick(selectedNodeId || 'root'); toggleTool(tool); setIsToolSheetOpen(false); }} />
+                        </div>
+                     </motion.div>
+                 )}
             </AnimatePresence>
         </div>
     );
@@ -460,7 +448,7 @@ export const UnitDesigner = () => {
     editIndex?: number 
   };
   
-  const isDesktop = useMediaQuery('(min-width: 1024px)');
+  const isDesktop = useMediaQuery('(min-width: 1280px)');
 
   // --- STATE MANAGEMENT ---
   useEffect(() => {
