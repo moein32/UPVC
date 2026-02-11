@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { ArrowRight, User, MapPin, Wrench, Briefcase, Save, Layers } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -15,12 +16,14 @@ export const ProjectSetup = () => {
     const state = location.state as { projectDetails?: ProjectDetails } || {};
     if (state.projectDetails) return state.projectDetails;
     
+    const settings = pricingStore.getSettings();
+
     return {
       id: '',
       customerName: '',
       address: '',
-      installPercent: 15,
-      companyName: 'گروه صنعتی نکس‌وین (NexWin)', 
+      installPercent: 10,
+      companyName: settings.invoice.companyName, 
       date: new Date().toISOString(),
       status: 'Draft',
       defaultProfileId: ''
@@ -78,16 +81,6 @@ export const ProjectSetup = () => {
         </div>
 
         <div className="space-y-4">
-            <InputField 
-                label="نام تولید کننده (سربرگ فاکتور)"
-                placeholder="مثال: گروه صنعتی نکس‌وین"
-                value={details.companyName}
-                onChange={(e: any) => setDetails({...details, companyName: e.target.value})}
-                suffix={<Briefcase size={16}/>}
-            />
-
-            <div className="h-px bg-slate-100 my-4"></div>
-
             <SelectField 
                 label="برند پروفیل مصرفی"
                 value={details.defaultProfileId}
