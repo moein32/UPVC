@@ -1,9 +1,11 @@
 
+
 export interface ProfileComponent {
   id: string;
   name: string;
   unit: 'm' | 'm2' | 'count';
   price: number; // Toman
+  weight?: number; // kg/m
 }
 
 export interface ProfileBrand {
