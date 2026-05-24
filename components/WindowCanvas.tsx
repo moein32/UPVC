@@ -150,6 +150,7 @@ const TechnicalHardware = ({ sx, sy, sw, sh, type }: { sx: number, sy: number, s
   const isHandleRight = !type.includes('Right'); // Reversed logic per request
   const isDoor = type.includes('Door');
   const isAwning = type === 'Awning';
+  const isSliding = type.includes('Sliding');
   
   const handlePadding = 30; 
   let handleX = 0;
@@ -160,7 +161,7 @@ const TechnicalHardware = ({ sx, sy, sw, sh, type }: { sx: number, sy: number, s
       handleY = sy + sh - handlePadding - 5;
   } else {
       handleX = isHandleRight ? sx + sw - handlePadding - 5 : sx + handlePadding + 5;
-      handleY = sy + sh / 2;
+      handleY = isDoor && sh > 1200 ? sy + sh - 1050 : sy + sh / 2;
   }
   
   const flipHandle = isHandleRight && !isAwning;
@@ -168,7 +169,7 @@ const TechnicalHardware = ({ sx, sy, sw, sh, type }: { sx: number, sy: number, s
   return (
     <g className="hardware-layer">
       {/* Dashed opening indicators */}
-      {!isDoor && !isAwning && (
+      {!isAwning && !isSliding && (
         <path 
           d={`M ${sx},${sy} L ${isHandleRight ? sx+sw : sx},${sy+sh/2} L ${sx},${sy+sh} Z`} 
           fill="none" 
@@ -188,6 +189,16 @@ const TechnicalHardware = ({ sx, sy, sw, sh, type }: { sx: number, sy: number, s
            strokeDasharray="8,6" 
            opacity="0.6" 
          />
+      )}
+      {isSliding && (
+         <g opacity="0.6" stroke={CAD.colors.openingLine} strokeWidth="2">
+             <line x1={sx + sw/2 - 20} y1={sy + sh/2} x2={sx + sw/2 + 20} y2={sy + sh/2} />
+             {isHandleRight ? (
+                 <path d={`M ${sx + sw/2 + 10},${sy + sh/2 - 10} L ${sx + sw/2 + 20},${sy + sh/2} L ${sx + sw/2 + 10},${sy + sh/2 + 10}`} fill="none" />
+             ) : (
+                 <path d={`M ${sx + sw/2 - 10},${sy + sh/2 - 10} L ${sx + sw/2 - 20},${sy + sh/2} L ${sx + sw/2 - 10},${sy + sh/2 + 10}`} fill="none" />
+             )}
+         </g>
       )}
       {/* Handle Base with realistic styling */}
       <g transform={`translate(${handleX}, ${handleY}) ${isAwning ? 'rotate(90)' : ''} scale(${flipHandle ? -1 : 1}, 1)`}>
@@ -223,26 +234,38 @@ const TechnicalHardware = ({ sx, sy, sw, sh, type }: { sx: number, sy: number, s
       </g>
 
       {/* Hinges */}
-      {!isAwning && (
-        <g fill="url(#metal-grad)" stroke="#475569" strokeWidth="1" filter="url(#shadow-soft)">
+      {!isAwning && !isSliding && (
+        <g fill="#ffffff" stroke="#94a3b8" strokeWidth="1.5" filter="url(#shadow-soft)">
            {(() => {
-               const hW = 6;
-               const hH = 26;
-               const hX = isHandleRight ? sx + 2 : sx + sw - hW - 2; 
+               const hW = 12;
+               const hH = 64;
+               const hX = isHandleRight ? sx + 3 : sx + sw - hW - 3; 
                return (
                    <>
-                      <rect x={hX} y={sy + 30} width={hW} height={hH} rx={2} />
-                      {isDoor && <rect x={hX} y={sy + sh/2 - hH/2} width={hW} height={hH} rx={2} />}
-                      <rect x={hX} y={sy + sh - 30 - hH} width={hW} height={hH} rx={2} />
+                      <rect x={hX} y={sy + 40} width={hW} height={hH} rx={4} />
+                      <line x1={hX} y1={sy + 40 + hH/2} x2={hX + hW} y2={sy + 40 + hH/2} stroke="#94a3b8" strokeWidth="1.5" />
+                      
+                      {isDoor && (
+                        <>
+                          <rect x={hX} y={sy + sh/2 - hH/2} width={hW} height={hH} rx={4} />
+                          <line x1={hX} y1={sy + sh/2} x2={hX + hW} y2={sy + sh/2} stroke="#94a3b8" strokeWidth="1.5" />
+                        </>
+                      )}
+                      
+                      <rect x={hX} y={sy + sh - 40 - hH} width={hW} height={hH} rx={4} />
+                      <line x1={hX} y1={sy + sh - 40 - hH/2} x2={hX + hW} y2={sy + sh - 40 - hH/2} stroke="#94a3b8" strokeWidth="1.5" />
                    </>
                )
            })()}
         </g>
       )}
       {isAwning && (
-          <g fill="url(#metal-grad)" stroke="#475569" strokeWidth="1" filter="url(#shadow-soft)">
-              <rect x={sx + sw * 0.2} y={sy + 1} width={26} height={6} rx={2} />
-              <rect x={sx + sw * 0.8 - 26} y={sy + 1} width={26} height={6} rx={2} />
+          <g fill="#ffffff" stroke="#94a3b8" strokeWidth="1.5" filter="url(#shadow-soft)">
+              <rect x={sx + sw * 0.2} y={sy + 2} width={64} height={12} rx={4} />
+              <line x1={sx + sw * 0.2 + 32} y1={sy + 2} x2={sx + sw * 0.2 + 32} y2={sy + 14} stroke="#94a3b8" strokeWidth="1.5" />
+              
+              <rect x={sx + sw * 0.8 - 64} y={sy + 2} width={64} height={12} rx={4} />
+              <line x1={sx + sw * 0.8 - 32} y1={sy + 2} x2={sx + sw * 0.8 - 32} y2={sy + 14} stroke="#94a3b8" strokeWidth="1.5" />
           </g>
       )}
     </g>
@@ -250,15 +273,17 @@ const TechnicalHardware = ({ sx, sy, sw, sh, type }: { sx: number, sy: number, s
 };
 
 interface ArchDimensionProps {
-  start: number; end: number; orientation: 'h' | 'v'; offset: number; onClick?: () => void;
+  start: number; end: number; orientation: 'h' | 'v'; linePos: number; leaderStart: number; onClick?: () => void;
 }
 
-const ArchDimension = ({ start, end, orientation, offset, onClick }: ArchDimensionProps) => {
+const ArchDimension = ({ start, end, orientation, linePos, leaderStart, onClick }: ArchDimensionProps) => {
   const isH = orientation === 'h';
   const mid = start + (end - start) / 2;
-  const linePos = -offset;
   const color = CAD.colors.dim;
   const tickSize = 8; 
+  const isNegative = linePos < leaderStart;
+  const leaderEnd = isNegative ? linePos + 3 : linePos - 3;
+  const leaderBase = isNegative ? leaderStart - 5 : leaderStart + 5;
 
   return (
     <g 
@@ -279,16 +304,16 @@ const ArchDimension = ({ start, end, orientation, offset, onClick }: ArchDimensi
 
       {isH ? (
         <>
-          <line x1={start} y1={-5} x2={start} y2={linePos - 3} stroke={color} strokeWidth="0.8" opacity="0.4"/>
-          <line x1={end} y1={-5} x2={end} y2={linePos - 3} stroke={color} strokeWidth="0.8" opacity="0.4"/>
+          <line x1={start} y1={leaderBase} x2={start} y2={leaderEnd} stroke={color} strokeWidth="0.8" opacity="0.4"/>
+          <line x1={end} y1={leaderBase} x2={end} y2={leaderEnd} stroke={color} strokeWidth="0.8" opacity="0.4"/>
           <line x1={start} y1={linePos} x2={end} y2={linePos} stroke={color} strokeWidth={CAD.stroke.dimension} />
           <line x1={start - tickSize} y1={linePos + tickSize} x2={start + tickSize} y2={linePos - tickSize} stroke={color} strokeWidth={CAD.stroke.tick} />
           <line x1={end - tickSize} y1={linePos + tickSize} x2={end + tickSize} y2={linePos - tickSize} stroke={color} strokeWidth={CAD.stroke.tick} />
         </>
       ) : (
         <>
-          <line x1={-5} y1={start} x2={linePos - 3} y2={start} stroke={color} strokeWidth="0.8" opacity="0.4"/>
-          <line x1={-5} y1={end} x2={linePos - 3} y2={end} stroke={color} strokeWidth="0.8" opacity="0.4"/>
+          <line x1={leaderBase} y1={start} x2={leaderEnd} y2={start} stroke={color} strokeWidth="0.8" opacity="0.4"/>
+          <line x1={leaderBase} y1={end} x2={leaderEnd} y2={end} stroke={color} strokeWidth="0.8" opacity="0.4"/>
           <line x1={linePos} y1={start} x2={linePos} y2={end} stroke={color} strokeWidth={CAD.stroke.dimension} />
           <line x1={linePos + tickSize} y1={start + tickSize} x2={linePos - tickSize} y2={start - tickSize} stroke={color} strokeWidth={CAD.stroke.tick} />
           <line x1={linePos + tickSize} y1={end + tickSize} x2={linePos - tickSize} y2={end - tickSize} stroke={color} strokeWidth={CAD.stroke.tick} />
@@ -403,7 +428,6 @@ const RenderBlueprintNode = ({ node, x, y, w, h, isRoot, selectedId, onSelect, r
       
       currentPos += flexSize;
       
-      // Paint mullion barrier between children
       if (idx < children.length - 1) {
         if (dir === 'row') {
           contentEls.push(<RenderMullion key={`mullion-${child.id}`} x={cx + cw} y={innerY} w={CAD.geom.mullionT} h={innerH} />);
@@ -442,7 +466,7 @@ const RenderBlueprintNode = ({ node, x, y, w, h, isRoot, selectedId, onSelect, r
     );
   }
   
-  if (!readOnly) {
+  if (!readOnly && (node.type === 'leaf' || node.children?.length === 0)) {
     els.push(
       <rect 
         key={`hit-${node.id}`} 
@@ -481,18 +505,71 @@ export const WindowCanvas = (props: WindowCanvasProps) => {
   
   const padding = canvasPadding !== undefined ? canvasPadding : (showDimensions ? 90 : 10);
 
-  const getSegments = (dir: 'row' | 'col'): { start: number; end: number; parentId: string; index: number }[] => {
-    if (node.type !== 'container' || !node.children || node.dir !== dir) return [];
-    const totalFlex = node.children.reduce((s: number, c: WindowNode) => s + (c.flex || 1), 0) || 1;
-    const available = dir === 'row' ? width : height;
-    let current = 0;
-    return node.children.map((child: WindowNode, idx: number) => {
-      const size = ((child.flex || 1) / totalFlex) * available;
-      const data = { start: current, end: current + size, parentId: node.id, index: idx };
-      current += size;
-      return data;
-    });
+  const getNestedSegments = (targetDir: 'row' | 'col') => {
+    let segments: { start: number; end: number; parentId: string; index: number; layer: number; crossPos: number }[] = [];
+    let currentLayerTop = 1;
+    let currentLayerBot = 1;
+    let currentLayerLeft = 1;
+    let currentLayerRight = 1;
+
+    const traverse = (currentNode: WindowNode, x: number, y: number, w: number, h: number) => {
+      if (currentNode.type !== 'container' || !currentNode.children || currentNode.children.length === 0) return;
+
+      const isMatchingDir = currentNode.dir === targetDir;
+      const isRow = currentNode.dir === 'row';
+      const cy = y + h / 2;
+      const cx = x + w / 2;
+
+      let myLayer = 0;
+      if (isMatchingDir) {
+        if (targetDir === 'row') {
+          myLayer = (cy <= height / 2.01) ? currentLayerTop++ : currentLayerBot++;
+        } else {
+          myLayer = (cx < width / 2) ? currentLayerLeft++ : currentLayerRight++;
+        }
+      }
+
+      const totalFlex = currentNode.children.reduce((s, c) => s + (c.flex || 1), 0) || 1;
+      let currentX = x;
+      let currentY = y;
+
+      currentNode.children.forEach((child, idx) => {
+        if (isRow) {
+          const cw = ((child.flex || 1) / totalFlex) * w;
+          const ch = h;
+          if (isMatchingDir) {
+            if (currentNode.children!.length > 1) {
+              segments.push({ start: currentX, end: currentX + cw, parentId: currentNode.id, index: idx, layer: myLayer, crossPos: cy });
+            }
+          }
+          traverse(child, currentX, currentY, cw, ch);
+          currentX += cw;
+        } else {
+          const cw = w;
+          const ch = ((child.flex || 1) / totalFlex) * h;
+          if (isMatchingDir) {
+            if (currentNode.children!.length > 1) {
+              segments.push({ start: currentY, end: currentY + ch, parentId: currentNode.id, index: idx, layer: myLayer, crossPos: cx });
+            }
+          }
+          traverse(child, currentX, currentY, cw, ch);
+          currentY += ch;
+        }
+      });
+    };
+
+    traverse(node, 0, 0, width, height);
+    return segments;
   };
+
+  const rowSegments = getNestedSegments('row');
+  const colSegments = getNestedSegments('col');
+
+  const maxRowLayerBot = Math.max(0, ...rowSegments.filter(s => s.crossPos > height / 2.01).map(s => s.layer));
+  const maxColLayerLeft = Math.max(0, ...colSegments.filter(s => s.crossPos < width / 2).map(s => s.layer));
+
+  const rowGlobalOffsetBase = 35;
+  const colGlobalOffsetBase = 35;
 
   return (
     <div className="w-full h-full flex items-center justify-center">
@@ -551,15 +628,36 @@ export const WindowCanvas = (props: WindowCanvasProps) => {
           
           {showDimensions && (
             <g className="dimensions-layer">
-              <ArchDimension start={0} end={width} orientation="h" offset={55} onClick={() => onGlobalResize && onGlobalResize('w')} />
-              <ArchDimension start={0} end={height} orientation="v" offset={55} onClick={() => onGlobalResize && onGlobalResize('h')} />
+              <ArchDimension 
+                start={0} end={width} orientation="h" 
+                linePos={height + rowGlobalOffsetBase + maxRowLayerBot * 20} 
+                leaderStart={height} 
+                onClick={() => onGlobalResize && onGlobalResize('w')} 
+              />
+              <ArchDimension 
+                start={0} end={height} orientation="v" 
+                linePos={-(colGlobalOffsetBase + maxColLayerLeft * 20)} 
+                leaderStart={0} 
+                onClick={() => onGlobalResize && onGlobalResize('h')} 
+              />
               
-              {getSegments('row').length > 1 && getSegments('row').map((seg, i) => (
-                <ArchDimension key={`h-${i}`} start={seg.start} end={seg.end} orientation="h" offset={35} onClick={() => onChildResize?.(seg.parentId, seg.index, seg.end - seg.start, width)} />
-              ))}
-              {getSegments('col').length > 1 && getSegments('col').map((seg, i) => (
-                <ArchDimension key={`v-${i}`} start={seg.start} end={seg.end} orientation="v" offset={35} onClick={() => onChildResize?.(seg.parentId, seg.index, seg.end - seg.start, height)} />
-              ))}
+              {rowSegments.map((seg, i) => {
+                const isBot = seg.crossPos > height / 2.01;
+                const linePos = isBot ? height + 35 + (seg.layer - 1) * 20 : -(35 + (seg.layer - 1) * 20);
+                const leaderStart = isBot ? height : 0;
+                return (
+                  <ArchDimension key={`h-${i}`} start={seg.start} end={seg.end} orientation="h" linePos={linePos} leaderStart={leaderStart} onClick={() => onChildResize?.(seg.parentId, seg.index, seg.end - seg.start, width)} />
+                );
+              })}
+              
+              {colSegments.map((seg, i) => {
+                const isRight = seg.crossPos >= width / 2;
+                const linePos = isRight ? width + 35 + (seg.layer - 1) * 20 : -(35 + (seg.layer - 1) * 20);
+                const leaderStart = isRight ? width : 0;
+                return (
+                  <ArchDimension key={`v-${i}`} start={seg.start} end={seg.end} orientation="v" linePos={linePos} leaderStart={leaderStart} onClick={() => onChildResize?.(seg.parentId, seg.index, seg.end - seg.start, height)} />
+                );
+              })}
             </g>
           )}
         </g>
