@@ -1,3 +1,4 @@
+
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
@@ -47,6 +48,8 @@ const resources = {
       "split_h_2": "برش افقی (۲)",
       "split_v_3": "برش عمودی (۳)",
       "split_h_3": "برش افقی (۳)",
+      "sash_split_v": "وادار عمودی در سش",
+      "sash_split_h": "وادار افقی در سش",
       "clear_split": "پاکسازی برش",
       "delete_item": "حذف",
       "select": "انتخاب",
@@ -106,6 +109,8 @@ const resources = {
       "split_h_2": "Split Horz (2)",
       "split_v_3": "Split Vert (3)",
       "split_h_3": "Split Horz (3)",
+      "sash_split_v": "Sash Mullion (V)",
+      "sash_split_h": "Sash Mullion (H)",
       "clear_split": "Clear Split",
       "delete_item": "Delete",
       "select": "Select",
@@ -119,6 +124,65 @@ const resources = {
       "added": "Added",
       "calculate_invoice": "Calculate Invoice",
       "active_tool_hint": "Active: Tap on canvas to apply"
+    }
+  },
+  ar: {
+    translation: {
+      "app_name": "نکس‌وین",
+      "welcome": "أهلا بك",
+      "dashboard": "لوحة القيادة",
+      "new_project": "مشروع جديد",
+      "new_project_desc": "حساب الأسعار وتصميم النوافذ",
+      "profile_price": "سعر الملف الشخصي",
+      "glass_hardware": "الزجاج والأجهزة",
+      "projects": "المشاريع",
+      "settings": "الإعدادات",
+      "system_status": "حالة النظام",
+      "online": "متصل",
+      "general": "عام",
+      "dark_mode": "الوضع المظلم",
+      "currency": "العملة",
+      "language": "لغة / Language",
+      "calculations": "العمليات الحسابية",
+      "profit_coefficient": "هامش الربح (%)",
+      "coefficient_version": "نسخة المعامل",
+      "output_format": "تنسيق الإخراج",
+      "version": "إصدار",
+      "year": "عام",
+      "management_section": "الإدارة والمشاريع",
+      "toman": "تومان",
+      // Designer
+      "unit_design": "تصميم الوحدة",
+      "item": "بند",
+      "opening": "افتتاح",
+      "splits": "التقسيمات",
+      "tools": "أدوات",
+      "fixed": "ثابت",
+      "turn_right": "يفتح يمين",
+      "turn_left": "يفتح يسار",
+      "tilt_turn_right": "قلاب يمين",
+      "tilt_turn_left": "قلاب يسار",
+      "sliding_right": "سحاب يمين",
+      "sliding_left": "سحاب يسار",
+      "door": "باب",
+      "panel": "لوحة UPVC",
+      "split_v_2": "تقسيم عمودي (2)",
+      "split_h_2": "تقسيم أفقي (2)",
+      "split_v_3": "تقسيم عمودي (3)",
+      "split_h_3": "تقسيم أفقي (3)",
+      "clear_split": "مسح التقسيم",
+      "delete_item": "حذف",
+      "select": "تحديد",
+      "move": "نقل",
+      "global_dims": "الأبعاد الكلية",
+      "section_dims": "أبعاد التحديد",
+      "width": "العرض",
+      "height": "الارتفاع",
+      "add_to_list": "أضف للقائمة",
+      "save_changes": "حفظ التغييرات",
+      "added": "تمت الإضافة",
+      "calculate_invoice": "حساب الفاتورة",
+      "active_tool_hint": "نشط: اضغط على النافذة للتطبيق"
     }
   }
 };

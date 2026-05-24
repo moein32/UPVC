@@ -3,16 +3,17 @@ import { Plus, Settings as SettingsIcon, Layers, Bell, Hammer, FolderOpen, Downl
 import { GlassCard } from '../components/UIComponents';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { BeforeInstallPromptEvent } from '../types';
 
 export const Dashboard = () => {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   
   const today = new Intl.DateTimeFormat(i18n.language === 'en' ? 'en-US' : 'fa-IR', { dateStyle: 'full' }).format(new Date());
 
   useEffect(() => {
-    const handleBeforeInstallPrompt = (e: any) => {
+    const handleBeforeInstallPrompt = (e: BeforeInstallPromptEvent) => {
       e.preventDefault();
       setDeferredPrompt(e);
     };

@@ -23,9 +23,6 @@ export const WindowPreview = ({ config, width, height, className = '', isThumbna
 
   const wRatio = (config.width / REF_DIM) * 100;
   const hRatio = (config.height / REF_DIM) * 100;
-  
-  // Real Aspect Ratio for the internal canvas
-  const aspectRatio = config.width / config.height;
 
   return (
     <div 
@@ -36,13 +33,12 @@ export const WindowPreview = ({ config, width, height, className = '', isThumbna
       }}
     >
         <div 
-            className="relative flex items-center justify-center"
+            className="relative"
             style={{ 
                 width: isThumbnail ? `${wRatio}%` : '100%',
                 height: isThumbnail ? `${hRatio}%` : '100%',
                 maxWidth: '100%',
                 maxHeight: '100%',
-                aspectRatio: `${aspectRatio}`,
             }}
         >
             {config.layout && (

@@ -272,7 +272,7 @@ export const InvoicePrint = () => {
                                             <tbody className="divide-y divide-slate-50">
                                                 {item.calculations.details.slice(0, 11).map((detail, dIdx) => (
                                                     <tr key={dIdx} className={`${dIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/20'}`}>
-                                                        <td className="px-3 py-1.5 font-bold text-slate-700 truncate w-[55%]">
+                                                        <td className="px-3 py-1.5 font-bold text-slate-700 truncate w-[55%]" style={{ fontFamily: 'Vazirmatn' }}>
                                                             {simplifyMaterialName(detail.name)}
                                                         </td>
                                                         <td className="px-2 py-1.5 w-[25%] text-center font-black text-slate-500 whitespace-nowrap">

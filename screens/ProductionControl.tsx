@@ -259,12 +259,12 @@ export const ProductionControl = () => {
                                             </thead>
                                             <tbody>
                                                 <tr>
-                                                    <td style={{ padding: '5px 8px', border: '1px solid #000', fontWeight: 'bold' }}>فریم افقی (Frame Width)</td>
+                                                    <td style={{ padding: '5px 8px', border: '1px solid #000', fontWeight: 'bold', fontFamily: 'Vazirmatn' }}>فریم افقی (Frame Width)</td>
                                                     <td style={{ padding: '5px', textAlign: 'center', border: '1px solid #000', fontWeight: '900', fontFamily: 'monospace', fontSize: '13px' }}>{toPersianDigits(item.config.width)}</td>
                                                     <td style={{ padding: '5px', textAlign: 'center', border: '1px solid #000', fontWeight: '900' }}>{toPersianDigits(2)}</td>
                                                 </tr>
                                                 <tr>
-                                                    <td style={{ padding: '5px 8px', border: '1px solid #000', fontWeight: 'bold' }}>فریم عمودی (Frame Height)</td>
+                                                    <td style={{ padding: '5px 8px', border: '1px solid #000', fontWeight: 'bold', fontFamily: 'Vazirmatn' }}>فریم عمودی (Frame Height)</td>
                                                     <td style={{ padding: '5px', textAlign: 'center', border: '1px solid #000', fontWeight: '900', fontFamily: 'monospace', fontSize: '13px' }}>{toPersianDigits(item.config.height)}</td>
                                                     <td style={{ padding: '5px', textAlign: 'center', border: '1px solid #000', fontWeight: '900' }}>{toPersianDigits(2)}</td>
                                                 </tr>

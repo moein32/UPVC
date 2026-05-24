@@ -26,7 +26,7 @@ export const ProjectSetup = () => {
       companyName: settings.invoice.companyName, 
       date: new Date().toISOString(),
       status: 'Draft',
-      defaultProfileId: ''
+      defaultProfileId: '',
     };
   });
 
@@ -83,7 +83,7 @@ export const ProjectSetup = () => {
         <div className="space-y-4">
             <SelectField 
                 label="برند پروفیل مصرفی"
-                value={details.defaultProfileId}
+                value={details.defaultProfileId || ''}
                 onChange={(e: any) => setDetails({...details, defaultProfileId: e.target.value})}
                 options={brands.map(b => ({ label: `${b.name} (${b.tier})`, value: b.id }))}
             />

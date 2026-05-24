@@ -1,5 +1,6 @@
 
 
+
 export interface ProfileComponent {
   id: string;
   name: string;
@@ -69,6 +70,7 @@ export interface WindowNode {
   systemType?: 'Casement' | 'Sliding'; 
   slidingRailType?: 'Monorail' | 'DoubleRail'; 
   isFrenchWindow?: boolean; 
+  sashMullions?: { horizontal: number, vertical: number };
 }
 
 export interface WindowConfig {
@@ -151,6 +153,12 @@ export interface InvoiceSettings {
   companyPhone: string;
   footerNote: string;
   layoutType: InvoiceLayoutType;
+}
+
+export interface BeforeInstallPromptEvent extends Event {
+  readonly platforms: Array<string>;
+  readonly userChoice: Promise<{ outcome: 'accepted' | 'dismissed', platform: string }>;
+  prompt(): Promise<void>;
 }
 
 export interface AppSettings {

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowRight, RefreshCw, Download, Settings as SettingsIcon, Package, Loader2, FileText, X, Layout, PieChart, Layers, CheckCircle2, Printer } from 'lucide-react';
+import { ArrowRight, RefreshCw, Download, Settings as SettingsIcon, Package, FileText, X, Layout, Layers } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { InputField, PrimaryButton, GlassCard, SelectField } from '../components/UIComponents';
 import { toPersianDigits, toEnglishDigits } from '../utils/formatting';
@@ -517,7 +517,7 @@ export const CuttingOptimization = () => {
                 <SelectField 
                     label="پروژه مرجع"
                     value={selectedProjectId}
-                    onChange={(e: any) => { setSelectedProjectId(e.target.value); handleProjectSelect(e.target.value); setShowSummary(false); }}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => { setSelectedProjectId(e.target.value); handleProjectSelect(e.target.value); setShowSummary(false); }}
                     options={[
                         { label: 'یک پروژه را انتخاب کنید...', value: '' },
                         ...projects.map(p => ({ label: `${p.customerName}`, value: p.id }))
@@ -532,8 +532,8 @@ export const CuttingOptimization = () => {
                 </div>
                 {activeMode === 'profile' ? (
                     <div className="grid grid-cols-2 gap-4">
-                        <InputField label="طول شاخه (mm)" type="number" value={stockLength} onChange={(e:any) => setStockLength(Number(toEnglishDigits(e.target.value)))} />
-                        <InputField label="تیغه اره (mm)" type="number" value={bladeKerf} onChange={(e:any) => setBladeKerf(Number(toEnglishDigits(e.target.value)))} />
+                        <InputField label="طول شاخه (mm)" type="number" value={stockLength} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setStockLength(Number(toEnglishDigits(e.target.value)))} />
+                        <InputField label="تیغه اره (mm)" type="number" value={bladeKerf} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setBladeKerf(Number(toEnglishDigits(e.target.value)))} />
                     </div>
                 ) : (
                     <div className="grid grid-cols-2 gap-4">

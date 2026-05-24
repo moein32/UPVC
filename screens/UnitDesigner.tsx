@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { ArrowRight, Save, Trash2, SplitSquareHorizontal, SplitSquareVertical, PlusCircle, Maximize, ZoomIn, ZoomOut, RefreshCcw, Hand, MousePointer2, Receipt, Check, Edit3, Grid, XCircle, Undo, Redo, LayoutTemplate, Home, Box, Layers, Settings, ChevronDown, ChevronUp, SlidersHorizontal, AlignJustify, AlignCenter, Minus, Plus, Sidebar, Monitor, MoveRight, PanelRightClose, PanelRightOpen, X } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -10,6 +9,10 @@ import { WindowCanvas } from '../components/WindowCanvas';
 import { WindowConfig, ProjectDetails, InvoiceItem, ProfileBrand, GlassType, HardwareItem, WindowNode, OpeningDirection, InvoiceDetail } from '../types';
 import { pricingStore } from '../services/pricingStore';
 import { toPersianDigits, formatPrice, toEnglishDigits } from '../utils/formatting';
+
+// --- CONSTANTS ---
+// Reduced padding to maximize the unit's zoom on screen per user request.
+const CANVAS_PADDING = 30; 
 
 // --- HOOKS ---
 const useMediaQuery = (query: string) => {
@@ -26,7 +29,7 @@ const useMediaQuery = (query: string) => {
   return matches;
 };
 
-// --- DATA: 36 SLIDING TYPOLOGIES DATABASE ---
+// --- DATA: SLIDING TYPOLOGIES DATABASE ---
 interface Typology {
     id: string;
     label: string;
@@ -154,305 +157,10 @@ const createDefaultLayout = (): WindowNode => ({
   systemType: 'Casement'
 });
 
-const commonSetup = {
-    // Shared functions for both mobile and desktop
-};
-
-// --- RENDERERS FOR EACH LAYOUT ---
-
-const DesktopLayout = ({ state, handlers }: any) => {
-    const { t } = useTranslation();
-    const { 
-        config, projectDetails, projectItems, unitCount, lastSavedId, editIndex, 
-        systemMode, slidingRailMode, activeTab, activeTool, zoomLevel,
-        selectedNodeId, isSidebarCollapsed, glassList, brands,
-        history, future
-    } = state;
-    const {
-        navigate, setSystemMode, setSlidingRailMode, setActiveTab, toggleTool,
-        applyTypology, handleDragStart, handleDragEnd, handleCanvasNodeClick, handleDelete,
-        setZoomLevel, fitToScreen, handleUpdateNode, handleAddToList, setConfig, setUnitCount,
-        setIsSidebarCollapsed, handleGlobalResize, handleChildResize, handleUndo, handleRedo
-    } = handlers;
-    
-    const isRootSelected = selectedNodeId === 'root' || selectedNodeId === null;
-
-    return (
-        <div className="h-screen flex flex-col bg-slate-100 font-sans">
-            {/* 1. Top Bar */}
-            <div className="bg-slate-900 px-4 py-2 flex justify-between items-center z-30 shadow-md shrink-0 h-14">
-                <div className="flex gap-2 items-center">
-                    <button onClick={() => navigate(-1)} className="p-2 bg-white/10 text-white/70 rounded-lg hover:bg-white/20 transition-colors">
-                        <ArrowRight size={20} />
-                    </button>
-                    <div className="w-px h-6 bg-white/10"></div>
-                    <h1 className="font-bold text-white text-md mx-2">{t('unit_design')}</h1>
-                    <p className="text-[10px] text-white/40 font-mono">{projectDetails.customerName}</p>
-                </div>
-                <div className="flex gap-2">
-                    <button onClick={handleUndo} disabled={history.length === 0} className="px-3 py-2 text-xs bg-white/10 text-white/70 rounded-lg disabled:opacity-30 flex items-center gap-1.5"><Undo size={14} /> Undo</button>
-                    <button onClick={handleRedo} disabled={future.length === 0} className="px-3 py-2 text-xs bg-white/10 text-white/70 rounded-lg disabled:opacity-30 flex items-center gap-1.5"><Redo size={14} /> Redo</button>
-                </div>
-            </div>
-
-            {/* 2. Main Workspace */}
-            <div className="flex-1 flex overflow-hidden">
-                {/* 2.1 Left Sidebar */}
-                <div className={`bg-slate-800 text-white z-20 shadow-lg flex flex-col shrink-0 transition-all duration-300 ${isSidebarCollapsed ? 'w-20' : 'w-80'}`}>
-                    <div className="p-2 flex items-center justify-between border-b border-slate-700">
-                        {!isSidebarCollapsed && <span className="px-2 text-xs font-bold text-slate-400">TOOLBOX</span>}
-                        <button onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)} className="p-2 text-slate-400 hover:bg-slate-700 rounded-lg">
-                            {isSidebarCollapsed ? <PanelRightOpen size={18} /> : <PanelRightClose size={18} />}
-                        </button>
-                    </div>
-                    <div className="flex border-b border-slate-700">
-                        <button onClick={() => setSystemMode('Casement')} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-md text-xs font-bold transition-all ${systemMode === 'Casement' ? 'bg-blue-600 text-white' : 'text-slate-400'}`}>
-                            <Sidebar size={16} /> {!isSidebarCollapsed && 'لولایی'}
-                        </button>
-                        <button onClick={() => setSystemMode('Sliding')} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-md text-xs font-bold transition-all ${systemMode === 'Sliding' ? 'bg-blue-600 text-white' : 'text-slate-400'}`}>
-                            <Monitor size={16} /> {!isSidebarCollapsed && 'کشویی'}
-                        </button>
-                    </div>
-                    {!isSidebarCollapsed && (
-                        <div className="flex border-b border-slate-700 bg-slate-800/50">
-                            <button onClick={() => setActiveTab('openings')} className={`flex-1 py-3 text-xs font-bold transition-colors ${activeTab === 'openings' ? 'bg-slate-700 text-white border-b-2 border-orange-500' : 'text-slate-400'}`}>{t('opening')}</button>
-                            <button onClick={() => setActiveTab('splits')} className={`flex-1 py-3 text-xs font-bold transition-colors ${activeTab === 'splits' ? 'bg-slate-700 text-white border-b-2 border-orange-500' : 'text-slate-400'}`}>{t('splits')}</button>
-                            <button onClick={() => setActiveTab('tools')} className={`flex-1 py-3 text-xs font-bold transition-colors ${activeTab === 'tools' ? 'bg-slate-700 text-white border-b-2 border-orange-500' : 'text-slate-400'}`}>{t('tools')}</button>
-                        </div>
-                    )}
-                    <div className="p-3 flex-1 overflow-y-auto no-scrollbar">
-                        {/* Tool Content */}
-                        <div className={`grid gap-2 ${isSidebarCollapsed ? 'grid-cols-1' : 'grid-cols-3'}`}>
-                             {activeTab === 'openings' && systemMode === 'Casement' && (
-                                <>
-                                <DraggableIcon type="opening" value="Fixed" label={t('fixed')} icon={<FixedIcon />} isActive={activeTool?.value === 'Fixed'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed} />
-                                <DraggableIcon type="opening" value="TurnLeft" label={t('turn_left')} icon={<TurnLeftIcon />} isActive={activeTool?.value === 'TurnLeft'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed}/>
-                                <DraggableIcon type="opening" value="TurnRight" label={t('turn_right')} icon={<TurnRightIcon />} isActive={activeTool?.value === 'TurnRight'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed}/>
-                                <DraggableIcon type="opening" value="TiltTurnLeft" label={t('tilt_turn_left')} icon={<TiltTurnLeftIcon />} isActive={activeTool?.value === 'TiltTurnLeft'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed}/>
-                                <DraggableIcon type="opening" value="TiltTurnRight" label={t('tilt_turn_right')} icon={<TiltTurnRightIcon />} isActive={activeTool?.value === 'TiltTurnRight'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed}/>
-                                <DraggableIcon type="opening" value="Awning" label="کلنگی (بالا)" icon={<AwningIcon />} isActive={activeTool?.value === 'Awning'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed}/>
-                                <DraggableIcon type="opening" value="FrenchWindowLeft" label="فرانسوی چپ" icon={<FrenchIcon dir="left"/>} isActive={activeTool?.value === 'FrenchWindowLeft'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed}/>
-                                <DraggableIcon type="opening" value="FrenchWindowRight" label="فرانسوی راست" icon={<FrenchIcon dir="right"/>} isActive={activeTool?.value === 'FrenchWindowRight'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed}/>
-                                <DraggableIcon type="opening" value="DoorLeft" label={t('door') + ' راست'} icon={<DoorRightIcon />} isActive={activeTool?.value === 'DoorLeft'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed}/>
-                                <DraggableIcon type="opening" value="DoorRight" label={t('door') + ' چپ'} icon={<DoorLeftIcon />} isActive={activeTool?.value === 'DoorRight'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed}/>
-                                <DraggableIcon type="opening" value="PanelV" label="پنل عمودی" icon={<PanelVIcon />} isActive={activeTool?.value === 'PanelV'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed}/>
-                                <DraggableIcon type="opening" value="PanelH" label="پنل افقی" icon={<PanelHIcon />} isActive={activeTool?.value === 'PanelH'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed}/>
-                                </>
-                             )}
-                              {activeTab === 'openings' && systemMode === 'Sliding' && (
-                                <div className="col-span-full space-y-2">
-                                     <div className="flex gap-2 p-1 bg-slate-900/40 rounded-lg w-full">
-                                        <button onClick={() => setSlidingRailMode('Monorail')} className={`flex-1 px-2 py-1 rounded text-[9px] font-black transition-all ${slidingRailMode === 'Monorail' ? 'bg-blue-500 text-white' : 'text-slate-500'}`}>MONORAIL</button>
-                                        <button onClick={() => setSlidingRailMode('DoubleRail')} className={`flex-1 px-2 py-1 rounded text-[9px] font-black transition-all ${slidingRailMode === 'DoubleRail' ? 'bg-blue-500 text-white' : 'text-slate-500'}`}>DOUBLE RAIL</button>
-                                     </div>
-                                      {Object.entries(SLIDING_DATA[slidingRailMode]).map(([category, typologies]) => (
-                                          <div key={category} className="flex flex-col gap-1">
-                                              <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">{category}</span>
-                                              <div className="grid grid-cols-3 gap-2">
-                                                  {typologies.map(t => (<TypologyIcon key={t.id} typology={t} isActive={false} onClick={applyTypology} />))}
-                                              </div>
-                                          </div>
-                                      ))}
-                                </div>
-                             )}
-                             {activeTab === 'splits' && (
-                                <>
-                                <DraggableIcon type="split" dir="row" count={2} label={t('split_v_2')} icon={<SplitVerticalIcon count={2} />} isActive={activeTool?.dir === 'row' && activeTool.count === 2} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed}/>
-                                <DraggableIcon type="split" dir="col" count={2} label={t('split_h_2')} icon={<SplitHorizontalIcon count={2} />} isActive={activeTool?.dir === 'col' && activeTool.count === 2} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed}/>
-                                <DraggableIcon type="split" dir="row" count={3} label={t('split_v_3')} icon={<SplitVerticalIcon count={3} />} isActive={activeTool?.dir === 'row' && activeTool.count === 3} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed}/>
-                                <DraggableIcon type="split" dir="col" count={3} label={t('split_h_3')} icon={<SplitHorizontalIcon count={3} />} isActive={activeTool?.dir === 'col' && activeTool.count === 3} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed}/>
-                                <DraggableIcon type="split" dir="row" count={1} value="clear" label={t('clear_split')} icon={<SquareIcon />} isActive={activeTool?.value === 'clear'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed}/>
-                                </>
-                             )}
-                              {activeTab === 'tools' && (
-                                <>
-                                <ToolBtn icon={Trash2} label={t('delete_item')} color="text-red-400" onClick={handleDelete} isCollapsed={isSidebarCollapsed}/>
-                                <ToolBtn icon={MousePointer2} label={t('select')} onClick={() => toggleTool(null)} isActive={activeTool === null} isCollapsed={isSidebarCollapsed}/>
-                                </>
-                             )}
-                        </div>
-                    </div>
-                </div>
-
-                {/* 2.2 Main Canvas */}
-                <div className="flex-1 relative bg-slate-100 overflow-hidden flex flex-col min-h-0">
-                    <div className="flex-1 overflow-auto flex items-center justify-center p-1 cursor-default">
-                        <div className="transition-transform duration-300 ease-out origin-center" style={{ transform: `scale(${zoomLevel})` }}>
-                            <div className="relative select-none" style={{ width: config.width / 4, height: config.height / 4 }}>
-                                {config.layout && (
-                                    <WindowCanvas node={config.layout} selectedId={selectedNodeId} onSelect={handleCanvasNodeClick} onUpdateNode={handleUpdateNode} onDimensionEdit={() => {}} onChildResize={handleChildResize} width={config.width} height={config.height} isRoot={true} frameType={config.frameType} />
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                    <div className="absolute inset-0 opacity-5 pointer-events-none" style={{ backgroundImage: 'linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
-                    <div className="absolute top-4 right-4 z-20 flex flex-col gap-2 bg-white rounded-lg shadow-md p-1">
-                        <button onClick={() => setZoomLevel((z: number) => Math.min(z + 0.1, 4))} className="p-2 text-slate-600 hover:bg-slate-100 rounded"><ZoomIn size={20}/></button>
-                        <button onClick={fitToScreen} className="p-2 text-slate-600 hover:bg-slate-100 rounded" title="Fit to Screen"><RefreshCcw size={16}/></button>
-                        <button onClick={() => setZoomLevel((z: number) => Math.max(z - 0.1, 0.1))} className="p-2 text-slate-600 hover:bg-slate-100 rounded"><ZoomOut size={20}/></button>
-                    </div>
-                </div>
-
-                {/* 2.3 Right Inspector */}
-                <div className="w-80 bg-white shadow-lg z-10 shrink-0 border-l border-slate-200 flex flex-col">
-                    <div className="p-4 border-b border-slate-200">
-                        <h2 className="font-bold text-slate-800 text-sm">INSPECTOR</h2>
-                        <p className="text-xs text-slate-400">Properties & Dimensions</p>
-                    </div>
-                    <div className="p-4 flex-1 space-y-4 overflow-y-auto">
-                        <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
-                            <label className="text-xs font-bold text-slate-400">Global Dimensions</label>
-                            <div className="grid grid-cols-2 gap-2 mt-2">
-                                <InputField label="عرض (mm)" type="number" value={config.width} onChange={(e: any) => handleGlobalResize(e.target.value, 'w')} />
-                                <InputField label="ارتفاع (mm)" type="number" value={config.height} onChange={(e: any) => handleGlobalResize(e.target.value, 'h')} />
-                            </div>
-                        </div>
-                        <SelectField label="برند پروفیل" value={config.profileId} onChange={(e:any) => setConfig({ ...config, profileId: e.target.value })} options={brands.map((b: any) => ({ label: b.name, value: b.id }))}/>
-                        <SelectField label="نوع شیشه" value={config.glassId} onChange={(e:any) => setConfig({ ...config, glassId: e.target.value })} options={glassList.map((g: any) => ({ label: g.name, value: g.id }))} />
-                        <SelectField label="نوع فریم" value={config.frameType || 'standard'} onChange={(e:any) => setConfig({ ...config, frameType: e.target.value })} options={[{ label: 'فریم استاندارد', value: 'standard' }, { label: 'فریم بازسازی', value: 'renovation' }]} />
-                    </div>
-                    <div className="p-4 border-t border-slate-200 flex items-center gap-3">
-                        <div className="flex-1">
-                            <PrimaryButton fullWidth onClick={handleAddToList}>
-                                {editIndex !== undefined ? 'ذخیره تغییرات' : 'افزودن به فاکتور'}
-                            </PrimaryButton>
-                        </div>
-                        {(projectItems.length > 0 || lastSavedId) && (
-                            <button onClick={() => navigate('/breakdown', { state: { projectDetails, items: projectItems } })} className="h-14 w-14 flex items-center justify-center bg-slate-100 text-slate-600 rounded-2xl hover:bg-blue-50 hover:text-blue-600 transition-colors">
-                                <Receipt size={22}/>
-                            </button>
-                        )}
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-const MobileLayout = ({ state, handlers }: any) => {
-    const { t } = useTranslation();
-    const [isPanelOpen, setIsPanelOpen] = useState(false);
-    const { 
-        config, projectDetails, projectItems, unitCount, lastSavedId, editIndex, 
-        systemMode, slidingRailMode, activeTab, activeTool, zoomLevel,
-        selectedNodeId, glassList, brands, history, future
-    } = state;
-    const {
-        navigate, setSystemMode, setSlidingRailMode, setActiveTab, toggleTool,
-        applyTypology, handleDragStart, handleDragEnd, handleCanvasNodeClick, handleDelete,
-        setZoomLevel, fitToScreen, handleUpdateNode, handleAddToList, setConfig, setUnitCount,
-        handleGlobalResize, handleChildResize, handleUndo, handleRedo
-    } = handlers;
-    
-    const isRootSelected = selectedNodeId === 'root' || selectedNodeId === null;
-    
-    return (
-        <div className="h-screen flex flex-col bg-slate-100 overflow-hidden">
-            {/* 1. Minimal Top Bar */}
-            <div className="bg-white/90 backdrop-blur-md px-4 py-3 flex justify-between items-center z-30 shadow-sm border-b border-slate-200 shrink-0">
-                <button onClick={() => navigate(-1)} className="p-2 bg-slate-100 rounded-lg text-slate-600"><ArrowRight size={20} /></button>
-                <div className="text-center">
-                    <h1 className="font-bold text-slate-800 text-sm">{t('unit_design')}</h1>
-                    <p className="text-[10px] text-slate-500">{projectDetails.customerName}</p>
-                </div>
-                <div className="flex gap-2">
-                    <button onClick={handleUndo} disabled={history.length === 0} className="p-2 bg-slate-100 rounded text-slate-600 disabled:opacity-30"><Undo size={18} /></button>
-                    <button onClick={handleRedo} disabled={future.length === 0} className="p-2 bg-slate-100 rounded text-slate-600 disabled:opacity-30"><Redo size={18} /></button>
-                </div>
-            </div>
-
-            {/* NEW: Mobile Design Toolbar */}
-            <div className="bg-white/90 backdrop-blur-md px-2 py-1 shadow-sm border-b border-slate-200 shrink-0 no-scrollbar overflow-x-auto">
-                <div className="flex items-center gap-1">
-                    <ToolBtn icon={systemMode === 'Casement' ? Monitor : Sidebar} label={systemMode === 'Casement' ? 'کشویی' : 'لولایی'} onClick={() => { setSystemMode(prev => prev === 'Casement' ? 'Sliding' : 'Casement'); toggleTool(null); }} isCollapsed={true}/>
-                    <div className="w-px h-10 bg-slate-200 mx-1"></div>
-
-                    {systemMode === 'Casement' ? (
-                        <>
-                            <DraggableIcon type="opening" value="Fixed" label={t('fixed')} icon={<FixedIcon />} isActive={activeTool?.value === 'Fixed'} onClick={toggleTool} onDragStart={()=>{}} onDragEnd={()=>{}} isCollapsed={true} />
-                            <DraggableIcon type="opening" value="TurnRight" label={t('turn_right')} icon={<TurnRightIcon />} isActive={activeTool?.value === 'TurnRight'} onClick={toggleTool} onDragStart={()=>{}} onDragEnd={()=>{}} isCollapsed={true}/>
-                            <DraggableIcon type="opening" value="TiltTurnRight" label={t('tilt_turn_right')} icon={<TiltTurnRightIcon />} isActive={activeTool?.value === 'TiltTurnRight'} onClick={toggleTool} onDragStart={()=>{}} onDragEnd={()=>{}} isCollapsed={true}/>
-                            <DraggableIcon type="opening" value="Awning" label="کلنگی (بالا)" icon={<AwningIcon />} isActive={activeTool?.value === 'Awning'} onClick={toggleTool} onDragStart={()=>{}} onDragEnd={()=>{}} isCollapsed={true}/>
-                            <div className="w-px h-10 bg-slate-200 mx-1"></div>
-                            <DraggableIcon type="split" dir="row" count={2} label={t('split_v_2')} icon={<SplitVerticalIcon count={2} />} isActive={activeTool?.dir === 'row' && activeTool.count === 2} onClick={toggleTool} onDragStart={()=>{}} onDragEnd={()=>{}} isCollapsed={true}/>
-                            <DraggableIcon type="split" dir="col" count={2} label={t('split_h_2')} icon={<SplitHorizontalIcon count={2} />} isActive={activeTool?.dir === 'col' && activeTool.count === 2} onClick={toggleTool} onDragStart={()=>{}} onDragEnd={()=>{}} isCollapsed={true}/>
-                        </>
-                    ) : (
-                        <div className="flex items-center gap-1">
-                           {SLIDING_DATA['DoubleRail']['2-Sash'].map(t => <div key={t.id} className="transform scale-90"><TypologyIcon typology={t} isActive={false} onClick={applyTypology} /></div>)}
-                           {SLIDING_DATA['DoubleRail']['3-Sash'].map(t => <div key={t.id} className="transform scale-90"><TypologyIcon typology={t} isActive={false} onClick={applyTypology} /></div>)}
-                        </div>
-                    )}
-
-                    <div className="w-px h-10 bg-slate-200 mx-1"></div>
-                    <ToolBtn icon={Trash2} label={t('delete_item')} color="text-red-400" onClick={handleDelete} isCollapsed={true}/>
-                    <ToolBtn icon={MousePointer2} label={t('select')} onClick={() => toggleTool(null)} isActive={activeTool === null} isCollapsed={true}/>
-                </div>
-            </div>
-
-            {/* 2. Canvas */}
-            <div className="flex-1 relative bg-slate-100 overflow-hidden flex flex-col min-h-0">
-                <div className="flex-1 overflow-auto flex items-center justify-center p-1 cursor-default">
-                    <div className="transition-transform duration-300 ease-out origin-center" style={{ transform: `scale(${zoomLevel})` }}>
-                        <div className="relative select-none" style={{ width: config.width / 4, height: config.height / 4 }}>
-                            {config.layout && (
-                                <WindowCanvas node={config.layout} selectedId={selectedNodeId} onSelect={handleCanvasNodeClick} onUpdateNode={handleUpdateNode} onDimensionEdit={() => {}} onChildResize={handleChildResize} width={config.width} height={config.height} isRoot={true} frameType={config.frameType} />
-                            )}
-                        </div>
-                    </div>
-                </div>
-                <div className="absolute inset-0 opacity-5 pointer-events-none" style={{ backgroundImage: 'linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
-                <div className="absolute top-4 right-4 z-20 flex flex-col gap-2 bg-white rounded-lg shadow-md p-1">
-                    <button onClick={() => setZoomLevel((z: number) => Math.min(z + 0.1, 4))} className="p-2 text-slate-600"><ZoomIn size={20}/></button>
-                    <button onClick={fitToScreen} className="p-2 text-slate-600" title="Fit to Screen"><RefreshCcw size={16}/></button>
-                    <button onClick={() => setZoomLevel((z: number) => Math.max(z - 0.1, 0.1))} className="p-2 text-slate-600"><ZoomOut size={20}/></button>
-                </div>
-            </div>
-
-            {/* 3. Bottom Action Bar */}
-            <div className="fixed bottom-0 left-0 right-0 z-40 p-4 pointer-events-none">
-                <div className="max-w-xl mx-auto flex items-center gap-2 pointer-events-auto">
-                    <button onClick={() => setIsPanelOpen(!isPanelOpen)} className={`h-14 w-14 flex items-center justify-center rounded-full transition-all shadow-xl border border-white/20 ${isPanelOpen ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'}`}>
-                        {isPanelOpen ? <ChevronDown size={24}/> : <SlidersHorizontal size={22}/>}
-                    </button>
-                    <div className="flex-1 flex gap-2 h-14 bg-white/95 backdrop-blur-xl border border-white/40 p-1.5 rounded-full shadow-[0_15px_40px_rgba(0,0,0,0.15)]">
-                        <div className="flex items-center bg-slate-100 rounded-full px-2 py-1 border border-slate-200">
-                            <button onClick={() => setUnitCount((p: number) => Math.max(1, p - 1))} className="p-1.5 bg-white text-slate-700 rounded-full shadow-sm"><Minus size={14} /></button>
-                            <div className="w-10 text-center"><span className="text-xs font-black text-slate-800">{toPersianDigits(unitCount)}</span></div>
-                            <button onClick={() => setUnitCount((p: number) => p + 1)} className="p-1.5 bg-white text-slate-700 rounded-full shadow-sm"><Plus size={14} /></button>
-                        </div>
-                        <button onClick={handleAddToList} className={`flex-1 rounded-full text-[10px] font-black flex items-center justify-center gap-2 transition-all ${lastSavedId ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-700'}`}>
-                            {lastSavedId ? <Check size={16}/> : <PlusCircle size={16}/>} {editIndex !== undefined ? 'تایید' : 'افزودن'}
-                        </button>
-                        {(projectItems.length > 0 || lastSavedId) && (
-                            <button onClick={() => navigate('/breakdown', { state: { projectDetails, items: projectItems } })} className="flex-[1.5] bg-blue-600 text-white rounded-full text-[10px] font-black flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20"><Receipt size={16}/> فاکتور</button>
-                        )}
-                    </div>
-                </div>
-            </div>
-
-            {/* Bottom Sheet for Properties */}
-            <AnimatePresence>
-                {isPanelOpen && (
-                     <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: 'spring', damping: 30, stiffness: 300 }} className="fixed bottom-24 left-4 right-4 z-30 p-6 bg-white/90 backdrop-blur-2xl border border-white/60 rounded-[2.5rem] shadow-2xl space-y-4">
-                         <div className="grid grid-cols-2 gap-2">
-                             <InputField label="عرض (mm)" type="number" value={config.width} onChange={(e: any) => handleGlobalResize(e.target.value, 'w')} />
-                             <InputField label="ارتفاع (mm)" type="number" value={config.height} onChange={(e: any) => handleGlobalResize(e.target.value, 'h')} />
-                         </div>
-                         <SelectField label="نوع شیشه" value={config.glassId} onChange={(e:any) => setConfig({ ...config, glassId: e.target.value })} options={glassList.map((g: any) => ({ label: g.name, value: g.id }))} />
-                         <SelectField label="نوع فریم" value={config.frameType || 'standard'} onChange={(e:any) => setConfig({ ...config, frameType: e.target.value })} options={[{ label: 'فریم استاندارد', value: 'standard' }, { label: 'فریم بازسازی', value: 'renovation' }]} />
-                     </motion.div>
-                )}
-            </AnimatePresence>
-        </div>
-    );
-};
-
-
 // --- MAIN COMPONENT ---
 export const UnitDesigner = () => {
   const navigate = useNavigate();
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
   const location = useLocation();
   const locationState = (location.state || {}) as { 
     projectDetails?: ProjectDetails, 
@@ -460,7 +168,7 @@ export const UnitDesigner = () => {
     editIndex?: number 
   };
   
-  const isDesktop = useMediaQuery('(min-width: 1024px)');
+  const isDesktop = useMediaQuery('(min-width: 1280px)');
 
   // --- STATE MANAGEMENT ---
   useEffect(() => {
@@ -489,8 +197,8 @@ export const UnitDesigner = () => {
 
   const [config, setConfig] = useState<WindowConfig>({
     id: Date.now().toString(),
-    width: 1200,
-    height: 1500,
+    width: 2000,
+    height: 1000,
     profileId: projectDetails.defaultProfileId || '',
     glassId: 'double_4_4',
     hardwareId: 'h1',
@@ -508,8 +216,10 @@ export const UnitDesigner = () => {
   const [activeTool, setActiveTool] = useState<{type: 'opening' | 'split', value: string, dir?: string, count?: number} | null>(null);
 
   const canvasAreaRef = useRef<HTMLDivElement>(null);
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const [dimensionModal, setDimensionModal] = useState<{ type: 'global' | 'child', dim?: 'w' | 'h', nodeId?: string, childIndex?: number, currentVal: number, totalSize?: number } | null>(null);
+  const [dimensionModalValue, setDimensionModalValue] = useState("");
   
-  // --- LIFECYCLE & DATA LOADING ---
   
   useEffect(() => {
     if (editIndex !== undefined && editIndex >= 0 && projectItems[editIndex]) {
@@ -522,7 +232,6 @@ export const UnitDesigner = () => {
     }
   }, [editIndex, projectItems, brands, glassList, projectDetails.defaultProfileId]);
   
-  // --- CORE LOGIC & HANDLERS (UNCHANGED) ---
   const pushToHistory = (newLayout: WindowNode) => {
     setHistory(prev => [...prev.slice(-10), config.layout!]);
     setFuture([]);
@@ -587,10 +296,30 @@ export const UnitDesigner = () => {
           if (activeTool.type === 'opening') {
                handleUpdateNode(id, { openingType: activeTool.value as any, isFrenchWindow: activeTool.value.includes('FrenchWindow') });
           } else if (activeTool.type === 'split') {
-              if (targetNode.type === 'leaf') {
-                  const newChildren = Array(activeTool.count || 2).fill(null).map((_, i) => ({ id: Date.now() + `_${i}_${Math.random()}`, type: 'leaf', openingType: 'Fixed', flex: 1 })) as WindowNode[];
-                  handleUpdateNode(id, { type: 'container', dir: activeTool.dir as 'row' | 'col', children: newChildren, systemType: 'Casement' });
-              }
+              // When splitting, the target node becomes a container.
+              // It retains its openingType, isFrenchWindow, and systemType.
+              // Its new children will inherit the openingType and systemType.
+              const currentOpeningType = targetNode.openingType || 'Fixed';
+              const currentIsFrenchWindow = targetNode.isFrenchWindow || false;
+              const currentSystemType = targetNode.systemType || 'Casement';
+
+              const newChildren = Array(activeTool.count || 2).fill(null).map((_, i) => ({
+                  id: Date.now() + `_${i}_${Math.random()}`,
+                  type: 'leaf' as const,
+                  openingType: currentOpeningType, // Propagate to children as requested
+                  flex: 1,
+                  systemType: currentSystemType, // Inherit system type from parent
+                  isFrenchWindow: currentIsFrenchWindow, // Propagate french window status
+              })) as WindowNode[];
+
+              handleUpdateNode(id, {
+                  type: 'container',
+                  dir: activeTool.dir as 'row' | 'col',
+                  children: newChildren,
+                  openingType: 'Fixed', // Container itself is fixed, children have the openings
+                  isFrenchWindow: false,
+                  systemType: currentSystemType
+              });
           }
       } else {
           setSelectedNodeId(id);
@@ -607,23 +336,49 @@ export const UnitDesigner = () => {
       if (!isNaN(num)) setConfig(prev => ({ ...prev, [dim === 'w' ? 'width' : 'height']: num }));
   }
 
+  const handleGlobalResizeClick = (dim: 'w' | 'h') => {
+      const currentVal = dim === 'w' ? config.width : config.height;
+      setDimensionModal({ type: 'global', dim, currentVal });
+      setDimensionModalValue(Math.round(currentVal).toString());
+  };
+
   const handleChildResize = (nodeId: string, childIndex: number, currentSize: number, totalSize: number) => {
-      const newValStr = window.prompt('اندازه جدید را وارد کنید (میلی‌متر):', Math.round(currentSize).toString());
-      if (newValStr === null) return;
+      setDimensionModal({ type: 'child', nodeId, childIndex, currentVal: currentSize, totalSize });
+      setDimensionModalValue(Math.round(currentSize).toString());
+  };
+  
+  const handleDimensionModalSubmit = () => {
+      if (!dimensionModal) return;
+      const newValStr = dimensionModalValue;
+      if (!newValStr) { setDimensionModal(null); return; }
+      
       const newVal = Number(toEnglishDigits(newValStr));
-      if (isNaN(newVal) || newVal <= 50 || newVal >= totalSize - 50) return;
-      const node = findNode(config.layout!, nodeId);
-      if (!node || !node.children) return;
-      const totalFlex = node.children.reduce((s, c) => s + (c.flex || 1), 0);
-      const targetFlex = (newVal / totalSize) * totalFlex;
-      const flexDiff = targetFlex - (node.children[childIndex].flex || 1);
-      let neighborIndex = childIndex + 1 < node.children.length ? childIndex + 1 : childIndex - 1;
-      const newChildren = node.children.map((child, idx) => {
-          if (idx === childIndex) return { ...child, flex: targetFlex };
-          if (idx === neighborIndex) return { ...child, flex: Math.max(0.1, (child.flex || 1) - flexDiff) };
-          return child;
-      });
-      handleUpdateNode(nodeId, { children: newChildren });
+      if (isNaN(newVal) || newVal <= 0) {
+         setDimensionModal(null);
+         return;
+      }
+      
+      if (dimensionModal.type === 'global' && dimensionModal.dim) {
+          handleGlobalResize(newValStr, dimensionModal.dim);
+      } else if (dimensionModal.type === 'child' && dimensionModal.nodeId && dimensionModal.childIndex !== undefined && dimensionModal.totalSize) {
+          if (newVal <= 50 || newVal >= dimensionModal.totalSize - 50) {
+             setDimensionModal(null);
+             return;
+          }
+          const node = findNode(config.layout!, dimensionModal.nodeId);
+          if (!node || !node.children) { setDimensionModal(null); return; }
+          const totalFlex = node.children.reduce((s, c) => s + (c.flex || 1), 0);
+          const targetFlex = (newVal / dimensionModal.totalSize) * totalFlex;
+          const flexDiff = targetFlex - (node.children[dimensionModal.childIndex].flex || 1);
+          let neighborIndex = dimensionModal.childIndex + 1 < node.children.length ? dimensionModal.childIndex + 1 : dimensionModal.childIndex - 1;
+          const newChildren = node.children.map((child, idx) => {
+              if (idx === dimensionModal.childIndex) return { ...child, flex: targetFlex };
+              if (idx === neighborIndex) return { ...child, flex: Math.max(0.1, (child.flex || 1) - flexDiff) };
+              return child;
+          });
+          handleUpdateNode(dimensionModal.nodeId, { children: newChildren });
+      }
+      setDimensionModal(null);
   };
   
   const handleDragStart = (e: React.DragEvent, type: 'opening' | 'split', value: string, dir?: string, count?: number) => {
@@ -660,17 +415,7 @@ export const UnitDesigner = () => {
                 const childW = node.dir === 'row' ? w * ratio : w;
                 const childH = node.dir === 'col' ? h * ratio : h;
                 const childStats = calculateWindowStats(child, childW, childH);
-                
-                Object.keys(childStats).forEach(key => {
-                    const k = key as keyof typeof stats;
-                    if (k === 'hardware') {
-                        (Object.keys(childStats.hardware) as Array<keyof typeof stats.hardware>).forEach(hk => {
-                            stats.hardware[hk] += childStats.hardware[hk];
-                        });
-                    } else {
-                        (stats as any)[k] += (childStats as any)[k];
-                    }
-                });
+                Object.keys(childStats).forEach(key => { const k = key as keyof typeof stats; if (k === 'hardware') { (Object.keys(childStats.hardware) as Array<keyof typeof stats.hardware>).forEach(hk => { stats.hardware[hk] += childStats.hardware[hk]; }); } else { (stats as any)[k] += (childStats as any)[k]; } });
             });
         }
     } else {
@@ -714,19 +459,339 @@ export const UnitDesigner = () => {
   
   const fitToScreen = () => {
     if (!canvasAreaRef.current) return;
-    const padding = isDesktop ? 120 : 80;
-    const areaW = canvasAreaRef.current.clientWidth - padding;
-    const areaH = canvasAreaRef.current.clientHeight - padding;
-    if (areaW <= 0 || areaH <= 0) return;
-    const baseW = config.width / 4; const baseH = config.height / 4;
-    const scaleW = areaW / baseW; const scaleH = areaH / baseH;
-    const newZoom = Math.min(scaleW, scaleH) * 0.85; 
-    setZoomLevel(Math.max(newZoom, 0.15));
+    
+    // We get the available viewing area (subtracting some small safety margins)
+    const availableW = canvasAreaRef.current.clientWidth;
+    const availableH = canvasAreaRef.current.clientHeight;
+    
+    // We calculate the *actual* content size including the known padding from WindowCanvas
+    // This makes the scale calculation precise.
+    const contentW = config.width + (CANVAS_PADDING * 2);
+    const contentH = config.height + (CANVAS_PADDING * 2);
+    
+    if (availableW <= 0 || availableH <= 0) return;
+
+    const scaleW = availableW / contentW;
+    const scaleH = availableH / contentH;
+    
+    // We choose the smaller scale to fit both dimensions
+    // We multiply by 0.98 to leave a small "breathing room" for maximum zoom
+    const scale = Math.min(scaleW, scaleH) * 0.98;
+    
+    // Clamp values to sane limits (e.g., don't zoom out to microscopic or zoom in infinitely)
+    setZoomLevel(Math.min(Math.max(scale, 0.1), 3));
   };
+  
   useEffect(() => { fitToScreen(); window.addEventListener('resize', fitToScreen); return () => window.removeEventListener('resize', fitToScreen); }, [config.width, config.height, isDesktop]);
 
-  const state = { config, projectDetails, projectItems, unitCount, lastSavedId, editIndex, systemMode, slidingRailMode, activeTab, activeTool, zoomLevel, selectedNodeId, isSidebarCollapsed, glassList, brands, history, future };
-  const handlers = { navigate, setSystemMode, setSlidingRailMode, setActiveTab, toggleTool, applyTypology, handleDragStart, handleDragEnd, handleCanvasNodeClick, handleDelete, setZoomLevel, fitToScreen, handleUpdateNode, handleAddToList, setConfig, setUnitCount, setIsSidebarCollapsed, handleGlobalResize, handleChildResize, handleUndo, handleRedo };
+  const renderDesktop = () => {
+    return (
+        <div className="h-screen flex flex-col bg-slate-100 font-sans overflow-hidden">
+            <div className="bg-slate-900 px-4 py-2 flex justify-between items-center z-30 shadow-md shrink-0 h-14">
+                <div className="flex gap-2 items-center">
+                    <button onClick={() => navigate(-1)} className="p-2 bg-white/10 text-white/70 rounded-lg hover:bg-white/20 transition-colors">
+                        <ArrowRight size={20} />
+                    </button>
+                    <div className="w-px h-6 bg-white/10"></div>
+                    <h1 className="font-bold text-white text-md mx-2">{t('unit_design')}</h1>
+                    <p className="text-[10px] text-white/40 font-mono">{projectDetails.customerName}</p>
+                </div>
+                <div className="flex gap-2">
+                    <button onClick={handleUndo} disabled={history.length === 0} className="px-3 py-2 text-xs bg-white/10 text-white/70 rounded-lg disabled:opacity-30 flex items-center gap-1.5"><Undo size={14} /> Undo</button>
+                    <button onClick={handleRedo} disabled={future.length === 0} className="px-3 py-2 text-xs bg-white/10 text-white/70 rounded-lg disabled:opacity-30 flex items-center gap-1.5"><Redo size={14} /> Redo</button>
+                </div>
+            </div>
+
+            <div className="flex-1 flex overflow-hidden">
+                <div className={`bg-slate-800 text-white z-20 shadow-lg flex flex-col shrink-0 transition-all duration-300 ${isSidebarCollapsed ? 'w-20' : 'w-80'}`}>
+                    <div className="p-2 flex items-center justify-between border-b border-slate-700">
+                        {!isSidebarCollapsed && <span className="px-2 text-xs font-bold text-slate-400">TOOLBOX</span>}
+                        <button onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)} className="p-2 text-slate-400 hover:bg-slate-700 rounded-lg">
+                            {isSidebarCollapsed ? <PanelRightOpen size={18} /> : <PanelRightClose size={18} />}
+                        </button>
+                    </div>
+                    <div className="flex border-b border-slate-700">
+                        <button onClick={() => setSystemMode('Casement')} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-md text-xs font-bold transition-all ${systemMode === 'Casement' ? 'bg-blue-600 text-white' : 'text-slate-400'}`}>
+                            <Sidebar size={16} /> {!isSidebarCollapsed && 'لولایی'}
+                        </button>
+                        <button onClick={() => setSystemMode('Sliding')} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-md text-xs font-bold transition-all ${systemMode === 'Sliding' ? 'bg-blue-600 text-white' : 'text-slate-400'}`}>
+                            <Monitor size={16} /> {!isSidebarCollapsed && 'کشویی'}
+                        </button>
+                    </div>
+                    {!isSidebarCollapsed && (
+                        <div className="flex border-b border-slate-700 bg-slate-800/50">
+                            <button onClick={() => setActiveTab('openings')} className={`flex-1 py-3 text-xs font-bold transition-colors ${activeTab === 'openings' ? 'bg-slate-700 text-white border-b-2 border-orange-500' : 'text-slate-400'}`}>{t('opening')}</button>
+                            <button onClick={() => setActiveTab('splits')} className={`flex-1 py-3 text-xs font-bold transition-colors ${activeTab === 'splits' ? 'bg-slate-700 text-white border-b-2 border-orange-500' : 'text-slate-400'}`}>{t('splits')}</button>
+                            <button onClick={() => setActiveTab('tools')} className={`flex-1 py-3 text-xs font-bold transition-colors ${activeTab === 'tools' ? 'bg-slate-700 text-white border-b-2 border-orange-500' : 'text-slate-400'}`}>{t('tools')}</button>
+                        </div>
+                    )}
+                    <div className="p-3 flex-1 overflow-y-auto no-scrollbar">
+                        <div className={`grid gap-2 ${isSidebarCollapsed ? 'grid-cols-1' : 'grid-cols-3'}`}>
+                             {activeTab === 'openings' && systemMode === 'Casement' && (
+                                <>
+                                <DraggableIcon type="opening" value="Fixed" label={t('fixed')} icon={<FixedIcon />} isActive={activeTool?.value === 'Fixed'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed} />
+                                <DraggableIcon type="opening" value="TurnRight" label={t('turn_right')} icon={<TurnRightIcon />} isActive={activeTool?.value === 'TurnRight'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed}/>
+                                <DraggableIcon type="opening" value="TurnLeft" label={t('turn_left')} icon={<TurnLeftIcon />} isActive={activeTool?.value === 'TurnLeft'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed}/>
+                                <DraggableIcon type="opening" value="TiltTurnRight" label={t('tilt_turn_right')} icon={<TiltTurnRightIcon />} isActive={activeTool?.value === 'TiltTurnRight'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed}/>
+                                <DraggableIcon type="opening" value="TiltTurnLeft" label={t('tilt_turn_left')} icon={<TiltTurnLeftIcon />} isActive={activeTool?.value === 'TiltTurnLeft'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed}/>
+                                <DraggableIcon type="opening" value="Awning" label="کلنگی" icon={<AwningIcon />} isActive={activeTool?.value === 'Awning'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed}/>
+                                <DraggableIcon type="opening" value="FrenchWindowRight" label="فرانسوی (راست)" icon={<FrenchIcon dir="right"/>} isActive={activeTool?.value === 'FrenchWindowRight'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed}/>
+                                <DraggableIcon type="opening" value="FrenchWindowLeft" label="فرانسوی (چپ)" icon={<FrenchIcon dir="left"/>} isActive={activeTool?.value === 'FrenchWindowLeft'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed}/>
+                                <DraggableIcon type="opening" value="DoorRight" label="درب (راست)" icon={<DoorRightIcon />} isActive={activeTool?.value === 'DoorRight'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed}/>
+                                <DraggableIcon type="opening" value="DoorLeft" label="درب (چپ)" icon={<DoorLeftIcon />} isActive={activeTool?.value === 'DoorLeft'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed}/>
+                                <DraggableIcon type="opening" value="PanelV" label="پنل عمودی" icon={<PanelVIcon />} isActive={activeTool?.value === 'PanelV'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed}/>
+                                <DraggableIcon type="opening" value="PanelH" label="پنل افقی" icon={<PanelHIcon />} isActive={activeTool?.value === 'PanelH'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed}/>
+                                </>
+                             )}
+                              {activeTab === 'openings' && systemMode === 'Sliding' && (
+                                <div className="col-span-full space-y-2">
+                                      {Object.entries(SLIDING_DATA[slidingRailMode]).map(([category, typologies]) => (
+                                          <div key={category} className="flex flex-col gap-1">
+                                              <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">{category}</span>
+                                              <div className="grid grid-cols-3 gap-2">
+                                                  {typologies.map(t => (<TypologyIcon key={t.id} typology={t} isActive={false} onClick={applyTypology} />))}
+                                              </div>
+                                          </div>
+                                      ))}
+                                </div>
+                             )}
+                             {activeTab === 'splits' && (
+                                <>
+                                <DraggableIcon type="split" dir="row" count={2} label={t('split_v_2')} icon={<SplitVerticalIcon count={2} />} isActive={activeTool?.dir === 'row' && activeTool.count === 2} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed}/>
+                                <DraggableIcon type="split" dir="col" count={2} label={t('split_h_2')} icon={<SplitHorizontalIcon count={2} />} isActive={activeTool?.dir === 'col' && activeTool.count === 2} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed}/>
+                                <DraggableIcon type="split" dir="row" count={3} label={t('split_v_3')} icon={<SplitVerticalIcon count={3} />} isActive={activeTool?.dir === 'row' && activeTool.count === 3} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed}/>
+                                <DraggableIcon type="split" dir="col" count={3} label={t('split_h_3')} icon={<SplitHorizontalIcon count={3} />} isActive={activeTool?.dir === 'col' && activeTool.count === 3} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed}/>
+                                <DraggableIcon type="split" dir="row" count={1} value="clear" label={t('clear_split')} icon={<SquareIcon />} isActive={activeTool?.value === 'clear'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed}/>
+                                </>
+                             )}
+                              {activeTab === 'tools' && (
+                                <>
+                                <ToolBtn icon={Trash2} label={t('delete_item')} color="text-red-400" onClick={handleDelete} isCollapsed={isSidebarCollapsed}/>
+                                <ToolBtn icon={MousePointer2} label={t('select')} onClick={() => toggleTool(null)} isActive={activeTool === null} isCollapsed={isSidebarCollapsed}/>
+                                </>
+                             )}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex-1 relative bg-white overflow-hidden flex flex-col min-h-0" ref={canvasAreaRef}>
+                    <div className="flex-1 overflow-auto flex items-center justify-center p-1 cursor-default">
+                        <div 
+                            className="transition-transform duration-300 ease-out origin-center" 
+                            style={{ 
+                                transform: `scale(${zoomLevel})`,
+                                width: config.width + (CANVAS_PADDING * 2), // Explicit dimensions for correct scaling
+                                height: config.height + (CANVAS_PADDING * 2) 
+                            }}
+                        >
+                            <div className="relative select-none w-full h-full">
+                                {config.layout && (
+                                    <WindowCanvas 
+                                        node={config.layout} 
+                                        selectedId={selectedNodeId} 
+                                        onSelect={handleCanvasNodeClick} 
+                                        onUpdateNode={handleUpdateNode} 
+                                        onChildResize={handleChildResize} 
+                                        onGlobalResize={handleGlobalResizeClick}
+                                        width={config.width} 
+                                        height={config.height} 
+                                        isRoot={true} 
+                                        frameType={config.frameType} 
+                                        canvasPadding={CANVAS_PADDING}
+                                        readOnly={false}
+                                    />
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                    <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: 'linear-gradient(rgba(37, 99, 235, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(37, 99, 235, 0.05) 1px, transparent 1px)', backgroundSize: '10px 10px' }}></div>
+                    <div className="absolute top-4 right-4 z-20 flex flex-col gap-2 bg-white rounded-lg shadow-md p-1">
+                        <button onClick={() => setZoomLevel((z: number) => Math.min(z + 0.1, 4))} className="p-2 text-slate-600 hover:bg-slate-100 rounded"><ZoomIn size={20}/></button>
+                        <button onClick={fitToScreen} className="p-2 text-slate-600 hover:bg-slate-100 rounded" title="Fit to Screen"><RefreshCcw size={16}/></button>
+                        <button onClick={() => setZoomLevel((z: number) => Math.max(z - 0.1, 0.1))} className="p-2 text-slate-600 hover:bg-slate-100 rounded"><ZoomOut size={20}/></button>
+                    </div>
+                </div>
+
+                <div className="w-80 bg-white shadow-lg z-10 shrink-0 border-l border-slate-200 flex flex-col">
+                    <div className="p-4 border-b border-slate-200">
+                        <h2 className="font-bold text-slate-800 text-sm uppercase tracking-widest">Inspector</h2>
+                        <p className="text-[10px] text-slate-400 font-bold">Properties & Dimensions</p>
+                    </div>
+                    <div className="p-4 flex-1 space-y-4 overflow-y-auto">
+                        <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                            <label className="text-xs font-bold text-slate-400">Global Dimensions</label>
+                            <div className="grid grid-cols-2 gap-2 mt-2">
+                                <InputField label="عرض (mm)" type="number" value={config.width} onChange={(e: any) => handleGlobalResize(e.target.value, 'w')} />
+                                <InputField label="ارتفاع (mm)" type="number" value={config.height} onChange={(e: any) => handleGlobalResize(e.target.value, 'h')} />
+                            </div>
+                        </div>
+                        <SelectField label="برند پروفیل" value={config.profileId} onChange={(e:any) => setConfig({ ...config, profileId: e.target.value })} options={brands.map((b: any) => ({ label: b.name, value: b.id }))}/>
+                        <SelectField label="نوع شیشه" value={config.glassId} onChange={(e:any) => setConfig({ ...config, glassId: e.target.value })} options={glassList.map((g: any) => ({ label: g.name, value: g.id }))} />
+                        <SelectField label="نوع فریم" value={config.frameType || 'standard'} onChange={(e:any) => setConfig({ ...config, frameType: e.target.value })} options={[{ label: 'فریم استاندارد', value: 'standard' }, { label: 'فریم بازسازی', value: 'renovation' }]} />
+                    </div>
+                    <div className="p-4 border-t border-slate-200 flex items-center gap-3">
+                        <div className="flex-1">
+                            <PrimaryButton fullWidth onClick={handleAddToList}>
+                                {editIndex !== undefined ? 'ذخیره تغییرات' : 'افزودن به فاکتور'}
+                            </PrimaryButton>
+                        </div>
+                        {(projectItems.length > 0 || lastSavedId) && (
+                            <button onClick={() => navigate('/breakdown', { state: { projectDetails, items: projectItems } })} className="h-14 w-14 flex items-center justify-center bg-slate-100 text-slate-600 rounded-2xl hover:bg-blue-50 hover:text-blue-600 transition-colors">
+                                <Receipt size={22}/>
+                            </button>
+                        )}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+  };
   
-  return isDesktop ? <DesktopLayout state={state} handlers={handlers} /> : <MobileLayout state={state} handlers={handlers} />;
+  const renderMobile = () => {
+    return (
+        <div className="h-screen flex flex-col bg-slate-100 overflow-hidden">
+            <div className="bg-white/90 backdrop-blur-md px-4 py-3 flex justify-between items-center z-30 shadow-sm border-b border-slate-200 shrink-0">
+                <button onClick={() => navigate(-1)} className="p-2 bg-slate-100 rounded-lg text-slate-600"><ArrowRight size={20} /></button>
+                <div className="text-center">
+                    <h1 className="font-bold text-slate-800 text-sm">{t('unit_design')}</h1>
+                    <p className="text-[10px] text-slate-500">{projectDetails.customerName}</p>
+                </div>
+                <div className="flex gap-2">
+                    <button onClick={handleUndo} disabled={history.length === 0} className="p-2 bg-slate-100 rounded text-slate-600 disabled:opacity-30"><Undo size={18} /></button>
+                    <button onClick={handleRedo} disabled={future.length === 0} className="p-2 bg-slate-100 rounded text-slate-600 disabled:opacity-30"><Redo size={18} /></button>
+                </div>
+            </div>
+            
+            <div className="bg-white px-2 py-1 shadow-sm border-b border-slate-200 shrink-0 no-scrollbar overflow-x-auto">
+                <div className="flex items-center gap-1 min-w-max">
+                    <ToolBtn icon={systemMode === 'Casement' ? Monitor : Sidebar} label={systemMode === 'Casement' ? 'کشویی' : 'لولایی'} onClick={() => { setSystemMode((prev: 'Casement' | 'Sliding') => prev === 'Casement' ? 'Sliding' : 'Casement'); toggleTool(null); }} isCollapsed={true}/>
+                    <div className="w-px h-10 bg-slate-200 mx-1"></div>
+
+                    {systemMode === 'Casement' ? (
+                        <>
+                            <DraggableIcon type="opening" value="Fixed" label={t('fixed')} icon={<FixedIcon />} isActive={activeTool?.value === 'Fixed'} onClick={toggleTool} isCollapsed={true} />
+                            <DraggableIcon type="opening" value="TurnRight" label={t('turn_right')} icon={<TurnRightIcon />} isActive={activeTool?.value === 'TurnRight'} onClick={toggleTool} isCollapsed={true}/>
+                            <DraggableIcon type="opening" value="TurnLeft" label={t('turn_left')} icon={<TurnLeftIcon />} isActive={activeTool?.value === 'TurnLeft'} onClick={toggleTool} isCollapsed={true}/>
+                            <DraggableIcon type="opening" value="TiltTurnRight" label={t('tilt_turn_right')} icon={<TiltTurnRightIcon />} isActive={activeTool?.value === 'TiltTurnRight'} onClick={toggleTool} isCollapsed={true}/>
+                            <DraggableIcon type="opening" value="TiltTurnLeft" label={t('tilt_turn_left')} icon={<TiltTurnLeftIcon />} isActive={activeTool?.value === 'TiltTurnLeft'} onClick={toggleTool} isCollapsed={true}/>
+                            <DraggableIcon type="opening" value="Awning" label="کلنگی" icon={<AwningIcon />} isActive={activeTool?.value === 'Awning'} onClick={toggleTool} isCollapsed={true}/>
+                            <div className="w-px h-10 bg-slate-200 mx-1"></div>
+                            <DraggableIcon type="split" dir="row" count={2} label={t('split_v_2')} icon={<SplitVerticalIcon count={2} />} isActive={activeTool?.dir === 'row' && activeTool.count === 2} onClick={toggleTool} isCollapsed={true}/>
+                            <DraggableIcon type="split" dir="col" count={2} label={t('split_h_2')} icon={<SplitHorizontalIcon count={2} />} isActive={activeTool?.dir === 'col' && activeTool.count === 2} onClick={toggleTool} isCollapsed={true}/>
+                            <DraggableIcon type="split" dir="row" count={1} value="clear" label={t('clear_split')} icon={<SquareIcon />} isActive={activeTool?.value === 'clear'} onClick={toggleTool} isCollapsed={true}/>
+                        </>
+                    ) : (
+                        <div className="flex items-center gap-1">
+                           {SLIDING_DATA[slidingRailMode]['2-Sash'].map(t => <div key={t.id} className="transform scale-90"><TypologyIcon typology={t} isActive={false} onClick={applyTypology} /></div>)}
+                           {SLIDING_DATA[slidingRailMode]['3-Sash'].map(t => <div key={t.id} className="transform scale-90"><TypologyIcon typology={t} isActive={false} onClick={applyTypology} /></div>)}
+                        </div>
+                    )}
+
+                    <div className="w-px h-10 bg-slate-200 mx-1"></div>
+                    <ToolBtn icon={Trash2} label={t('delete_item')} color="text-red-400" onClick={handleDelete} isCollapsed={true}/>
+                    <ToolBtn icon={MousePointer2} label={t('select')} onClick={() => toggleTool(null)} isActive={activeTool === null} isCollapsed={true}/>
+                </div>
+            </div>
+
+            <div className="flex-1 relative bg-white overflow-hidden flex flex-col min-h-0" ref={canvasAreaRef}>
+                <div className="flex-1 overflow-auto flex items-center justify-center p-1 cursor-default">
+                    <div 
+                        className="transition-transform duration-300 ease-out origin-center" 
+                        style={{ 
+                            transform: `scale(${zoomLevel})`,
+                            width: config.width + (CANVAS_PADDING * 2),
+                            height: config.height + (CANVAS_PADDING * 2) 
+                        }}
+                    >
+                        <div className="relative select-none w-full h-full">
+                            {config.layout && (
+                                <WindowCanvas 
+                                    node={config.layout} 
+                                    selectedId={selectedNodeId} 
+                                    onSelect={handleCanvasNodeClick} 
+                                    onUpdateNode={handleUpdateNode} 
+                                    onGlobalResize={handleGlobalResizeClick}
+                                    width={config.width} 
+                                    height={config.height} 
+                                    isRoot={true} 
+                                    frameType={config.frameType} 
+                                    canvasPadding={CANVAS_PADDING}
+                                    readOnly={false}
+                                />
+                            )}
+                        </div>
+                    </div>
+                </div>
+                <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: 'linear-gradient(rgba(37, 99, 235, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(37, 99, 235, 0.05) 1px, transparent 1px)', backgroundSize: '10px 10px' }}></div>
+                <div className="absolute top-4 right-4 z-20 flex flex-col gap-2 bg-white/80 backdrop-blur rounded-lg shadow-md p-1">
+                    <button onClick={() => setZoomLevel((z: number) => Math.min(z + 0.1, 4))} className="p-2 text-slate-600"><ZoomIn size={20}/></button>
+                    <button onClick={fitToScreen} className="p-2 text-slate-600"><RefreshCcw size={16}/></button>
+                    <button onClick={() => setZoomLevel((z: number) => Math.max(z - 0.1, 0.1))} className="p-2 text-slate-600"><ZoomOut size={20}/></button>
+                </div>
+            </div>
+
+            <div className="fixed bottom-0 left-0 right-0 z-40 p-4 pointer-events-none">
+                <div className="max-w-xl mx-auto flex items-center gap-2 pointer-events-auto">
+                    <button onClick={() => setIsPanelOpen(!isPanelOpen)} className={`h-14 w-14 flex items-center justify-center rounded-full transition-all shadow-xl border border-white/20 ${isPanelOpen ? 'bg-slate-900 text-white' : 'bg-white text-slate-700'}`}>
+                        {isPanelOpen ? <ChevronDown size={24}/> : <SlidersHorizontal size={22}/>}
+                    </button>
+                    <div className="flex-1 flex gap-2 h-14 bg-white/95 backdrop-blur-xl border border-white/40 p-1.5 rounded-full shadow-2xl">
+                        <div className="flex items-center bg-slate-100 rounded-full px-2 py-1 border border-slate-200">
+                            <button onClick={() => setUnitCount((p: number) => Math.max(1, p - 1))} className="p-1.5 bg-white text-slate-700 rounded-full shadow-sm"><Minus size={14} /></button>
+                            <div className="w-10 text-center"><span className="text-xs font-black text-slate-800">{toPersianDigits(unitCount)}</span></div>
+                            <button onClick={() => setUnitCount((p: number) => p + 1)} className="p-1.5 bg-white text-slate-700 rounded-full shadow-sm"><Plus size={14} /></button>
+                        </div>
+                        <button onClick={handleAddToList} className={`flex-1 rounded-full text-[10px] font-black flex items-center justify-center gap-2 transition-all ${lastSavedId ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-700'}`}>
+                            {lastSavedId ? <Check size={16}/> : <PlusCircle size={16}/>} {editIndex !== undefined ? 'تایید' : 'افزودن'}
+                        </button>
+                        {(projectItems.length > 0 || lastSavedId) && (
+                            <button onClick={() => navigate('/breakdown', { state: { projectDetails, items: projectItems } })} className="flex-[1.5] bg-blue-600 text-white rounded-full text-[10px] font-black flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20"><Receipt size={16}/> فاکتور</button>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            <AnimatePresence>
+                {isPanelOpen && (
+                     <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: 'spring', damping: 30, stiffness: 300 }} className="fixed bottom-24 left-4 right-4 z-30 p-6 bg-white/90 backdrop-blur-2xl border border-white/60 rounded-[2.5rem] shadow-2xl space-y-4">
+                         <div className="grid grid-cols-2 gap-2">
+                             <InputField label="عرض (mm)" type="number" value={config.width} onChange={(e: any) => handleGlobalResize(e.target.value, 'w')} />
+                             <InputField label="ارتفاع (mm)" type="number" value={config.height} onChange={(e: any) => handleGlobalResize(e.target.value, 'h')} />
+                         </div>
+                         <SelectField label="نوع شیشه" value={config.glassId} onChange={(e:any) => setConfig({ ...config, glassId: e.target.value })} options={glassList.map((g: any) => ({ label: g.name, value: g.id }))} />
+                         <SelectField label="نوع فریم" value={config.frameType || 'standard'} onChange={(e:any) => setConfig({ ...config, frameType: e.target.value })} options={[{ label: 'فریم استاندارد', value: 'standard' }, { label: 'فریم بازسازی', value: 'renovation' }]} />
+                     </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+  };
+  
+  const renderDimensionModalDialog = () => {
+    if (!dimensionModal) return null;
+    return (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl p-6 shadow-2xl max-w-sm w-full mx-auto" onClick={(e) => e.stopPropagation()}>
+                <h3 className="text-lg font-black text-slate-800 mb-4">{dimensionModal.type === 'global' ? 'تغییر ابعاد' : 'تغییر اندازه فریم'}</h3>
+                <InputField 
+                    label={`اندازه جدید ${dimensionModal.type === 'global' ? (dimensionModal.dim === 'w' ? 'عرض' : 'ارتفاع') : ''} (mm)`} 
+                    type="number" 
+                    value={dimensionModalValue} 
+                    onChange={(e: any) => setDimensionModalValue(e.target.value)} 
+                />
+                <div className="flex gap-2 mt-6">
+                    <button className="flex-1 px-4 py-3 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-xl font-bold transition-all" onClick={() => setDimensionModal(null)}>انصراف</button>
+                    <PrimaryButton className="flex-1 !py-3" onClick={handleDimensionModalSubmit}>تایید</PrimaryButton>
+                </div>
+            </div>
+        </div>
+    );
+  };
+  
+  return (
+    <>
+      {isDesktop ? renderDesktop() : renderMobile()}
+      {renderDimensionModalDialog()}
+    </>
+  );
 };

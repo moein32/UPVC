@@ -14,6 +14,18 @@ export default defineConfig({
           }
         },
       },
+      onwarn(warning, warn) {
+        // Suppress specific warnings from 'use client' directives in node_modules
+        if (
+          warning.code === 'MODULE_LEVEL_DIRECTIVE' &&
+          warning.message.includes('"use client"') &&
+          warning.id &&
+          warning.id.includes('node_modules')
+        ) {
+          return; // Ignore this warning
+        }
+        warn(warning); // Otherwise, call the default warn handler
+      },
     },
   },
   plugins: [

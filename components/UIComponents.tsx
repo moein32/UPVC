@@ -13,7 +13,17 @@ export const GlassCard = ({ children, className = '', onClick }: { children?: Re
   </motion.div>
 );
 
-export const PrimaryButton = ({ children, onClick, icon: Icon, fullWidth = false, loading = false, variant = 'primary' }: any) => (
+interface PrimaryButtonProps {
+  children: React.ReactNode;
+  onClick: () => void;
+  icon?: React.ElementType; // Use React.ElementType for icon components
+  fullWidth?: boolean;
+  loading?: boolean;
+  variant?: 'primary' | 'secondary';
+  className?: string;
+}
+
+export const PrimaryButton = ({ children, onClick, icon: Icon, fullWidth = false, loading = false, variant = 'primary' }: PrimaryButtonProps) => (
   <motion.button
     whileHover={{ scale: 1.02 }}
     whileTap={{ scale: 0.95 }}
@@ -40,7 +50,16 @@ export const PrimaryButton = ({ children, onClick, icon: Icon, fullWidth = false
   </motion.button>
 );
 
-export const InputField = ({ label, value, onChange, type = "text", suffix, placeholder }: any) => {
+interface InputFieldProps {
+  label: string;
+  value: string | number;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  type?: 'text' | 'number' | 'tel';
+  suffix?: React.ReactNode;
+  placeholder?: string;
+}
+
+export const InputField = ({ label, value, onChange, type = "text", suffix, placeholder }: InputFieldProps) => {
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     // If it's a numeric input intent, convert Persian digits to English for the state
@@ -48,7 +67,7 @@ export const InputField = ({ label, value, onChange, type = "text", suffix, plac
        const rawValue = e.target.value;
        const englishValue = toEnglishDigits(rawValue);
        
-       // Handle empty string specifically to allow deletion
+       // If the raw value is empty, pass an empty string. Otherwise, pass the converted English value.
        const finalValue = rawValue === '' ? '' : englishValue;
 
        // We create a synthetic event to pass back compatible with standard handlers
@@ -65,11 +84,8 @@ export const InputField = ({ label, value, onChange, type = "text", suffix, plac
     }
   };
 
-  // Check if the value is strictly 0 (number) or "0" (string) and not part of a larger number like 10, 20
-  // But purely for display, we often want 0 to be visible unless it's a placeholder state.
-  // However, specifically for the issue of "backspace not clearing 0", parent components often pass 0 as default.
-  // We handle the display logic here:
-  const displayValue = value === 0 || value === '0' ? '' : value;
+  // For number inputs, display 0 as an empty string to allow clearing.
+  const displayValue = (type === 'number' || type === 'tel') && (value === 0 || value === '0') ? '' : value;
 
   return (
     <div className="flex flex-col gap-2">
@@ -78,7 +94,7 @@ export const InputField = ({ label, value, onChange, type = "text", suffix, plac
         <input
           type={type === 'number' ? 'text' : type} // Use text input for numbers to allow Persian chars
           inputMode={type === 'number' ? 'numeric' : 'text'}
-          value={value} // Use raw value from props, let parent handle 0 vs empty logic if needed, OR use displayValue if we want to force clear
+          value={displayValue} // Use displayValue here to handle 0 as empty string
           onChange={handleChange}
           placeholder={placeholder}
           // IMPORTANT: dir="ltr" fixes the cursor issue on backspace for numbers, text-right keeps visual alignment
@@ -93,7 +109,14 @@ export const InputField = ({ label, value, onChange, type = "text", suffix, plac
   );
 };
 
-export const SelectField = ({ label, value, onChange, options }: any) => (
+interface SelectFieldProps {
+  label: string;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  options: { value: string; label: string }[];
+}
+
+export const SelectField = ({ label, value, onChange, options }: SelectFieldProps) => (
   <div className="flex flex-col gap-2">
     <label className="text-xs font-medium text-slate-500 font-bold">{label}</label>
     <div className="relative">
@@ -103,7 +126,7 @@ export const SelectField = ({ label, value, onChange, options }: any) => (
         className="w-full appearance-none bg-white/50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-right"
         style={{ direction: 'rtl' }}
       >
-        {options.map((opt: any) => (
+        {options.map((opt) => (
           <option key={opt.value} value={opt.value}>{opt.label}</option>
         ))}
       </select>
