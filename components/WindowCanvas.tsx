@@ -503,7 +503,7 @@ export interface WindowCanvasProps {
 export const WindowCanvas = (props: WindowCanvasProps) => {
   const { node, width, height, showDimensions = true, onSelect, selectedId, readOnly, onChildResize, onGlobalResize, canvasPadding } = props;
   
-  const padding = canvasPadding !== undefined ? canvasPadding : (showDimensions ? 90 : 10);
+  const padding = canvasPadding !== undefined ? canvasPadding : (showDimensions ? 160 : 10);
 
   const getNestedSegments = (targetDir: 'row' | 'col') => {
     let segments: { start: number; end: number; parentId: string; index: number; layer: number; crossPos: number }[] = [];
@@ -568,8 +568,8 @@ export const WindowCanvas = (props: WindowCanvasProps) => {
   const maxRowLayerBot = Math.max(0, ...rowSegments.filter(s => s.crossPos > height / 2.01).map(s => s.layer));
   const maxColLayerLeft = Math.max(0, ...colSegments.filter(s => s.crossPos < width / 2).map(s => s.layer));
 
-  const rowGlobalOffsetBase = 35;
-  const colGlobalOffsetBase = 35;
+  const rowGlobalOffsetBase = 75;
+  const colGlobalOffsetBase = 75;
 
   return (
     <div className="w-full h-full flex items-center justify-center">
@@ -630,20 +630,20 @@ export const WindowCanvas = (props: WindowCanvasProps) => {
             <g className="dimensions-layer">
               <ArchDimension 
                 start={0} end={width} orientation="h" 
-                linePos={height + rowGlobalOffsetBase + maxRowLayerBot * 20} 
+                linePos={height + rowGlobalOffsetBase + maxRowLayerBot * 35} 
                 leaderStart={height} 
                 onClick={() => onGlobalResize && onGlobalResize('w')} 
               />
               <ArchDimension 
                 start={0} end={height} orientation="v" 
-                linePos={-(colGlobalOffsetBase + maxColLayerLeft * 20)} 
+                linePos={-(colGlobalOffsetBase + maxColLayerLeft * 35)} 
                 leaderStart={0} 
                 onClick={() => onGlobalResize && onGlobalResize('h')} 
               />
               
               {rowSegments.map((seg, i) => {
                 const isBot = seg.crossPos > height / 2.01;
-                const linePos = isBot ? height + 35 + (seg.layer - 1) * 20 : -(35 + (seg.layer - 1) * 20);
+                const linePos = isBot ? height + 55 + (seg.layer - 1) * 35 : -(55 + (seg.layer - 1) * 35);
                 const leaderStart = isBot ? height : 0;
                 return (
                   <ArchDimension key={`h-${i}`} start={seg.start} end={seg.end} orientation="h" linePos={linePos} leaderStart={leaderStart} onClick={() => onChildResize?.(seg.parentId, seg.index, seg.end - seg.start, width)} />
@@ -652,7 +652,7 @@ export const WindowCanvas = (props: WindowCanvasProps) => {
               
               {colSegments.map((seg, i) => {
                 const isRight = seg.crossPos >= width / 2;
-                const linePos = isRight ? width + 35 + (seg.layer - 1) * 20 : -(35 + (seg.layer - 1) * 20);
+                const linePos = isRight ? width + 55 + (seg.layer - 1) * 35 : -(55 + (seg.layer - 1) * 35);
                 const leaderStart = isRight ? width : 0;
                 return (
                   <ArchDimension key={`v-${i}`} start={seg.start} end={seg.end} orientation="v" linePos={linePos} leaderStart={leaderStart} onClick={() => onChildResize?.(seg.parentId, seg.index, seg.end - seg.start, height)} />

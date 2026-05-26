@@ -145,42 +145,52 @@ export const InvoicePrint = () => {
 
   const simplifyMaterialName = (name: string) => {
     return name
-      .replace('پروفیل فریم استاندارد', 'فریم استاندارد')
+      .replace('پروفیل فریم استاندارد', 'فریم')
       .replace('پروفیل فریم', 'فریم')
-      .replace('پروفیل سش (Sash) بازشو', 'بازشو')
+      .replace('پروفیل سش (Sash) بازشو', 'سش پنجره')
       .replace('پروفیل سش (Sash) درب', 'سش درب')
       .replace('پروفیل سش (Sash)', 'بازشو')
       .replace('شیشه دوجداره صنعتی', 'شیشه دوجداره')
+      .replace('شیشه دوجداره', 'شیشه 2ج')
       .replace('گالوانیزه تقویتی', 'گالوانیزه')
       .replace('زهوار (Beading) پروفیل', 'زهوار')
       .replace('پروفیل مولیون', 'مولیون')
-      .replace('گالوانیزه و متعلقات فنی', 'گالوانیزه و متعلقات');
+      .replace('گالوانیزه و متعلقات فنی', 'گالوانیزه')
+      .replace('مجموعه یراق‌آلات بازشو', 'یراق‌آلات')
+      .replace('نوار لاستیکی درزگیر (EPDM)', 'لاستیک EPDM');
   };
 
   const InvoiceHeader = () => (
-    <div className={`inv-header shrink-0 px-10 pt-8 pb-4 ${tempLayout === 'classic' ? 'border-b-2 border-slate-900' : ''}`}>
-        <div className={`flex justify-between items-start`}>
+    <div className={`inv-header shrink-0 px-10 pt-8 pb-4 ${tempLayout === 'classic' ? 'border-b-2 border-slate-900 bg-slate-100' : ''}`}>
+        <div className="flex justify-between items-start">
             <div className="text-right">
                 <div className="inv-title-box">
-                    <h1 className={`${tempLayout === 'classic' ? 'text-2xl font-black' : 'text-xl font-black'} mb-0.5 tracking-tight text-slate-800`}>{invoiceConfig.companyName}</h1>
-                    {tempLayout === 'modern' && <span className="inv-badge text-[9px] font-bold text-blue-600 uppercase tracking-tighter">راهکارهای صنعتی نکس‌وین</span>}
+                    <h1 className={`mb-1 tracking-tight ${
+                        tempLayout === 'classic' ? 'text-2xl font-black text-black' : 
+                        tempLayout === 'modern' ? 'text-2xl font-black text-emerald-950 border-r-4 border-emerald-500 pr-3' : 
+                        tempLayout === 'technical' ? 'text-2xl font-black text-slate-900 border-r-4 border-blue-600 pr-3' : 
+                        'text-xl font-black text-slate-800'
+                    }`}>{invoiceConfig.companyName}</h1>
+                    {tempLayout === 'modern' && <span className="inv-badge text-[10px] font-black text-emerald-600 uppercase tracking-tighter">راهکارهای صنعتی نکس‌وین</span>}
+                    {tempLayout === 'technical' && <span className="inv-badge text-[10px] font-mono font-bold text-blue-600 uppercase tracking-widest">NEXWIN INDUSTRIAL SOLUTIONS</span>}
                 </div>
-                <div className="text-[9px] opacity-80 space-y-0.5 font-bold mt-1.5 text-slate-700">
-                    <div className="flex items-center gap-2"><span>نشانی:</span><span>{invoiceConfig.companyAddress || '---'}</span></div>
-                    <div className="flex items-center gap-2"><span>تلفن تماس:</span><span>{toPersianDigits(invoiceConfig.companyPhone) || '---'}</span></div>
+                <div className="text-[10px] opacity-90 space-y-1 font-bold mt-2 text-slate-700">
+                    <div className="flex items-center gap-2"><span>نشانی:</span><span className="text-slate-900 font-extrabold">{invoiceConfig.companyAddress || '---'}</span></div>
+                    <div className="flex items-center gap-2"><span>تلفن تماس:</span><span className="text-slate-900 font-extrabold">{toPersianDigits(invoiceConfig.companyPhone) || '---'}</span></div>
                 </div>
             </div>
-            <div className={`flex flex-col items-end text-left pt-1`}>
-                <div className={`text-[10px] font-black px-4 py-1.5 mb-2 rounded-lg border border-slate-200 ${
-                    tempLayout === 'technical' ? 'bg-slate-800 text-white border-transparent' : 
-                    tempLayout === 'classic' ? 'border-2 border-slate-900 text-slate-900' : 
-                    'bg-slate-50 text-slate-800'
+            <div className="flex flex-col items-end text-left pt-1">
+                <div className={`text-[11px] font-black px-4 py-2 mb-2 rounded-xl border ${
+                    tempLayout === 'technical' ? 'bg-blue-600 text-white border-transparent font-bold' : 
+                    tempLayout === 'classic' ? 'border-2 border-slate-900 text-slate-900 font-black bg-slate-200 rounded-none' : 
+                    tempLayout === 'modern' ? 'bg-emerald-50 text-emerald-800 border-emerald-100 font-black' :
+                    'bg-slate-50 text-slate-800 border-slate-200 font-black'
                 }`}>
-                    {tempLayout === 'classic' ? 'صورتحساب رسمی فروش' : 'پیش‌فاکتور فنی و برآورد مهندسی'}
+                    {tempLayout === 'classic' ? 'صورتحساب رسمی فروش' : tempLayout === 'technical' ? 'مشخصات فنی و محاسبات مهندسی' : 'پیش‌فاکتور فنی و برآورد پروژه'}
                 </div>
-                <div className="text-[9px] font-bold space-y-0.5 opacity-95 text-slate-900">
-                    <div className="flex gap-4 justify-between min-w-[140px]"><span>تاریخ صدور:</span><span className="font-black">{todayJalali}</span></div>
-                    <div className="flex gap-4 justify-between min-w-[140px]"><span>شماره فاکتور:</span><span className="font-black">{toPersianDigits(projectDetails.id.slice(-6))}</span></div>
+                <div className="text-[10px] font-black space-y-1 opacity-95 text-slate-905">
+                    <div className="flex gap-4 justify-between min-w-[150px]"><span>تاریخ صدور:</span><span className="font-extrabold text-slate-800">{todayJalali}</span></div>
+                    <div className="flex gap-4 justify-between min-w-[150px]"><span>شماره فاکتور:</span><span className="font-extrabold text-slate-800">{toPersianDigits(projectDetails.id.slice(-6))}</span></div>
                 </div>
             </div>
         </div>
@@ -189,15 +199,15 @@ export const InvoicePrint = () => {
 
   const InvoiceFooter = ({ pageNum, totalPages }: { pageNum: number, totalPages: number }) => (
      <div className="inv-footer shrink-0 px-10 pb-6 pt-2 mt-auto">
-        <div className="inv-footer-container relative pt-3 border-t border-slate-100">
+        <div className="inv-footer-container relative pt-3 border-t border-slate-200">
             <div className="flex justify-between items-end">
                 <div className="max-w-[80%]">
-                    <p className="text-[8px] leading-relaxed text-justify opacity-50 font-bold text-slate-800">
+                    <p className="text-[9.5px] leading-relaxed text-justify opacity-80 font-bold text-slate-700">
                         {invoiceConfig.footerNote || 'اعتبار این پیش‌فاکتور نکس‌وین ۷۲ ساعت می‌باشد. کلیه محاسبات بر اساس استانداردهای مهندسی UPVC انجام شده است. هرگونه تغییر در ابعاد پس از تایید نهایی بر عهده مشتری می‌باشد.'}
                     </p>
                 </div>
                 <div className="text-left">
-                    <div className={`${tempLayout === 'classic' ? 'bg-slate-200 text-slate-800 border border-slate-900' : 'bg-slate-900 text-white'} text-[8px] font-black px-3 py-0.5 rounded-full flex items-center gap-2`}>
+                    <div className={`${tempLayout === 'classic' ? 'bg-slate-300 text-slate-900 border border-slate-900 font-bold rounded-none' : 'bg-slate-900 text-white'} text-[9px] font-black px-4 py-1 rounded-full flex items-center gap-2 shadow-sm`}>
                         <span>صفحه {toPersianDigits(pageNum)} از {toPersianDigits(totalPages)}</span>
                     </div>
                 </div>
@@ -214,28 +224,43 @@ export const InvoicePrint = () => {
         <InvoiceHeader />
         
         {pageIndex === 0 && (
-            <div className="px-10 py-2 shrink-0">
-                <div className={`${tempLayout === 'classic' ? 'border-2 border-slate-900' : 'bg-white border border-slate-200'} p-3.5 grid grid-cols-2 gap-8 rounded-2xl`}>
-                    <div className="flex flex-col gap-1">
-                        <span className="text-[8px] font-black opacity-40 uppercase tracking-widest block">مشخصات خریدار / کارفرما</span>
-                        <div className="text-[11px] font-black text-slate-900">{projectDetails.customerName}</div>
+            <div className="px-10 py-1 shrink-0">
+                <div className={`${
+                    tempLayout === 'classic' ? 'border-2 border-slate-900 rounded-none bg-slate-50' : 
+                    tempLayout === 'modern' ? 'bg-gradient-to-r from-emerald-50/40 to-teal-50/10 border-r-4 border-emerald-500 border-y border-l border-slate-200 rounded-2xl' :
+                    tempLayout === 'technical' ? 'bg-zinc-50/80 border border-slate-300 rounded-xl font-mono' :
+                    'bg-slate-50/50 border border-slate-200 rounded-2xl'
+                } p-4 grid grid-cols-2 gap-8`}>
+                    <div className="flex flex-col gap-1.5">
+                        <span className="text-[10px] font-black opacity-55 uppercase tracking-widest block text-slate-500">مشخصات خریدار / کارفرما</span>
+                        <div className="text-[13px] font-black text-slate-900">{projectDetails.customerName}</div>
                     </div>
-                    <div className="flex flex-col gap-1">
-                        <span className="text-[8px] font-black opacity-40 uppercase tracking-widest block">نشانی و محل اجرای پروژه</span>
-                        <div className="text-[10px] font-bold text-slate-700 leading-tight">{projectDetails.address || 'آدرس ثبت نشده'}</div>
+                    <div className="flex flex-col gap-1.5">
+                        <span className="text-[10px] font-black opacity-55 uppercase tracking-widest block text-slate-500">نشانی و محل اجرای پروژه</span>
+                        <div className="text-[11px] font-bold text-slate-755 leading-snug">{projectDetails.address || 'آدرس ثبت نشده'}</div>
                     </div>
                 </div>
             </div>
         )}
 
         <div className="flex-1 px-10 pt-2 pb-2 overflow-hidden flex flex-col">
-            <div className={`w-full flex-1 flex flex-col ${tempLayout === 'classic' ? 'border-2 border-slate-900' : 'border border-slate-200 rounded-2xl overflow-hidden'}`}>
+            <div className={`w-full flex-1 flex flex-col ${
+                tempLayout === 'classic' ? 'border-2 border-slate-900 rounded-none' : 
+                tempLayout === 'modern' ? 'border border-emerald-100 rounded-3xl overflow-hidden' :
+                tempLayout === 'technical' ? 'border border-slate-350 rounded-2xl overflow-hidden' :
+                'border border-slate-200 rounded-2xl overflow-hidden shadow-sm'
+            }`}>
                 {/* Header Table */}
-                <div className={`flex w-full shrink-0 ${tempLayout === 'classic' ? 'bg-slate-100 border-b-2 border-slate-900' : 'bg-slate-50 border-b border-slate-200'}`}>
-                    <div className="p-3 w-8 text-center text-[9px] font-black text-slate-500 border-l border-slate-200 shrink-0">#</div>
-                    <div className="p-3 w-[340px] text-center text-[9px] font-black text-slate-500 border-x border-slate-200 shrink-0">نقشه فنی و مشخصات ابعادی</div>
-                    <div className="p-3 flex-1 text-center text-[9px] font-black text-slate-500">جزئیات متریال (مقدار و قیمت واحد)</div>
-                    <div className="p-3 w-28 text-center text-[9px] font-black text-slate-500 border-r border-slate-200 shrink-0">مجموع ردیف</div>
+                <div className={`flex w-full shrink-0 items-center text-slate-700 font-black text-[11px] ${
+                    tempLayout === 'classic' ? 'bg-slate-200 border-b-2 border-slate-900 text-slate-900' : 
+                    tempLayout === 'modern' ? 'bg-emerald-50/70 border-b border-emerald-100 text-emerald-950' :
+                    tempLayout === 'technical' ? 'bg-slate-100 border-b border-slate-300 text-slate-800' :
+                    'bg-slate-50 border-b border-slate-200'
+                }`}>
+                    <div className="py-3.5 px-2 w-9 text-center border-l border-slate-200 shrink-0">ردیف</div>
+                    <div className="py-3.5 px-3 w-[340px] text-center border-x border-slate-200 shrink-0">نقشه فنی و مشخصات ابعادی</div>
+                    <div className="py-3.5 px-4 flex-1 text-center">جزئیات متریال مصرفی (شرح کالا، مقدار و قیمت واحد)</div>
+                    <div className="py-3.5 px-3 w-[122px] text-center border-r border-slate-200 shrink-0">مجموع ردیف</div>
                 </div>
                 
                 <div className="flex-1 flex flex-col overflow-hidden bg-white">
@@ -243,42 +268,74 @@ export const InvoicePrint = () => {
                         const globalIndex = pageIndex * ITEMS_PER_PAGE + localIndex;
                         const brand = BRANDS.find(b => b.id === item.config.profileId);
                         return (
-                            <div key={item.id} className={`flex w-full items-stretch border-b last:border-0 h-[288px] break-inside-avoid page-break-inside-avoid ${tempLayout === 'classic' ? 'border-slate-900' : 'border-slate-200'}`}>
-                                <div className="p-2 w-8 flex flex-col items-center justify-center text-[10px] font-black text-slate-300 shrink-0 border-l border-slate-200">{toPersianDigits(globalIndex + 1)}</div>
+                            <div key={item.id} className={`flex w-full items-stretch border-b last:border-0 h-[270px] break-inside-avoid page-break-inside-avoid ${
+                                tempLayout === 'classic' ? 'border-slate-950 border-b-2' : 'border-slate-200'
+                            }`}>
+                                <div className="p-2 w-9 flex flex-col items-center justify-center text-[11px] font-black text-slate-400 shrink-0 border-l border-slate-200 bg-slate-50/20">{toPersianDigits(globalIndex + 1)}</div>
                                 
-                                <div className="p-4 w-[340px] shrink-0 flex flex-col items-center justify-center gap-3 border-x border-slate-200 bg-slate-50/5">
-                                    <div className="relative w-full h-[180px] bg-white flex items-center justify-center border border-slate-100 rounded-2xl overflow-hidden p-4">
-                                        <div className="w-full h-full flex items-center justify-center">
-                                            <WindowPreview config={item.config} width="100%" height="100%" isThumbnail={true} scale={0.55} />
+                                <div className="p-4 w-[340px] shrink-0 flex flex-col items-center justify-center gap-2.5 border-x border-slate-200 bg-slate-50/5">
+                                    <div className={`relative w-[95%] h-[150px] flex items-center justify-center overflow-hidden p-2 transition-all ${
+                                        tempLayout === 'classic' ? 'bg-white border-2 border-slate-900 rounded-none' :
+                                        tempLayout === 'modern' ? 'bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-md' :
+                                        tempLayout === 'technical' ? 'bg-zinc-50 border border-slate-300 rounded-xl font-mono' :
+                                        'bg-white border border-slate-100 rounded-2xl'
+                                    }`}>
+                                        <div className="w-full h-full flex items-center justify-center scale-[0.98]">
+                                            <WindowPreview config={item.config} width="100%" height="100%" isThumbnail={false} scale={0.65} />
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-3">
-                                        <div className="text-[12px] font-black text-slate-900 bg-white px-3 py-1.5 rounded-xl border border-slate-200" style={{ direction: 'ltr' }}>
-                                            {toPersianDigits(item.config.width)} × {toPersianDigits(item.config.height)}
+                                    <div className="flex items-center gap-3 w-full justify-center">
+                                        <div className="text-[12.5px] font-black text-slate-900 bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-sm" style={{ direction: 'ltr' }}>
+                                            {toPersianDigits(item.config.width)} × {toPersianDigits(item.config.height)} <span className="text-[9px] text-slate-400 font-bold ml-0.5">میلی‌متر</span>
                                         </div>
-                                        <div className="text-[10px] font-black text-blue-700 bg-white px-3 py-1.5 rounded-xl border border-blue-200">
-                                            تعداد: {toPersianDigits(item.quantity)}
+                                        <div className="text-[11.5px] font-black text-blue-700 bg-blue-50/50 px-3 py-1.5 rounded-xl border border-blue-100 shadow-sm">
+                                            تعداد: {toPersianDigits(item.quantity)} <span className="text-[9px] text-slate-500 font-bold">عدد</span>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="p-3 flex-1 flex flex-col justify-center overflow-hidden">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <span className={`px-2 py-0.5 rounded text-[9px] font-black ${tempLayout === 'classic' ? 'bg-slate-200 text-slate-900 border border-slate-900' : 'bg-slate-100 text-slate-800 border border-slate-200'}`}>{brand?.name}</span>
-                                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest truncate max-w-[140px]">{item.config.type}</span>
+                                <div className="p-4 flex-1 flex flex-col justify-center overflow-hidden">
+                                    <div className="flex items-center gap-2.5 mb-2.5">
+                                        <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black tracking-tight ${
+                                            tempLayout === 'classic' ? 'bg-slate-250 text-slate-900 border border-slate-900 rounded-none' : 
+                                            tempLayout === 'modern' ? 'bg-emerald-50 text-emerald-800 border border-emerald-100' :
+                                            tempLayout === 'technical' ? 'bg-slate-800 text-white border-transparent' :
+                                            'bg-slate-100 text-slate-800 border border-slate-200'
+                                        }`}>{brand?.name}</span>
+                                        <span className="text-[10px] font-black text-slate-500 tracking-wide truncate max-w-[200px]">{item.config.type}</span>
                                     </div>
-                                    <div className="border border-slate-100 rounded-xl overflow-hidden bg-white">
-                                        <table className="w-full table-fixed border-collapse text-[9px] leading-tight">
-                                            <tbody className="divide-y divide-slate-50">
-                                                {item.calculations.details.slice(0, 11).map((detail, dIdx) => (
-                                                    <tr key={dIdx} className={`${dIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/20'}`}>
-                                                        <td className="px-3 py-1.5 font-bold text-slate-700 truncate w-[55%]" style={{ fontFamily: 'Vazirmatn' }}>
+                                    <div className={`overflow-hidden ${
+                                        tempLayout === 'classic' ? 'border-2 border-slate-900 rounded-none bg-white' :
+                                        tempLayout === 'modern' ? 'border border-emerald-50 rounded-2xl bg-white shadow-xs' :
+                                        tempLayout === 'technical' ? 'border border-slate-300 rounded-xl bg-zinc-50' :
+                                        'border border-slate-150 rounded-2xl bg-white shadow-xs font-medium'
+                                    }`}>
+                                        <table className="w-full table-fixed border-collapse text-[9.5px] leading-snug">
+                                            <thead>
+                                                <tr className={`text-[8.5px] text-slate-400 font-black tracking-wider uppercase border-b ${
+                                                    tempLayout === 'classic' ? 'bg-slate-100 border-slate-900 text-slate-800' :
+                                                    tempLayout === 'modern' ? 'bg-slate-50/50 border-emerald-50 text-emerald-950' :
+                                                    'bg-slate-50/80 border-slate-100'
+                                                }`}>
+                                                    <th className="px-2.5 py-1 text-right font-black">شرح کالا / متریال</th>
+                                                    <th className="px-1 py-1 w-[24%] text-center font-black">مقدار مصرفی</th>
+                                                    <th className="px-2.5 py-1 w-[33%] text-left font-black">قیمت واحد</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-100">
+                                                {item.calculations.details.slice(0, 8).map((detail, dIdx) => (
+                                                    <tr key={dIdx} className={`${
+                                                        tempLayout === 'classic' ? (dIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50') :
+                                                        tempLayout === 'modern' ? (dIdx % 2 === 0 ? 'bg-white' : 'bg-emerald-50/10') :
+                                                        (dIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30')
+                                                    } hover:bg-slate-50/50 transition-colors`}>
+                                                        <td className="px-2.5 py-1 font-bold text-slate-700 truncate w-[43%]" style={{ fontFamily: 'Vazirmatn' }}>
                                                             {simplifyMaterialName(detail.name)}
                                                         </td>
-                                                        <td className="px-2 py-1.5 w-[25%] text-center font-black text-slate-500 whitespace-nowrap">
+                                                        <td className="px-1 py-1 w-[24%] text-center font-black text-slate-600 whitespace-nowrap">
                                                             {toPersianDigits(detail.quantity)} <span className="opacity-60 text-[7px]">{detail.unit}</span>
                                                         </td>
-                                                        <td className="px-3 py-1.5 w-[20%] text-left font-black text-slate-900 whitespace-nowrap">
+                                                        <td className="px-2.5 py-1 w-[33%] text-left font-black text-slate-900 tracking-tighter whitespace-nowrap">
                                                             {formatPrice(detail.unitPrice)}
                                                         </td>
                                                     </tr>
@@ -288,12 +345,22 @@ export const InvoicePrint = () => {
                                     </div>
                                 </div>
 
-                                <div className="p-4 w-28 shrink-0 flex flex-col items-center justify-center text-center border-r border-slate-200 bg-slate-50/20">
-                                    <div className="text-[9px] font-black text-slate-400 mb-1.5 uppercase tracking-widest opacity-60">مبلغ نهایی</div>
-                                    <div className="text-sm font-black text-slate-900 tracking-tight leading-none">
+                                <div className={`px-3 flex flex-col items-center justify-center text-center w-[122px] shrink-0 border-r border-slate-200 ${
+                                    tempLayout === 'classic' ? 'bg-slate-50 border-slate-900 border-l-2' :
+                                    tempLayout === 'modern' ? 'bg-emerald-50/35 border-slate-100' :
+                                    tempLayout === 'technical' ? 'bg-zinc-100/50 border-slate-300' :
+                                    'bg-slate-50/40'
+                                }`}>
+                                    <div className="text-[10px] font-black text-slate-450 mb-2 uppercase tracking-widest opacity-80 decoration-slate-300">مبلغ نهایی</div>
+                                    <div className={`text-[15.5px] font-black tracking-tight leading-none ${
+                                        tempLayout === 'classic' ? 'text-black font-extrabold' :
+                                        tempLayout === 'modern' ? 'text-emerald-700' :
+                                        tempLayout === 'technical' ? 'text-blue-700' :
+                                        'text-slate-900'
+                                    }`}>
                                         {formatPrice(item.calculations.totalPrice * item.quantity)}
                                     </div>
-                                    <div className="text-[8px] font-bold text-slate-500 mt-1.5 uppercase tracking-tighter opacity-50">تومان</div>
+                                    <div className="text-[8.5px] font-black text-slate-500 mt-2 uppercase tracking-tighter opacity-75">تومان</div>
                                 </div>
                             </div>
                         );
@@ -303,39 +370,53 @@ export const InvoicePrint = () => {
         </div>
 
         {isLastPage && (
-            <div className="inv-total px-10 pt-2 pb-6 shrink-0 bg-white">
-                <div className="flex gap-10 items-end">
-                    <div className="flex-1 grid grid-cols-2 gap-8 opacity-40 pb-4">
-                        <div className="text-center">
-                            <span className="text-[9px] font-black block mb-8 text-slate-600 uppercase tracking-widest">مهر و امضاء مجاز واحد فروش</span>
-                            <div className="w-24 h-[1px] bg-slate-900 mx-auto"></div>
+            <div className="inv-total px-10 pt-4 pb-6 shrink-0 bg-white flex flex-col mt-auto relative z-10 before:absolute before:inset-x-10 before:top-0 before:h-px before:bg-slate-200">
+                <div className="flex gap-10 items-end justify-between">
+                    <div className="flex-1 grid grid-cols-2 gap-8 opacity-80 pb-2 pl-4">
+                        <div className="text-center flex flex-col items-center">
+                            <span className="text-[9px] font-black block mb-8 text-slate-700 uppercase tracking-widest">مهر و امضاء مجاز واحد فروش</span>
+                            <div className="w-28 h-[1px] border-b-2 border-dashed border-slate-400"></div>
                         </div>
-                        <div className="text-center">
-                            <span className="text-[9px] font-black block mb-8 text-slate-600 uppercase tracking-widest">تایید و امضاء خریدار</span>
-                            <div className="w-24 h-[1px] bg-slate-900 mx-auto"></div>
+                        <div className="text-center flex flex-col items-center">
+                            <span className="text-[9px] font-black block mb-8 text-slate-700 uppercase tracking-widest">تایید و امضاء خریدار</span>
+                            <div className="w-28 h-[1px] border-b-2 border-dashed border-slate-400"></div>
                         </div>
                     </div>
                     
-                    <div className={`totals-box w-72 p-6 rounded-[2.5rem] flex flex-col border border-slate-200 ${
-                        tempLayout === 'standard' ? 'bg-white text-slate-900' : 
-                        tempLayout === 'classic' ? 'bg-slate-50 border-2 border-slate-900 text-slate-900' :
-                        'bg-slate-900 text-white border-transparent'
+                    <div className={`totals-box w-[300px] p-4 flex flex-col border shadow-sm ${
+                        tempLayout === 'standard' ? 'bg-slate-50/80 border-slate-200 text-slate-900 rounded-3xl' : 
+                        tempLayout === 'classic' ? 'bg-slate-50 border-2 border-slate-900 text-slate-900 rounded-none' :
+                        tempLayout === 'modern' ? 'bg-emerald-50/50 border-emerald-200 text-slate-900 rounded-3xl shadow-sm' :
+                        'bg-slate-900 text-white border-transparent rounded-2xl' /* technical is charcoal dark */
                     }`}>
-                        <div className="space-y-3">
-                            <div className="flex justify-between text-[11px] font-bold opacity-60">
+                        <div className="space-y-2">
+                            <div className="flex justify-between items-center text-[10.5px] font-bold opacity-90">
                                 <span>جمع متریال مصرفی:</span>
-                                <span className="font-black">{formatPrice(totalMaterialPrice)}</span>
+                                <div className="flex items-baseline gap-1">
+                                    <span className="font-extrabold text-[12px]">{formatPrice(totalMaterialPrice)}</span>
+                                    <span className="text-[7.5px] opacity-70">تومان</span>
+                                </div>
                             </div>
-                            <div className="flex justify-between text-[11px] font-bold opacity-60">
+                            <div className="flex justify-between items-center text-[10.5px] font-bold opacity-90">
                                 <span>هزینه نصب ({toPersianDigits(projectDetails.installPercent)}٪):</span>
-                                <span className="font-black">{formatPrice(installationCost)}</span>
+                                <div className="flex items-baseline gap-1">
+                                    <span className="font-extrabold text-[12px]">{formatPrice(installationCost)}</span>
+                                    <span className="text-[7.5px] opacity-70">تومان</span>
+                                </div>
                             </div>
-                            <div className="h-px bg-current opacity-10 my-3"></div>
-                            <div className="flex justify-between items-center">
-                                <span className="text-[11px] font-black text-blue-500 uppercase tracking-widest">مبلغ نهایی پروژه:</span>
-                                <div className="text-left">
-                                    <div className="text-2xl font-black leading-none tracking-tighter">{formatPrice(finalPrice)}</div>
-                                    <span className="text-[8px] font-black opacity-40 block mt-1 tracking-widest text-left uppercase">تومان</span>
+                            <div className="h-px bg-current opacity-20 my-2"></div>
+                            <div className="flex justify-between items-end">
+                                <span className={`text-[11px] font-black uppercase tracking-widest mb-0.5 ${
+                                    tempLayout === 'modern' ? 'text-emerald-700' :
+                                    tempLayout === 'technical' ? 'text-blue-400' :
+                                    tempLayout === 'classic' ? 'text-black' :
+                                    'text-blue-600'
+                                }`}>مبلغ نهایی پروژه:</span>
+                                <div className="text-left flex flex-col items-end">
+                                    <div className="flex items-baseline gap-1.5">
+                                        <div className="text-2xl font-black leading-none tracking-tighter">{formatPrice(finalPrice)}</div>
+                                        <span className="text-[8.5px] font-black opacity-60 tracking-widest uppercase">تومان</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
