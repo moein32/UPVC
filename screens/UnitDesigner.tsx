@@ -197,8 +197,8 @@ export const UnitDesigner = () => {
 
   const [config, setConfig] = useState<WindowConfig>({
     id: Date.now().toString(),
-    width: 2000,
-    height: 1000,
+    width: 1500,
+    height: 1500,
     profileId: projectDetails.defaultProfileId || '',
     glassId: 'double_4_4',
     hardwareId: 'h1',
@@ -296,28 +296,40 @@ export const UnitDesigner = () => {
           if (activeTool.type === 'opening') {
                handleUpdateNode(id, { openingType: activeTool.value as any, isFrenchWindow: activeTool.value.includes('FrenchWindow') });
           } else if (activeTool.type === 'split') {
-              // When splitting, the target node becomes a container.
-              // It retains its openingType, isFrenchWindow, and systemType.
-              // Its new children will inherit the openingType and systemType.
               const currentOpeningType = targetNode.openingType || 'Fixed';
               const currentIsFrenchWindow = targetNode.isFrenchWindow || false;
               const currentSystemType = targetNode.systemType || 'Casement';
 
+              if (activeTool.value === 'clear') {
+                  handleUpdateNode(id, {
+                      type: 'leaf',
+                      children: [],
+                      dir: undefined,
+                      openingType: currentOpeningType,
+                      isFrenchWindow: currentIsFrenchWindow,
+                      systemType: currentSystemType
+                  });
+                  return;
+              }
+
+              // Check if node is an opening sash (mullion inside sash)
+              const isSash = currentOpeningType !== 'Fixed' && !currentOpeningType.includes('Panel');
+
               const newChildren = Array(activeTool.count || 2).fill(null).map((_, i) => ({
                   id: Date.now() + `_${i}_${Math.random()}`,
                   type: 'leaf' as const,
-                  openingType: currentOpeningType, // Propagate to children as requested
+                  openingType: isSash ? 'Fixed' : currentOpeningType, // If parent is sash, children inside are standard glass dividers (Fixed)
                   flex: 1,
                   systemType: currentSystemType, // Inherit system type from parent
-                  isFrenchWindow: currentIsFrenchWindow, // Propagate french window status
+                  isFrenchWindow: isSash ? false : currentIsFrenchWindow,
               })) as WindowNode[];
 
               handleUpdateNode(id, {
                   type: 'container',
                   dir: activeTool.dir as 'row' | 'col',
                   children: newChildren,
-                  openingType: 'Fixed', // Container itself is fixed, children have the openings
-                  isFrenchWindow: false,
+                  openingType: isSash ? currentOpeningType : 'Fixed', // Keep sash on the container itself if it's a sash
+                  isFrenchWindow: isSash ? currentIsFrenchWindow : false,
                   systemType: currentSystemType
               });
           }
@@ -454,7 +466,7 @@ export const UnitDesigner = () => {
       const projectToSave = { ...projectDetails, items: updatedItems, totalPrice: finalProjectPrice };
       pricingStore.saveProject(projectToSave); setProjectItems(updatedItems); setLastSavedId(newItem.id);
       if (editIndex !== undefined) navigate('/breakdown', { state: { projectDetails, items: updatedItems } });
-      else { setConfig(prev => ({ ...prev, id: Date.now().toString(), width: 1200, height: 1500, layout: createDefaultLayout() })); setUnitCount(1); setHistory([]); setFuture([]); setSelectedNodeId('root'); setTimeout(() => setLastSavedId(null), 2000); }
+      else { setConfig(prev => ({ ...prev, id: Date.now().toString(), width: 1500, height: 1500, layout: createDefaultLayout() })); setUnitCount(1); setHistory([]); setFuture([]); setSelectedNodeId('root'); setTimeout(() => setLastSavedId(null), 2000); }
   };
   
   const fitToScreen = () => {
