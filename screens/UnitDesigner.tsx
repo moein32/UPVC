@@ -687,9 +687,17 @@ export const UnitDesigner = () => {
                             <DraggableIcon type="opening" value="TiltTurnRight" label={t('tilt_turn_right')} icon={<TiltTurnRightIcon />} isActive={activeTool?.value === 'TiltTurnRight'} onClick={toggleTool} isCollapsed={true}/>
                             <DraggableIcon type="opening" value="TiltTurnLeft" label={t('tilt_turn_left')} icon={<TiltTurnLeftIcon />} isActive={activeTool?.value === 'TiltTurnLeft'} onClick={toggleTool} isCollapsed={true}/>
                             <DraggableIcon type="opening" value="Awning" label="کلنگی" icon={<AwningIcon />} isActive={activeTool?.value === 'Awning'} onClick={toggleTool} isCollapsed={true}/>
+                            <DraggableIcon type="opening" value="FrenchWindowRight" label="فرانسوی (راست)" icon={<FrenchIcon dir="right"/>} isActive={activeTool?.value === 'FrenchWindowRight'} onClick={toggleTool} isCollapsed={true} />
+                            <DraggableIcon type="opening" value="FrenchWindowLeft" label="فرانسوی (چپ)" icon={<FrenchIcon dir="left"/>} isActive={activeTool?.value === 'FrenchWindowLeft'} onClick={toggleTool} isCollapsed={true} />
+                            <DraggableIcon type="opening" value="DoorRight" label="درب (راست)" icon={<DoorRightIcon />} isActive={activeTool?.value === 'DoorRight'} onClick={toggleTool} isCollapsed={true} />
+                            <DraggableIcon type="opening" value="DoorLeft" label="درب (چپ)" icon={<DoorLeftIcon />} isActive={activeTool?.value === 'DoorLeft'} onClick={toggleTool} isCollapsed={true} />
+                            <DraggableIcon type="opening" value="PanelV" label="پنل عمودی" icon={<PanelVIcon />} isActive={activeTool?.value === 'PanelV'} onClick={toggleTool} isCollapsed={true} />
+                            <DraggableIcon type="opening" value="PanelH" label="پنل افقی" icon={<PanelHIcon />} isActive={activeTool?.value === 'PanelH'} onClick={toggleTool} isCollapsed={true} />
                             <div className="w-px h-10 bg-slate-200 mx-1"></div>
                             <DraggableIcon type="split" dir="row" count={2} label={t('split_v_2')} icon={<SplitVerticalIcon count={2} />} isActive={activeTool?.dir === 'row' && activeTool.count === 2} onClick={toggleTool} isCollapsed={true}/>
                             <DraggableIcon type="split" dir="col" count={2} label={t('split_h_2')} icon={<SplitHorizontalIcon count={2} />} isActive={activeTool?.dir === 'col' && activeTool.count === 2} onClick={toggleTool} isCollapsed={true}/>
+                            <DraggableIcon type="split" dir="row" count={3} label={t('split_v_3')} icon={<SplitVerticalIcon count={3} />} isActive={activeTool?.dir === 'row' && activeTool.count === 3} onClick={toggleTool} isCollapsed={true}/>
+                            <DraggableIcon type="split" dir="col" count={3} label={t('split_h_3')} icon={<SplitHorizontalIcon count={3} />} isActive={activeTool?.dir === 'col' && activeTool.count === 3} onClick={toggleTool} isCollapsed={true}/>
                             <DraggableIcon type="split" dir="row" count={1} value="clear" label={t('clear_split')} icon={<SquareIcon />} isActive={activeTool?.value === 'clear'} onClick={toggleTool} isCollapsed={true}/>
                         </>
                     ) : (
