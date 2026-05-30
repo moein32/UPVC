@@ -96,13 +96,13 @@ const TypologyIcon = ({ typology, isActive, onClick }: any) => (
     </div>
 );
 
-const DraggableIcon = ({ type, value, dir, count, label, icon, isActive, onClick, onDragStart, onDragEnd, isCollapsed }: any) => {
+const DraggableIcon = ({ type, value, dir, count, label, icon, isActive, onClick, onDragStart, onDragEnd, isCollapsed, isDark }: any) => {
   return (
     <div 
       className={`
-        flex flex-col items-center justify-center gap-1 p-2 rounded-lg cursor-pointer transition-all select-none min-w-[64px]
-        ${isActive ? 'bg-orange-500 text-white shadow-lg scale-105' : 'hover:bg-slate-700 text-slate-300'}
-        ${isCollapsed ? 'w-12 h-12' : ''}
+        flex flex-col items-center justify-center gap-1.5 p-2 rounded-xl cursor-pointer transition-all select-none
+        ${isActive ? 'bg-blue-600 text-white shadow-lg scale-105' : (isDark ? 'hover:bg-slate-700 bg-slate-800/20 text-slate-300 border border-slate-700/50' : 'hover:bg-slate-100 bg-white text-slate-700 border border-slate-200')}
+        ${isCollapsed ? 'min-w-[70px] h-[70px]' : 'min-w-[64px]'}
       `}
       onClick={(e) => { e.preventDefault(); onClick({ type, value, dir, count }); }}
       draggable
@@ -113,41 +113,41 @@ const DraggableIcon = ({ type, value, dir, count, label, icon, isActive, onClick
       <div className={`${isCollapsed ? 'w-6 h-6' : 'w-8 h-8'} flex items-center justify-center`}>
         {icon}
       </div>
-      {!isCollapsed && <span className="text-[9px] font-medium max-w-[60px] text-center leading-tight">{label}</span>}
+      <span className={`${isCollapsed ? 'text-[8.5px]' : 'text-[9.5px]'} font-bold max-w-[66px] text-center leading-tight whitespace-nowrap overflow-hidden text-ellipsis w-full px-0.5`}>{label}</span>
     </div>
   );
 };
 
-const ToolBtn = ({ icon: Icon, label, onClick, isActive, color, isCollapsed }: any) => (
+const ToolBtn = ({ icon: Icon, label, onClick, isActive, color, isCollapsed, isDark }: any) => (
   <button 
     onClick={onClick}
     title={label}
     className={`
-      flex flex-col items-center justify-center gap-1 p-2 rounded-lg transition-all min-w-[64px]
-      ${isActive ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-700 text-slate-300'}
+      flex flex-col items-center justify-center gap-1.5 p-2 rounded-xl transition-all
+      ${isActive ? 'bg-blue-600 text-white shadow-lg' : (isDark ? 'hover:bg-slate-700 bg-slate-800/20 text-slate-300 border border-slate-700/50' : 'hover:bg-slate-100 bg-white text-slate-700 border border-slate-200')}
       ${color ? color : ''}
-      ${isCollapsed ? 'w-12 h-12' : ''}
+      ${isCollapsed ? 'min-w-[70px] h-[70px]' : 'w-full min-h-[64px]'}
     `}
   >
     <Icon size={isCollapsed ? 20 : 24} />
-    {!isCollapsed && <span className="text-[9px] font-medium">{label}</span>}
+    <span className={`${isCollapsed ? 'text-[8.5px]' : 'text-[9.5px]'} font-bold max-w-[66px] text-center leading-tight whitespace-nowrap overflow-hidden text-ellipsis w-full px-0.5`}>{label}</span>
   </button>
 );
 
-const FixedIcon = () => (<svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2" /><line x1="12" y1="3" x2="12" y2="21" opacity="0.2" /><line x1="3" y1="12" x2="21" y2="12" opacity="0.2" /></svg>);
-const TurnLeftIcon = () => (<svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M18 6L6 12L18 18" /></svg>);
-const TurnRightIcon = () => (<svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M6 6L18 12L6 18" /></svg>);
-const TiltTurnLeftIcon = () => (<svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M18 6L6 12L18 18" /><path d="M6 18L12 6L18 18" strokeDasharray="2 2" opacity="0.6" /></svg>);
-const TiltTurnRightIcon = () => (<svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M6 6L18 12L6 18" /><path d="M6 18L12 6L18 18" strokeDasharray="2 2" opacity="0.6" /></svg>);
+const FixedIcon = () => (<svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2" /><line x1="12" y1="3" x2="12" y2="21" opacity="0.3" /><line x1="3" y1="12" x2="21" y2="12" opacity="0.3" /></svg>);
+const TurnLeftIcon = () => (<svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M6 6L18 12L6 18" /></svg>);
+const TurnRightIcon = () => (<svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M18 6L6 12L18 18" /></svg>);
+const TiltTurnLeftIcon = () => (<svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M6 6L18 12L6 18" /><path d="M6 18L12 6L18 18" strokeDasharray="3 2" opacity="0.5" /></svg>);
+const TiltTurnRightIcon = () => (<svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M18 6L6 12L18 18" /><path d="M6 18L12 6L18 18" strokeDasharray="3 2" opacity="0.5" /></svg>);
 const AwningIcon = () => (<svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M6 18L12 6L18 18" strokeLinecap="round" strokeLinejoin="round" /></svg>);
-const DoorLeftIcon = () => (<svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="1.5"><rect x="5" y="3" width="14" height="18" rx="1" /><path d="M9 3 L19 12 L9 21" strokeDasharray="3 2" /></svg>);
-const DoorRightIcon = () => (<svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="1.5"><rect x="5" y="3" width="14" height="18" rx="1" /><path d="M15 3 L5 12 L15 21" strokeDasharray="3 2" /></svg>);
+const DoorLeftIcon = () => (<svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="1.5"><rect x="5" y="3" width="14" height="18" rx="1" /><path d="M15 3 L5 12 L15 21" strokeDasharray="3 2" /></svg>);
+const DoorRightIcon = () => (<svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="1.5"><rect x="5" y="3" width="14" height="18" rx="1" /><path d="M9 3 L19 12 L9 21" strokeDasharray="3 2" /></svg>);
 const PanelVIcon = () => (<svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2" /><line x1="8" y1="3" x2="8" y2="21" opacity="0.4" /><line x1="12" y1="3" x2="12" y2="21" opacity="0.4" /><line x1="16" y1="3" x2="16" y2="21" opacity="0.4" /></svg>);
 const PanelHIcon = () => (<svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2" /><line x1="3" y1="8" x2="21" y2="8" opacity="0.4" /><line x1="3" y1="12" x2="21" y2="12" opacity="0.4" /><line x1="3" y1="16" x2="21" y2="16" opacity="0.4" /></svg>);
 const SplitVerticalIcon = ({ count }: { count: number }) => (<svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="3" opacity="0.2" />{count === 2 && <line x1="12" y1="3" x2="12" y2="21" strokeLinecap="round" />}{count === 3 && (<><line x1="9" y1="3" x2="9" y2="21" strokeLinecap="round" /><line x1="15" y1="3" x2="15" y2="21" strokeLinecap="round" /></>)}</svg>);
 const SplitHorizontalIcon = ({ count }: { count: number }) => (<svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="3" opacity="0.2" />{count === 2 && <line x1="3" y1="12" x2="21" y2="12" strokeLinecap="round" />}{count === 3 && (<><line x1="3" y1="9" x2="21" y2="9" strokeLinecap="round" /><line x1="3" y1="15" x2="21" y2="15" strokeLinecap="round" /></>)}</svg>);
 const SquareIcon = () => (<svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2" /></svg>);
-const FrenchIcon = ({ dir }: { dir: 'left' | 'right' }) => (<svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2" opacity="0.2" /><path d={dir === 'right' ? "M18 6L12 12L18 18 M6 6L12 12L6 18" : "M6 6L12 12L6 18 M18 6L12 12L18 18"} opacity="0.8" /><line x1="12" y1="3" x2="12" y2="21" strokeDasharray="2 2" opacity="0.4" /></svg>);
+const FrenchIcon = ({ dir }: { dir: 'left' | 'right' }) => (<svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2" opacity="0.2" /><line x1="12" y1="3" x2="12" y2="21" strokeDasharray="3 2" opacity="0.5" />{dir === 'right' ? <><path d="M18 6L12 12L18 18" opacity="0.9" /><path d="M6 6L12 12L6 18" opacity="0.4" strokeDasharray="2 2" /></> : <><path d="M6 6L12 12L6 18" opacity="0.9" /><path d="M18 6L12 12L18 18" opacity="0.4" strokeDasharray="2 2" /></>}</svg>);
 
 const createDefaultLayout = (): WindowNode => ({
   id: 'root',
@@ -541,18 +541,18 @@ export const UnitDesigner = () => {
                         <div className={`grid gap-2 ${isSidebarCollapsed ? 'grid-cols-1' : 'grid-cols-3'}`}>
                              {activeTab === 'openings' && systemMode === 'Casement' && (
                                 <>
-                                <DraggableIcon type="opening" value="Fixed" label={t('fixed')} icon={<FixedIcon />} isActive={activeTool?.value === 'Fixed'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed} />
-                                <DraggableIcon type="opening" value="TurnRight" label={t('turn_right')} icon={<TurnRightIcon />} isActive={activeTool?.value === 'TurnRight'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed}/>
-                                <DraggableIcon type="opening" value="TurnLeft" label={t('turn_left')} icon={<TurnLeftIcon />} isActive={activeTool?.value === 'TurnLeft'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed}/>
-                                <DraggableIcon type="opening" value="TiltTurnRight" label={t('tilt_turn_right')} icon={<TiltTurnRightIcon />} isActive={activeTool?.value === 'TiltTurnRight'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed}/>
-                                <DraggableIcon type="opening" value="TiltTurnLeft" label={t('tilt_turn_left')} icon={<TiltTurnLeftIcon />} isActive={activeTool?.value === 'TiltTurnLeft'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed}/>
-                                <DraggableIcon type="opening" value="Awning" label="کلنگی" icon={<AwningIcon />} isActive={activeTool?.value === 'Awning'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed}/>
-                                <DraggableIcon type="opening" value="FrenchWindowRight" label="فرانسوی (راست)" icon={<FrenchIcon dir="right"/>} isActive={activeTool?.value === 'FrenchWindowRight'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed}/>
-                                <DraggableIcon type="opening" value="FrenchWindowLeft" label="فرانسوی (چپ)" icon={<FrenchIcon dir="left"/>} isActive={activeTool?.value === 'FrenchWindowLeft'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed}/>
-                                <DraggableIcon type="opening" value="DoorRight" label="درب (راست)" icon={<DoorRightIcon />} isActive={activeTool?.value === 'DoorRight'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed}/>
-                                <DraggableIcon type="opening" value="DoorLeft" label="درب (چپ)" icon={<DoorLeftIcon />} isActive={activeTool?.value === 'DoorLeft'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed}/>
-                                <DraggableIcon type="opening" value="PanelV" label="پنل عمودی" icon={<PanelVIcon />} isActive={activeTool?.value === 'PanelV'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed}/>
-                                <DraggableIcon type="opening" value="PanelH" label="پنل افقی" icon={<PanelHIcon />} isActive={activeTool?.value === 'PanelH'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed}/>
+                                <DraggableIcon type="opening" value="Fixed" label={t('fixed')} icon={<FixedIcon />} isActive={activeTool?.value === 'Fixed'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed} isDark={true} />
+                                <DraggableIcon type="opening" value="TurnRight" label={t('turn_right')} icon={<TurnRightIcon />} isActive={activeTool?.value === 'TurnRight'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed} isDark={true}/>
+                                <DraggableIcon type="opening" value="TurnLeft" label={t('turn_left')} icon={<TurnLeftIcon />} isActive={activeTool?.value === 'TurnLeft'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed} isDark={true}/>
+                                <DraggableIcon type="opening" value="TiltTurnRight" label={t('tilt_turn_right')} icon={<TiltTurnRightIcon />} isActive={activeTool?.value === 'TiltTurnRight'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed} isDark={true}/>
+                                <DraggableIcon type="opening" value="TiltTurnLeft" label={t('tilt_turn_left')} icon={<TiltTurnLeftIcon />} isActive={activeTool?.value === 'TiltTurnLeft'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed} isDark={true}/>
+                                <DraggableIcon type="opening" value="Awning" label="کلنگی" icon={<AwningIcon />} isActive={activeTool?.value === 'Awning'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed} isDark={true}/>
+                                <DraggableIcon type="opening" value="FrenchWindowRight" label="فرانسوی (راست)" icon={<FrenchIcon dir="right"/>} isActive={activeTool?.value === 'FrenchWindowRight'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed} isDark={true}/>
+                                <DraggableIcon type="opening" value="FrenchWindowLeft" label="فرانسوی (چپ)" icon={<FrenchIcon dir="left"/>} isActive={activeTool?.value === 'FrenchWindowLeft'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed} isDark={true}/>
+                                <DraggableIcon type="opening" value="DoorRight" label="درب (راست)" icon={<DoorRightIcon />} isActive={activeTool?.value === 'DoorRight'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed} isDark={true}/>
+                                <DraggableIcon type="opening" value="DoorLeft" label="درب (چپ)" icon={<DoorLeftIcon />} isActive={activeTool?.value === 'DoorLeft'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed} isDark={true}/>
+                                <DraggableIcon type="opening" value="PanelV" label="پنل عمودی" icon={<PanelVIcon />} isActive={activeTool?.value === 'PanelV'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed} isDark={true}/>
+                                <DraggableIcon type="opening" value="PanelH" label="پنل افقی" icon={<PanelHIcon />} isActive={activeTool?.value === 'PanelH'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed} isDark={true}/>
                                 </>
                              )}
                               {activeTab === 'openings' && systemMode === 'Sliding' && (
@@ -569,17 +569,17 @@ export const UnitDesigner = () => {
                              )}
                              {activeTab === 'splits' && (
                                 <>
-                                <DraggableIcon type="split" dir="row" count={2} label={t('split_v_2')} icon={<SplitVerticalIcon count={2} />} isActive={activeTool?.dir === 'row' && activeTool.count === 2} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed}/>
-                                <DraggableIcon type="split" dir="col" count={2} label={t('split_h_2')} icon={<SplitHorizontalIcon count={2} />} isActive={activeTool?.dir === 'col' && activeTool.count === 2} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed}/>
-                                <DraggableIcon type="split" dir="row" count={3} label={t('split_v_3')} icon={<SplitVerticalIcon count={3} />} isActive={activeTool?.dir === 'row' && activeTool.count === 3} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed}/>
-                                <DraggableIcon type="split" dir="col" count={3} label={t('split_h_3')} icon={<SplitHorizontalIcon count={3} />} isActive={activeTool?.dir === 'col' && activeTool.count === 3} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed}/>
-                                <DraggableIcon type="split" dir="row" count={1} value="clear" label={t('clear_split')} icon={<SquareIcon />} isActive={activeTool?.value === 'clear'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed}/>
+                                <DraggableIcon type="split" dir="row" count={2} label={t('split_v_2')} icon={<SplitVerticalIcon count={2} />} isActive={activeTool?.dir === 'row' && activeTool.count === 2} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed} isDark={true}/>
+                                <DraggableIcon type="split" dir="col" count={2} label={t('split_h_2')} icon={<SplitHorizontalIcon count={2} />} isActive={activeTool?.dir === 'col' && activeTool.count === 2} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed} isDark={true}/>
+                                <DraggableIcon type="split" dir="row" count={3} label={t('split_v_3')} icon={<SplitVerticalIcon count={3} />} isActive={activeTool?.dir === 'row' && activeTool.count === 3} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed} isDark={true}/>
+                                <DraggableIcon type="split" dir="col" count={3} label={t('split_h_3')} icon={<SplitHorizontalIcon count={3} />} isActive={activeTool?.dir === 'col' && activeTool.count === 3} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed} isDark={true}/>
+                                <DraggableIcon type="split" dir="row" count={1} value="clear" label={t('clear_split')} icon={<SquareIcon />} isActive={activeTool?.value === 'clear'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed} isDark={true}/>
                                 </>
                              )}
                               {activeTab === 'tools' && (
                                 <>
-                                <ToolBtn icon={Trash2} label={t('delete_item')} color="text-red-400" onClick={handleDelete} isCollapsed={isSidebarCollapsed}/>
-                                <ToolBtn icon={MousePointer2} label={t('select')} onClick={() => toggleTool(null)} isActive={activeTool === null} isCollapsed={isSidebarCollapsed}/>
+                                <ToolBtn icon={Trash2} label={t('delete_item')} color="text-red-400" onClick={handleDelete} isCollapsed={isSidebarCollapsed} isDark={true}/>
+                                <ToolBtn icon={MousePointer2} label={t('select')} onClick={() => toggleTool(null)} isActive={activeTool === null} isCollapsed={isSidebarCollapsed} isDark={true}/>
                                 </>
                              )}
                         </div>
