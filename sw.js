@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nexwin-v4.9-sys-optimized';
+const CACHE_NAME = 'nexwin-v5.0-sys-optimized';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',

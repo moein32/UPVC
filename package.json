@@ -4,28 +4,28 @@
   "version": "1.2.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --force",
     "build": "tsc && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
     "@google/genai": "^1.33.0",
-    "framer-motion": "^12.23.26",
+    "framer-motion": "^11.11.17",
     "html-to-image": "^1.11.11",
     "html2canvas": "^1.4.1",
     "i18next": "^23.16.8",
     "jspdf": "^2.5.2",
-    "lucide-react": "^0.561.0",
-    "react": "^19.2.3",
-    "react-dom": "^19.2.3",
+    "lucide-react": "^0.468.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "react-i18next": "^15.2.0",
-    "react-router-dom": "^7.10.1"
+    "react-router-dom": "^6.28.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.16.0",
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
     "@vitejs/plugin-react": "^4.3.4",
     "eslint": "^9.16.0",
     "eslint-plugin-react": "^7.37.2",

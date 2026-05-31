@@ -53,6 +53,34 @@
   <body>
     <div id="root"></div>
     <div id="pdf-export-root"></div>
+    <!-- Unregister SW and clear cache -->
+    <script>
+      (async function() {
+        let needsReload = false;
+        
+        if ('caches' in window) {
+          const cacheKeys = await caches.keys();
+          if (cacheKeys.length > 0) {
+            for (const key of cacheKeys) {
+              await caches.delete(key);
+            }
+            needsReload = true;
+          }
+        }
+        
+        if ('serviceWorker' in navigator) {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          for(let registration of registrations) {
+            await registration.unregister();
+            needsReload = true;
+          }
+        }
+        
+        if (needsReload && !window.location.search.includes('cleared=1')) {
+          window.location.search = '?cleared=1';
+        }
+      })();
+    </script>
     <script type="module" src="/main.tsx"></script>
   </body>
 </html>

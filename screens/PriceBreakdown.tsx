@@ -235,32 +235,30 @@ export const PriceBreakdown = () => {
       </div>
 
       {/* FINAL PRICE STICKY DOCK */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 p-4 md:p-6 pb-8">
-        <div className="max-w-4xl mx-auto bg-white/90 backdrop-blur-3xl p-5 md:p-8 rounded-[2.5rem] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.25)] border border-white/60">
-            <div className="flex flex-col md:flex-row justify-between items-center mb-6 px-2 gap-4">
-                <div className="space-y-1 text-center md:text-right">
-                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">مبلغ نهایی کل قرارداد</span>
-                    <div className="flex items-baseline justify-center md:justify-start gap-2">
-                        <span className="text-3xl md:text-5xl font-black text-blue-600 tracking-tighter leading-none">{formatPrice(finalPrice)}</span>
-                        <span className="text-xs md:text-sm font-black text-slate-500">تومان</span>
+      <div className="fixed bottom-4 left-0 right-0 z-50 px-4 pointer-events-none">
+        <div className="max-w-md mx-auto bg-white/95 backdrop-blur-3xl p-4 rounded-3xl shadow-2xl border border-slate-200/80 pointer-events-auto">
+            <div className="flex justify-between items-center mb-3 px-1">
+                <div className="space-y-0.5 text-right flex-1">
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">مبلغ نهایی فاکتور</span>
+                    <div className="flex items-baseline justify-start gap-1">
+                        <span className="text-xl md:text-2xl font-black text-blue-600 tracking-tighter leading-none">{formatPrice(finalPrice)}</span>
+                        <span className="text-[10px] font-black text-slate-500">تومان</span>
                     </div>
                 </div>
-                <div className="text-center md:text-left">
-                    <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">خلاصه فنی پروژه</div>
-                    <div className="text-base md:text-xl font-black text-slate-900 leading-none">{toPersianDigits(items.reduce((acc, i) => acc + i.quantity, 0))} یونیت سفارشی</div>
+                <div className="text-left">
+                    <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">کل پروژه</div>
+                    <div className="text-sm md:text-base font-black text-slate-900 leading-none">{toPersianDigits(items.reduce((acc, i) => acc + i.quantity, 0))} یونیت</div>
                 </div>
             </div>
-            <div className="flex flex-col md:flex-row gap-3">
+            <div className="flex gap-2">
                 <button 
                     onClick={handleOpenReview}
-                    className="w-full md:flex-[2] bg-slate-900 text-white h-14 md:h-16 rounded-2xl md:rounded-3xl font-black text-lg flex items-center justify-center gap-3 shadow-xl active:scale-95 transition-all"
+                    className="flex-[2] bg-slate-900 hover:bg-slate-800 text-white h-11 rounded-2xl font-black text-[11px] md:text-xs flex items-center justify-center gap-2 shadow-xl active:scale-95 transition-all"
                 >
-                    <Printer size={22} /> مشاهده و صدور فاکتور نهایی
+                    <Printer size={16} /> مشاهده و صدور فاکتور
                 </button>
-                <div className="flex flex-1 gap-2">
-                    <button onClick={() => navigate('/designer', { state: { projectDetails, items } })} className="flex-1 bg-white border border-slate-200 text-slate-700 h-14 md:h-16 rounded-2xl font-black text-xs flex items-center justify-center gap-2 active:scale-95 transition-all">افزودن یونیت</button>
-                    <button onClick={() => navigate('/dashboard')} className="w-14 bg-white border border-slate-200 text-slate-400 h-14 md:h-16 rounded-2xl flex items-center justify-center active:scale-95 transition-all"><Home size={22} /></button>
-                </div>
+                <button onClick={() => navigate('/designer', { state: { projectDetails, items } })} className="flex-1 bg-slate-50 border border-slate-200 text-slate-600 h-11 rounded-2xl font-black text-[10px] md:text-xs flex items-center justify-center hover:bg-slate-100 active:scale-95 transition-all">یونیت +</button>
+                <button onClick={() => navigate('/dashboard')} className="w-11 bg-slate-50 border border-slate-200 text-slate-400 hover:text-blue-600 h-11 rounded-2xl flex items-center justify-center hover:bg-slate-100 active:scale-95 transition-all"><Home size={18} /></button>
             </div>
         </div>
       </div>
