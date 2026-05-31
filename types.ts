@@ -58,7 +58,8 @@ export type OpeningDirection =
   | 'FrenchWindowLeft'
   | 'FrenchWindowRight'
   | 'VWSliding'
-  | 'Awning';
+  | 'Awning'
+  | 'Hopper';
 
 export interface WindowNode {
   id: string;

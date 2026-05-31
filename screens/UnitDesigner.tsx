@@ -140,6 +140,7 @@ const TurnRightIcon = () => (<svg viewBox="0 0 24 24" className="w-full h-full s
 const TiltTurnLeftIcon = () => (<svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M6 6L18 12L6 18" /><path d="M6 18L12 6L18 18" strokeDasharray="3 2" opacity="0.5" /></svg>);
 const TiltTurnRightIcon = () => (<svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M18 6L6 12L18 18" /><path d="M6 18L12 6L18 18" strokeDasharray="3 2" opacity="0.5" /></svg>);
 const AwningIcon = () => (<svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M6 18L12 6L18 18" strokeLinecap="round" strokeLinejoin="round" /></svg>);
+const HopperIcon = () => (<svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M6 6L12 18L18 6" strokeLinecap="round" strokeLinejoin="round" /></svg>);
 const DoorLeftIcon = () => (<svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="1.5"><rect x="5" y="3" width="14" height="18" rx="1" /><path d="M15 3 L5 12 L15 21" strokeDasharray="3 2" /></svg>);
 const DoorRightIcon = () => (<svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="1.5"><rect x="5" y="3" width="14" height="18" rx="1" /><path d="M9 3 L19 12 L9 21" strokeDasharray="3 2" /></svg>);
 const PanelVIcon = () => (<svg viewBox="0 0 24 24" className="w-full h-full stroke-current fill-none" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2" /><line x1="8" y1="3" x2="8" y2="21" opacity="0.4" /><line x1="12" y1="3" x2="12" y2="21" opacity="0.4" /><line x1="16" y1="3" x2="16" y2="21" opacity="0.4" /></svg>);
@@ -488,7 +489,7 @@ export const UnitDesigner = () => {
     
     // We choose the smaller scale to fit both dimensions
     // We multiply by 0.98 to leave a small "breathing room" for maximum zoom
-    const scale = Math.min(scaleW, scaleH) * 0.98;
+    const scale = Math.min(scaleW, scaleH) * 1.05;
     
     // Clamp values to sane limits (e.g., don't zoom out to microscopic or zoom in infinitely)
     setZoomLevel(Math.min(Math.max(scale, 0.1), 3));
@@ -515,7 +516,7 @@ export const UnitDesigner = () => {
             </div>
 
             <div className="flex-1 flex overflow-hidden">
-                <div className={`bg-slate-800 text-white z-20 shadow-lg flex flex-col shrink-0 transition-all duration-300 ${isSidebarCollapsed ? 'w-20' : 'w-80'}`}>
+                <div className={`bg-slate-800 text-white z-20 shadow-lg flex flex-col shrink-0 transition-all duration-300 ${isSidebarCollapsed ? 'w-16' : 'w-[240px]'}`}>
                     <div className="p-2 flex items-center justify-between border-b border-slate-700">
                         {!isSidebarCollapsed && <span className="px-2 text-xs font-bold text-slate-400">TOOLBOX</span>}
                         <button onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)} className="p-2 text-slate-400 hover:bg-slate-700 rounded-lg">
@@ -546,7 +547,8 @@ export const UnitDesigner = () => {
                                 <DraggableIcon type="opening" value="TurnLeft" label={t('turn_left')} icon={<TurnLeftIcon />} isActive={activeTool?.value === 'TurnLeft'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed} isDark={true}/>
                                 <DraggableIcon type="opening" value="TiltTurnRight" label={t('tilt_turn_right')} icon={<TiltTurnRightIcon />} isActive={activeTool?.value === 'TiltTurnRight'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed} isDark={true}/>
                                 <DraggableIcon type="opening" value="TiltTurnLeft" label={t('tilt_turn_left')} icon={<TiltTurnLeftIcon />} isActive={activeTool?.value === 'TiltTurnLeft'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed} isDark={true}/>
-                                <DraggableIcon type="opening" value="Awning" label="کلنگی" icon={<AwningIcon />} isActive={activeTool?.value === 'Awning'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed} isDark={true}/>
+                                <DraggableIcon type="opening" value="Awning" label="کلنگی رو به بالا" icon={<AwningIcon />} isActive={activeTool?.value === 'Awning'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed} isDark={true}/>
+                                <DraggableIcon type="opening" value="Hopper" label="کلنگی رو به پایین" icon={<HopperIcon />} isActive={activeTool?.value === 'Hopper'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed} isDark={true}/>
                                 <DraggableIcon type="opening" value="FrenchWindowRight" label="فرانسوی (راست)" icon={<FrenchIcon dir="right"/>} isActive={activeTool?.value === 'FrenchWindowRight'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed} isDark={true}/>
                                 <DraggableIcon type="opening" value="FrenchWindowLeft" label="فرانسوی (چپ)" icon={<FrenchIcon dir="left"/>} isActive={activeTool?.value === 'FrenchWindowLeft'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed} isDark={true}/>
                                 <DraggableIcon type="opening" value="DoorRight" label="درب (راست)" icon={<DoorRightIcon />} isActive={activeTool?.value === 'DoorRight'} onClick={toggleTool} onDragStart={handleDragStart} onDragEnd={handleDragEnd} isCollapsed={isSidebarCollapsed} isDark={true}/>
@@ -624,7 +626,7 @@ export const UnitDesigner = () => {
                     </div>
                 </div>
 
-                <div className="w-80 bg-white shadow-lg z-10 shrink-0 border-l border-slate-200 flex flex-col">
+                <div className="w-[240px] bg-white shadow-lg z-10 shrink-0 border-l border-slate-200 flex flex-col">
                     <div className="p-4 border-b border-slate-200">
                         <h2 className="font-bold text-slate-800 text-sm uppercase tracking-widest">Inspector</h2>
                         <p className="text-[10px] text-slate-400 font-bold">Properties & Dimensions</p>
@@ -641,17 +643,27 @@ export const UnitDesigner = () => {
                         <SelectField label="نوع شیشه" value={config.glassId} onChange={(e:any) => setConfig({ ...config, glassId: e.target.value })} options={glassList.map((g: any) => ({ label: g.name, value: g.id }))} />
                         <SelectField label="نوع فریم" value={config.frameType || 'standard'} onChange={(e:any) => setConfig({ ...config, frameType: e.target.value })} options={[{ label: 'فریم استاندارد', value: 'standard' }, { label: 'فریم بازسازی', value: 'renovation' }]} />
                     </div>
-                    <div className="p-4 border-t border-slate-200 flex items-center gap-3">
-                        <div className="flex-1">
-                            <PrimaryButton fullWidth onClick={handleAddToList}>
-                                {editIndex !== undefined ? 'ذخیره تغییرات' : 'افزودن به فاکتور'}
-                            </PrimaryButton>
+                    <div className="p-4 border-t border-slate-200 flex flex-col gap-3">
+                        <div className="flex items-center justify-between bg-slate-50 p-2 rounded-xl border border-slate-200">
+                            <span className="text-xs font-bold text-slate-600 px-2">تعداد</span>
+                            <div className="flex items-center gap-2">
+                                <button onClick={() => setUnitCount((p: number) => Math.max(1, p - 1))} className="p-2 bg-white text-slate-700 rounded-lg shadow-sm border border-slate-200 flex shrink-0 items-center justify-center h-8 w-8"><Minus size={16} /></button>
+                                <span className="font-black text-slate-800 text-sm w-6 text-center">{toPersianDigits(unitCount)}</span>
+                                <button onClick={() => setUnitCount((p: number) => p + 1)} className="p-2 bg-white text-slate-700 rounded-lg shadow-sm border border-slate-200 flex shrink-0 items-center justify-center h-8 w-8"><Plus size={16} /></button>
+                            </div>
                         </div>
-                        {(projectItems.length > 0 || lastSavedId) && (
-                            <button onClick={() => navigate('/breakdown', { state: { projectDetails, items: projectItems } })} className="h-14 w-14 flex items-center justify-center bg-slate-100 text-slate-600 rounded-2xl hover:bg-blue-50 hover:text-blue-600 transition-colors">
-                                <Receipt size={22}/>
-                            </button>
-                        )}
+                        <div className="flex items-center gap-3">
+                            <div className="flex-1">
+                                <PrimaryButton fullWidth onClick={handleAddToList}>
+                                    {editIndex !== undefined ? 'ذخیره تغییرات' : 'افزودن به فاکتور'}
+                                </PrimaryButton>
+                            </div>
+                            {(projectItems.length > 0 || lastSavedId) && (
+                                <button onClick={() => navigate('/breakdown', { state: { projectDetails, items: projectItems } })} className="h-10 w-10 flex shrink-0 items-center justify-center bg-slate-100 text-slate-600 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-colors">
+                                    <Receipt size={20}/>
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -686,7 +698,8 @@ export const UnitDesigner = () => {
                             <DraggableIcon type="opening" value="TurnLeft" label={t('turn_left')} icon={<TurnLeftIcon />} isActive={activeTool?.value === 'TurnLeft'} onClick={toggleTool} isCollapsed={true}/>
                             <DraggableIcon type="opening" value="TiltTurnRight" label={t('tilt_turn_right')} icon={<TiltTurnRightIcon />} isActive={activeTool?.value === 'TiltTurnRight'} onClick={toggleTool} isCollapsed={true}/>
                             <DraggableIcon type="opening" value="TiltTurnLeft" label={t('tilt_turn_left')} icon={<TiltTurnLeftIcon />} isActive={activeTool?.value === 'TiltTurnLeft'} onClick={toggleTool} isCollapsed={true}/>
-                            <DraggableIcon type="opening" value="Awning" label="کلنگی" icon={<AwningIcon />} isActive={activeTool?.value === 'Awning'} onClick={toggleTool} isCollapsed={true}/>
+                            <DraggableIcon type="opening" value="Awning" label="کلنگی رو به بالا" icon={<AwningIcon />} isActive={activeTool?.value === 'Awning'} onClick={toggleTool} isCollapsed={true}/>
+                            <DraggableIcon type="opening" value="Hopper" label="کلنگی رو به پایین" icon={<HopperIcon />} isActive={activeTool?.value === 'Hopper'} onClick={toggleTool} isCollapsed={true}/>
                             <DraggableIcon type="opening" value="FrenchWindowRight" label="فرانسوی (راست)" icon={<FrenchIcon dir="right"/>} isActive={activeTool?.value === 'FrenchWindowRight'} onClick={toggleTool} isCollapsed={true} />
                             <DraggableIcon type="opening" value="FrenchWindowLeft" label="فرانسوی (چپ)" icon={<FrenchIcon dir="left"/>} isActive={activeTool?.value === 'FrenchWindowLeft'} onClick={toggleTool} isCollapsed={true} />
                             <DraggableIcon type="opening" value="DoorRight" label="درب (راست)" icon={<DoorRightIcon />} isActive={activeTool?.value === 'DoorRight'} onClick={toggleTool} isCollapsed={true} />

@@ -150,6 +150,7 @@ const TechnicalHardware = ({ sx, sy, sw, sh, type }: { sx: number, sy: number, s
   const isHandleRight = !type.includes('Right'); // Reversed logic per request
   const isDoor = type.includes('Door');
   const isAwning = type === 'Awning';
+  const isHopper = type === 'Hopper';
   const isSliding = type.includes('Sliding');
   
   const handlePadding = 30; 
@@ -159,17 +160,20 @@ const TechnicalHardware = ({ sx, sy, sw, sh, type }: { sx: number, sy: number, s
   if (isAwning) {
       handleX = sx + sw / 2;
       handleY = sy + sh - handlePadding - 5;
+  } else if (isHopper) {
+      handleX = sx + sw / 2;
+      handleY = sy + handlePadding + 5;
   } else {
       handleX = isHandleRight ? sx + sw - handlePadding - 5 : sx + handlePadding + 5;
       handleY = isDoor && sh > 1200 ? sy + sh - 1050 : sy + sh / 2;
   }
   
-  const flipHandle = isHandleRight && !isAwning;
+  const flipHandle = isHandleRight && !isAwning && !isHopper;
 
   return (
     <g className="hardware-layer">
       {/* Dashed opening indicators */}
-      {!isAwning && !isSliding && (
+      {!isAwning && !isHopper && !isSliding && (
         <path 
           d={`M ${sx},${sy} L ${isHandleRight ? sx+sw : sx},${sy+sh/2} L ${sx},${sy+sh} Z`} 
           fill="none" 
@@ -190,6 +194,16 @@ const TechnicalHardware = ({ sx, sy, sw, sh, type }: { sx: number, sy: number, s
            opacity="0.6" 
          />
       )}
+      {isHopper && (
+         <path 
+           d={`M ${sx},${sy+sh} L ${sx+sw/2},${sy} L ${sx+sw},${sy+sh} Z`}
+           fill="none" 
+           stroke={CAD.colors.openingLine} 
+           strokeWidth="1.5" 
+           strokeDasharray="8,6" 
+           opacity="0.6" 
+         />
+      )}
       {isSliding && (
          <g opacity="0.6" stroke={CAD.colors.openingLine} strokeWidth="2">
              <line x1={sx + sw/2 - 20} y1={sy + sh/2} x2={sx + sw/2 + 20} y2={sy + sh/2} />
@@ -201,7 +215,7 @@ const TechnicalHardware = ({ sx, sy, sw, sh, type }: { sx: number, sy: number, s
          </g>
       )}
       {/* Handle Base with realistic styling */}
-      <g transform={`translate(${handleX}, ${handleY}) ${isAwning ? 'rotate(90)' : ''} scale(${flipHandle ? -1 : 1}, 1)`}>
+      <g transform={`translate(${handleX}, ${handleY}) ${isAwning || isHopper ? 'rotate(90)' : ''} scale(${flipHandle ? -1 : 1}, 1)`}>
         {isDoor ? (
            <g>
              {/* Door handle base: larger, rectangular with keyhole */}
@@ -234,7 +248,7 @@ const TechnicalHardware = ({ sx, sy, sw, sh, type }: { sx: number, sy: number, s
       </g>
 
       {/* Hinges */}
-      {!isAwning && !isSliding && (
+      {!isAwning && !isHopper && !isSliding && (
         <g fill="#ffffff" stroke="#94a3b8" strokeWidth="1.5" filter="url(#shadow-soft)">
            {(() => {
                const hW = 12;
@@ -266,6 +280,15 @@ const TechnicalHardware = ({ sx, sy, sw, sh, type }: { sx: number, sy: number, s
               
               <rect x={sx + sw * 0.8 - 64} y={sy + 2} width={64} height={12} rx={4} />
               <line x1={sx + sw * 0.8 - 32} y1={sy + 2} x2={sx + sw * 0.8 - 32} y2={sy + 14} stroke="#94a3b8" strokeWidth="1.5" />
+          </g>
+      )}
+      {isHopper && (
+          <g fill="#ffffff" stroke="#94a3b8" strokeWidth="1.5" filter="url(#shadow-soft)">
+              <rect x={sx + sw * 0.2} y={sy + sh - 14} width={64} height={12} rx={4} />
+              <line x1={sx + sw * 0.2 + 32} y1={sy + sh - 14} x2={sx + sw * 0.2 + 32} y2={sy + sh - 2} stroke="#94a3b8" strokeWidth="1.5" />
+              
+              <rect x={sx + sw * 0.8 - 64} y={sy + sh - 14} width={64} height={12} rx={4} />
+              <line x1={sx + sw * 0.8 - 32} y1={sy + sh - 14} x2={sx + sw * 0.8 - 32} y2={sy + sh - 2} stroke="#94a3b8" strokeWidth="1.5" />
           </g>
       )}
     </g>
