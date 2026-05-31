@@ -29,8 +29,8 @@ export const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen pb-24 px-6 pt-12 bg-[#f8fafc] font-['Vazirmatn']">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen pb-24 px-6 pt-12 bg-[#f8fafc] font-['Vazirmatn'] overflow-x-hidden">
+      <div className="max-w-7xl mx-auto lg:scale-[0.80] lg:origin-top transform transition-all duration-300">
         <header className="flex justify-between items-center mb-10">
           <div>
             <h1 className="text-2xl font-black text-slate-900 mb-1">نکس‌وین</h1>
