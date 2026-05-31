@@ -1,10 +1,10 @@
 import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
   build: {
     target: 'esnext',
-    minify: 'terser',
     cssCodeSplit: true,
     rollupOptions: {
       output: {
@@ -29,7 +29,9 @@ export default defineConfig({
     },
   },
   plugins: [
+    react(),
     VitePWA({
+
       registerType: 'autoUpdate',
       injectRegister: 'auto',
       includeAssets: ['favicon.ico', 'icons/icon-192x192.png', 'icons/icon-512x512.png'],

@@ -1,16 +1,6 @@
+/// <reference types="vite/client" />
 import { GoogleGenAI } from "@google/genai";
 import { WindowConfig } from "../types";
-
-/**
- * Declaring process globally for the TypeScript compiler to prevent 
- * build-time errors (TS2591) on platforms like Vercel.
- */
-declare var process: {
-  env: {
-    API_KEY: string;
-    [key: string]: string | undefined;
-  };
-};
 
 /**
  * Generates optimization suggestions for UPVC window configurations using Gemini AI.
@@ -18,8 +8,17 @@ declare var process: {
  */
 export const getOptimizationSuggestions = async (config: WindowConfig, brandName: string): Promise<string> => {
   try {
-    // Initialization using the mandatory process.env.API_KEY as per SDK guidelines
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    // ------------------------------------------------------------------------
+    // دریافت API Key از متغیرهای محیطی Vercel مبتی بر VITE_GOOGLE_API_KEY
+    // ------------------------------------------------------------------------
+    const apiKey = import.meta.env.VITE_GOOGLE_API_KEY;
+
+    if (!apiKey) {
+      console.warn("API Key is missing! Ensure VITE_GOOGLE_API_KEY is set in Vercel.");
+      return "هوش مصنوعی NexWin فعال نیست. لطفاً متغیر VITE_GOOGLE_API_KEY را در پنل Vercel اضافه کنید.";
+    }
+
+    const ai = new GoogleGenAI({ apiKey });
 
     const prompt = `
       به عنوان یک مهندس ساختمان متخصص در پنجره های UPVC در سیستم NexWin عمل کن.
