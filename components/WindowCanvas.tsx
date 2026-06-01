@@ -22,7 +22,7 @@ const CAD = {
     dim: '#0f172a',         
     grid: '#f8fafc',
     activeFrame: '#2563eb',
-    openingLine: '#3b82f6',
+    openingLine: '#2563eb',
     miter: '#94a3b8'
   },
   geom: {
@@ -100,10 +100,20 @@ const RenderGlass = ({ x, y, w, h }: { x: number, y: number, w: number, h: numbe
   if (w <= 0 || h <= 0) return null;
   return (
     <g className="render-glass">
-      <rect x={x} y={y} width={w} height={h} fill="url(#glass-grad)" stroke="none" />
-      {/* Light inner highlight for glass realistic reflections */}
-      <path d={`M${x},${y+h} L${x},${y} L${x+w},${y}`} fill="none" stroke="#ffffff" strokeWidth="3" strokeOpacity="0.7" />
+      {/* Solid sky-blue base layer to completely block grid pattern behind */}
+      <rect x={x} y={y} width={w} height={h} fill="#e0f2fe" fillOpacity="1" />
+      {/* Overlay gradient for spectacular high-end glass look */}
+      <rect x={x} y={y} width={w} height={h} fill="url(#glass-grad)" stroke="none" fillOpacity="1" />
+      {/* Glazing spacer profile simulation */}
+      <rect x={x+6} y={y+6} width={Math.max(0, w-12)} height={Math.max(0, h-12)} fill="none" stroke="#025a90" strokeWidth="1" strokeOpacity="0.25" />
+      {/* Realistic lighting/reflection bevels */}
+      <path d={`M${x},${y+h} L${x},${y} L${x+w},${y}`} fill="none" stroke="#ffffff" strokeWidth="3" strokeOpacity="0.65" />
       <path d={`M${x},${y+h} L${x+w},${y+h} L${x+w},${y}`} fill="none" stroke="#000000" strokeWidth="2" strokeOpacity="0.15" />
+      {/* Double glass glossy diagonal light reflection strokes */}
+      <path d={`M${x + w*0.15},${y} L${x},${y + h*0.15}`} stroke="#ffffff" strokeWidth="2.5" strokeOpacity="0.35" />
+      <path d={`M${x + w*0.18},${y} L${x},${y + h*0.18}`} stroke="#ffffff" strokeWidth="1" strokeOpacity="0.3" />
+      <path d={`M${x + w*0.4},${y} L${x},${y + h*0.4}`} stroke="#ffffff" strokeWidth="5.5" strokeOpacity="0.25" />
+      <path d={`M${x + w*0.44},${y} L${x},${y + h*0.44}`} stroke="#ffffff" strokeWidth="2" strokeOpacity="0.2" />
     </g>
   );
 };
@@ -146,12 +156,17 @@ const RenderPanel = ({ x, y, w, h, op }: { x: number, y: number, w: number, h: n
   return <g>{els}</g>;
 };
 
-const TechnicalHardware = ({ sx, sy, sw, sh, type }: { sx: number, sy: number, sw: number, sh: number, type: string }) => {
+const TechnicalHardware = ({ sx: sxInput, sy: syInput, sw: swInput, sh: shInput, type }: { sx: number, sy: number, sw: number, sh: number, type: string }) => {
+  const sx = Number(sxInput);
+  const sy = Number(syInput);
+  const sw = Number(swInput);
+  const sh = Number(shInput);
   const isHandleRight = !type.includes('Right'); // Reversed logic per request
   const isDoor = type.includes('Door');
   const isAwning = type === 'Awning';
   const isHopper = type === 'Hopper';
   const isSliding = type.includes('Sliding');
+  const isTiltTurn = type.includes('TiltTurn');
   
   const handlePadding = 30; 
   let handleX = 0;
@@ -170,51 +185,96 @@ const TechnicalHardware = ({ sx, sy, sw, sh, type }: { sx: number, sy: number, s
   
   const flipHandle = isHandleRight && !isAwning && !isHopper;
 
+  // Center glass-morphic motion badges calculation
+  const cx = sx + sw / 2;
+  const cy = sy + sh / 2;
+
   return (
     <g className="hardware-layer">
-      {/* Dashed opening indicators */}
+      {/* Traditional/Standard Turn Swing Opening line with Chevron arrowheads */}
       {!isAwning && !isHopper && !isSliding && (
-        <path 
-          d={`M ${sx},${sy} L ${isHandleRight ? sx+sw : sx},${sy+sh/2} L ${sx},${sy+sh} Z`} 
-          fill="none" 
-          stroke={CAD.colors.openingLine} 
-          strokeWidth="1.5" 
-          strokeDasharray="8,6" 
-          opacity="0.6" 
-          transform={isHandleRight ? '' : `matrix(-1, 0, 0, 1, ${sx*2+sw}, 0)`}
-        />
+        <>
+          <path 
+            d={isHandleRight 
+              ? `M ${sx},${sy} L ${sx+sw},${sy+sh/2} L ${sx},${sy+sh}`
+              : `M ${sx+sw},${sy} L ${sx},${sy+sh/2} L ${sx+sw},${sy+sh}`} 
+            fill="none" 
+            stroke={CAD.colors.openingLine} 
+            strokeWidth="2.5" 
+            strokeDasharray="10,6" 
+            opacity="1" 
+          />
+          {/* Beautiful converging feedback polygon arrow at focal handle tip */}
+          <polygon
+            points={isHandleRight 
+              ? `${sx+sw},${sy+sh/2} ${sx+sw-16},${sy+sh/2-10} ${sx+sw-16},${sy+sh/2+10}` 
+              : `${sx},${sy+sh/2} ${sx+16},${sy+sh/2-10} ${sx+16},${sy+sh/2+10}`}
+            fill={CAD.colors.openingLine}
+            opacity="1"
+          />
+        </>
       )}
+
+      {/* ADDITIONAL TILT indicators for Tilt & Turn: Converges to top center */}
+      {isTiltTurn && (
+        <>
+          <path 
+            d={`M ${sx},${sy+sh} L ${sx+sw/2},${sy} L ${sx+sw},${sy+sh}`} 
+            fill="none" 
+            stroke={CAD.colors.openingLine} 
+            strokeWidth="2.2" 
+            strokeDasharray="7,5" 
+            opacity="1" 
+          />
+          {/* Upper converging polygon arrow for secure Tilt action */}
+          <polygon
+            points={`${sx+sw/2},${sy} ${sx+sw/2-14},${sy+18} ${sx+sw/2+14},${sy+18}`}
+            fill={CAD.colors.openingLine}
+            opacity="1"
+          />
+        </>
+      )}
+
       {isAwning && (
          <path 
-           d={`M ${sx},${sy} L ${sx+sw/2},${sy+sh} L ${sx+sw},${sy} Z`}
+           d={`M ${sx},${sy} L ${sx+sw/2},${sy+sh} L ${sx+sw},${sy}`}
            fill="none" 
            stroke={CAD.colors.openingLine} 
-           strokeWidth="1.5" 
-           strokeDasharray="8,6" 
-           opacity="0.6" 
+           strokeWidth="2.5" 
+           strokeDasharray="10,6" 
+           opacity="1" 
          />
       )}
+
       {isHopper && (
          <path 
-           d={`M ${sx},${sy+sh} L ${sx+sw/2},${sy} L ${sx+sw},${sy+sh} Z`}
+           d={`M ${sx},${sy+sh} L ${sx+sw/2},${sy} L ${sx+sw},${sy+sh}`}
            fill="none" 
            stroke={CAD.colors.openingLine} 
-           strokeWidth="1.5" 
-           strokeDasharray="8,6" 
-           opacity="0.6" 
+           strokeWidth="2.5" 
+           strokeDasharray="10,6" 
+           opacity="1" 
          />
       )}
+
+      {/* Advanced Sliding track line & indicator arrows */}
       {isSliding && (
-         <g opacity="0.6" stroke={CAD.colors.openingLine} strokeWidth="2">
-             <line x1={sx + sw/2 - 20} y1={sy + sh/2} x2={sx + sw/2 + 20} y2={sy + sh/2} />
-             {isHandleRight ? (
-                 <path d={`M ${sx + sw/2 + 10},${sy + sh/2 - 10} L ${sx + sw/2 + 20},${sy + sh/2} L ${sx + sw/2 + 10},${sy + sh/2 + 10}`} fill="none" />
-             ) : (
-                 <path d={`M ${sx + sw/2 - 10},${sy + sh/2 - 10} L ${sx + sw/2 - 20},${sy + sh/2} L ${sx + sw/2 - 10},${sy + sh/2 + 10}`} fill="none" />
-             )}
+         <g opacity="0.95">
+             {/* Slider track linear accent line on glass */}
+             <line x1={sx + 15} y1={sy + sh/2} x2={sx + sw - 15} y2={sy + sh/2} stroke={CAD.colors.openingLine} strokeWidth="1" strokeDasharray="4,4" opacity="0.4" />
+             {/* Big premium slide guide graphic */}
+             <g stroke={CAD.colors.openingLine} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none">
+                 <line x1={sx + sw/2 - 35} y1={sy + sh/2} x2={sx + sw/2 + 35} y2={sy + sh/2} />
+                 {isHandleRight ? (
+                     <path d={`M ${sx + sw/2 + 20},${sy + sh/2 - 10} L ${sx + sw/2 + 35},${sy + sh/2} L ${sx + sw/2 + 20},${sy + sh/2 + 10}`} />
+                 ) : (
+                     <path d={`M ${sx + sw/2 - 20},${sy + sh/2 - 10} L ${sx + sw/2 - 35},${sy + sh/2} L ${sx + sw/2 - 20},${sy + sh/2 + 10}`} />
+                 )}
+             </g>
          </g>
       )}
-      {/* Handle Base with realistic styling */}
+
+{/* Handle Base with realistic styling */}
       <g transform={`translate(${handleX}, ${handleY}) ${isAwning || isHopper ? 'rotate(90)' : ''} scale(${flipHandle ? -1 : 1}, 1)`}>
         {isDoor ? (
            <g>
@@ -231,6 +291,20 @@ const TechnicalHardware = ({ sx, sy, sw, sh, type }: { sx: number, sy: number, s
              <path d="M -6 4 L 55 4 C 65 4, 65 14, 55 14 L -6 14 Z" fill="#000000" opacity="0.2" />
              <path d="M -6 -1 L 52 -1 C 60 -1, 60 9, 52 9 L -6 9 Z" fill="url(#metal-grad)" stroke="#334155" strokeWidth="1.5" />
              <path d="M -3 1 L 44 1 C 49 1, 49 3, 44 3 L -3 3 Z" fill="#ffffff" opacity="0.6" />
+           </g>
+        ) : isSliding ? (
+           <g>
+             {/* Beautiful recessed slide vertical handle (specifically designed for sliding sashes!) */}
+             <rect x="-10" y="-45" width="20" height="90" rx="8" fill="#000000" opacity="0.3" />
+             <rect x="-10" y="-47" width="18" height="88" rx="7" fill="url(#metal-grad)" stroke="#1e293b" strokeWidth="1.5" />
+             <rect x="-8" y="-45" width="14" height="84" rx="5" fill="none" stroke="#ffffff" strokeWidth="1" opacity="0.4" />
+             {/* Deep grip slot */}
+             <rect x="-5" y="-35" width="10" height="70" rx="4" fill="#090d16" stroke="#475569" strokeWidth="1" />
+             {/* Sliding center lock slider */}
+             <rect x="-3" y="-10" width="6" height="20" rx="1.5" fill="url(#metal-grad)" stroke="#334155" strokeWidth="0.8" />
+             {/* Elegant status lock pins */}
+             <circle cx="0" cy="-22" r="2.5" fill="#ef4444" />
+             <circle cx="0" cy="22" r="2.5" fill="#22c55e" />
            </g>
         ) : (
            <g>
@@ -368,9 +442,10 @@ interface RenderNodeProps {
   selectedId: string | null;
   onSelect: (id: string) => void;
   readOnly: boolean;
+  hardwareList?: React.ReactNode[];
 }
 
-const RenderBlueprintNode = ({ node, x, y, w, h, isRoot, selectedId, onSelect, readOnly }: RenderNodeProps) => {
+const RenderBlueprintNode = ({ node, x, y, w, h, isRoot, selectedId, onSelect, readOnly, hardwareList }: RenderNodeProps) => {
   let innerX = x;
   let innerY = y;
   let innerW = w;
@@ -390,9 +465,15 @@ const RenderBlueprintNode = ({ node, x, y, w, h, isRoot, selectedId, onSelect, r
   const op = node.openingType || 'Fixed';
   const isSash = op !== 'Fixed' && !op.includes('Panel');
   
+  let hwEl: React.ReactNode = null;
   if (isSash) {
     els.push(<RenderFrame key={`sash-${node.id}`} x={innerX} y={innerY} w={innerW} h={innerH} thickness={CAD.geom.sashT} />);
-    els.push(<TechnicalHardware key={`hw-${node.id}`} sx={innerX} sy={innerY} sw={innerW} sh={innerH} type={op} />);
+    const actualHwEl = <TechnicalHardware key={`hw-${node.id}`} sx={innerX} sy={innerY} sw={innerW} sh={innerH} type={op} />;
+    if (hardwareList) {
+      hardwareList.push(actualHwEl);
+    } else {
+      hwEl = actualHwEl;
+    }
     innerX += CAD.geom.sashT;
     innerY += CAD.geom.sashT;
     innerW -= 2 * CAD.geom.sashT;
@@ -446,6 +527,7 @@ const RenderBlueprintNode = ({ node, x, y, w, h, isRoot, selectedId, onSelect, r
           selectedId={selectedId}
           onSelect={onSelect}
           readOnly={readOnly}
+          hardwareList={hardwareList}
         />
       );
       
@@ -469,6 +551,11 @@ const RenderBlueprintNode = ({ node, x, y, w, h, isRoot, selectedId, onSelect, r
       {contentEls}
     </g>
   );
+
+  // Layer the opening line indicator arrows on top of the glass
+  if (hwEl) {
+    els.push(hwEl);
+  }
   
   // 4. Hit Area & Focus State
   const isSelected = !readOnly && selectedId === node.id;
@@ -527,6 +614,8 @@ export const WindowCanvas = (props: WindowCanvasProps) => {
   const { node, width, height, showDimensions = true, onSelect, selectedId, readOnly, onChildResize, onGlobalResize, canvasPadding } = props;
   
   const padding = canvasPadding !== undefined ? canvasPadding : (showDimensions ? 160 : 10);
+
+  const hardwareList: React.ReactNode[] = [];
 
   const getNestedSegments = (targetDir: 'row' | 'col') => {
     let segments: { start: number; end: number; parentId: string; index: number; layer: number; crossPos: number }[] = [];
@@ -618,11 +707,12 @@ export const WindowCanvas = (props: WindowCanvasProps) => {
             <stop offset="100%" stopColor="#d1d5db" />
           </linearGradient>
           <linearGradient id="glass-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#bae6fd" stopOpacity="0.4" />
-            <stop offset="40%" stopColor="#e0f2fe" stopOpacity="0.1" />
-            <stop offset="45%" stopColor="#ffffff" stopOpacity="0.7" />
-            <stop offset="50%" stopColor="#e0f2fe" stopOpacity="0.1" />
-            <stop offset="100%" stopColor="#7dd3fc" stopOpacity="0.5" />
+            <stop offset="0%" stopColor="#bae6fd" stopOpacity="1" />
+            <stop offset="30%" stopColor="#e0f2fe" stopOpacity="1" />
+            <stop offset="45%" stopColor="#ffffff" stopOpacity="1" />
+            <stop offset="60%" stopColor="#bae6fd" stopOpacity="1" />
+            <stop offset="85%" stopColor="#a5f3fc" stopOpacity="1" />
+            <stop offset="100%" stopColor="#7dd3fc" stopOpacity="1" />
           </linearGradient>
           <linearGradient id="panel-grad" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#ffffff" />
@@ -639,6 +729,9 @@ export const WindowCanvas = (props: WindowCanvasProps) => {
         </defs>
         <rect x={-padding} y={-padding} width={width + padding*2} height={height + padding*2} fill="url(#industrial-grid)" pointerEvents="none" />
         
+        {/* Solid white substrate layer to completely block the grid pattern behind the main profile, sashes, and glass */}
+        <rect x={0} y={0} width={width} height={height} fill="#ffffff" stroke="none" />
+        
         <g className="blueprint-main">
           <RenderBlueprintNode 
             node={node} 
@@ -647,6 +740,7 @@ export const WindowCanvas = (props: WindowCanvasProps) => {
             selectedId={selectedId} 
             onSelect={onSelect} 
             readOnly={readOnly} 
+            hardwareList={hardwareList}
           />
           
           {showDimensions && (
@@ -683,6 +777,11 @@ export const WindowCanvas = (props: WindowCanvasProps) => {
               })}
             </g>
           )}
+        </g>
+        
+        {/* Absolute top-most layer for sash hardware, handles, hinges, and opening indication lines to guarantee they sit above the glass and sashes */}
+        <g className="hardware-overlay-layer">
+          {hardwareList}
         </g>
       </svg>
     </div>
