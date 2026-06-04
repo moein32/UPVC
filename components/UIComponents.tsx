@@ -19,16 +19,17 @@ interface PrimaryButtonProps {
   icon?: React.ElementType; // Use React.ElementType for icon components
   fullWidth?: boolean;
   loading?: boolean;
+  disabled?: boolean;
   variant?: 'primary' | 'secondary';
   className?: string;
 }
 
-export const PrimaryButton = ({ children, onClick, icon: Icon, fullWidth = false, loading = false, variant = 'primary' }: PrimaryButtonProps) => (
+export const PrimaryButton = ({ children, onClick, icon: Icon, fullWidth = false, loading = false, disabled = false, variant = 'primary', className = '' }: PrimaryButtonProps) => (
   <motion.button
-    whileHover={{ scale: 1.02 }}
-    whileTap={{ scale: 0.95 }}
-    onClick={onClick}
-    disabled={loading}
+    whileHover={disabled || loading ? undefined : { scale: 1.02 }}
+    whileTap={disabled || loading ? undefined : { scale: 0.95 }}
+    onClick={disabled || loading ? undefined : onClick}
+    disabled={disabled || loading}
     className={`
       ${fullWidth ? 'w-full' : ''}
       ${variant === 'secondary' 
@@ -36,7 +37,8 @@ export const PrimaryButton = ({ children, onClick, icon: Icon, fullWidth = false
         : 'bg-gradient-to-r from-slate-800 to-slate-900 text-white shadow-lg shadow-slate-900/20'}
       py-4 px-6 rounded-xl font-semibold 
       flex items-center justify-center gap-3 transition-all
-      disabled:opacity-70
+      disabled:opacity-40 disabled:cursor-not-allowed
+      ${className}
     `}
   >
     {loading ? (

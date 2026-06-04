@@ -80,11 +80,64 @@ export const InvoicePrint = () => {
   const todayJalali = new Intl.DateTimeFormat('fa-IR', { dateStyle: 'full' }).format(new Date(projectDetails.date));
   const invoiceConfig = settings?.invoice || { companyName: 'فروشگاه نکس‌وین', companyPhone: '', companyAddress: '', footerNote: '' };
 
-  const ITEMS_PER_PAGE = 3; 
-  const pages = [];
-  for (let i = 0; i < items.length; i += ITEMS_PER_PAGE) {
-    pages.push(items.slice(i, i + ITEMS_PER_PAGE));
-  }
+  // تابع تقسیم‌بندی هوشمند صفحات جهت جلوگیری از تداخل و قرارگیری پاورقی روی جزئیات یونیت‌ها
+  const getInvoicePages = (invoiceItems: InvoiceItem[]): InvoiceItem[][] => {
+    const computedPages: InvoiceItem[][] = [];
+    let currentPageItems: InvoiceItem[] = [];
+    
+    // مقادیر دقیق ارتفاع عناصر به پیکسل بر اساس خروجی A4 با ارتفاع ۱۱۲۳px
+    const PAGE_HEIGHT = 1123;
+    const FIRST_PAGE_BASE_HEIGHT = 320; // هدر + اطلاعات خریدار + هدر جدول + مارجین‌ها
+    const OTHER_PAGE_BASE_HEIGHT = 220; // هدر + هدر جدول + مارجین‌ها
+    const ITEM_ROW_HEIGHT = 270;        // ارتفاع ثابت ۲۷۰ پیکسل برای هر یونیت
+    const TOTALS_FOOTER_HEIGHT = 205;   // فضایی که کادر قیمت نهایی و امضاها در صفحه آخر اشغال می‌کنند
+    
+    for (let i = 0; i < invoiceItems.length; i++) {
+      const item = invoiceItems[i];
+      const isFirstPage = computedPages.length === 0;
+      const baseHeight = isFirstPage ? FIRST_PAGE_BASE_HEIGHT : OTHER_PAGE_BASE_HEIGHT;
+      
+      const nextItemsCount = currentPageItems.length + 1;
+      const itemsHeight = nextItemsCount * ITEM_ROW_HEIGHT;
+      const isLastItem = i === invoiceItems.length - 1;
+      
+      if (isLastItem) {
+        // اگر آیتم آخر است، باید چک کنیم آیا ترکیب آیتم آخر دیتایل‌ها به همراه باکس جمع کل در صفحه فعلی جا می‌شود یا خیر
+        const totalHeightNeeded = baseHeight + itemsHeight + TOTALS_FOOTER_HEIGHT;
+        if (totalHeightNeeded <= PAGE_HEIGHT) {
+          currentPageItems.push(item);
+        } else {
+          // اگر جا نشد، آیتم‌های فعلی را به صفحه قبلی فرستاده و آیتم آخر + پاورقی را به صفحه جدید منتقل می‌کنیم
+          if (currentPageItems.length > 0) {
+            computedPages.push(currentPageItems);
+            currentPageItems = [];
+          }
+          currentPageItems.push(item);
+        }
+      } else {
+        // برای آیتم‌های غیر از آخرین آیتم، همواره چک می‌کنیم آیا خود آیتم به تنهایی در صفحه جا می‌شود یا خیر
+        const totalHeightNeeded = baseHeight + itemsHeight;
+        if (totalHeightNeeded <= PAGE_HEIGHT) {
+          currentPageItems.push(item);
+        } else {
+          // اگر جا نشود، صفحه را بسته و آیتم را در صفحه تازه قرار می‌دهیم
+          if (currentPageItems.length > 0) {
+            computedPages.push(currentPageItems);
+            currentPageItems = [];
+          }
+          currentPageItems.push(item);
+        }
+      }
+    }
+    
+    if (currentPageItems.length > 0) {
+      computedPages.push(currentPageItems);
+    }
+    
+    return computedPages;
+  };
+
+  const pages = getInvoicePages(items);
 
   const handlePrint = () => {
     window.print();
@@ -144,20 +197,121 @@ export const InvoicePrint = () => {
   };
 
   const simplifyMaterialName = (name: string) => {
-    return name
-      .replace('پروفیل فریم استاندارد', 'فریم')
-      .replace('پروفیل فریم', 'فریم')
-      .replace('پروفیل سش (Sash) بازشو', 'سش پنجره')
-      .replace('پروفیل سش (Sash) درب', 'سش درب')
-      .replace('پروفیل سش (Sash)', 'بازشو')
-      .replace('شیشه دوجداره صنعتی', 'شیشه دوجداره')
-      .replace('شیشه دوجداره', 'شیشه 2ج')
-      .replace('گالوانیزه تقویتی', 'گالوانیزه')
-      .replace('زهوار (Beading) پروفیل', 'زهوار')
-      .replace('پروفیل مولیون', 'مولیون')
-      .replace('گالوانیزه و متعلقات فنی', 'گالوانیزه')
-      .replace('مجموعه یراق‌آلات بازشو', 'یراق‌آلات')
-      .replace('نوار لاستیکی درزگیر (EPDM)', 'لاستیک EPDM');
+    if (!name) return '';
+    let s = name;
+
+    // ۱. فریم ها
+    s = s.replace(/پروفیل فریم بازسازی/g, 'فریم بازسازی');
+    s = s.replace(/پروفیل فریم درب نوسازی/g, 'فریم درب نوسازی');
+    s = s.replace(/پروفیل فریم درب عریض/g, 'فریم درب عریض');
+    s = s.replace(/پروفیل فریم استاندارد/g, 'فریم استاندارد');
+    s = s.replace(/پروفیل فریم ویستابست ۷۰/g, 'فریم ویستابست ۷۰');
+    s = s.replace(/پروفیل فریم ویستابست/g, 'فریم ویستابست');
+    s = s.replace(/پروفیل فریم وین‌تک W640/g, 'فریم وین‌تک W640');
+    s = s.replace(/پروفیل فریم/g, 'فریم');
+    s = s.replace(/فریم کشویی تک‌ریل/g, 'فریم کشویی');
+
+    // ۲. سش ها
+    s = s.replace(/پروفیل سش \(Sash\) بازشو/g, 'سش بازشو');
+    s = s.replace(/پروفیل سش بازشو/g, 'سش بازشو');
+    s = s.replace(/پروفیل سش \(Sash\) درب سنگین/g, 'سش درب سنگین');
+    s = s.replace(/پروفیل سش \(Sash\) درب دو عدد/g, 'سش درب دوبل');
+    s = s.replace(/پروفیل سش درب/g, 'سش درب');
+    s = s.replace(/پروفیل سش \(Sash\) پنجره/g, 'سش پنجره');
+    s = s.replace(/پروفیل سش \(Sash\) میانی/g, 'سش میانی');
+    s = s.replace(/پروفیل سش \(Sash\)/g, 'سش');
+
+    // ۳. مولیون ها
+    s = s.replace(/پروفیل مولیون \(وادار\)/g, 'مولیون');
+    s = s.replace(/پروفیل مولیون عمودی/g, 'مولیون عمودی');
+    s = s.replace(/پروفیل مولیون متحرک \(Floating\)/g, 'مولیون متحرک');
+    s = s.replace(/مولیون و Interlock/g, 'مولیون اینترلاک');
+    s = s.replace(/مولیون متحرک/g, 'مولیون متحرک');
+    s = s.replace(/پروفیل مولیون/g, 'مولیون');
+
+    // ۴. شیشه‌ها
+    s = s.replace(/شیشه دوجداره ۴-۴ ساده/g, 'شیشه دوجداره ۴-۴');
+    s = s.replace(/شیشه ۶-۴ دوجداره صنعتی/g, 'شیشه دوجداره ۶-۴');
+    s = s.replace(/شیشه دوجداره ۴-۴ صنعتی/g, 'شیشه دوجداره ۴-۴');
+    s = s.replace(/شیشه دوجداره سکوریت شده/g, 'شیشه دوجداره سکوریت');
+    s = s.replace(/شیشه دوجداره سکوریت ۶-۴/g, 'شیشه دوجداره سکوریت ۶-۴');
+    s = s.replace(/شیشه دوجداره مشجر برفی/g, 'شیشه دوجداره مشجر');
+    s = s.replace(/شیشه دوجداره صنعتی/g, 'شیشه دوجداره');
+    s = s.replace(/شیشه دوجداره/g, 'شیشه دوجداره');
+
+    // ۵. زهوارها
+    s = s.replace(/زهوار \(Beading\) پروفیل/g, 'زهوار');
+    s = s.replace(/زهوار دکوراتیو پروفیل/g, 'زهوار دکوراتیو');
+    s = s.replace(/زهوار \(Beading\) پنل و شیشه/g, 'زهوار پنل و شیشه');
+    s = s.replace(/زهوار \(Beading\) استاندارد/g, 'زهوار استاندارد');
+    s = s.replace(/زهوار \(Beading\) دوجداره/g, 'زهوار دوجداره');
+    s = s.replace(/زهوار/g, 'زهوار طولی');
+
+    // ۶. یراق ها
+    s = s.replace(/یراق فرانسوی برند G-U آلمان/g, 'یراق فرانسوی G-U');
+    s = s.replace(/یراق تک‌حالته برند Endow/g, 'یراق تک‌حالته Endow');
+    s = s.replace(/یراق تک‌حالته برند روتو/g, 'یراق تک‌حالته روتو');
+    s = s.replace(/یراق دوحالته برند Endow/g, 'یراق دوحالته Endow');
+    s = s.replace(/یراق درب بالکنی برند G-U/g, 'یراق بالکنی G-U');
+    s = s.replace(/یراق کلنگی برند Endow/g, 'یراق کلنگی Endow');
+    s = s.replace(/یراق ثابت \(بدون یراق\)/g, 'بدون یراق');
+    s = s.replace(/یراق درب سرویسی/g, 'یراق درب سرویس');
+    s = s.replace(/یراق درب بالکنی/g, 'یراق درب بالکن');
+    s = s.replace(/برند /g, '');
+
+    // ۷. گالوانیزه ها
+    s = s.replace(/گالوانیزه و متعلقات فنی/g, 'گالوانیزه و متعلقات');
+    s = s.replace(/گالوانیزه تقویتی داخلی/g, 'گالوانیزه داخلی');
+    s = s.replace(/گالوانیزه و متعلقات درب/g, 'گالوانیزه درب');
+    s = s.replace(/گالوانیزه تقویتی سرویسی/g, 'گالوانیزه سرویس');
+    s = s.replace(/گالوانیزه صنعتی ۲ میلی‌متر/g, 'گالوانیزه ۲ میلی‌متر');
+    s = s.replace(/گالوانیزه تقویتی ۲ میل/g, 'گالوانیزه ۲ میل');
+    s = s.replace(/گالوانیزه تقویتی/g, 'گالوانیزه تقویتی');
+
+    // ۸. پنل و لاستیک EPDM
+    s = s.replace(/پنل UPVC فشرده \(ساندویچ\)/g, 'پنل UPVC ساندویچی');
+    s = s.replace(/پنل UPVC \(متر مربع\)/g, 'پنل UPVC');
+    s = s.replace(/نوار لاستیکی درزگیر \(EPDM\)/g, 'لاستیک EPDM');
+
+    // پیراستن نهایی کلمات تکراری یا سنگین
+    s = s.replace(/پروفیل/g, '').trim();
+
+    return s;
+  };
+
+  const summarizePersianText = (text: string, maxLength: number): string => {
+    if (!text) return '';
+    if (text.length <= maxLength) return text;
+
+    const replacements: [RegExp | string, string][] = [
+      [/اعتبار این پیش‌فاکتور نکس‌وین/g, 'اعتبار پیش‌فاکتور'],
+      [/اعتبار این پیش‌فاکتور نکس‌وین ۷۲ ساعت می‌باشد/g, 'اعتبار پیش‌فاکتور ۷۲ ساعت است'],
+      [/کلیه محاسبات بر اساس استانداردهای مهندسی UPVC انجام شده است/g, 'محاسبات بر اساس استاندارد UPVC است'],
+      [/هرگونه تغییر در ابعاد پس از تایید نهایی بر عهده مشتری می‌باشد/g, 'تغییر ابعاد پس از تایید با مشتری است'],
+      [/پیش‌فاکتور فنی و برآورد پروژه/g, 'پیش‌فاکتور پروژه'],
+      [/مشخصات فنی و محاسبات مهندسی/g, 'مشخصات فنی مهندسی'],
+      [/بدون ستون وسط/g, 'بدون ستون'],
+      [/پنجره تک لنگه سرویس/g, 'پنجره تک‌لنگه سرویس'],
+      [/سه لنگه \(وسط بازشو دوحالته\)/g, 'سه لنگه بازشو وسط'],
+      [/دو لنگه با کتیبه بالا/g, 'دو لنگه کتیبه‌دار'],
+      [/محل اجرای پروژه/g, 'محل پروژه'],
+      [/مشخصات خریدار \/ کارفرما/g, 'خریدار'],
+      [/نشانی و محل اجرای پروژه/g, 'نشانی پروژه'],
+    ];
+
+    let result = text;
+    for (const [pattern, replacement] of replacements) {
+      result = result.replace(pattern, replacement);
+    }
+
+    if (result.length <= maxLength) return result;
+
+    const trimmed = result.slice(0, maxLength);
+    const lastSpace = trimmed.lastIndexOf(' ');
+    if (lastSpace > maxLength * 0.75) {
+      return trimmed.slice(0, lastSpace) + '...';
+    }
+    return trimmed + '...';
   };
 
   const InvoiceHeader = () => (
@@ -203,7 +357,7 @@ export const InvoicePrint = () => {
             <div className="flex justify-between items-end">
                 <div className="max-w-[80%]">
                     <p className="text-[9.5px] leading-relaxed text-justify opacity-80 font-bold text-slate-700">
-                        {invoiceConfig.footerNote || 'اعتبار این پیش‌فاکتور نکس‌وین ۷۲ ساعت می‌باشد. کلیه محاسبات بر اساس استانداردهای مهندسی UPVC انجام شده است. هرگونه تغییر در ابعاد پس از تایید نهایی بر عهده مشتری می‌باشد.'}
+                        {summarizePersianText(invoiceConfig.footerNote || 'اعتبار این پیش‌فاکتور نکس‌وین ۷۲ ساعت می‌باشد. کلیه محاسبات بر اساس استانداردهای مهندسی UPVC انجام شده است. هرگونه تغییر در ابعاد پس از تایید نهایی بر عهده مشتری می‌باشد.', 150)}
                     </p>
                 </div>
                 <div className="text-left">
@@ -218,6 +372,9 @@ export const InvoicePrint = () => {
 
   const InvoicePageContent = ({ pageItems, pageIndex, totalPages }: { pageItems: InvoiceItem[], pageIndex: number, totalPages: number }) => {
     const isLastPage = pageIndex === totalPages - 1;
+    const isFirstPage = pageIndex === 0;
+    const maxCapacity = isLastPage ? 2 : 3;
+    const showPlaceholder = pageItems.length < maxCapacity;
 
     return (
       <div className="bg-white w-full h-[1123px] flex flex-col overflow-hidden relative">
@@ -233,11 +390,11 @@ export const InvoicePrint = () => {
                 } p-4 grid grid-cols-2 gap-8`}>
                     <div className="flex flex-col gap-1.5">
                         <span className="text-[10px] font-black opacity-55 uppercase tracking-widest block text-slate-500">مشخصات خریدار / کارفرما</span>
-                        <div className="text-[13px] font-black text-slate-900">{projectDetails.customerName}</div>
+                        <div className="text-[13px] font-black text-slate-900">{summarizePersianText(projectDetails.customerName, 40)}</div>
                     </div>
                     <div className="flex flex-col gap-1.5">
                         <span className="text-[10px] font-black opacity-55 uppercase tracking-widest block text-slate-500">نشانی و محل اجرای پروژه</span>
-                        <div className="text-[11px] font-bold text-slate-755 leading-snug">{projectDetails.address || 'آدرس ثبت نشده'}</div>
+                        <div className="text-[11px] font-bold text-slate-755 leading-snug">{summarizePersianText(projectDetails.address || 'آدرس ثبت نشده', 75)}</div>
                     </div>
                 </div>
             </div>
@@ -264,8 +421,8 @@ export const InvoicePrint = () => {
                 </div>
                 
                 <div className="flex-1 flex flex-col overflow-hidden bg-white">
-                    {pageItems.map((item, localIndex) => {
-                        const globalIndex = pageIndex * ITEMS_PER_PAGE + localIndex;
+                    {pageItems.map((item) => {
+                        const globalIndex = items.findIndex(it => it.id === item.id);
                         const brand = BRANDS.find(b => b.id === item.config.profileId);
                         return (
                             <div key={item.id} className={`flex w-full items-stretch border-b last:border-0 h-[270px] break-inside-avoid page-break-inside-avoid ${
@@ -302,13 +459,13 @@ export const InvoicePrint = () => {
                                             tempLayout === 'technical' ? 'bg-slate-800 text-white border-transparent' :
                                             'bg-slate-100 text-slate-800 border border-slate-200'
                                         }`}>{brand?.name}</span>
-                                        <span className="text-[10px] font-black text-slate-500 tracking-wide truncate max-w-[200px]">{item.config.type}</span>
+                                        <span className="text-[10px] font-black text-slate-500 tracking-wide truncate max-w-[325px]">{summarizePersianText(item.config.type, 35)}</span>
                                     </div>
                                     <div className={`overflow-hidden ${
                                         tempLayout === 'classic' ? 'border-2 border-slate-900 rounded-none bg-white' :
                                         tempLayout === 'modern' ? 'border border-emerald-50 rounded-2xl bg-white shadow-xs' :
                                         tempLayout === 'technical' ? 'border border-slate-300 rounded-xl bg-zinc-50' :
-                                        'border border-slate-150 rounded-2xl bg-white shadow-xs font-medium'
+                                        'border border-slate-150 rounded-2xl bg-white shadow-xs font-semibold'
                                     }`}>
                                         <table className="w-full table-fixed border-collapse text-[9.5px] leading-snug">
                                             <thead>
@@ -365,6 +522,42 @@ export const InvoicePrint = () => {
                             </div>
                         );
                     })}
+
+                    {showPlaceholder && (
+                        <div className={`flex w-full items-stretch flex-1 bg-white min-h-[140px] last:border-b-0 ${
+                            tempLayout === 'classic' ? 'border-slate-950 border-b-2' : 'border-slate-200 border-b'
+                        }`}>
+                            <div className="p-2 w-9 flex flex-col items-center justify-center text-[10px] font-bold text-slate-350 shrink-0 border-l border-slate-200 bg-slate-50/10">
+                                {toPersianDigits(pageItems.length + 1)}
+                            </div>
+                            
+                            <div className="p-4 w-[340px] shrink-0 flex flex-col items-center justify-center border-x border-slate-200 bg-slate-50/[0.02]">
+                                <div className={`w-[85%] h-[90px] flex items-center justify-center opacity-30 ${
+                                    tempLayout === 'classic' ? 'border border-dashed border-slate-900 rounded-none' :
+                                    tempLayout === 'modern' ? 'border border-dashed border-emerald-200 rounded-xl' :
+                                    tempLayout === 'technical' ? 'border border-dashed border-slate-300 rounded-xl' :
+                                    'border border-dashed border-slate-200 rounded-xl'
+                                }`}>
+                                    <span className="text-[9px] font-bold text-slate-450">فضای تراز فنی فریم</span>
+                                </div>
+                            </div>
+
+                            <div className="p-4 flex-1 flex flex-col justify-center gap-2 opacity-35">
+                                <div className={`h-3 w-1/2 rounded ${tempLayout === 'technical' ? 'bg-zinc-200' : 'bg-slate-100'}`}></div>
+                                <div className={`text-[9.5px] font-extrabold text-slate-400 ${tempLayout === 'modern' ? 'text-emerald-800' : ''}`}>ردیف رزرو دفتری و تراز پروژه</div>
+                                <div className={`h-2 text-[8px] rounded ${tempLayout === 'technical' ? 'bg-zinc-200' : 'bg-slate-50'}`}></div>
+                            </div>
+
+                            <div className={`px-3 flex flex-col items-center justify-center text-center w-[122px] shrink-0 border-r border-slate-200 ${
+                                tempLayout === 'classic' ? 'bg-slate-50/10' :
+                                tempLayout === 'modern' ? 'bg-emerald-50/10' :
+                                tempLayout === 'technical' ? 'bg-zinc-100/10' :
+                                'bg-slate-50/10'
+                            }`}>
+                                <span className="text-[11px] font-bold text-slate-300">---</span>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

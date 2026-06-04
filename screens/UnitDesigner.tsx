@@ -220,6 +220,7 @@ export const UnitDesigner = () => {
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [dimensionModal, setDimensionModal] = useState<{ type: 'global' | 'child', dim?: 'w' | 'h', nodeId?: string, childIndex?: number, currentVal: number, totalSize?: number } | null>(null);
   const [dimensionModalValue, setDimensionModalValue] = useState("");
+  const [frenchModal, setFrenchModal] = useState<{ nodeId: string, totalWidth: number, activeWidth: number, fixedWidth: number, direction: 'FrenchWindowLeft' | 'FrenchWindowRight' } | null>(null);
   
   
   useEffect(() => {
@@ -271,6 +272,75 @@ export const UnitDesigner = () => {
     return root;
   };
 
+  const getNodeDimensions = (node: WindowNode, targetId: string, w: number, h: number): { w: number, h: number } | null => {
+      if (node.id === targetId) return { w, h };
+      if (node.type === 'container' && node.children) {
+          const totalFlex = node.children.reduce((s, c) => s + (c.flex || 1), 0) || 1;
+          for (const child of node.children) {
+              const ratio = (child.flex || 1) / totalFlex;
+              const childW = node.dir === 'row' ? w * ratio : w;
+              const childH = node.dir === 'col' ? h * ratio : h;
+              const res = getNodeDimensions(child, targetId, childW, childH);
+              if (res) return res;
+          }
+      }
+      return null;
+  };
+
+  const handleFrenchModalSubmit = () => {
+    if (!frenchModal || !config.layout) return;
+    const { nodeId, activeWidth, fixedWidth, direction } = frenchModal;
+
+    pushToHistory(config.layout);
+
+    const targetNode = findNode(config.layout, nodeId);
+    if (!targetNode) {
+      setFrenchModal(null);
+      return;
+    }
+
+    const currentSystemType = targetNode.systemType || 'Casement';
+    
+    // In a French window split, we have one active door-sash and one fixed section
+    const activeChild: WindowNode = {
+      id: Date.now() + `_active_${Math.random()}`,
+      type: 'leaf',
+      openingType: direction === 'FrenchWindowLeft' ? 'DoorLeft' : 'DoorRight',
+      flex: activeWidth,
+      systemType: currentSystemType,
+      isFrenchWindow: false
+    };
+
+    const fixedChild: WindowNode = {
+      id: Date.now() + `_fixed_${Math.random()}`,
+      type: 'leaf',
+      openingType: 'Fixed',
+      flex: fixedWidth,
+      systemType: currentSystemType,
+      isFrenchWindow: false
+    };
+
+    const children: WindowNode[] = direction === 'FrenchWindowLeft' 
+      ? [activeChild, fixedChild]
+      : [fixedChild, activeChild];
+
+    // Update parent to be a French window container
+    setConfig(prev => ({
+      ...prev,
+      layout: updateNodeInTree(prev.layout!, nodeId, (node) => ({
+        ...node,
+        type: 'container',
+        dir: 'row',
+        isFrenchWindow: true,
+        children,
+        openingType: 'Fixed',
+        systemType: currentSystemType
+      }))
+    }));
+
+    setFrenchModal(null);
+  };
+
   const handleUpdateNode = (id: string, updates: Partial<WindowNode>) => {
     if (!config.layout) return;
     pushToHistory(config.layout);
@@ -295,6 +365,20 @@ export const UnitDesigner = () => {
           const targetNode = findNode(config.layout!, id);
           if (!targetNode) return;
           if (activeTool.type === 'opening') {
+              if (activeTool.value === 'FrenchWindowLeft' || activeTool.value === 'FrenchWindowRight') {
+                  const dims = getNodeDimensions(config.layout!, id, config.width, config.height);
+                  if (dims) {
+                      const totalW = Math.round(dims.w);
+                      setFrenchModal({
+                          nodeId: id,
+                          totalWidth: totalW,
+                          activeWidth: Math.round(totalW * 0.6),
+                          fixedWidth: Math.round(totalW - (totalW * 0.6)),
+                          direction: activeTool.value as 'FrenchWindowLeft' | 'FrenchWindowRight'
+                      });
+                      return;
+                  }
+              }
                handleUpdateNode(id, { openingType: activeTool.value as any, isFrenchWindow: activeTool.value.includes('FrenchWindow') });
           } else if (activeTool.type === 'split') {
               const currentOpeningType = targetNode.openingType || 'Fixed';
@@ -820,11 +904,83 @@ export const UnitDesigner = () => {
         </div>
     );
   };
+
+  const renderFrenchModalDialog = () => {
+    if (!frenchModal) return null;
+    return (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setFrenchModal(null)}>
+            <div className="bg-white rounded-3xl p-6 shadow-2xl max-w-sm w-full mx-auto" onClick={(e) => e.stopPropagation()}>
+                <h3 className="text-lg font-black text-slate-800 mb-2 text-right">تنظیم ابعاد بازشوی فرانسوی</h3>
+                <p className="text-xs text-slate-400 mb-4 text-right">اندازه لنگه‌های فعال (متحرک) و ثابت را مشخص کنید.</p>
+                
+                <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 mb-4 text-right">
+                    <span className="text-[10px] uppercase font-bold text-slate-500 block">عرض کل فریم</span>
+                    <span className="text-sm font-black text-slate-800 leading-snug font-mono mt-0.5 block">{frenchModal.totalWidth} mm</span>
+                </div>
+
+                <div className="space-y-4">
+                    <InputField 
+                        label="عرض قسمت بازشو (متحرک) (mm)" 
+                        type="number" 
+                        value={frenchModal.activeWidth.toString()} 
+                        onChange={(e: any) => {
+                            const val = Number(toEnglishDigits(e.target.value));
+                            if (!isNaN(val)) {
+                                setFrenchModal(prev => prev ? {
+                                    ...prev,
+                                    activeWidth: val,
+                                    fixedWidth: prev.totalWidth - val
+                                } : null);
+                            }
+                        }} 
+                    />
+                    
+                    <InputField 
+                        label="عرض قسمت ثابت (mm)" 
+                        type="number" 
+                        value={frenchModal.fixedWidth.toString()} 
+                        onChange={(e: any) => {
+                            const val = Number(toEnglishDigits(e.target.value));
+                            if (!isNaN(val)) {
+                                setFrenchModal(prev => prev ? {
+                                    ...prev,
+                                    fixedWidth: val,
+                                    activeWidth: prev.totalWidth - val
+                                } : null);
+                            }
+                        }} 
+                    />
+                </div>
+
+                { (frenchModal.activeWidth < 150 || frenchModal.fixedWidth < 150) && (
+                    <p className="text-[11px] text-red-500 font-bold mt-2 text-right">حداقل عرض برای هر لنگه ۱۵۰ میلی‌متر است.</p>
+                )}
+
+                <div className="flex gap-2 mt-6">
+                    <button 
+                        className="flex-1 px-4 py-3 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-xl font-bold transition-all text-sm" 
+                        onClick={() => setFrenchModal(null)}
+                    >
+                        انصراف
+                    </button>
+                    <PrimaryButton 
+                        className="flex-1 !py-3 text-sm font-semibold" 
+                        disabled={frenchModal.activeWidth < 150 || frenchModal.fixedWidth < 150 || (frenchModal.activeWidth + frenchModal.fixedWidth !== frenchModal.totalWidth)}
+                        onClick={handleFrenchModalSubmit}
+                    >
+                        تایید
+                    </PrimaryButton>
+                </div>
+            </div>
+        </div>
+    );
+  };
   
   return (
     <>
       {isDesktop ? renderDesktop() : renderMobile()}
       {renderDimensionModalDialog()}
+      {renderFrenchModalDialog()}
     </>
   );
 };
