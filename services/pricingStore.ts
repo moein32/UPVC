@@ -351,7 +351,8 @@ export const pricingStore = {
     let projects: SavedProject[] = stored ? JSON.parse(stored) : [];
     
     const demoExists = projects.some(p => p.id === DEFAULT_PROJECT.id);
-    if (!demoExists) {
+    const demoDeleted = localStorage.getItem('lumina_demo_deleted') === 'true';
+    if (!demoExists && !demoDeleted) {
         return [DEFAULT_PROJECT, ...projects];
     }
     return projects;
@@ -365,7 +366,26 @@ export const pricingStore = {
     } else {
       projects.push(project);
     }
-    localStorage.setItem('lumina_projects', JSON.stringify(projects));
+    // Make sure we remove actual DEFAULT_PROJECT from stored list if it's there but not customized,
+    // or just store everything. Let's make sure if we save the default project, it's considered saved
+    // and not marked as deleted anymore (just in case they modify the default demo).
+    if (project.id === DEFAULT_PROJECT.id) {
+      localStorage.removeItem('lumina_demo_deleted');
+    }
+    // Filter out DEFAULT_PROJECT to avoid duplicate storage if it's unmodified,
+    // but here we can just save all projects.
+    const toStore = projects.filter(p => p.id !== DEFAULT_PROJECT.id || JSON.stringify(p) !== JSON.stringify(DEFAULT_PROJECT));
+    localStorage.setItem('lumina_projects', JSON.stringify(toStore));
+  },
+
+  deleteProject: (id: string) => {
+    const projects = pricingStore.getProjects();
+    const filtered = projects.filter(p => p.id !== id);
+    if (id === DEFAULT_PROJECT.id) {
+      localStorage.setItem('lumina_demo_deleted', 'true');
+    }
+    const toStore = filtered.filter(p => p.id !== DEFAULT_PROJECT.id || JSON.stringify(p) !== JSON.stringify(DEFAULT_PROJECT));
+    localStorage.setItem('lumina_projects', JSON.stringify(toStore));
   },
 
   getSettings: (): AppSettings => {

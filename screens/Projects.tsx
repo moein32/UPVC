@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { ArrowRight, Folder, Calendar, CheckCircle2, Clock, Factory, ChevronDown, MoreVertical } from 'lucide-react';
+import { ArrowRight, Folder, Calendar, CheckCircle2, Clock, Factory, ChevronDown, MoreVertical, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { pricingStore } from '../services/pricingStore';
 import { SavedProject } from '../types';
@@ -9,6 +9,7 @@ import { toPersianDigits, formatPrice } from '../utils/formatting';
 export const Projects = () => {
   const navigate = useNavigate();
   const [projects, setProjects] = useState<SavedProject[]>([]);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     setProjects(pricingStore.getProjects());
@@ -94,9 +95,49 @@ export const Projects = () => {
         <div className="h-px bg-slate-50 my-3"></div>
         
         <div className="flex justify-between items-center text-sm">
-          <div className="flex items-center gap-1.5 text-slate-400 text-[10px] font-bold">
-            <Calendar size={14} />
-            <span>{toPersianDigits(new Date(p.date).toLocaleDateString('fa-IR'))}</span>
+          <div className="flex items-center gap-3 text-slate-400 text-[10px] font-bold">
+            {confirmDeleteId === p.id ? (
+              <div className="flex items-center gap-1.5 bg-red-50 text-red-600 px-3 py-1 rounded-2xl animate-pulse">
+                <span>حذف شود؟</span>
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    pricingStore.deleteProject(p.id);
+                    setProjects(prev => prev.filter(proj => proj.id !== p.id));
+                    setConfirmDeleteId(null);
+                  }}
+                  className="font-black hover:underline mr-1.5 px-2 py-0.5 bg-red-100 rounded-lg text-[9px]"
+                >
+                  بله
+                </button>
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setConfirmDeleteId(null);
+                  }}
+                  className="text-slate-500 hover:underline mr-1 px-2 py-0.5 bg-slate-100 rounded-lg text-[9px]"
+                >
+                  خیر
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5">
+                  <Calendar size={14} />
+                  <span>{toPersianDigits(new Date(p.date).toLocaleDateString('fa-IR'))}</span>
+                </div>
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setConfirmDeleteId(p.id);
+                  }}
+                  className="text-slate-400 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-xl transition-all"
+                  title="حذف پروژه"
+                >
+                  <Trash2 size={15} />
+                </button>
+              </div>
+            )}
           </div>
           <div className="text-left">
             <div className="text-[9px] font-bold text-slate-400 mb-0.5">مبلغ نهایی (با نصب)</div>
