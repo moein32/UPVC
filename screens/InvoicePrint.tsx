@@ -89,7 +89,7 @@ export const InvoicePrint = () => {
     const PAGE_HEIGHT = 1123;
     const FIRST_PAGE_BASE_HEIGHT = 320; // هدر + اطلاعات خریدار + هدر جدول + مارجین‌ها
     const OTHER_PAGE_BASE_HEIGHT = 220; // هدر + هدر جدول + مارجین‌ها
-    const ITEM_ROW_HEIGHT = 270;        // ارتفاع ثابت ۲۷۰ پیکسل برای هر یونیت
+    const ITEM_ROW_HEIGHT = 220;        // ارتفاع ثابت ۲۲۰ پیکسل برای هر یونیت بهینه و جمع‌وجور
     const TOTALS_FOOTER_HEIGHT = 205;   // فضایی که کادر قیمت نهایی و امضاها در صفحه آخر اشغال می‌کنند
     
     for (let i = 0; i < invoiceItems.length; i++) {
@@ -373,8 +373,6 @@ export const InvoicePrint = () => {
   const InvoicePageContent = ({ pageItems, pageIndex, totalPages }: { pageItems: InvoiceItem[], pageIndex: number, totalPages: number }) => {
     const isLastPage = pageIndex === totalPages - 1;
     const isFirstPage = pageIndex === 0;
-    const maxCapacity = isLastPage ? 2 : 3;
-    const showPlaceholder = pageItems.length < maxCapacity;
 
     return (
       <div className="bg-white w-full h-[1123px] flex flex-col overflow-hidden relative">
@@ -415,7 +413,7 @@ export const InvoicePrint = () => {
                     'bg-slate-50 border-b border-slate-200'
                 }`}>
                     <div className="py-3.5 px-2 w-9 text-center border-l border-slate-200 shrink-0">ردیف</div>
-                    <div className="py-3.5 px-3 w-[340px] text-center border-x border-slate-200 shrink-0">نقشه فنی و مشخصات ابعادی</div>
+                    <div className="py-3.5 px-3 w-[185px] text-center border-x border-slate-200 shrink-0">نقشه فنی و ابعاد</div>
                     <div className="py-3.5 px-4 flex-1 text-center">جزئیات متریال مصرفی (شرح کالا، مقدار و قیمت واحد)</div>
                     <div className="py-3.5 px-3 w-[122px] text-center border-r border-slate-200 shrink-0">مجموع ردیف</div>
                 </div>
@@ -425,15 +423,15 @@ export const InvoicePrint = () => {
                         const globalIndex = items.findIndex(it => it.id === item.id);
                         const brand = BRANDS.find(b => b.id === item.config.profileId);
                         return (
-                            <div key={item.id} className={`flex w-full items-stretch border-b last:border-0 h-[270px] break-inside-avoid page-break-inside-avoid ${
+                            <div key={item.id} className={`flex w-full items-stretch border-b last:border-0 h-[220px] break-inside-avoid page-break-inside-avoid ${
                                 tempLayout === 'classic' ? 'border-slate-950 border-b-2' : 'border-slate-200'
                             }`}>
                                 <div className="p-2 w-9 flex flex-col items-center justify-center text-[11px] font-black text-slate-400 shrink-0 border-l border-slate-200 bg-slate-50/20">{toPersianDigits(globalIndex + 1)}</div>
                                 
-                                <div className="p-4 w-[340px] shrink-0 flex flex-col items-center justify-center gap-2.5 border-x border-slate-200 bg-slate-50/5">
-                                    <div className={`relative w-[95%] h-[150px] flex items-center justify-center overflow-hidden p-2 transition-all ${
+                                <div className="p-2 w-[185px] shrink-0 flex flex-col items-center justify-center gap-1.5 border-x border-slate-200 bg-slate-50/5">
+                                    <div className={`relative w-full h-[120px] flex items-center justify-center overflow-hidden p-1.5 transition-all ${
                                         tempLayout === 'classic' ? 'bg-white border-2 border-slate-900 rounded-none' :
-                                        tempLayout === 'modern' ? 'bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-md' :
+                                        tempLayout === 'modern' ? 'bg-white border border-slate-100 rounded-2xl shadow-xs hover:shadow-sm' :
                                         tempLayout === 'technical' ? 'bg-zinc-50 border border-slate-300 rounded-xl font-mono' :
                                         'bg-white border border-slate-100 rounded-2xl'
                                     }`}>
@@ -441,25 +439,25 @@ export const InvoicePrint = () => {
                                             <WindowPreview config={item.config} width="100%" height="100%" isThumbnail={false} scale={0.65} />
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-3 w-full justify-center">
-                                        <div className="text-[12.5px] font-black text-slate-900 bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-sm" style={{ direction: 'ltr' }}>
-                                            {toPersianDigits(item.config.width)} × {toPersianDigits(item.config.height)} <span className="text-[9px] text-slate-400 font-bold ml-0.5">میلی‌متر</span>
+                                    <div className="flex flex-col items-center gap-1 w-full justify-center">
+                                        <div className="text-[11.5px] font-black text-slate-900 bg-white px-2 py-0.5 rounded-lg border border-slate-200 shadow-xs" style={{ direction: 'ltr' }}>
+                                            {toPersianDigits(item.config.width)} × {toPersianDigits(item.config.height)} <span className="text-[8px] text-slate-400 font-bold ml-0.5">mm</span>
                                         </div>
-                                        <div className="text-[11.5px] font-black text-blue-700 bg-blue-50/50 px-3 py-1.5 rounded-xl border border-blue-100 shadow-sm">
-                                            تعداد: {toPersianDigits(item.quantity)} <span className="text-[9px] text-slate-500 font-bold">عدد</span>
+                                        <div className="text-[10px] font-black text-blue-700 bg-blue-50/50 px-2 py-0.5 rounded-lg border border-blue-100 shadow-xs">
+                                            تعداد: {toPersianDigits(item.quantity)} <span className="text-[8px] text-slate-500 font-bold">عدد</span>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="p-4 flex-1 flex flex-col justify-center overflow-hidden">
-                                    <div className="flex items-center gap-2.5 mb-2.5">
-                                        <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black tracking-tight ${
+                                <div className="p-3 flex-1 flex flex-col justify-center overflow-hidden">
+                                    <div className="flex items-center gap-2 mb-1.5">
+                                        <span className={`px-2 py-0.5 rounded-md text-[9px] font-black tracking-tight ${
                                             tempLayout === 'classic' ? 'bg-slate-250 text-slate-900 border border-slate-900 rounded-none' : 
                                             tempLayout === 'modern' ? 'bg-emerald-50 text-emerald-800 border border-emerald-100' :
                                             tempLayout === 'technical' ? 'bg-slate-800 text-white border-transparent' :
                                             'bg-slate-100 text-slate-800 border border-slate-200'
                                         }`}>{brand?.name}</span>
-                                        <span className="text-[10px] font-black text-slate-500 tracking-wide truncate max-w-[325px]">{summarizePersianText(item.config.type, 35)}</span>
+                                        <span className="text-[9.5px] font-black text-slate-500 tracking-wide truncate max-w-[325px]">{summarizePersianText(item.config.type, 35)}</span>
                                     </div>
                                     <div className={`overflow-hidden ${
                                         tempLayout === 'classic' ? 'border-2 border-slate-900 rounded-none bg-white' :
@@ -486,13 +484,13 @@ export const InvoicePrint = () => {
                                                         tempLayout === 'modern' ? (dIdx % 2 === 0 ? 'bg-white' : 'bg-emerald-50/10') :
                                                         (dIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30')
                                                     } hover:bg-slate-50/50 transition-colors`}>
-                                                        <td className="px-2.5 py-1 font-bold text-slate-700 truncate w-[43%]" style={{ fontFamily: 'Vazirmatn' }}>
+                                                        <td className="px-2.5 py-0.5 font-bold text-slate-700 truncate w-[43%]" style={{ fontFamily: 'Vazirmatn' }}>
                                                             {simplifyMaterialName(detail.name)}
                                                         </td>
-                                                        <td className="px-1 py-1 w-[24%] text-center font-black text-slate-600 whitespace-nowrap">
+                                                        <td className="px-1 py-0.5 w-[24%] text-center font-black text-slate-600 whitespace-nowrap">
                                                             {toPersianDigits(detail.quantity)} <span className="opacity-60 text-[7px]">{detail.unit}</span>
                                                         </td>
-                                                        <td className="px-2.5 py-1 w-[33%] text-left font-black text-slate-900 tracking-tighter whitespace-nowrap">
+                                                        <td className="px-2.5 py-0.5 w-[33%] text-left font-black text-slate-900 tracking-tighter whitespace-nowrap">
                                                             {formatPrice(detail.unitPrice)}
                                                         </td>
                                                     </tr>
@@ -522,42 +520,6 @@ export const InvoicePrint = () => {
                             </div>
                         );
                     })}
-
-                    {showPlaceholder && (
-                        <div className={`flex w-full items-stretch flex-1 bg-white min-h-[140px] last:border-b-0 ${
-                            tempLayout === 'classic' ? 'border-slate-950 border-b-2' : 'border-slate-200 border-b'
-                        }`}>
-                            <div className="p-2 w-9 flex flex-col items-center justify-center text-[10px] font-bold text-slate-350 shrink-0 border-l border-slate-200 bg-slate-50/10">
-                                {toPersianDigits(pageItems.length + 1)}
-                            </div>
-                            
-                            <div className="p-4 w-[340px] shrink-0 flex flex-col items-center justify-center border-x border-slate-200 bg-slate-50/[0.02]">
-                                <div className={`w-[85%] h-[90px] flex items-center justify-center opacity-30 ${
-                                    tempLayout === 'classic' ? 'border border-dashed border-slate-900 rounded-none' :
-                                    tempLayout === 'modern' ? 'border border-dashed border-emerald-200 rounded-xl' :
-                                    tempLayout === 'technical' ? 'border border-dashed border-slate-300 rounded-xl' :
-                                    'border border-dashed border-slate-200 rounded-xl'
-                                }`}>
-                                    <span className="text-[9px] font-bold text-slate-450">فضای تراز فنی فریم</span>
-                                </div>
-                            </div>
-
-                            <div className="p-4 flex-1 flex flex-col justify-center gap-2 opacity-35">
-                                <div className={`h-3 w-1/2 rounded ${tempLayout === 'technical' ? 'bg-zinc-200' : 'bg-slate-100'}`}></div>
-                                <div className={`text-[9.5px] font-extrabold text-slate-400 ${tempLayout === 'modern' ? 'text-emerald-800' : ''}`}>ردیف رزرو دفتری و تراز پروژه</div>
-                                <div className={`h-2 text-[8px] rounded ${tempLayout === 'technical' ? 'bg-zinc-200' : 'bg-slate-50'}`}></div>
-                            </div>
-
-                            <div className={`px-3 flex flex-col items-center justify-center text-center w-[122px] shrink-0 border-r border-slate-200 ${
-                                tempLayout === 'classic' ? 'bg-slate-50/10' :
-                                tempLayout === 'modern' ? 'bg-emerald-50/10' :
-                                tempLayout === 'technical' ? 'bg-zinc-100/10' :
-                                'bg-slate-50/10'
-                            }`}>
-                                <span className="text-[11px] font-bold text-slate-300">---</span>
-                            </div>
-                        </div>
-                    )}
                 </div>
             </div>
         </div>
