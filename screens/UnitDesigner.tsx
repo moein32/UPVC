@@ -577,7 +577,7 @@ export const UnitDesigner = () => {
     // We choose the smaller scale to fit both dimensions safely
     let scale = Math.min(scaleW, scaleH);
     if (isDesktop) {
-      scale = scale * 0.95;
+      scale = scale * 0.80;
     } else {
       // On mobile mode, scale to fit both width/height comfortably with a 10% safety margin
       // so it never overflows or requires excessive scrolling/zooming.

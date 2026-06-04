@@ -5,12 +5,12 @@ import { toPersianDigits } from '../utils/formatting';
 // --- INDUSTRIAL CAD STANDARDS (RETAINED & GRAPHICALLY OPTIMIZED) ---
 const CAD = {
   stroke: {
-    outer: 2.5,       
-    inner: 1.2,      
-    bead: 0.8,       
-    miter: 0.8, // بهینه‌سازی شده برای خط مایتِر تمیز       
-    dimension: 1.2,   
-    tick: 2.0,        
+    outer: 3.5,       
+    inner: 2.0,      
+    bead: 1.9,       
+    miter: 1.5, // بهینه‌سازی شده برای خط مایتِر تمیز       
+    dimension: 1.5,   
+    tick: 2.5,        
   },
   colors: {
     profileFill: '#ffffff', 
@@ -25,9 +25,9 @@ const CAD = {
     miter: '#94a3b8'
   },
   geom: {
-    frameT: 50,           
-    sashT: 55,            
-    mullionT: 50,         
+    frameT: 62,           
+    sashT: 68,            
+    mullionT: 62,         
   },
   font: {
     dimSize: 52,          
@@ -51,14 +51,17 @@ const RenderFrame = ({ x, y, w, h, thickness, isRenovation, isDoorSash }: { x: n
   const innerW = Math.max(0, w - 2 * thickness);
   const innerH = Math.max(0, h - 2 * thickness);
 
+  const beadOffset = Math.round(thickness * 0.22);
+  const beadSizeDiff = beadOffset * 2;
+
   // تمام ساختار تو در توی چندکاناله قبلی حذف و با خطوط تمیز دوخطی و مایتِر جایگزین شد
   return (
     <g className="render-frame" filter="url(#shadow-soft)">
       {/* Flange / Lip for Renovation Frame Profile (لبه بازسازی روی فریم بیرونی) */}
       {isRenovation && (
         <g className="renovation-lip-outer">
-          <rect x={x - 14} y={y - 14} width={w + 28} height={h + 28} fill="url(#frame-grad-h)" stroke={CAD.colors.line} strokeWidth={CAD.stroke.outer} />
-          <rect x={x - 8} y={y - 8} width={w + 16} height={h + 16} fill="none" stroke={CAD.colors.beadLine} strokeWidth="1" opacity="0.4" />
+          <rect x={x - 20} y={y - 20} width={w + 40} height={h + 40} fill="url(#frame-grad-h)" stroke={CAD.colors.line} strokeWidth={CAD.stroke.outer} />
+          <rect x={x - 12} y={y - 12} width={w + 24} height={h + 24} fill="none" stroke={CAD.colors.beadLine} strokeWidth="1" opacity="0.4" />
         </g>
       )}
 
@@ -74,7 +77,7 @@ const RenderFrame = ({ x, y, w, h, thickness, isRenovation, isDoorSash }: { x: n
       )}
 
       {/* خط نمای ظریف داخلی (زهوار موازای نقشه) */}
-      <rect x={innerX - 12} y={innerY - 12} width={innerW + 24} height={innerH + 24} fill="none" stroke={CAD.colors.beadLine} strokeWidth={CAD.stroke.bead} opacity="0.6" />
+      <rect x={innerX - beadOffset} y={innerY - beadOffset} width={innerW + beadSizeDiff} height={innerH + beadSizeDiff} fill="none" stroke={CAD.colors.beadLine} strokeWidth={CAD.stroke.bead} opacity="0.6" />
 
       {/* خطوط مایتِر برش ۴۵ درجه در گوشه‌ها (دقیقاً مطابق استاندارد CAD) */}
       <line x1={x} y1={y} x2={innerX} y2={innerY} stroke={CAD.colors.line} strokeWidth={CAD.stroke.miter} />
@@ -106,8 +109,9 @@ const RenderMullion = ({ x, y, w, h }: { x: number, y: number, w: number, h: num
     els.push(<rect key="body" x={x} y={y} width={w} height={h} fill="url(#frame-grad-v)" stroke={CAD.colors.line} strokeWidth={CAD.stroke.inner} />);
     
     // خطوط موازی مهندسی ظریف روی وادار
-    els.push(<line key="m-line-1" x1={x+10} y1={y} x2={x+10} y2={y+h} stroke={CAD.colors.beadLine} strokeWidth={CAD.stroke.bead} opacity="0.5" />);
-    els.push(<line key="m-line-2" x1={x+w-10} y1={y} x2={x+w-10} y2={y+h} stroke={CAD.colors.beadLine} strokeWidth={CAD.stroke.bead} opacity="0.5" />);
+    const mbOffset = Math.round(w * 0.20);
+    els.push(<line key="m-line-1" x1={x+mbOffset} y1={y} x2={x+mbOffset} y2={y+h} stroke={CAD.colors.beadLine} strokeWidth={CAD.stroke.bead} opacity="0.5" />);
+    els.push(<line key="m-line-2" x1={x+w-mbOffset} y1={y} x2={x+w-mbOffset} y2={y+h} stroke={CAD.colors.beadLine} strokeWidth={CAD.stroke.bead} opacity="0.5" />);
     
     // محور تقارن مرکزی
     els.push(<line key="bead-center" x1={x+w/2} y1={y} x2={x+w/2} y2={y+h} stroke={CAD.colors.line} strokeWidth="1.2" />);
@@ -118,8 +122,9 @@ const RenderMullion = ({ x, y, w, h }: { x: number, y: number, w: number, h: num
     
     els.push(<rect key="body" x={x} y={y} width={w} height={h} fill="url(#frame-grad-h)" stroke={CAD.colors.line} strokeWidth={CAD.stroke.inner} />);
     
-    els.push(<line key="m-line-1" x1={x} y1={y+10} x2={x+w} y2={y+10} stroke={CAD.colors.beadLine} strokeWidth={CAD.stroke.bead} opacity="0.5" />);
-    els.push(<line key="m-line-2" x1={x} y1={y+h-10} x2={x+w} y2={y+h-10} stroke={CAD.colors.beadLine} strokeWidth={CAD.stroke.bead} opacity="0.5" />);
+    const mbOffset = Math.round(h * 0.20);
+    els.push(<line key="m-line-1" x1={x} y1={y+mbOffset} x2={x+w} y2={y+mbOffset} stroke={CAD.colors.beadLine} strokeWidth={CAD.stroke.bead} opacity="0.5" />);
+    els.push(<line key="m-line-2" x1={x} y1={y+h-mbOffset} x2={x+w} y2={y+h-mbOffset} stroke={CAD.colors.beadLine} strokeWidth={CAD.stroke.bead} opacity="0.5" />);
     
     els.push(<line key="bead-center" x1={x} y1={y+h/2} x2={x+w} y2={y+h/2} stroke={CAD.colors.line} strokeWidth="1.2" />);
     els.push(<line key="bead-center-hl" x1={x} y1={y+h/2+1} x2={x+w} y2={y+h/2+1} stroke="#ffffff" strokeWidth="0.8" opacity="0.5" />);
@@ -447,8 +452,8 @@ const RenderBlueprintNode = ({ node, x, y, w, h, isRoot, selectedId, onSelect, r
   // 1. Draw Outer Frame if Root
   if (isRoot) {
     const isRenovation = frameType === 'renovation';
-    // Standard frame is 50. If renovation frame is requested, it is visually thicker (72px instead of 50px)
-    const currentFrameT = isRenovation ? 72 : CAD.geom.frameT;
+    // Standard frame is thicker now. If renovation frame is requested, it is visually thicker (104px instead of 62px)
+    const currentFrameT = isRenovation ? 104 : CAD.geom.frameT;
     els.push(<RenderFrame key={`root-frame-${node.id}`} x={x} y={y} w={w} h={h} thickness={currentFrameT} isRenovation={isRenovation} />);
     innerX += currentFrameT;
     innerY += currentFrameT;
@@ -463,8 +468,8 @@ const RenderBlueprintNode = ({ node, x, y, w, h, isRoot, selectedId, onSelect, r
   let hwEl: React.ReactNode = null;
   if (isSash) {
     const isDoorSash = op.includes('Door');
-    // If door sash is active, make it visually thicker (75px instead of 55px)
-    const currentSashT = isDoorSash ? 75 : CAD.geom.sashT;
+    // If door sash is active, make it visually thicker (92px instead of 68px)
+    const currentSashT = isDoorSash ? 92 : CAD.geom.sashT;
     els.push(<RenderFrame key={`sash-${node.id}`} x={innerX} y={innerY} w={innerW} h={innerH} thickness={currentSashT} isDoorSash={isDoorSash} />);
     const actualHwEl = <TechnicalHardware key={`hw-${node.id}`} sx={innerX} sy={innerY} sw={innerW} sh={innerH} type={op} />;
     if (hardwareList) {
@@ -695,15 +700,15 @@ export const WindowCanvas = (props: WindowCanvasProps) => {
           <CadGrid />
           <linearGradient id="frame-grad-v" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor="#f8fafc" />
-            <stop offset="25%" stopColor="#ffffff" />
-            <stop offset="85%" stopColor="#f1f5f9" />
-            <stop offset="100%" stopColor="#d1d5db" />
+            <stop offset="6%" stopColor="#ffffff" />
+            <stop offset="94%" stopColor="#ffffff" />
+            <stop offset="100%" stopColor="#f1f5f9" />
           </linearGradient>
           <linearGradient id="frame-grad-h" x1="0%" y1="0%" x2="0%" y2="100%">
             <stop offset="0%" stopColor="#f8fafc" />
-            <stop offset="25%" stopColor="#ffffff" />
-            <stop offset="85%" stopColor="#f1f5f9" />
-            <stop offset="100%" stopColor="#d1d5db" />
+            <stop offset="6%" stopColor="#ffffff" />
+            <stop offset="94%" stopColor="#ffffff" />
+            <stop offset="100%" stopColor="#f1f5f9" />
           </linearGradient>
           <linearGradient id="glass-grad" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#bae6fd" stopOpacity="1" />
@@ -749,8 +754,8 @@ export const WindowCanvas = (props: WindowCanvasProps) => {
             <stop offset="50%" stopColor="#cbd5e1" />
             <stop offset="100%" stopColor="#64748b" />
           </linearGradient>
-          <filter id="shadow-soft" x="-10%" y="-10%" width="120%" height="120%">
-            <feDropShadow dx="1" dy="2" stdDeviation="3" floodOpacity="0.15" />
+          <filter id="shadow-soft" x="-15%" y="-15%" width="130%" height="130%">
+            <feDropShadow dx="2" dy="4" stdDeviation="5" floodColor="#0f172a" floodOpacity="0.22" />
           </filter>
         </defs>
         <rect x={-padding} y={-padding} width={width + padding*2} height={height + padding*2} fill="url(#industrial-grid)" pointerEvents="none" />
