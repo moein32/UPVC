@@ -561,22 +561,31 @@ export const UnitDesigner = () => {
     const availableW = canvasAreaRef.current.clientWidth;
     const availableH = canvasAreaRef.current.clientHeight;
     
+    // Use dynamic padding to maximize size on mobile screen
+    const currentPadding = isDesktop ? 30 : 10;
+    
     // We calculate the *actual* content size including the known padding from WindowCanvas
     // This makes the scale calculation precise.
-    const contentW = config.width + (CANVAS_PADDING * 2);
-    const contentH = config.height + (CANVAS_PADDING * 2);
+    const contentW = config.width + (currentPadding * 2);
+    const contentH = config.height + (currentPadding * 2);
     
     if (availableW <= 0 || availableH <= 0) return;
 
     const scaleW = availableW / contentW;
     const scaleH = availableH / contentH;
     
-    // We choose the smaller scale to fit both dimensions
-    // We multiply by 0.98 to leave a small "breathing room" for maximum zoom
-    const scale = Math.min(scaleW, scaleH) * 1.05;
+    // We choose the smaller scale to fit both dimensions safely
+    let scale = Math.min(scaleW, scaleH);
+    if (isDesktop) {
+      scale = scale * 0.95;
+    } else {
+      // On mobile mode, scale to fit both width/height comfortably with a 10% safety margin
+      // so it never overflows or requires excessive scrolling/zooming.
+      scale = scale * 0.80;
+    }
     
     // Clamp values to sane limits (e.g., don't zoom out to microscopic or zoom in infinitely)
-    setZoomLevel(Math.min(Math.max(scale, 0.1), 3));
+    setZoomLevel(Math.min(Math.max(scale, 0.1), 3.5));
   };
   
   useEffect(() => { fitToScreen(); window.addEventListener('resize', fitToScreen); return () => window.removeEventListener('resize', fitToScreen); }, [config.width, config.height, isDesktop]);
@@ -674,31 +683,43 @@ export const UnitDesigner = () => {
 
                 <div className="flex-1 relative bg-white overflow-hidden flex flex-col min-h-0" ref={canvasAreaRef}>
                     <div className="flex-1 overflow-auto flex items-center justify-center p-1 cursor-default">
-                        <div 
-                            className="transition-transform duration-300 ease-out origin-center" 
-                            style={{ 
-                                transform: `scale(${zoomLevel})`,
-                                width: config.width + (CANVAS_PADDING * 2), // Explicit dimensions for correct scaling
-                                height: config.height + (CANVAS_PADDING * 2) 
+                        <div
+                            style={{
+                                width: (config.width + 60) * zoomLevel,
+                                height: (config.height + 60) * zoomLevel,
+                                position: 'relative',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
                             }}
                         >
-                            <div className="relative select-none w-full h-full">
-                                {config.layout && (
-                                    <WindowCanvas 
-                                        node={config.layout} 
-                                        selectedId={selectedNodeId} 
-                                        onSelect={handleCanvasNodeClick} 
-                                        onUpdateNode={handleUpdateNode} 
-                                        onChildResize={handleChildResize} 
-                                        onGlobalResize={handleGlobalResizeClick}
-                                        width={config.width} 
-                                        height={config.height} 
-                                        isRoot={true} 
-                                        frameType={config.frameType} 
-                                        canvasPadding={CANVAS_PADDING}
-                                        readOnly={false}
-                                    />
-                                )}
+                            <div 
+                                className="transition-transform duration-300 ease-out origin-center" 
+                                style={{ 
+                                    transform: `scale(${zoomLevel})`,
+                                    width: config.width + 60, // Explicit dimensions for correct scaling
+                                    height: config.height + 60,
+                                    position: 'absolute'
+                                }}
+                            >
+                                <div className="relative select-none w-full h-full">
+                                    {config.layout && (
+                                        <WindowCanvas 
+                                            node={config.layout} 
+                                            selectedId={selectedNodeId} 
+                                            onSelect={handleCanvasNodeClick} 
+                                            onUpdateNode={handleUpdateNode} 
+                                            onChildResize={handleChildResize} 
+                                            onGlobalResize={handleGlobalResizeClick}
+                                            width={config.width} 
+                                            height={config.height} 
+                                            isRoot={true} 
+                                            frameType={config.frameType} 
+                                            canvasPadding={30}
+                                            readOnly={false}
+                                        />
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -812,30 +833,42 @@ export const UnitDesigner = () => {
 
             <div className="flex-1 relative bg-white overflow-hidden flex flex-col min-h-0" ref={canvasAreaRef}>
                 <div className="flex-1 overflow-auto flex items-center justify-center p-1 cursor-default">
-                    <div 
-                        className="transition-transform duration-300 ease-out origin-center" 
-                        style={{ 
-                            transform: `scale(${zoomLevel})`,
-                            width: config.width + (CANVAS_PADDING * 2),
-                            height: config.height + (CANVAS_PADDING * 2) 
+                    <div
+                        style={{
+                            width: (config.width + 20) * zoomLevel,
+                            height: (config.height + 20) * zoomLevel,
+                            position: 'relative',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
                         }}
                     >
-                        <div className="relative select-none w-full h-full">
-                            {config.layout && (
-                                <WindowCanvas 
-                                    node={config.layout} 
-                                    selectedId={selectedNodeId} 
-                                    onSelect={handleCanvasNodeClick} 
-                                    onUpdateNode={handleUpdateNode} 
-                                    onGlobalResize={handleGlobalResizeClick}
-                                    width={config.width} 
-                                    height={config.height} 
-                                    isRoot={true} 
-                                    frameType={config.frameType} 
-                                    canvasPadding={CANVAS_PADDING}
-                                    readOnly={false}
-                                />
-                            )}
+                        <div 
+                            className="transition-transform duration-300 ease-out origin-center" 
+                            style={{ 
+                                transform: `scale(${zoomLevel})`,
+                                width: config.width + 20,
+                                height: config.height + 20,
+                                position: 'absolute'
+                            }}
+                        >
+                            <div className="relative select-none w-full h-full">
+                                {config.layout && (
+                                    <WindowCanvas 
+                                        node={config.layout} 
+                                        selectedId={selectedNodeId} 
+                                        onSelect={handleCanvasNodeClick} 
+                                        onUpdateNode={handleUpdateNode} 
+                                        onGlobalResize={handleGlobalResizeClick}
+                                        width={config.width} 
+                                        height={config.height} 
+                                        isRoot={true} 
+                                        frameType={config.frameType} 
+                                        canvasPadding={10}
+                                        readOnly={false}
+                                    />
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
