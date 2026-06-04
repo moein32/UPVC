@@ -108,26 +108,19 @@ const RenderMullion = ({ x, y, w, h }: { x: number, y: number, w: number, h: num
     // بدنه یکدست مولیون بدون لایه‌های تو در توی پله‌ای شلوغ
     els.push(<rect key="body" x={x} y={y} width={w} height={h} fill="url(#frame-grad-v)" stroke={CAD.colors.line} strokeWidth={CAD.stroke.inner} />);
     
-    // خطوط موازی مهندسی ظریف روی وادار
-    const mbOffset = Math.round(w * 0.20);
-    els.push(<line key="m-line-1" x1={x+mbOffset} y1={y} x2={x+mbOffset} y2={y+h} stroke={CAD.colors.beadLine} strokeWidth={CAD.stroke.bead} opacity="0.5" />);
-    els.push(<line key="m-line-2" x1={x+w-mbOffset} y1={y} x2={x+w-mbOffset} y2={y+h} stroke={CAD.colors.beadLine} strokeWidth={CAD.stroke.bead} opacity="0.5" />);
-    
-    // محور تقارن مرکزی
-    els.push(<line key="bead-center" x1={x+w/2} y1={y} x2={x+w/2} y2={y+h} stroke={CAD.colors.line} strokeWidth="1.2" />);
-    els.push(<line key="bead-center-hl" x1={x+w/2+1} y1={y} x2={x+w/2+1} y2={y+h} stroke="#ffffff" strokeWidth="0.8" opacity="0.5" />);
+    // خطوط موازی مهندسی ظریف روی وادار با تمایز و وضوح عالی برای زهوار
+    const mbOffset = Math.round(w * 0.22);
+    els.push(<line key="m-line-1" x1={x+mbOffset} y1={y} x2={x+mbOffset} y2={y+h} stroke={CAD.colors.beadLine} strokeWidth={CAD.stroke.bead} opacity="0.8" />);
+    els.push(<line key="m-line-2" x1={x+w-mbOffset} y1={y} x2={x+w-mbOffset} y2={y+h} stroke={CAD.colors.beadLine} strokeWidth={CAD.stroke.bead} opacity="0.8" />);
   } else {
     els.push(<line key="g-top" x1={x} y1={y} x2={x+w} y2={y} stroke="#090d16" strokeWidth="4" opacity="0.95" />);
     els.push(<line key="g-bot" x1={x} y1={y+h} x2={x+w} y2={y+h} stroke="#090d16" strokeWidth="4" opacity="0.95" />);
     
     els.push(<rect key="body" x={x} y={y} width={w} height={h} fill="url(#frame-grad-h)" stroke={CAD.colors.line} strokeWidth={CAD.stroke.inner} />);
     
-    const mbOffset = Math.round(h * 0.20);
-    els.push(<line key="m-line-1" x1={x} y1={y+mbOffset} x2={x+w} y2={y+mbOffset} stroke={CAD.colors.beadLine} strokeWidth={CAD.stroke.bead} opacity="0.5" />);
-    els.push(<line key="m-line-2" x1={x} y1={y+h-mbOffset} x2={x+w} y2={y+h-mbOffset} stroke={CAD.colors.beadLine} strokeWidth={CAD.stroke.bead} opacity="0.5" />);
-    
-    els.push(<line key="bead-center" x1={x} y1={y+h/2} x2={x+w} y2={y+h/2} stroke={CAD.colors.line} strokeWidth="1.2" />);
-    els.push(<line key="bead-center-hl" x1={x} y1={y+h/2+1} x2={x+w} y2={y+h/2+1} stroke="#ffffff" strokeWidth="0.8" opacity="0.5" />);
+    const mbOffset = Math.round(h * 0.22);
+    els.push(<line key="m-line-1" x1={x} y1={y+mbOffset} x2={x+w} y2={y+mbOffset} stroke={CAD.colors.beadLine} strokeWidth={CAD.stroke.bead} opacity="0.8" />);
+    els.push(<line key="m-line-2" x1={x} y1={y+h-mbOffset} x2={x+w} y2={y+h-mbOffset} stroke={CAD.colors.beadLine} strokeWidth={CAD.stroke.bead} opacity="0.8" />);
   }
   
   return <g filter="url(#shadow-soft)">{els}</g>;
@@ -758,10 +751,8 @@ export const WindowCanvas = (props: WindowCanvasProps) => {
             <feDropShadow dx="2" dy="4" stdDeviation="5" floodColor="#0f172a" floodOpacity="0.22" />
           </filter>
         </defs>
-        <rect x={-padding} y={-padding} width={width + padding*2} height={height + padding*2} fill="url(#industrial-grid)" pointerEvents="none" />
-        
-        {/* Solid white substrate layer to completely block the grid pattern behind the main profile, sashes, and glass */}
-        <rect x={0} y={0} width={width} height={height} fill="#ffffff" stroke="none" />
+        {/* Solid white substrate layer to completely block any patterns and display a clean solid white backdrop */}
+        <rect x={-padding} y={-padding} width={width + padding*2} height={height + padding*2} fill="#ffffff" stroke="none" />
         
         <g className="blueprint-main">
           <RenderBlueprintNode 

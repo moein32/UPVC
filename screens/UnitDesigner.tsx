@@ -832,7 +832,10 @@ export const UnitDesigner = () => {
             </div>
 
             <div className="flex-1 relative bg-white overflow-hidden flex flex-col min-h-0" ref={canvasAreaRef}>
-                <div className="flex-1 overflow-auto flex items-center justify-center p-1 cursor-default">
+                <div 
+                    className="flex-1 overflow-auto flex items-center justify-center p-1 cursor-default"
+                    style={{ paddingBottom: '94px' }}
+                >
                     <div
                         style={{
                             width: (config.width + 20) * zoomLevel,
