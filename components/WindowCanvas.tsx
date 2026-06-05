@@ -590,7 +590,11 @@ const RenderBlueprintNode = ({
 
   // In DoubleRail sliding, ALL positions except filler panels are sashes.
   const isDoubleRail = currentSystemType === 'Sliding' && currentSlidingRailType === 'DoubleRail';
-  const isSash = node.type === 'leaf' && !op.includes('Panel') && (isDoubleRail || op !== 'Fixed');
+  const isSash = !op.includes('Panel') && (
+    node.type === 'leaf'
+      ? (isDoubleRail || op !== 'Fixed')
+      : (currentSystemType === 'Casement' && op !== 'Fixed')
+  );
   
   let hwEl: React.ReactNode = null;
   if (isSash) {
