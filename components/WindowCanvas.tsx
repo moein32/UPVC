@@ -213,6 +213,7 @@ const RenderPanel = ({ x, y, w, h, op }: { x: number, y: number, w: number, h: n
 };
 
 const TechnicalHardware = ({ sx: sxInput, sy: syInput, sw: swInput, sh: shInput, type }: { sx: number, sy: number, sw: number, sh: number, type: string }) => {
+  if (type === 'Fixed' || type.includes('Panel')) return null;
   const sx = Number(sxInput);
   const sy = Number(syInput);
   const sw = Number(swInput);
@@ -306,7 +307,7 @@ const TechnicalHardware = ({ sx: sxInput, sy: syInput, sw: swInput, sh: shInput,
              <line x1={sx + 15} y1={sy + sh/2} x2={sx + sw - 15} y2={sy + sh/2} stroke={CAD.colors.openingLine} strokeWidth="1" strokeDasharray="4,4" opacity="0.4" />
              <g stroke={CAD.colors.openingLine} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none">
                  <line x1={sx + sw/2 - 35} y1={sy + sh/2} x2={sx + sw/2 + 35} y2={sy + sh/2} />
-                 {isHandleRight ? (
+                 {type.includes('Right') ? (
                      <path d={`M ${sx + sw/2 + 20},${sy + sh/2 - 10} L ${sx + sw/2 + 35},${sy + sh/2} L ${sx + sw/2 + 20},${sy + sh/2 + 10}`} />
                  ) : (
                      <path d={`M ${sx + sw/2 - 20},${sy + sh/2 - 10} L ${sx + sw/2 - 35},${sy + sh/2} L ${sx + sw/2 - 20},${sy + sh/2 + 10}`} />
@@ -556,9 +557,14 @@ interface RenderNodeProps {
   readOnly: boolean;
   hardwareList?: React.ReactNode[];
   frameType?: 'standard' | 'slim' | 'heavy' | 'renovation';
+  parentSystemType?: 'Casement' | 'Sliding';
+  parentSlidingRailType?: 'Monorail' | 'DoubleRail';
 }
 
-const RenderBlueprintNode = ({ node, x, y, w, h, isRoot, selectedId, onSelect, readOnly, hardwareList, frameType }: RenderNodeProps) => {
+const RenderBlueprintNode = ({ 
+  node, x, y, w, h, isRoot, selectedId, onSelect, readOnly, hardwareList, frameType,
+  parentSystemType, parentSlidingRailType
+}: RenderNodeProps) => {
   let innerX = x;
   let innerY = y;
   let innerW = w;
@@ -579,7 +585,12 @@ const RenderBlueprintNode = ({ node, x, y, w, h, isRoot, selectedId, onSelect, r
   
   // 2. Check for Sash/Opening
   const op = node.openingType || 'Fixed';
-  const isSash = op !== 'Fixed' && !op.includes('Panel');
+  const currentSystemType = node.systemType || parentSystemType || (op.includes('Sliding') ? 'Sliding' : 'Casement');
+  const currentSlidingRailType = node.slidingRailType || parentSlidingRailType;
+
+  // In DoubleRail sliding, ALL positions except filler panels are sashes.
+  const isDoubleRail = currentSystemType === 'Sliding' && currentSlidingRailType === 'DoubleRail';
+  const isSash = node.type === 'leaf' && !op.includes('Panel') && (isDoubleRail || op !== 'Fixed');
   
   let hwEl: React.ReactNode = null;
   if (isSash) {
@@ -621,16 +632,30 @@ const RenderBlueprintNode = ({ node, x, y, w, h, isRoot, selectedId, onSelect, r
     // Container mullion distribution
     const children = node.children;
     const dir = node.dir;
+    const isSlidingContainer = node.systemType === 'Sliding' || parentSystemType === 'Sliding';
     const totalFlex = children.reduce((sum, c) => sum + (c.flex || 1), 0) || 1;
     
-    const childrenSpace = dir === 'row' 
-      ? innerW - (children.length - 1) * CAD.geom.mullionT
-      : innerH - (children.length - 1) * CAD.geom.mullionT;
+    // In sliding, sashes overlap by 24px horizontally
+    const overlap = 24;
+    let childrenSpace = 0;
+    
+    if (isSlidingContainer && dir === 'row' && children.length > 1) {
+      childrenSpace = innerW + (children.length - 1) * overlap;
+    } else {
+      childrenSpace = dir === 'row' 
+        ? innerW - (children.length - 1) * CAD.geom.mullionT
+        : innerH - (children.length - 1) * CAD.geom.mullionT;
+    }
 
     let currentPos = 0;
 
     children.forEach((child, idx) => {
-      const flexSize = MathMax(0, (childrenSpace * (child.flex || 1)) / totalFlex);
+      let flexSize = 0;
+      if (isSlidingContainer && dir === 'row' && children.length > 1) {
+        flexSize = (childrenSpace * (child.flex || 1)) / totalFlex;
+      } else {
+        flexSize = MathMax(0, (childrenSpace * (child.flex || 1)) / totalFlex);
+      }
       
       const cx = dir === 'row' ? innerX + currentPos : innerX;
       const cy = dir === 'col' ? innerY + currentPos : innerY;
@@ -648,12 +673,18 @@ const RenderBlueprintNode = ({ node, x, y, w, h, isRoot, selectedId, onSelect, r
           readOnly={readOnly}
           hardwareList={hardwareList}
           frameType={frameType}
+          parentSystemType={node.systemType || parentSystemType}
+          parentSlidingRailType={node.slidingRailType || parentSlidingRailType}
         />
       );
       
-      currentPos += flexSize;
+      if (isSlidingContainer && dir === 'row' && children.length > 1) {
+        currentPos += flexSize - overlap;
+      } else {
+        currentPos += flexSize;
+      }
       
-      if (idx < children.length - 1) {
+      if (!isSlidingContainer && idx < children.length - 1) {
         const isMullionSelected = !readOnly && selectedId === node.id;
         if (dir === 'row') {
           contentEls.push(
@@ -684,6 +715,15 @@ const RenderBlueprintNode = ({ node, x, y, w, h, isRoot, selectedId, onSelect, r
           );
           currentPos += CAD.geom.mullionT;
         }
+      } else if (isSlidingContainer && dir === 'row' && idx < children.length - 1) {
+        // Between overlapping sliding sashes, draw a beautiful slim vertical interlock overlap line/indicator in the overlapping area!
+        const interlockX = cx + cw - (overlap / 2);
+        contentEls.push(
+          <g key={`interlock-${child.id}`} opacity="0.6">
+            <line x1={interlockX} y1={innerY} x2={interlockX} y2={innerY + innerH} stroke="#000000" strokeWidth="2" opacity="0.3" />
+            <line x1={interlockX} y1={innerY} x2={interlockX} y2={innerY + innerH} stroke={CAD.colors.line} strokeWidth="1" strokeDasharray="3,3" />
+          </g>
+        );
       }
     });
   }

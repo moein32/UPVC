@@ -45,31 +45,32 @@ const SLIDING_DATA: Record<string, Record<string, Typology[]>> = {
             { id: 'M2-03', label: 'Panel + Slide R', sashes: 2, openings: ['PanelV', 'SlidingMonorailRight'] },
         ],
         '3-Sash': [
-            { id: 'M3-01', label: 'F + S + F', sashes: 3, openings: ['Fixed', 'SlidingMonorailRight', 'Fixed'] },
-            { id: 'M3-02', label: 'S + F + S', sashes: 3, openings: ['SlidingMonorailRight', 'Fixed', 'SlidingMonorailLeft'] },
-            { id: 'M3-03', label: 'P + S + P', sashes: 3, openings: ['PanelV', 'SlidingMonorailRight', 'PanelV'] },
+            { id: 'M3-01', label: 'Fixed + Slide R + Fixed', sashes: 3, openings: ['Fixed', 'SlidingMonorailRight', 'Fixed'] },
+            { id: 'M3-02', label: 'Slide R + Fixed + Slide L', sashes: 3, openings: ['SlidingMonorailRight', 'Fixed', 'SlidingMonorailLeft'] },
+            { id: 'M3-03', label: 'Panel + Slide R + Panel', sashes: 3, openings: ['PanelV', 'SlidingMonorailRight', 'PanelV'] },
         ],
         '4-Sash': [
-            { id: 'M4-01', label: 'F + S + S + F', sashes: 4, openings: ['Fixed', 'SlidingMonorailRight', 'SlidingMonorailLeft', 'Fixed'] },
-            { id: 'M4-02', label: 'S + F + F + S', sashes: 4, openings: ['SlidingMonorailRight', 'Fixed', 'Fixed', 'SlidingMonorailLeft'] },
-            { id: 'M4-03', label: 'P + S + S + P', sashes: 4, openings: ['PanelV', 'SlidingMonorailRight', 'SlidingMonorailLeft', 'PanelV'] },
+            { id: 'M4-01', label: 'Fixed + Slide R + Slide L + Fixed', sashes: 4, openings: ['Fixed', 'SlidingMonorailRight', 'SlidingMonorailLeft', 'Fixed'] },
+            { id: 'M4-02', label: 'Slide R + Fixed + Fixed + Slide L', sashes: 4, openings: ['SlidingMonorailRight', 'Fixed', 'Fixed', 'SlidingMonorailLeft'] },
+            { id: 'M4-03', label: 'Panel + Slide R + Slide L + Panel', sashes: 4, openings: ['PanelV', 'SlidingMonorailRight', 'SlidingMonorailLeft', 'PanelV'] },
         ]
     },
     DoubleRail: {
         '2-Sash': [
-            { id: 'D2-01', label: 'S + F', sashes: 2, openings: ['SlidingRight', 'Fixed'] },
-            { id: 'D2-02', label: 'F + S', sashes: 2, openings: ['Fixed', 'SlidingLeft'] },
-            { id: 'D2-03', label: 'S + S', sashes: 2, openings: ['SlidingRight', 'SlidingLeft'] },
+            { id: 'D2-01', label: 'Slide R + Fixed', sashes: 2, openings: ['SlidingRight', 'Fixed'] },
+            { id: 'D2-02', label: 'Fixed + Slide L', sashes: 2, openings: ['Fixed', 'SlidingLeft'] },
+            { id: 'D2-03', label: 'Slide R + Slide L', sashes: 2, openings: ['SlidingRight', 'SlidingLeft'] },
         ],
         '3-Sash': [
-            { id: 'D3-01', label: 'S + F + S', sashes: 3, openings: ['SlidingRight', 'Fixed', 'SlidingLeft'] },
-            { id: 'D3-02', label: 'F + S + F', sashes: 3, openings: ['Fixed', 'SlidingRight', 'Fixed'] },
-            { id: 'D3-03', label: 'S + S + S', sashes: 3, openings: ['SlidingRight', 'SlidingRight', 'SlidingRight'] },
+            { id: 'D3-01', label: 'Slide R + Fixed + Slide L', sashes: 3, openings: ['SlidingRight', 'Fixed', 'SlidingLeft'] },
+            { id: 'D3-02', label: 'Fixed + Slide R + Fixed', sashes: 3, openings: ['Fixed', 'SlidingRight', 'Fixed'] },
+            { id: 'D3-03', label: 'Slide R + Slide R + Slide R', sashes: 3, openings: ['SlidingRight', 'SlidingRight', 'SlidingRight'] },
+            { id: 'D3-04', label: 'Slide L + Fixed + Slide R', sashes: 3, openings: ['SlidingLeft', 'Fixed', 'SlidingRight'] },
         ],
         '4-Sash': [
-            { id: 'D4-01', label: 'S + F + F + S', sashes: 4, openings: ['SlidingRight', 'Fixed', 'Fixed', 'SlidingLeft'] },
-            { id: 'D4-02', label: 'F + S + S + F', sashes: 4, openings: ['Fixed', 'SlidingLeft', 'SlidingRight', 'Fixed'] },
-            { id: 'D4-03', label: 'S + S + S + S', sashes: 4, openings: ['SlidingRight', 'SlidingRight', 'SlidingLeft', 'SlidingLeft'] },
+            { id: 'D4-01', label: 'Slide R + Fixed + Fixed + Slide L', sashes: 4, openings: ['SlidingRight', 'Fixed', 'Fixed', 'SlidingLeft'] },
+            { id: 'D4-02', label: 'Fixed + Slide L + Slide R + Fixed', sashes: 4, openings: ['Fixed', 'SlidingLeft', 'SlidingRight', 'Fixed'] },
+            { id: 'D4-03', label: 'Slide R + Slide R + Slide L + Slide L', sashes: 4, openings: ['SlidingRight', 'SlidingRight', 'SlidingLeft', 'SlidingLeft'] },
         ]
     }
 };
@@ -365,8 +366,21 @@ export const UnitDesigner = () => {
   const applyTypology = (typology: Typology) => {
       if (!selectedNodeId || !config.layout) return;
       pushToHistory(config.layout);
-      const newChildren = typology.openings.map((op, i) => ({ id: Date.now() + `_${i}_${Math.random()}`, type: 'leaf' as const, openingType: op, flex: 1 }));
-      handleUpdateNode(selectedNodeId, { type: 'container', dir: 'row', children: newChildren, systemType: 'Sliding', slidingRailType: slidingRailMode });
+      const newChildren = typology.openings.map((op, i) => ({ 
+          id: Date.now() + `_${i}_${Math.random()}`, 
+          type: 'leaf' as const, 
+          openingType: op, 
+          flex: 1,
+          systemType: 'Sliding' as const,
+          slidingRailType: slidingRailMode as 'Monorail' | 'DoubleRail'
+      }));
+      handleUpdateNode(selectedNodeId, { 
+          type: 'container', 
+          dir: 'row', 
+          children: newChildren, 
+          systemType: 'Sliding', 
+          slidingRailType: slidingRailMode 
+      });
   };
 
   const handleCanvasNodeClick = (id: string) => {
@@ -504,10 +518,21 @@ export const UnitDesigner = () => {
         const leafW = (w - (2 * PROFILE_WIDTH_CONSTANT) + (overlapsCount * SLIDING_OVERLAP)) / numSashes; const leafH = h - (2 * PROFILE_WIDTH_CONSTANT);
         if (node.slidingRailType === 'Monorail') stats.monorailFrameMeters += (w + h) * 2;
         stats.mullionMeters += overlapsCount * leafH;
+        const isDoubleRail = node.slidingRailType === 'DoubleRail';
         node.children.forEach(child => {
-            if (child.openingType?.includes('Sliding')) { stats.sashWindowMeters += (leafW + leafH) * 2; processHardware(child.openingType); stats.glassArea += Math.max(0, (leafW - (PROFILE_WIDTH_CONSTANT * 2)) * (leafH - (PROFILE_WIDTH_CONSTANT * 2))); } 
-            else if (child.openingType === 'Fixed') { stats.glassArea += Math.max(0, (leafW - 40) * (leafH - 40)); }
-            if (child.openingType?.includes('Panel')) { stats.panelArea += leafW * leafH; stats.glassArea = Math.max(0, stats.glassArea - (leafW * leafH)); }
+            const op = child.openingType || 'Fixed';
+            const isChildSash = isDoubleRail ? !op.includes('Panel') : op.includes('Sliding');
+            if (isChildSash) {
+                stats.sashWindowMeters += (leafW + leafH) * 2;
+                processHardware(op);
+                stats.glassArea += Math.max(0, (leafW - (PROFILE_WIDTH_CONSTANT * 2)) * (leafH - (PROFILE_WIDTH_CONSTANT * 2)));
+            } else if (op === 'Fixed') {
+                stats.glassArea += Math.max(0, (leafW - 40) * (leafH - 40));
+            }
+            if (op.includes('Panel')) {
+                stats.panelArea += leafW * leafH;
+                stats.glassArea = Math.max(0, stats.glassArea - (leafW * leafH));
+            }
             stats.beadMeters += (leafW + leafH) * 2;
         }); return stats;
     }
@@ -708,6 +733,26 @@ export const UnitDesigner = () => {
                                     )}
                                 </div>
                              )}
+                              {activeTab === 'openings' && systemMode === 'Sliding' && (
+                                 <div className="col-span-full mb-1">
+                                       {!isSidebarCollapsed && (
+                                           <div className="bg-slate-900/55 p-0.5 rounded-lg border border-slate-700/60 flex gap-0.5 w-full">
+                                               <button
+                                                   onClick={() => setSlidingRailMode('Monorail')}
+                                                   className={`flex-1 py-1 px-1 rounded text-[9px] font-black tracking-tight transition-all text-center ${slidingRailMode === 'Monorail' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-slate-300'}`}
+                                               >
+                                                   تک ریل
+                                               </button>
+                                               <button
+                                                   onClick={() => setSlidingRailMode('DoubleRail')}
+                                                   className={`flex-1 py-1 px-1 rounded text-[9px] font-black tracking-tight transition-all text-center ${slidingRailMode === 'DoubleRail' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-slate-300'}`}
+                                               >
+                                                   جفت ریل
+                                               </button>
+                                           </div>
+                                       )}
+                                 </div>
+                              )}
                               {activeTab === 'openings' && systemMode === 'Sliding' && (
                                 <div className="col-span-full space-y-2">
                                       {Object.entries(SLIDING_DATA[slidingRailMode]).map(([category, typologies]) => (
@@ -923,12 +968,31 @@ export const UnitDesigner = () => {
                             </div>
                         </>
                     ) : (
-                        <div className="flex items-center gap-1.5 bg-slate-50/70 p-1 rounded-xl border border-slate-100 shrink-0">
-                           <span className="text-[7px] font-black text-slate-400 [writing-mode:vertical-lr] rotate-180 mr-0.5 select-none leading-none tracking-tight">طرح‌ها</span>
-                           <div className="w-px h-6 bg-slate-200 mx-0.5 shrink-0"></div>
-                           {SLIDING_DATA[slidingRailMode]['2-Sash'].map(t => <TypologyIcon key={t.id} typology={t} isActive={false} onClick={applyTypology} isMobileCompact={true} />)}
-                           {SLIDING_DATA[slidingRailMode]['3-Sash'].map(t => <TypologyIcon key={t.id} typology={t} isActive={false} onClick={applyTypology} isMobileCompact={true} />)}
-                        </div>
+                        <>
+                            {/* Rail Type Selector for Mobile */}
+                            <div className="flex items-center gap-1 bg-slate-50/70 p-1 rounded-xl border border-slate-100 shrink-0 select-none">
+                                <button
+                                    onClick={() => setSlidingRailMode('Monorail')}
+                                    className={`px-2 py-1.5 rounded-lg text-[8px] font-black leading-none transition-all ${slidingRailMode === 'Monorail' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-500 hover:bg-slate-100'}`}
+                                >
+                                    تک ریل (Monorail)
+                                </button>
+                                <button
+                                    onClick={() => setSlidingRailMode('DoubleRail')}
+                                    className={`px-2 py-1.5 rounded-lg text-[8px] font-black leading-none transition-all ${slidingRailMode === 'DoubleRail' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-500 hover:bg-slate-100'}`}
+                                >
+                                    جفت ریل (DoubleRail)
+                                </button>
+                            </div>
+
+                            <div className="flex items-center gap-1.5 bg-slate-50/70 p-1 rounded-xl border border-slate-100 shrink-0">
+                               <span className="text-[7px] font-black text-slate-400 [writing-mode:vertical-lr] rotate-180 mr-0.5 select-none leading-none tracking-tight">طرح‌ها</span>
+                               <div className="w-px h-6 bg-slate-200 mx-0.5 shrink-0"></div>
+                               {SLIDING_DATA[slidingRailMode]['2-Sash']?.map(t => <TypologyIcon key={t.id} typology={t} isActive={false} onClick={applyTypology} isMobileCompact={true} />)}
+                               {SLIDING_DATA[slidingRailMode]['3-Sash']?.map(t => <TypologyIcon key={t.id} typology={t} isActive={false} onClick={applyTypology} isMobileCompact={true} />)}
+                               {SLIDING_DATA[slidingRailMode]['4-Sash']?.map(t => <TypologyIcon key={t.id} typology={t} isActive={false} onClick={applyTypology} isMobileCompact={true} />)}
+                            </div>
+                        </>
                     )}
                 </div>
             </div>
