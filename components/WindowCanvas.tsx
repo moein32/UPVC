@@ -94,7 +94,17 @@ const RenderFrame = ({ x, y, w, h, thickness, isRenovation, isDoorSash }: { x: n
   );
 };
 
-const RenderMullion = ({ x, y, w, h }: { x: number, y: number, w: number, h: number }) => {
+const RenderMullion = ({ 
+  x, y, w, h, 
+  onClick, 
+  isSelected, 
+  readOnly 
+}: { 
+  x: number, y: number, w: number, h: number, 
+  onClick?: () => void, 
+  isSelected?: boolean, 
+  readOnly?: boolean 
+}) => {
   if (w <= 0 || h <= 0) return null;
   const isVertical = w < h;
   
@@ -106,21 +116,42 @@ const RenderMullion = ({ x, y, w, h }: { x: number, y: number, w: number, h: num
     els.push(<line key="g-right" x1={x+w} y1={y} x2={x+w} y2={y+h} stroke="#090d16" strokeWidth="4" opacity="0.95" />);
     
     // بدنه یکدست مولیون بدون لایه‌های تو در توی پله‌ای شلوغ
-    els.push(<rect key="body" x={x} y={y} width={w} height={h} fill="url(#frame-grad-v)" stroke={CAD.colors.line} strokeWidth={CAD.stroke.inner} />);
+    els.push(<rect key="body" x={x} y={y} width={w} height={h} fill={isSelected ? "url(#metal-grad-classic)" : "url(#frame-grad-v)"} stroke={isSelected ? CAD.colors.activeFrame : CAD.colors.line} strokeWidth={isSelected ? 2 : CAD.stroke.inner} />);
     
     // خطوط موازی مهندسی ظریف روی وادار با تمایز و وضوح عالی برای زهوار
     const mbOffset = Math.round(w * 0.22);
-    els.push(<line key="m-line-1" x1={x+mbOffset} y1={y} x2={x+mbOffset} y2={y+h} stroke={CAD.colors.beadLine} strokeWidth={CAD.stroke.bead} opacity="0.8" />);
-    els.push(<line key="m-line-2" x1={x+w-mbOffset} y1={y} x2={x+w-mbOffset} y2={y+h} stroke={CAD.colors.beadLine} strokeWidth={CAD.stroke.bead} opacity="0.8" />);
+    els.push(<line key="m-line-1" x1={x+mbOffset} y1={y} x2={x+mbOffset} y2={y+h} stroke={isSelected ? CAD.colors.activeFrame : CAD.colors.beadLine} strokeWidth={CAD.stroke.bead} opacity="0.8" />);
+    els.push(<line key="m-line-2" x1={x+w-mbOffset} y1={y} x2={x+w-mbOffset} y2={y+h} stroke={isSelected ? CAD.colors.activeFrame : CAD.colors.beadLine} strokeWidth={CAD.stroke.bead} opacity="0.8" />);
   } else {
     els.push(<line key="g-top" x1={x} y1={y} x2={x+w} y2={y} stroke="#090d16" strokeWidth="4" opacity="0.95" />);
     els.push(<line key="g-bot" x1={x} y1={y+h} x2={x+w} y2={y+h} stroke="#090d16" strokeWidth="4" opacity="0.95" />);
     
-    els.push(<rect key="body" x={x} y={y} width={w} height={h} fill="url(#frame-grad-h)" stroke={CAD.colors.line} strokeWidth={CAD.stroke.inner} />);
+    els.push(<rect key="body" x={x} y={y} width={w} height={h} fill={isSelected ? "url(#metal-grad-classic)" : "url(#frame-grad-h)"} stroke={isSelected ? CAD.colors.activeFrame : CAD.colors.line} strokeWidth={isSelected ? 2 : CAD.stroke.inner} />);
     
     const mbOffset = Math.round(h * 0.22);
-    els.push(<line key="m-line-1" x1={x} y1={y+mbOffset} x2={x+w} y2={y+mbOffset} stroke={CAD.colors.beadLine} strokeWidth={CAD.stroke.bead} opacity="0.8" />);
-    els.push(<line key="m-line-2" x1={x} y1={y+h-mbOffset} x2={x+w} y2={y+h-mbOffset} stroke={CAD.colors.beadLine} strokeWidth={CAD.stroke.bead} opacity="0.8" />);
+    els.push(<line key="m-line-1" x1={x} y1={y+mbOffset} x2={x+w} y2={y+mbOffset} stroke={isSelected ? CAD.colors.activeFrame : CAD.colors.beadLine} strokeWidth={CAD.stroke.bead} opacity="0.8" />);
+    els.push(<line key="m-line-2" x1={x} y1={y+h-mbOffset} x2={x+w} y2={y+h-mbOffset} stroke={isSelected ? CAD.colors.activeFrame : CAD.colors.beadLine} strokeWidth={CAD.stroke.bead} opacity="0.8" />);
+  }
+
+  // Hit area (overlay) representing the transom/mullion which makes it selective
+  if (!readOnly && onClick) {
+    const hitPadding = 12;
+    els.push(
+      <rect 
+        key="hit-area"
+        x={isVertical ? x - hitPadding : x}
+        y={isVertical ? y : y - hitPadding}
+        width={isVertical ? w + 2 * hitPadding : w}
+        height={isVertical ? h : h + 2 * hitPadding}
+        fill="transparent"
+        cursor="pointer"
+        className="mullion-hit-area hover:fill-blue-500/10 transition-colors duration-200"
+        onClick={(e) => {
+          e.stopPropagation();
+          onClick();
+        }}
+      />
+    );
   }
   
   return <g filter="url(#shadow-soft)">{els}</g>;
@@ -193,31 +224,38 @@ const TechnicalHardware = ({ sx: sxInput, sy: syInput, sw: swInput, sh: shInput,
   
   const isSideOpen = !isAwning && !isHopper && !isSliding;
   const isHandleRight = type.includes('Left');
-  const handlePadding = 30; 
+  
   let handleX = 0;
   let handleY = 0;
 
   if (isAwning) {
       handleX = sx + sw / 2;
-      handleY = sy + sh - handlePadding - 5;
+      handleY = sy + sh - 25;
   } else if (isHopper) {
       handleX = sx + sw / 2;
-      handleY = sy + handlePadding + 5;
+      handleY = sy + 25;
   } else {
-      handleX = isHandleRight ? sx + sw - 22 : sx + 22;
-      handleY = isDoor && sh > 1200 ? sy + sh - 1050 : sy + sh / 2;
+      // For all side-open windows & doors, handle is ALWAYS vertically and horizontally centered exactly on the swing "tip"
+      handleX = isHandleRight ? sx + sw - (isDoor ? 42 : 26) : sx + (isDoor ? 42 : 26);
+      handleY = sy + sh / 2;
   }
   
   const flipHandle = isHandleRight && !isAwning && !isHopper;
+  
+  // Calculate dynamic handle scale and exact visual tip offsets so meeting lines match handle tip perfectly
+  const handleScale = isDoor ? 2.4 : 3.6; // window is scaled up to 3.6 (exactly 2x larger than 1.8)
+  const leverLength = isDoor ? 32 : 26;
+  const pivotDistance = isDoor ? 42 : 26;
+  const handleTipOffset = pivotDistance + leverLength * handleScale;
 
   return (
     <g className="hardware-layer">
-      {/* اصلاح خطوط بازشو: صاف و هندسی دقیقاً تا لبه دستگیره بدون فلش‌های اضافه زاید */}
+      {/* Opening sash lines */}
       {isSideOpen && (
         <path 
           d={isHandleRight 
-            ? `M ${sx},${sy} L ${sx + sw - 12},${sy + sh/2} L ${sx},${sy + sh}`
-            : `M ${sx + sw},${sy} L ${sx + 12},${sy + sh/2} L ${sx + sw},${sy + sh}`
+            ? `M ${sx},${sy} L ${handleX},${sy + sh/2} L ${sx},${sy + sh}`
+            : `M ${sx + sw},${sy} L ${handleX},${sy + sh/2} L ${sx + sw},${sy + sh}`
           } 
           fill="none" 
           stroke={CAD.colors.openingLine} 
@@ -228,7 +266,6 @@ const TechnicalHardware = ({ sx: sxInput, sy: syInput, sw: swInput, sh: shInput,
         />
       )}
 
-      {/* تمام کدهای منطقی حالت‌های دوحالته، کلنگی، سایه‌بانی و ریلی شما ۱۰۰٪ حفظ شدند */}
       {type.includes('Tilt') && (
         <path 
           d={`M ${sx + 8},${sy + sh - 8} L ${sx + sw/2},${sy + 8} L ${sx + sw - 8},${sy + sh - 8}`} 
@@ -244,7 +281,7 @@ const TechnicalHardware = ({ sx: sxInput, sy: syInput, sw: swInput, sh: shInput,
 
       {isAwning && (
          <path 
-           d={`M ${sx},${sy} L ${sx+sw/2},${sy+sh} L ${sx+sw},${sy}`}
+           d={`M ${sx},${sy} L ${sx+sw/2},${sy+sh - 10} L ${sx+sw},${sy}`}
            fill="none" 
            stroke={CAD.colors.openingLine} 
            strokeWidth="2.5" 
@@ -255,7 +292,7 @@ const TechnicalHardware = ({ sx: sxInput, sy: syInput, sw: swInput, sh: shInput,
 
       {isHopper && (
          <path 
-           d={`M ${sx},${sy+sh} L ${sx+sw/2},${sy} L ${sx+sw},${sy+sh}`}
+           d={`M ${sx},${sy+sh} L ${sx+sw/2},${sy + 10} L ${sx+sw},${sy+sh}`}
            fill="none" 
            stroke={CAD.colors.openingLine} 
            strokeWidth="2.5" 
@@ -278,80 +315,166 @@ const TechnicalHardware = ({ sx: sxInput, sy: syInput, sw: swInput, sh: shInput,
          </g>
       )}
 
-      {/* بخش طراحی دستگیره‌های لایه‌ای پریمیوم شما بدون تغییر ماند */}
-      <g transform={`translate(${handleX}, ${handleY}) ${isAwning || isHopper ? 'rotate(90)' : ''} scale(${flipHandle ? -1 : 1}, 1)`}>
+      {/* LUXURY WHITE HARDWARE - BOTH WINDOW & DOOR HANDLES */}
+      <g transform={`translate(${handleX}, ${handleY}) ${isAwning || isHopper ? 'rotate(90)' : ''} scale(${flipHandle ? -1 : 1}, 1)`} filter="url(#shadow-soft)">
         {isDoor ? (
-           <g>
-             <rect x="-12" y="-55" width="24" height="150" rx="4" fill="#000000" opacity="0.2" />
-             <rect x="-12" y="-57" width="22" height="148" rx="3" fill="url(#metal-grad-classic)" stroke="#1e293b" strokeWidth="1.5" />
-             <rect x="-10" y="-55" width="18" height="144" rx="2" fill="none" stroke="#ffffff" strokeWidth="1" opacity="0.5" />
-             <circle cx="-1" cy="45" r="4" fill="#1e293b" />
-             <path d="M -4 45 L -5 57 L 3 57 L 2 45 Z" fill="#1e293b" />
-             <path d="M -6 4 L 55 4 C 65 4, 65 14, 55 14 L -6 14 Z" fill="#000000" opacity="0.2" />
-             <path d="M -6 -1 L 52 -1 C 60 -1, 60 9, 52 9 L -6 9 Z" fill="url(#metal-grad-classic)" stroke="#1e293b" strokeWidth="1.5" />
-             <path d="M -3 1 L 44 1 C 49 1, 49 3, 44 3 L -3 3 Z" fill="#ffffff" opacity="0.6" />
+           <g transform="scale(2.4)">
+             {/* Drop shadow behind the plate */}
+             <rect x="-7" y="-35" width="14" height="90" rx="3.5" fill="#090d16" opacity="0.15" transform="translate(1, 1.2)" />
+             
+             {/* Luxury bevelled outer metallic-silver border */}
+             <rect x="-7.5" y="-35.5" width="15" height="91" rx="4" fill="none" stroke="#e2e8f0" strokeWidth="0.8" />
+             
+             {/* Pure white premium glossy lacquer backplate */}
+             <rect x="-7" y="-35" width="14" height="90" rx="3.5" fill="url(#white-hardware-grad)" stroke="#94a3b8" strokeWidth="0.6" />
+             
+             {/* Inner glossy inlay border */}
+             <rect x="-5.8" y="-33.8" width="11.6" height="87.6" rx="2.5" fill="none" stroke="#ffffff" strokeWidth="0.5" opacity="0.9" />
+             
+             {/* Tiny elegant chrome mounting screws at top and bottom */}
+             <circle cx="0" cy="-29" r="1.2" fill="url(#metal-grad-classic)" stroke="#94a3b8" strokeWidth="0.4" />
+             <line x1="-0.8" y1="-29" x2="0.8" y2="-29" stroke="#334155" strokeWidth="0.3" />
+             
+             <circle cx="0" cy="46" r="1.2" fill="url(#metal-grad-classic)" stroke="#94a3b8" strokeWidth="0.4" />
+             <line x1="-0.8" y1="46" x2="0.8" y2="46" stroke="#334155" strokeWidth="0.3" />
+             
+             {/* Premium EURO cylinder detail with key path slot */}
+             {/* Brass/bronze cylinder frame shadow */}
+             <path d="M -3.2,16 A 3.2,3.2 0 0,1 3.2,16 L 2.4,28.5 A 2.2,2.2 0 0,1 -2.4,28.5 Z" fill="#000000" opacity="0.12" transform="translate(0.5, 0.5)" />
+             {/* Premium chrome-plated high-security cylinder */}
+             <path d="M -3,16 A 3,3 0 0,1 3,16 L 2.2,28 A 2,2 0 0,1 -2.2,28 Z" fill="url(#metal-grad-classic)" stroke="#475569" strokeWidth="0.5" />
+             {/* Key way core */}
+             <circle cx="0" cy="16" r="1.5" fill="#1e293b" />
+             <rect x="-0.6" y="16" width="1.2" height="9" rx="0.3" fill="#0f172a" />
+             <line x1="0" y1="17" x2="0" y2="23" stroke="#cbd5e1" strokeWidth="0.4" opacity="0.6" />
+             
+             {/* Chrome dual-ring collar under the lever neck */}
+             <circle cx="0" cy="-15" r="5.2" fill="none" stroke="#cbd5e1" strokeWidth="0.8" />
+             <circle cx="0" cy="-15" r="4.2" fill="url(#metal-grad-classic)" stroke="#94a3b8" strokeWidth="0.6" />
+             
+             {/* ITALIAN DESIGNED CURVED LEVER */}
+             {/* Lever soft cast drop shadow */}
+             <path d="M -3,-18 C 12,-21 24,-19 32,-15 C 35,-13.5 35,-9.5 30,-10 C 20,-11.5 8,-11 -3,-12 Z" fill="#000000" opacity="0.15" transform="translate(1, 1.8)" />
+             {/* Glossy lacquered white main body curve */}
+             <path d="M -3,-18 C 12,-21 24,-19 32,-15 C 35,-13.5 35,-9.5 30,-10 C 20,-11.5 8,-11 -3,-12 Z" fill="url(#white-hardware-grad)" stroke="#94a3b8" strokeWidth="0.7" />
+             
+             {/* Sleek chrome accent inlay stripe */}
+             <path d="M 0,-15 C 10,-16.5 20,-15.5 28,-13.2" fill="none" stroke="url(#metal-grad-classic)" strokeWidth="0.9" strokeLinecap="round" />
+             <path d="M 0,-15 C 10,-16.5 20,-15.5 28,-13.2" fill="none" stroke="#ffffff" strokeWidth="0.4" strokeLinecap="round" opacity="0.8" />
+             
+             {/* Pure white highlight flare curve */}
+             <path d="M -1,-16.8 C 9,-18 19,-17.2 27,-14.8" fill="none" stroke="#ffffff" opacity="0.95" strokeWidth="0.6" />
            </g>
         ) : isSliding ? (
-           <g>
-             <rect x="-10" y="-45" width="20" height="90" rx="8" fill="#000000" opacity="0.3" />
-             <rect x="-10" y="-47" width="18" height="88" rx="7" fill="url(#metal-grad-classic)" stroke="#1e293b" strokeWidth="1.5" />
-             <rect x="-8" y="-45" width="14" height="84" rx="5" fill="none" stroke="#ffffff" strokeWidth="1" opacity="0.4" />
-             <rect x="-5" y="-35" width="10" height="70" rx="4" fill="#090d16" stroke="#475569" strokeWidth="1" />
-             <rect x="-3" y="-10" width="6" height="20" rx="1.5" fill="url(#metal-grad-classic)" stroke="#1e293b" strokeWidth="0.8" />
-             <circle cx="0" cy="-22" r="2.5" fill="#ef4444" />
-             <circle cx="0" cy="22" r="2.5" fill="#22c55e" />
+           <g transform="scale(1.9)">
+             {/* Drop shadow */}
+             <rect x="-6" y="-25" width="12" height="50" rx="4" fill="#000000" opacity="0.1" transform="translate(0.8, 0.8)" />
+             {/* Glossy white body */}
+             <rect x="-6" y="-25" width="12" height="50" rx="4" fill="url(#white-hardware-grad)" stroke="#94a3b8" strokeWidth="0.8" />
+             <rect x="-5" y="-24" width="10" height="48" rx="3" fill="none" stroke="#ffffff" strokeWidth="0.5" opacity="0.6" />
+             
+             {/* Recessed grip panel */}
+             <rect x="-3" y="-18" width="6" height="36" rx="2" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="0.6" />
+             
+             {/* Slider status details */}
+             <circle cx="0" cy="-12" r="1.5" fill="#ef4444" />
+             <circle cx="0" cy="12" r="1.5" fill="#22c55e" />
            </g>
         ) : (
-           <g className="classic-lever-handle">
-             <rect x="-7" y="-27" width="14" height="54" rx="4" fill="#000000" opacity="0.15" transform="translate(1.5, 1.5)" />
-             <rect x="-7" y="-27" width="14" height="54" rx="4" fill="url(#metal-grad-classic)" stroke={CAD.colors.line} strokeWidth="1.2" />
-             <rect x="-5" y="-25" width="10" height="50" rx="2" fill="none" stroke="#ffffff" strokeWidth="0.8" opacity="0.5" />
-             <path d="M 0,-5 L 42,-5 C 46,-5 46,5 42,5 L 0,5 Z" fill="#000000" opacity="0.15" transform="translate(1, 2)" />
-             <path d="M 0,-5 L 42,-5 C 46,-5 46,5 42,5 L 0,5 Z" fill="url(#metal-grad-classic)" stroke={CAD.colors.line} strokeWidth="1.2" />
-             <circle cx="0" cy="0" r="5" fill="url(#metal-grad-classic)" stroke={CAD.colors.line} strokeWidth="1.0" />
-             <circle cx="0" cy="0" r="2" fill="#ffffff" opacity="0.7" />
-             <line x1="3" y1="-1" x2="36" y2="-1" stroke="#ffffff" strokeWidth="1.2" opacity="0.5" strokeLinecap="round" />
+           <g className="classic-lever-handle" transform="scale(3.6)">
+             {/* Backplate Shadow */}
+             <rect x="-5.5" y="-16.5" width="11" height="33" rx="3.5" fill="#000000" opacity="0.15" transform="translate(0.5, 0.8)" />
+             
+             {/* Backplate Border Chrome */}
+             <rect x="-5.5" y="-16.5" width="11" height="33" rx="3.5" fill="none" stroke="#e2e8f0" strokeWidth="0.4" />
+             
+             {/* Pure White Glossy Plate */}
+             <rect x="-5" y="-16" width="10" height="32" rx="3" fill="url(#white-hardware-grad)" stroke="#94a3b8" strokeWidth="0.6" />
+             
+             {/* White overlay inner glare bevel */}
+             <rect x="-4.2" y="-15.2" width="8.4" height="30.4" rx="2" fill="none" stroke="#ffffff" strokeWidth="0.4" opacity="0.8" />
+             
+             {/* Top/bottom micro screw indicators */}
+             <circle cx="0" cy="-12" r="0.6" fill="#64748b" />
+             <circle cx="0" cy="12" r="0.6" fill="#64748b" />
+             
+             {/* Pivot collar chrome ring */}
+             <circle cx="0" cy="0" r="4.2" fill="none" stroke="#cbd5e1" strokeWidth="0.6" />
+             <circle cx="0" cy="0" r="3.2" fill="url(#white-hardware-grad)" stroke="#94a3b8" strokeWidth="0.5" />
+             
+             {/* ERGONOMIC FLUID WINDOW LEVER */}
+             {/* Lever Shadow */}
+             <path d="M -1.5,-4 C 8,-5.5 17,-5 26,-3 C 28.5,-2.2 28.5,1.2 25,1.8 C 17,2.5 7,1.8 -1.5,1 Z" fill="#000000" opacity="0.12" transform="translate(0.5, 1.2)" />
+             {/* White Lacquered body */}
+             <path d="M -1.5,-4 C 8,-5.5 17,-5 26,-3 C 28.5,-2.2 28.5,1.2 25,1.8 C 17,2.5 7,1.8 -1.5,1 Z" fill="url(#white-hardware-grad)" stroke="#94a3b8" strokeWidth="0.6" />
+             
+             {/* Chrome designer groove line */}
+             <path d="M 2,-1.5 C 9,-2.4 17,-2.0 23,-1.0" fill="none" stroke="url(#metal-grad-classic)" strokeWidth="0.5" />
+             <path d="M 2,-1.5 C 9,-2.4 17,-2.0 23,-1.0" fill="none" stroke="#ffffff" strokeWidth="0.25" opacity="0.8" />
+             
+             {/* Handle Pivot cap */}
+             <circle cx="0" cy="0" r="2.2" fill="url(#white-hardware-grad)" stroke="#94a3b8" strokeWidth="0.4" />
+             <circle cx="0" cy="0" r="0.8" fill="#ffffff" opacity="0.9" />
            </g>
         )}
       </g>
 
-      {/* منطق و چیدمان پوزیشین لولاهای امنیتی کاملاً حفظ شدند */}
+      {/* DETAILED WHITE HINGES (MULTIPLE TIMES LARGER FOR PREMIUM GRAPHICAL TOUCH) */}
       {isSideOpen && (
-        <g fill="url(#metal-grad-classic)" stroke={CAD.colors.line} strokeWidth="1.2" filter="url(#shadow-soft)">
+        <g fill="url(#white-hardware-grad)" stroke="#94a3b8" strokeWidth="1.2" filter="url(#shadow-soft)">
            {(() => {
-               const hW = 8;
-               const hH = 38;
-               const hX = isHandleRight ? sx + 4 : sx + sw - hW - 4; 
+               // White hinges are designed significantly larger / thicker as requested
+               const hW = isDoor ? 18 : 12; // door hinges are heavy-duty and 3D
+               const hH = isDoor ? 88 : 55; // tall high-capacity white hinges
+               const hX = isHandleRight ? sx + 5 : sx + sw - hW - 5; 
+               const rx = isDoor ? 3 : 2;
                return (
                    <>
-                      <rect x={hX} y={sy + 35} width={hW} height={hH} rx={1.5} />
-                      <line x1={hX} y1={sy + 35 + hH/2} x2={hX + hW} y2={sy + 35 + hH/2} stroke={CAD.colors.line} strokeWidth="0.8" />
+                      {/* Top Hinge */}
+                      <g>
+                        <rect x={hX} y={sy + 35} width={hW} height={hH} rx={rx} />
+                        {/* Hinges structural details */}
+                        <line x1={hX} y1={sy + 35 + hH/2} x2={hX + hW} y2={sy + 35 + hH/2} stroke="#94a3b8" strokeWidth="1.2" />
+                        <line x1={hX} y1={sy + 35 + hH/2 + 1} x2={hX + hW} y2={sy + 35 + hH/2 + 1} stroke="#ffffff" strokeWidth="0.6" opacity="0.8" />
+                      </g>
                       
+                      {/* Middle Hinge for doors */}
                       {isDoor && (
-                        <>
-                          <rect x={hX} y={sy + sh/2 - hH/2} width={hW} height={hH} rx={1.5} />
-                          <line x1={hX} y1={sy + sh/2} x2={hX + hW} y2={sy + sh/2} stroke={CAD.colors.line} strokeWidth="0.8" />
-                        </>
+                        <g>
+                          <rect x={hX} y={sy + sh/2 - hH/2} width={hW} height={hH} rx={rx} />
+                          <line x1={hX} y1={sy + sh/2} x2={hX + hW} y2={sy + sh/2} stroke="#94a3b8" strokeWidth="1.2" />
+                          <line x1={hX} y1={sy + sh/2 + 1} x2={hX + hW} y2={sy + sh/2 + 1} stroke="#ffffff" strokeWidth="0.6" opacity="0.8" />
+                        </g>
                       )}
                       
-                      <rect x={hX} y={sy + sh - 35 - hH} width={hW} height={hH} rx={1.5} />
-                      <line x1={hX} y1={sy + sh - 35 - hH/2} x2={hX + hW} y2={sy + sh - 35 - hH/2} stroke={CAD.colors.line} strokeWidth="0.8" />
+                      {/* Bottom Hinge */}
+                      <g>
+                        <rect x={hX} y={sy + sh - 35 - hH} width={hW} height={hH} rx={rx} />
+                        <line x1={hX} y1={sy + sh - 35 - hH/2} x2={hX + hW} y2={sy + sh - 35 - hH/2} stroke="#94a3b8" strokeWidth="1.2" />
+                        <line x1={hX} y1={sy + sh - 35 - hH/2 + 1} x2={hX + hW} y2={sy + sh - 35 - hH/2 + 1} stroke="#ffffff" strokeWidth="0.6" opacity="0.8" />
+                      </g>
                    </>
                )
            })()}
         </g>
       )}
       
+      {/* Awning hinges: Large, robust, glossy white cylinders */}
       {isAwning && (
-          <g fill="url(#metal-grad-classic)" stroke={CAD.colors.line} strokeWidth="1.2" filter="url(#shadow-soft)">
-              <rect x={sx + sw * 0.2} y={sy + 2} width={42} height={8} rx={2} />
-              <rect x={sx + sw * 0.8 - 42} y={sy + 2} width={42} height={8} rx={2} />
+          <g fill="url(#white-hardware-grad)" stroke="#94a3b8" strokeWidth="1.2" filter="url(#shadow-soft)">
+              <rect x={sx + sw * 0.2} y={sy + 4} width={80} height={14} rx={3} />
+              <rect x={sx + sw * 0.8 - 80} y={sy + 4} width={80} height={14} rx={3} />
+              <line x1={sx + sw * 0.2 + 2} y1={sy + 10} x2={sx + sw * 0.2 + 78} y2={sy + 10} stroke="#cbd5e1" strokeWidth="0.8" />
+              <line x1={sx + sw * 0.8 - 78} y1={sy + 10} x2={sx + sw * 0.8 - 2} y2={sy + 10} stroke="#cbd5e1" strokeWidth="0.8" />
           </g>
       )}
+      {/* Hopper hinges: Large, robust, glossy white cylinders */}
       {isHopper && (
-          <g fill="url(#metal-grad-classic)" stroke={CAD.colors.line} strokeWidth="1.2" filter="url(#shadow-soft)">
-              <rect x={sx + sw * 0.2} y={sy + sh - 10} width={42} height={8} rx={2} />
-              <rect x={sx + sw * 0.8 - 42} y={sy + sh - 10} width={42} height={8} rx={2} />
+          <g fill="url(#white-hardware-grad)" stroke="#94a3b8" strokeWidth="1.2" filter="url(#shadow-soft)">
+              <rect x={sx + sw * 0.2} y={sy + sh - 18} width={80} height={14} rx={3} />
+              <rect x={sx + sw * 0.8 - 80} y={sy + sh - 18} width={80} height={14} rx={3} />
+              <line x1={sx + sw * 0.2 + 2} y1={sy + sh - 11} x2={sx + sw * 0.2 + 78} y2={sy + sh - 11} stroke="#cbd5e1" strokeWidth="0.8" />
+              <line x1={sx + sw * 0.8 - 78} y1={sy + sh - 11} x2={sx + sw * 0.8 - 2} y2={sy + sh - 11} stroke="#cbd5e1" strokeWidth="0.8" />
           </g>
       )}
     </g>
@@ -531,11 +654,34 @@ const RenderBlueprintNode = ({ node, x, y, w, h, isRoot, selectedId, onSelect, r
       currentPos += flexSize;
       
       if (idx < children.length - 1) {
+        const isMullionSelected = !readOnly && selectedId === node.id;
         if (dir === 'row') {
-          contentEls.push(<RenderMullion key={`mullion-${child.id}`} x={cx + cw} y={innerY} w={CAD.geom.mullionT} h={innerH} />);
+          contentEls.push(
+            <RenderMullion 
+              key={`mullion-${child.id}`} 
+              x={cx + cw} 
+              y={innerY} 
+              w={CAD.geom.mullionT} 
+              h={innerH} 
+              onClick={() => onSelect(node.id)}
+              isSelected={isMullionSelected}
+              readOnly={readOnly}
+            />
+          );
           currentPos += CAD.geom.mullionT;
         } else {
-          contentEls.push(<RenderMullion key={`mullion-${child.id}`} x={innerX} y={cy + ch} w={innerW} h={CAD.geom.mullionT} />);
+          contentEls.push(
+            <RenderMullion 
+              key={`mullion-${child.id}`} 
+              x={innerX} 
+              y={cy + ch} 
+              w={innerW} 
+              h={CAD.geom.mullionT} 
+              onClick={() => onSelect(node.id)}
+              isSelected={isMullionSelected}
+              readOnly={readOnly}
+            />
+          );
           currentPos += CAD.geom.mullionT;
         }
       }
@@ -746,6 +892,12 @@ export const WindowCanvas = (props: WindowCanvasProps) => {
             <stop offset="0%" stopColor="#f8fafc" />
             <stop offset="50%" stopColor="#cbd5e1" />
             <stop offset="100%" stopColor="#64748b" />
+          </linearGradient>
+          <linearGradient id="white-hardware-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#ffffff" />
+            <stop offset="35%" stopColor="#ffffff" />
+            <stop offset="75%" stopColor="#f1f5f9" />
+            <stop offset="100%" stopColor="#cbd5e1" />
           </linearGradient>
           <filter id="shadow-soft" x="-15%" y="-15%" width="130%" height="130%">
             <feDropShadow dx="2" dy="4" stdDeviation="5" floodColor="#0f172a" floodOpacity="0.22" />
