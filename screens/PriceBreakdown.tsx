@@ -12,11 +12,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 export const PriceBreakdown = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const locationState = location.state as { projectDetails: ProjectDetails, items: InvoiceItem[] } | null;
+  const locationState = location.state as { projectDetails: ProjectDetails, items: InvoiceItem[], fromProjectsList?: boolean } | null;
   
   const [projectDetails, setProjectDetails] = useState<ProjectDetails | null>(locationState?.projectDetails || null);
   const [items, setItems] = useState<InvoiceItem[]>(locationState?.items || []);
   const [settings, setSettings] = useState<AppSettings | null>(null);
+  const [deletingIndex, setDeletingIndex] = useState<number | null>(null);
   
   // Modal State
   const [showPriceReview, setShowPriceReview] = useState(false);
@@ -107,21 +108,20 @@ export const PriceBreakdown = () => {
     });
 
     navigate('/print-invoice', { 
-        state: { projectDetails, items: updatedItems } 
+        state: { projectDetails, items: updatedItems, fromProjectsList: locationState?.fromProjectsList } 
     });
   };
 
   const handleDeleteItem = (index: number) => {
-    if (window.confirm('آیا از حذف این آیتم مطمئن هستید؟')) {
-      const updatedItems = items.filter((_, i) => i !== index);
-      const totalMaterialPrice = updatedItems.reduce((acc, item) => acc + (item.calculations.unitPrice * item.quantity), 0);
-      const installationCost = Math.round(totalMaterialPrice * (projectDetails.installPercent / 100));
-      const finalProjectPrice = totalMaterialPrice + installationCost;
-      const projectToSave = { ...projectDetails, items: updatedItems, totalPrice: finalProjectPrice };
-      pricingStore.saveProject(projectToSave);
-      setItems(updatedItems);
-      setProjectDetails(projectToSave);
-    }
+    const updatedItems = items.filter((_, i) => i !== index);
+    const totalMaterialPrice = updatedItems.reduce((acc, item) => acc + (item.calculations.unitPrice * item.quantity), 0);
+    const installationCost = Math.round(totalMaterialPrice * ((projectDetails ? projectDetails.installPercent : 10) / 100));
+    const finalProjectPrice = totalMaterialPrice + installationCost;
+    const projectToSave = { ...projectDetails, items: updatedItems, totalPrice: finalProjectPrice } as ProjectDetails;
+    pricingStore.saveProject(projectToSave);
+    setItems(updatedItems);
+    setProjectDetails(projectToSave);
+    setDeletingIndex(null);
   };
 
   const totalMaterialPrice = items.reduce<number>((acc, item) => acc + (item.calculations.unitPrice * item.quantity), 0);
@@ -136,7 +136,13 @@ export const PriceBreakdown = () => {
     <div className="min-h-screen bg-[#f8fafc] pb-80 md:pb-64 lg:pb-72">
        {/* Top Navigation */}
        <div className="bg-white/80 backdrop-blur-xl px-6 pt-12 pb-6 flex items-center justify-between sticky top-0 z-40 border-b border-slate-200 shadow-sm">
-        <button onClick={() => navigate(-1)} className="p-3 bg-slate-100 rounded-2xl text-slate-600 active:scale-95 transition-transform">
+        <button onClick={() => {
+          if (locationState?.fromProjectsList) {
+            navigate('/projects');
+          } else {
+            navigate('/dashboard');
+          }
+        }} className="p-3 bg-slate-100 rounded-2xl text-slate-600 active:scale-95 transition-transform">
           <ArrowRight size={22} />
         </button>
         <div className="text-center">
@@ -146,7 +152,7 @@ export const PriceBreakdown = () => {
                 <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tight">{projectDetails.customerName}</p>
             </div>
         </div>
-        <button onClick={() => navigate('/project-setup', { state: { projectDetails, isEdit: true } })} className="p-3 bg-white border border-slate-200 text-slate-600 rounded-2xl active:scale-95 transition-transform shadow-sm">
+        <button onClick={() => navigate('/project-setup', { state: { projectDetails, isEdit: true, fromProjectsList: locationState?.fromProjectsList } })} className="p-3 bg-white border border-slate-200 text-slate-600 rounded-2xl active:scale-95 transition-transform shadow-sm">
             <Edit2 size={20} />
         </button>
       </div>
@@ -204,8 +210,17 @@ export const PriceBreakdown = () => {
                                 </div>
                             </div>
                             <div className="flex gap-1.5">
-                                <button onClick={() => navigate('/designer', { state: { projectDetails, items, editIndex: index } })} className="p-2 bg-slate-50 text-slate-400 rounded-xl hover:bg-blue-50 hover:text-blue-600 transition-all"><Edit2 size={14}/></button>
-                                <button onClick={() => handleDeleteItem(index)} className="p-2 bg-slate-50 text-slate-400 rounded-xl hover:bg-red-50 hover:text-red-500 transition-all"><Trash2 size={14}/></button>
+                                {deletingIndex === index ? (
+                                    <div className="flex items-center gap-1">
+                                        <button onClick={() => handleDeleteItem(index)} className="px-2 py-1.5 text-[10px] bg-red-600 hover:bg-red-700 text-white font-black rounded-xl transition-all shadow-sm">تایید</button>
+                                        <button onClick={() => setDeletingIndex(null)} className="px-2 py-1.5 text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-black rounded-xl transition-all">لغو</button>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <button onClick={() => navigate('/designer', { state: { projectDetails, items, editIndex: index, fromProjectsList: locationState?.fromProjectsList } })} className="p-2 bg-slate-50 text-slate-400 rounded-xl hover:bg-blue-50 hover:text-blue-600 transition-all"><Edit2 size={14}/></button>
+                                        <button onClick={() => setDeletingIndex(index)} className="p-2 bg-slate-50 text-slate-400 rounded-xl hover:bg-red-50 hover:text-red-500 transition-all"><Trash2 size={14}/></button>
+                                    </>
+                                )}
                             </div>
                         </div>
                         <div className="p-4 flex-1">
@@ -257,7 +272,7 @@ export const PriceBreakdown = () => {
                 >
                     <Printer size={16} /> مشاهده و صدور فاکتور
                 </button>
-                <button onClick={() => navigate('/designer', { state: { projectDetails, items } })} className="flex-1 bg-slate-50 border border-slate-200 text-slate-600 h-11 rounded-2xl font-black text-[10px] md:text-xs flex items-center justify-center hover:bg-slate-100 active:scale-95 transition-all">یونیت +</button>
+                <button onClick={() => navigate('/designer', { state: { projectDetails, items, fromProjectsList: locationState?.fromProjectsList } })} className="flex-1 bg-slate-50 border border-slate-200 text-slate-600 h-11 rounded-2xl font-black text-[10px] md:text-xs flex items-center justify-center hover:bg-slate-100 active:scale-95 transition-all">یونیت +</button>
                 <button onClick={() => navigate('/dashboard')} className="w-11 bg-slate-50 border border-slate-200 text-slate-400 hover:text-blue-600 h-11 rounded-2xl flex items-center justify-center hover:bg-slate-100 active:scale-95 transition-all"><Home size={18} /></button>
             </div>
         </div>

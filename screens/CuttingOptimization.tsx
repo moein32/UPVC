@@ -6,6 +6,7 @@ import { InputField, PrimaryButton, GlassCard, SelectField } from '../components
 import { toPersianDigits, toEnglishDigits } from '../utils/formatting';
 import { pricingStore } from '../services/pricingStore';
 import { SavedProject } from '../types';
+import { calculateDetailedCuts } from '../services/engineeringService';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toJpeg } from 'html-to-image';
 import { jsPDF } from 'jspdf';
@@ -111,20 +112,38 @@ export const CuttingOptimization = () => {
 
     project.items.forEach((unit, idx) => {
       const uId = (idx + 1).toString();
-      profiles.push({ id: `F-${idx}-W`, length: unit.config.width, quantity: unit.quantity * 2, label: `عرض`, type: 'Frame', angle: '45/45', unitId: uId });
-      profiles.push({ id: `F-${idx}-H`, length: unit.config.height, quantity: unit.quantity * 2, label: `ارتفاع`, type: 'Frame', angle: '45/45', unitId: uId });
-      if (unit.calculations.sashCount > 0) {
-          profiles.push({ id: `S-${idx}-W`, length: unit.config.width - 45, quantity: unit.quantity * unit.calculations.sashCount * 2, label: `ع بازشو`, type: 'Sash', angle: '45/45', unitId: uId });
-          profiles.push({ id: `S-${idx}-H`, length: unit.config.height - 45, quantity: unit.quantity * unit.calculations.sashCount * 2, label: `ا بازشو`, type: 'Sash', angle: '45/45', unitId: uId });
-      }
-      if (unit.config.mullions > 0) {
-          profiles.push({ id: `M-${idx}`, length: unit.config.height - 70, quantity: unit.quantity * unit.config.mullions, label: `مولیون`, type: 'Mullion', angle: '90/90', unitId: uId });
-      }
-      profiles.push({ id: `B-${idx}-W`, length: unit.config.width - 90, quantity: unit.quantity * 2, label: `زهوار ع`, type: 'Bead', angle: '45/45', unitId: uId });
-      profiles.push({ id: `B-${idx}-H`, length: unit.config.height - 90, quantity: unit.quantity * 2, label: `زهوار ا`, type: 'Bead', angle: '45/45', unitId: uId });
-
-      glasses.push({ id: `G-${idx}`, length: 0, width: unit.config.width - 80, height: unit.config.height - 80, quantity: unit.quantity, label: `شیشه`, type: 'Glass', unitId: uId });
+      
+      // Calculate 100% precise materials according to the MasterWin technical manual
+      const cuts = calculateDetailedCuts(unit.config.layout || {} as any, unit.config.width, unit.config.height, unit.config.frameType);
+      
+      cuts.forEach((cut, cIdx) => {
+        const itemQuantity = cut.quantity * unit.quantity;
+        
+        if (cut.type === 'Glass') {
+          glasses.push({
+            id: `G-${idx}-${cIdx}`,
+            length: 0,
+            width: cut.width || 0,
+            height: cut.height || 0,
+            quantity: itemQuantity,
+            label: `${cut.name} (${unit.config.width}x${unit.config.height})`,
+            type: 'Glass',
+            unitId: uId
+          });
+        } else if (cut.type === 'Frame' || cut.type === 'Sash' || cut.type === 'Mullion' || cut.type === 'Bead') {
+          profiles.push({
+            id: `${cut.type.substring(0, 1)}-${idx}-${cIdx}`,
+            length: cut.length,
+            quantity: itemQuantity,
+            label: cut.name,
+            type: cut.type,
+            angle: cut.angle || '45/45',
+            unitId: uId
+          });
+        }
+      });
     });
+
     setProfileList(profiles);
     setGlassList(glasses);
   };

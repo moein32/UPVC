@@ -64,7 +64,7 @@ export const Projects = () => {
         className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 hover:border-blue-100 transition-all group"
       >
         <div className="flex justify-between items-start mb-4">
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/breakdown', { state: { projectDetails: p, items: p.items } })}>
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/breakdown', { state: { projectDetails: p, items: p.items, fromProjectsList: true } })}>
             <div className={`p-3 rounded-xl ${isProduced ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'}`}>
               <Folder size={24} />
             </div>

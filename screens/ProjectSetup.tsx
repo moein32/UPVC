@@ -55,7 +55,7 @@ export const ProjectSetup = () => {
       if (existingProject) {
         const updatedProject = { ...existingProject, ...details };
         pricingStore.saveProject(updatedProject);
-        navigate('/breakdown', { state: { projectDetails: details, items: existingProject.items } });
+        navigate('/breakdown', { state: { projectDetails: details, items: existingProject.items, fromProjectsList: (location.state as any)?.fromProjectsList } });
       } else {
         alert("خطا: پروژه اصلی یافت نشد.");
       }
@@ -68,7 +68,13 @@ export const ProjectSetup = () => {
   return (
     <div className="min-h-screen bg-slate-50 p-6 flex flex-col">
       <div className="flex items-center mb-8 pt-6">
-        <button onClick={() => navigate(-1)} className="p-2 ml-4 bg-white rounded-xl shadow-sm text-slate-700">
+        <button onClick={() => {
+          if ((location.state as any)?.fromProjectsList) {
+            navigate('/projects');
+          } else {
+            navigate('/dashboard');
+          }
+        }} className="p-2 ml-4 bg-white rounded-xl shadow-sm text-slate-700">
           <ArrowRight size={20} />
         </button>
         <h1 className="text-xl font-bold text-slate-900">{isEdit ? 'ویرایش مشخصات پروژه' : 'مشخصات پروژه جدید'}</h1>

@@ -1,551 +1,646 @@
 import React from 'react';
-import { WindowNode } from '../types';
+import { WindowNode, OpeningDirection } from '../types';
 import { toPersianDigits } from '../utils/formatting';
 
-// --- INDUSTRIAL CAD STANDARDS (RETAINED & GRAPHICALLY OPTIMIZED) ---
+// CAD Geometric and Styling constants for high-fidelity architectural rendering
 const CAD = {
   stroke: {
-    outer: 3.5,       
-    inner: 2.0,      
-    bead: 1.9,       
-    miter: 1.5, // بهینه‌سازی شده برای خط مایتِر تمیز       
-    dimension: 1.5,   
-    tick: 2.5,        
+    outer: 4.0,       // Outer main frame contour
+    inner: 2.5,       // Inner frame sash contours
+    bead: 1.5,        // Glazing bead contour (زهوار پنجره)
+    spacer: 1.2,      // Double glazing thermal spacer bar profile
+    miter: 1.5,        // Miter corner joints
+    dimension: 1.5,   // Dimension lines
+    tick: 2.5,        // Architectural tick marks
+    hinge: 1.5,       // Metal hinge contours
+    glazeLine: 2.0    // Reflective glass glare lines
   },
   colors: {
-    profileFill: '#ffffff', 
-    line: '#0f172a',        
-    beadLine: '#475569',    
-    glass: '#bae6fd', 
-    panel: '#0f2038',       
-    dim: '#000000',         
-    grid: '#1e3a8a',
-    activeFrame: '#60a5fa',
-    openingLine: '#38bdf8',
-    miter: '#94a3b8'
+    line: '#0f172a',         // Deep slate contour lines
+    beadLine: '#475569',     // Glazing bead divisions
+    spacerColor: '#64748b',  // Thermal glass spacer alloy color
+    activeFrame: '#2563eb',  // Blue highlight for selected parts
+    openingLine: '#0ea5e9',  // Cyan opening direction visualization
+    miter: '#94a3b8',        // Distinct miter joints
+    dim: '#1e293b',          // High-contrast architectural dimension text
+    glassBase: '#e0f2fe',    // Translucent light blue sky color
+    spacerInner: '#1e293b'   // Sealant line color
   },
   geom: {
-    frameT: 62,           
-    sashT: 68,            
-    mullionT: 62,         
+    frameT: 62,        // Outer frame thickness
+    sashT: 68,         // Active sash (بازشو) thickness
+    mullionT: 62,      // Fixed divider mullion thickness (مولیون)
+    overlapSliding: 35 // Horizontal overlap for sliding sashes
   },
   font: {
-    dimSize: 52,          
+    dimSize: 42
   }
 };
 
-const CadGrid = () => (
-  <pattern id="industrial-grid" width="40" height="40" patternUnits="userSpaceOnUse">
-    {/* Fine Engineering blueprint grid of 10px */}
-    <path d="M 10 0 L 10 40 M 20 0 L 20 40 M 30 0 L 30 40 M 0 10 L 40 10 M 0 20 L 40 20 M 0 30 L 40 30" fill="none" stroke="#11294a" strokeWidth="0.5" strokeOpacity="0.45" />
-    {/* Major alignment grid lines every 40px */}
-    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1d4ed8" strokeWidth="1.0" strokeOpacity="0.6" />
-  </pattern>
-);
+interface RenderFrameProps {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  thickness: number;
+  isRenovation?: boolean;
+  isDoorSash?: boolean;
+}
 
-const RenderFrame = ({ x, y, w, h, thickness, isRenovation, isDoorSash }: { x: number, y: number, w: number, h: number, thickness: number, isRenovation?: boolean, isDoorSash?: boolean }) => {
+// 1. High-fidelity frame profile drawing with bevels, mitres, bead lines, and realistic textures
+const RenderFrame = ({ x, y, w, h, thickness, isRenovation, isDoorSash }: RenderFrameProps) => {
   if (w <= 0 || h <= 0) return null;
-
+  
   const innerX = x + thickness;
   const innerY = y + thickness;
   const innerW = Math.max(0, w - 2 * thickness);
   const innerH = Math.max(0, h - 2 * thickness);
+  const beadOffset = Math.round(thickness * 0.25); // Inset for glazing bead profile
 
-  const beadOffset = Math.round(thickness * 0.22);
-  const beadSizeDiff = beadOffset * 2;
-
-  // تمام ساختار تو در توی چندکاناله قبلی حذف و با خطوط تمیز دوخطی و مایتِر جایگزین شد
   return (
-    <g className="render-frame" filter="url(#shadow-soft)">
-      {/* Flange / Lip for Renovation Frame Profile (لبه بازسازی روی فریم بیرونی) */}
+    <g className="render-frame" filter="url(#shadow-frame-3d)">
+      {/* Renovation frame extensions (Sill or flange profile for older properties - فریم بازسازی) */}
       {isRenovation && (
-        <g className="renovation-lip-outer">
-          <rect x={x - 20} y={y - 20} width={w + 40} height={h + 40} fill="url(#frame-grad-h)" stroke={CAD.colors.line} strokeWidth={CAD.stroke.outer} />
-          <rect x={x - 12} y={y - 12} width={w + 24} height={h + 24} fill="none" stroke={CAD.colors.beadLine} strokeWidth="1" opacity="0.4" />
+        <g opacity="0.95">
+          <rect
+            x={x - 22}
+            y={y - 22}
+            width={w + 44}
+            height={h + 44}
+            fill="url(#renovation-grad)"
+            stroke={CAD.colors.line}
+            strokeWidth={CAD.stroke.outer}
+            rx={2}
+          />
+          <rect
+            x={x - 10}
+            y={y - 10}
+            width={w + 20}
+            height={h + 20}
+            fill="none"
+            stroke={CAD.colors.beadLine}
+            strokeWidth={CAD.stroke.bead}
+            opacity="0.5"
+          />
         </g>
       )}
 
-      {/* بدنه اصلی یکدست پروفیل */}
-      <rect x={x} y={y} width={w} height={h} fill="url(#frame-grad-h)" stroke="none" />
-      
-      {/* خط محیطی بیرونی */}
-      <rect x={x} y={y} width={w} height={h} fill="none" stroke={CAD.colors.line} strokeWidth={CAD.stroke.outer} />
-      
-      {/* لاستیک درزگیر ثانویه (مخصوص سش درب برای عایق‌بندی فوق‌العاده) */}
+      {/* Main Extruded Profile base */}
+      <rect
+        x={x}
+        y={y}
+        width={w}
+        height={h}
+        fill="url(#frame-grad-h)"
+        stroke={CAD.colors.line}
+        strokeWidth={CAD.stroke.outer}
+      />
+
+      {/* Door Leaf bottom kick-plate or extra sash reinforcement (درب بالکنی یا ورودی) */}
       {isDoorSash && (
-        <rect x={innerX - 8} y={innerY - 8} width={innerW + 16} height={innerH + 16} fill="none" stroke="#2c3e50" strokeWidth="2.5" strokeLinecap="round" opacity="0.8" />
+        <g>
+          <rect
+            x={innerX - 8}
+            y={innerY - 8}
+            width={innerW + 16}
+            height={innerH + 16}
+            fill="none"
+            stroke="#0f172a"
+            strokeWidth="2.5"
+            opacity="0.8"
+          />
+          {/* Kick plate region at bottom of doors */}
+          {innerH > 400 && (
+            <rect
+              x={innerX}
+              y={innerY + innerH - 120}
+              width={innerW}
+              height={120}
+              fill="url(#metal-grad-classic)"
+              stroke={CAD.colors.line}
+              strokeWidth={CAD.stroke.inner}
+              opacity="0.5"
+            />
+          )}
+        </g>
       )}
 
-      {/* خط نمای ظریف داخلی (زهوار موازای نقشه) */}
-      <rect x={innerX - beadOffset} y={innerY - beadOffset} width={innerW + beadSizeDiff} height={innerH + beadSizeDiff} fill="none" stroke={CAD.colors.beadLine} strokeWidth={CAD.stroke.bead} opacity="0.6" />
-
-      {/* خطوط مایتِر برش ۴۵ درجه در گوشه‌ها (دقیقاً مطابق استاندارد CAD) */}
-      <line x1={x} y1={y} x2={innerX} y2={innerY} stroke={CAD.colors.line} strokeWidth={CAD.stroke.miter} />
-      <line x1={x + w} y1={y} x2={innerX + innerW} y2={innerY} stroke={CAD.colors.line} strokeWidth={CAD.stroke.miter} />
-      <line x1={x} y1={y + h} x2={innerX} y2={innerY + innerH} stroke={CAD.colors.line} strokeWidth={CAD.stroke.miter} />
-      <line x1={x + w} y1={y + h} x2={innerX + innerW} y2={innerY + innerH} stroke={CAD.colors.line} strokeWidth={CAD.stroke.miter} />
-
-      {/* لاستیک درزگیر مشکی اصلی شما حفظ شد */}
-      <rect x={innerX - 2} y={innerY - 2} width={innerW + 4} height={innerH + 4} fill="none" stroke="#090d16" strokeWidth="4" strokeLinecap="round" opacity="0.95" />
+      {/* 3D Bevel Chamfers - Diagonal miter weld joins (جوش زاویه قاب یوپی‌وی‌سی) */}
+      <line x1={x} y1={y} x2={innerX} y2={innerY} stroke={CAD.colors.miter} strokeWidth={CAD.stroke.miter} />
+      <line x1={x + w} y1={y} x2={innerX + innerW} y2={innerY} stroke={CAD.colors.miter} strokeWidth={CAD.stroke.miter} />
+      <line x1={x} y1={y + h} x2={innerX} y2={innerY + innerH} stroke={CAD.colors.miter} strokeWidth={CAD.stroke.miter} />
+      <line x1={x + w} y1={y + h} x2={innerX + innerW} y2={innerY + innerH} stroke={CAD.colors.miter} strokeWidth={CAD.stroke.miter} />
       
-      {/* خط مرز قاطع داخلی */}
-      <rect x={innerX} y={innerY} width={innerW} height={innerH} fill="none" stroke={CAD.colors.line} strokeWidth={CAD.stroke.inner} />
+      {/* Subtle secondary inner shadow stroke */}
+      <rect
+        x={innerX - 2}
+        y={innerY - 2}
+        width={innerW + 4}
+        height={innerH + 4}
+        fill="none"
+        stroke="#0f172a"
+        strokeWidth="2"
+        opacity="0.85"
+      />
+
+      {/* Ultimate absolute glass cutout opening bounding line */}
+      <rect
+        x={innerX}
+        y={innerY}
+        width={innerW}
+        height={innerH}
+        fill="none"
+        stroke={CAD.colors.line}
+        strokeWidth={CAD.stroke.inner}
+      />
     </g>
   );
 };
 
-const RenderMullion = ({ 
-  x, y, w, h, 
-  onClick, 
-  isSelected, 
-  readOnly 
-}: { 
-  x: number, y: number, w: number, h: number, 
-  onClick?: () => void, 
-  isSelected?: boolean, 
-  readOnly?: boolean 
-}) => {
+// 2. Extruded Mullion (مولیون ثابت) with high-end miter joins and double stop-miter line indicators
+interface RenderMullionProps {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  onClick?: () => void;
+  isSelected?: boolean;
+  readOnly?: boolean;
+}
+
+const RenderMullion = ({ x, y, w, h, onClick, isSelected, readOnly }: RenderMullionProps) => {
   if (w <= 0 || h <= 0) return null;
   const isVertical = w < h;
-  
-  const els: React.ReactNode[] = [];
-  
-  if (isVertical) {
-    // لاستیک‌های درزگیر شما کاملاً حفظ شدند
-    els.push(<line key="g-left" x1={x} y1={y} x2={x} y2={y+h} stroke="#090d16" strokeWidth="4" opacity="0.95" />);
-    els.push(<line key="g-right" x1={x+w} y1={y} x2={x+w} y2={y+h} stroke="#090d16" strokeWidth="4" opacity="0.95" />);
-    
-    // بدنه یکدست مولیون بدون لایه‌های تو در توی پله‌ای شلوغ
-    els.push(<rect key="body" x={x} y={y} width={w} height={h} fill={isSelected ? "url(#metal-grad-classic)" : "url(#frame-grad-v)"} stroke={isSelected ? CAD.colors.activeFrame : CAD.colors.line} strokeWidth={isSelected ? 2 : CAD.stroke.inner} />);
-    
-    // خطوط موازی مهندسی ظریف روی وادار با تمایز و وضوح عالی برای زهوار
-    const mbOffset = Math.round(w * 0.22);
-    els.push(<line key="m-line-1" x1={x+mbOffset} y1={y} x2={x+mbOffset} y2={y+h} stroke={isSelected ? CAD.colors.activeFrame : CAD.colors.beadLine} strokeWidth={CAD.stroke.bead} opacity="0.8" />);
-    els.push(<line key="m-line-2" x1={x+w-mbOffset} y1={y} x2={x+w-mbOffset} y2={y+h} stroke={isSelected ? CAD.colors.activeFrame : CAD.colors.beadLine} strokeWidth={CAD.stroke.bead} opacity="0.8" />);
-  } else {
-    els.push(<line key="g-top" x1={x} y1={y} x2={x+w} y2={y} stroke="#090d16" strokeWidth="4" opacity="0.95" />);
-    els.push(<line key="g-bot" x1={x} y1={y+h} x2={x+w} y2={y+h} stroke="#090d16" strokeWidth="4" opacity="0.95" />);
-    
-    els.push(<rect key="body" x={x} y={y} width={w} height={h} fill={isSelected ? "url(#metal-grad-classic)" : "url(#frame-grad-h)"} stroke={isSelected ? CAD.colors.activeFrame : CAD.colors.line} strokeWidth={isSelected ? 2 : CAD.stroke.inner} />);
-    
-    const mbOffset = Math.round(h * 0.22);
-    els.push(<line key="m-line-1" x1={x} y1={y+mbOffset} x2={x+w} y2={y+mbOffset} stroke={isSelected ? CAD.colors.activeFrame : CAD.colors.beadLine} strokeWidth={CAD.stroke.bead} opacity="0.8" />);
-    els.push(<line key="m-line-2" x1={x} y1={y+h-mbOffset} x2={x+w} y2={y+h-mbOffset} stroke={isSelected ? CAD.colors.activeFrame : CAD.colors.beadLine} strokeWidth={CAD.stroke.bead} opacity="0.8" />);
-  }
+  const beadOffset = Math.round((isVertical ? w : h) * 0.22);
 
-  // Hit area (overlay) representing the transom/mullion which makes it selective
-  if (!readOnly && onClick) {
-    const hitPadding = 12;
-    els.push(
-      <rect 
-        key="hit-area"
-        x={isVertical ? x - hitPadding : x}
-        y={isVertical ? y : y - hitPadding}
-        width={isVertical ? w + 2 * hitPadding : w}
-        height={isVertical ? h : h + 2 * hitPadding}
-        fill="transparent"
-        cursor="pointer"
-        className="mullion-hit-area hover:fill-blue-500/10 transition-colors duration-200"
-        onClick={(e) => {
+  const r = 12; // Fillet bend radius to frame
+  const strokeColor = isSelected ? CAD.colors.activeFrame : CAD.colors.line;
+  const mullionFill = isSelected ? "url(#metal-grad-classic)" : (isVertical ? "url(#frame-grad-v)" : "url(#frame-grad-h)");
+
+  return (
+    <g
+      onClick={(e) => {
+        if (!readOnly && onClick) {
           e.stopPropagation();
           onClick();
-        }}
+        }
+      }}
+      style={{ cursor: onClick ? 'pointer' : 'default' }}
+      className="render-mullion"
+      filter="url(#shadow-hardware)"
+    >
+      {/* Main profile fill without standard rect border stroke to allow continuous welded transition */}
+      <rect
+        x={x}
+        y={y}
+        width={w}
+        height={h}
+        fill={mullionFill}
+        stroke="none"
       />
-    );
-  }
-  
-  return <g filter="url(#shadow-soft)">{els}</g>;
-};
 
-const RenderGlass = ({ x, y, w, h }: { x: number, y: number, w: number, h: number }) => {
-  if (w <= 0 || h <= 0) return null;
-  return (
-    <g className="render-glass">
-      <rect x={x} y={y} width={w} height={h} fill="#e2f1ff" fillOpacity="1.0" />
-      <rect x={x} y={y} width={w} height={h} fill="url(#glass-grad)" stroke="none" fillOpacity="0.9" />
-      <rect x={x+6} y={y+6} width={Math.max(0, w-12)} height={Math.max(0, h-12)} fill="none" stroke="#2563eb" strokeWidth="1.2" strokeOpacity="0.3" />
-      <path d={`M${x},${y+h} L${x},${y} L${x+w},${y}`} fill="none" stroke="#ffffff" strokeWidth="2.5" strokeOpacity="0.5" />
-      <path d={`M${x},${y+h} L${x+w},${y+h} L${x+w},${y}`} fill="none" stroke="#000000" strokeWidth="2" strokeOpacity="0.15" />
-      {/* خطوط بازتاب نوری ملایم شما کاملاً دست‌نخورده باقی ماندند */}
-      <path d={`M${x + w*0.15},${y} L${x},${y + h*0.15}`} stroke="#ffffff" strokeWidth="2.5" strokeOpacity="0.35" />
-      <path d={`M${x + w*0.18},${y} L${x},${y + h*0.18}`} stroke="#ffffff" strokeWidth="1" strokeOpacity="0.3" />
-      <path d={`M${x + w*0.4},${y} L${x},${y + h*0.4}`} stroke="#ffffff" strokeWidth="5.5" strokeOpacity="0.25" />
-      <path d={`M${x + w*0.44},${y} L${x},${y + h*0.44}`} stroke="#ffffff" strokeWidth="2" strokeOpacity="0.2" />
+      {isVertical ? (
+        <>
+          {/* Corner wedges filling the flare joints */}
+          <path d={`M ${x},${y} L ${x},${y + r} Q ${x},${y} ${x - r},${y} Z`} fill={mullionFill} stroke="none" />
+          <path d={`M ${x + w},${y} L ${x + w},${y + r} Q ${x + w},${y} ${x + w + r},${y} Z`} fill={mullionFill} stroke="none" />
+          <path d={`M ${x},${y + h} L ${x},${y + h - r} Q ${x},${y + h} ${x - r},${y + h} Z`} fill={mullionFill} stroke="none" />
+          <path d={`M ${x + w},${y + h} L ${x + w},${y + h - r} Q ${x + w},${y + h} ${x + w + r},${y + h} Z`} fill={mullionFill} stroke="none" />
+
+          {/* Straight outer boundary lines of the vertical mullion profile */}
+          <line x1={x} y1={y + r} x2={x} y2={y + h - r} stroke={strokeColor} strokeWidth={CAD.stroke.inner} />
+          <line x1={x + w} y1={y + r} x2={x + w} y2={y + h - r} stroke={strokeColor} strokeWidth={CAD.stroke.inner} />
+
+          {/* Seamless flared fillets bridging vertical mullion with frame contour */}
+          <path d={`M ${x - r},${y} Q ${x},${y} ${x},${y + r}`} fill="none" stroke={strokeColor} strokeWidth={CAD.stroke.inner} strokeLinecap="round" />
+          <path d={`M ${x + w + r},${y} Q ${x + w},${y} ${x + w},${y + r}`} fill="none" stroke={strokeColor} strokeWidth={CAD.stroke.inner} strokeLinecap="round" />
+          <path d={`M ${x - r},${y + h} Q ${x},${y + h} ${x},${y + h - r}`} fill="none" stroke={strokeColor} strokeWidth={CAD.stroke.inner} strokeLinecap="round" />
+          <path d={`M ${x + w + r},${y + h} Q ${x + w},${y + h} ${x + w},${y + h - r}`} fill="none" stroke={strokeColor} strokeWidth={CAD.stroke.inner} strokeLinecap="round" />
+
+          {/* Inside structural steel core line */}
+          <line x1={x + beadOffset} y1={y} x2={x + beadOffset} y2={y + h} stroke={CAD.colors.beadLine} strokeWidth={CAD.stroke.bead} opacity="0.6" />
+          <line x1={x + w / 2} y1={y} x2={x + w / 2} y2={y + h} stroke={CAD.colors.line} strokeWidth="1" strokeDasharray="6,4" opacity="0.25" />
+          <line x1={x + w - beadOffset} y1={y} x2={x + w - beadOffset} y2={y + h} stroke={CAD.colors.beadLine} strokeWidth={CAD.stroke.bead} opacity="0.6" />
+        </>
+      ) : (
+        <>
+          {/* Corner wedges filling the flare joints */}
+          <path d={`M ${x},${y} L ${x + r},${y} Q ${x},${y} ${x},${y - r} Z`} fill={mullionFill} stroke="none" />
+          <path d={`M ${x},${y + h} L ${x + r},${y + h} Q ${x},${y + h} ${x},${y + h + r} Z`} fill={mullionFill} stroke="none" />
+          <path d={`M ${x + w},${y} L ${x + w - r},${y} Q ${x + w},${y} ${x + w},${y - r} Z`} fill={mullionFill} stroke="none" />
+          <path d={`M ${x + w},${y + h} L ${x + w - r},${y + h} Q ${x + w},${y + h} ${x + w},${y + h + r} Z`} fill={mullionFill} stroke="none" />
+
+          {/* Straight outer boundary lines of the horizontal transom profile */}
+          <line x1={x + r} y1={y} x2={x + w - r} y2={y} stroke={strokeColor} strokeWidth={CAD.stroke.inner} />
+          <line x1={x + r} y1={y + h} x2={x + w - r} y2={y + h} stroke={strokeColor} strokeWidth={CAD.stroke.inner} />
+
+          {/* Seamless flared fillets bridging horizontal transom with frame or mullion contour */}
+          <path d={`M ${x},${y - r} Q ${x},${y} ${x + r},${y}`} fill="none" stroke={strokeColor} strokeWidth={CAD.stroke.inner} strokeLinecap="round" />
+          <path d={`M ${x},${y + h + r} Q ${x},${y + h} ${x + r},${y + h}`} fill="none" stroke={strokeColor} strokeWidth={CAD.stroke.inner} strokeLinecap="round" />
+          <path d={`M ${x + w},${y - r} Q ${x + w},${y} ${x + w - r},${y}`} fill="none" stroke={strokeColor} strokeWidth={CAD.stroke.inner} strokeLinecap="round" />
+          <path d={`M ${x + w},${y + h + r} Q ${x + w},${y + h} ${x + w - r},${y + h}`} fill="none" stroke={strokeColor} strokeWidth={CAD.stroke.inner} strokeLinecap="round" />
+
+          {/* Inside structural indicators */}
+          <line x1={x} y1={y + beadOffset} x2={x + w} y2={y + beadOffset} stroke={CAD.colors.beadLine} strokeWidth={CAD.stroke.bead} opacity="0.6" />
+          <line x1={x} y1={y + h / 2} x2={x + w} y2={y + h / 2} stroke={CAD.colors.line} strokeWidth="1" strokeDasharray="6,4" opacity="0.25" />
+          <line x1={x} y1={y + h - beadOffset} x2={x + w} y2={y + h - beadOffset} stroke={CAD.colors.beadLine} strokeWidth={CAD.stroke.bead} opacity="0.6" />
+        </>
+      )}
     </g>
   );
 };
 
+// 3. Double Glazing Glass (شیشه دوجداره) with thermal spacer bar spacer alloy and rich sun shine glossy reflections
+const RenderGlass = ({ x, y, w, h }: { x: number, y: number, w: number, h: number }) => {
+  if (w <= 0 || h <= 0) return null;
+
+  const spacerOffset = 18; // Distance of the double-glazed aluminium spacer from the frame inside
+  const glassW = Math.max(0, w);
+  const glassH = Math.max(0, h);
+  
+  return (
+    <g className="render-glass" filter="url(#shadow-glass-inset)">
+      {/* 1. Translucent baseline glass color */}
+      <rect x={x} y={y} width={glassW} height={glassH} fill={CAD.colors.glassBase} />
+      {/* 2. Glass glossy gradient shimmer */}
+      <rect x={x} y={y} width={glassW} height={glassH} fill="url(#glass-grad)" stroke="none" fillOpacity="0.85" />
+
+      {/* 3. Double Glazing Aluminium Spacer (اسپیسر آلومینیومی شیشه دوجداره) */}
+      {glassW > spacerOffset * 2 && glassH > spacerOffset * 2 && (
+        <g opacity="0.8">
+          {/* Black butyl sealant line */}
+          <rect
+            x={x + spacerOffset - 2}
+            y={y + spacerOffset - 2}
+            width={glassW - (spacerOffset - 2) * 2}
+            height={glassH - (spacerOffset - 2) * 2}
+            fill="none"
+            stroke={CAD.colors.spacerInner}
+            strokeWidth="2"
+            opacity="0.6"
+          />
+          {/* Main extruded aluminium spacer bar alloy */}
+          <rect
+            x={x + spacerOffset}
+            y={y + spacerOffset}
+            width={glassW - spacerOffset * 2}
+            height={glassH - spacerOffset * 2}
+            fill="none"
+            stroke="url(#alloy-grad)"
+            strokeWidth={CAD.stroke.spacer}
+          />
+        </g>
+      )}
+
+      {/* 4. Elegant 3D Glass Gleam Reflection Stripes */}
+      <path d={`M${x + glassW * 0.15},${y} L${x},${y + glassH * 0.15}`} stroke="#ffffff" strokeWidth="2" strokeOpacity="0.30" />
+      <path d={`M${x + glassW * 0.40},${y} L${x},${y + glassH * 0.40}`} stroke="#ffffff" strokeWidth="5.0" strokeOpacity="0.22" />
+      <path d={`M${x + glassW * 0.46},${y} L${x},${y + glassH * 0.46}`} stroke="#ffffff" strokeWidth="1.5" strokeOpacity="0.15" />
+      
+      {/* Bottom corner reflection */}
+      {glassW > 100 && glassH > 100 && (
+        <path d={`M${x + glassW},${y + glassH - glassH * 0.18} L${x + glassW - glassW * 0.18},${y + glassH}`} stroke="#ffffff" strokeWidth="2.5" strokeOpacity="0.12" />
+      )}
+    </g>
+  );
+};
+
+// 4. Panel (پنل پی‌وی‌سی) rendering with realistic vertical or horizontal grooved details and soft indentation shadow lines
 const RenderPanel = ({ x, y, w, h, op }: { x: number, y: number, w: number, h: number, op: string }) => {
   if (w <= 0 || h <= 0) return null;
-  const els = [
-    <rect key="panel-bg" x={x} y={y} width={w} height={h} fill="url(#panel-grad)" stroke="none" />
-  ];
-  
+  const els = [<rect key="bg" x={x} y={y} width={w} height={h} fill="url(#panel-grad)" stroke={CAD.colors.line} strokeWidth="1.5" />];
+  const grooveCount = Math.max(3, Math.min(10, Math.floor((grooveCount => op === 'PanelV' ? w / 60 : h / 60)())));
+
   if (op === 'PanelV') {
-    const lineCount = 3;
-    const spacing = w / (lineCount + 1);
-    for (let i = 1; i <= lineCount; i++) {
-        els.push(
-          <g key={`pv-${i}`}>
-            <line x1={x + spacing * i} y1={y} x2={x + spacing * i} y2={y + h} stroke="#ffffff" strokeWidth={3} opacity={0.7} />
-            <line x1={x + spacing * i + 1} y1={y} x2={x + spacing * i + 1} y2={y + h} stroke={CAD.colors.beadLine} strokeWidth={1} opacity={0.6} />
-          </g>
-        );
+    const spacing = w / (grooveCount + 1);
+    for (let i = 1; i <= grooveCount; i++) {
+      const gx = x + spacing * i;
+      els.push(
+        <g key={`v-${i}`} opacity="0.8">
+          {/* Shadow of groove */}
+          <line x1={gx} y1={y} x2={gx} y2={y + h} stroke="#0f172a" strokeWidth={1.5} opacity={0.35} />
+          {/* Light highlight of groove */}
+          <line x1={gx + 1.5} y1={y} x2={gx + 1.5} y2={y + h} stroke="#ffffff" strokeWidth={1.0} opacity={0.7} />
+        </g>
+      );
     }
   } else if (op === 'PanelH') {
-    const lineCount = 3;
-    const spacing = h / (lineCount + 1);
-    for (let i = 1; i <= lineCount; i++) {
-        els.push(
-          <g key={`ph-${i}`}>
-            <line x1={x} y1={y + spacing * i} x2={x + w} y2={y + spacing * i} stroke="#ffffff" strokeWidth={3} opacity={0.7} />
-            <line x1={x} y1={y + spacing * i + 1} x2={x + w} y2={y + spacing * i + 1} stroke={CAD.colors.beadLine} strokeWidth={1} opacity={0.6} />
-          </g>
-        );
+    const spacing = h / (grooveCount + 1);
+    for (let i = 1; i <= grooveCount; i++) {
+      const gy = y + spacing * i;
+      els.push(
+        <g key={`h-${i}`} opacity="0.8">
+          {/* Shadow of groove */}
+          <line x1={x} y1={gy} x2={x + w} y2={gy} stroke="#0f172a" strokeWidth={1.5} opacity={0.35} />
+          {/* Light highlight of groove */}
+          <line x1={x} y1={gy + 1.5} x2={x + w} y2={gy + 1.5} stroke="#ffffff" strokeWidth={1.0} opacity={0.7} />
+        </g>
+      );
     }
   }
-  
-  els.push(
-    <rect key="inner-shadow-path" x={x} y={y} width={w} height={h} fill="none" stroke="#cbd5e1" strokeWidth="4" opacity="0.6" />
-  );
-
   return <g>{els}</g>;
 };
 
-const TechnicalHardware = ({ sx: sxInput, sy: syInput, sw: swInput, sh: shInput, type }: { sx: number, sy: number, sw: number, sh: number, type: string }) => {
+// 4.5. High-fidelity separate miter-cut glazing beads (زهوار با برش‌های ۴۵ درجه مجزا)
+const RenderBeading = ({ x, y, w, h }: { x: number; y: number; w: number; h: number }) => {
+  if (w <= 0 || h <= 0) return null;
+  const bt = 12; // Beading profile thickness
+  const dW = Math.max(0, w);
+  const dH = Math.max(0, h);
+  const actualBt = Math.min(bt, Math.min(dW, dH) / 2);
+
+  // Math miter cuts at 45 degrees
+  const topPath = `M ${x},${y} L ${x + dW},${y} L ${x + dW - actualBt},${y + actualBt} L ${x + actualBt},${y + actualBt} Z`;
+  const bottomPath = `M ${x},${y + dH} L ${x + dW},${y + dH} L ${x + dW - actualBt},${y + dH - actualBt} L ${x + actualBt},${y + dH - actualBt} Z`;
+  const leftPath = `M ${x},${y} L ${x},${y + dH} L ${x + actualBt},${y + dH - actualBt} L ${x + actualBt},${y + actualBt} Z`;
+  const rightPath = `M ${x + dW},${y} L ${x + dW},${y + dH} L ${x + dW - actualBt},${y + dH - actualBt} L ${x + dW - actualBt},${y + actualBt} Z`;
+
+  return (
+    <g className="glazing-beads" opacity="0.95">
+      {/* 4 separate custom shapes with bevel textures on all sides */}
+      <path d={topPath} fill="url(#frame-grad-h)" stroke={CAD.colors.beadLine} strokeWidth={CAD.stroke.bead} />
+      <path d={bottomPath} fill="url(#frame-grad-h)" stroke={CAD.colors.beadLine} strokeWidth={CAD.stroke.bead} />
+      <path d={leftPath} fill="url(#frame-grad-v)" stroke={CAD.colors.beadLine} strokeWidth={CAD.stroke.bead} />
+      <path d={rightPath} fill="url(#frame-grad-v)" stroke={CAD.colors.beadLine} strokeWidth={CAD.stroke.bead} />
+    </g>
+  );
+};
+
+// 5. High fidelity accessories including corner hinges (لولاهای فلزی), lock-cylinder handles with base plates
+interface TechnicalHardwareProps {
+  sx: number;
+  sy: number;
+  sw: number;
+  sh: number;
+  type: string;
+}
+
+const TechnicalHardware = ({ sx, sy, sw, sh, type }: TechnicalHardwareProps) => {
   if (type === 'Fixed' || type.includes('Panel')) return null;
-  const sx = Number(sxInput);
-  const sy = Number(syInput);
-  const sw = Number(swInput);
-  const sh = Number(shInput);
   const isDoor = type.includes('Door');
   const isAwning = type === 'Awning';
   const isHopper = type === 'Hopper';
   const isSliding = type.includes('Sliding');
-  
   const isSideOpen = !isAwning && !isHopper && !isSliding;
-  const isHandleRight = type.includes('Left');
-  
-  let handleX = 0;
-  let handleY = 0;
+  const isHandleRight = isSliding ? type.includes('Right') : type.includes('Left');
+
+  // Handle positioning calculation
+  let handleX = isHandleRight ? sx + sw - (isDoor ? 42 : 28) : sx + (isDoor ? 42 : 28);
+  let handleY = sy + sh / 2;
 
   if (isAwning) {
-      handleX = sx + sw / 2;
-      handleY = sy + sh - 25;
+    handleX = sx + sw / 2;
+    handleY = sy + sh - 25;
   } else if (isHopper) {
-      handleX = sx + sw / 2;
-      handleY = sy + 25;
-  } else {
-      // For all side-open windows & doors, handle is ALWAYS vertically and horizontally centered exactly on the swing "tip"
-      handleX = isHandleRight ? sx + sw - (isDoor ? 42 : 26) : sx + (isDoor ? 42 : 26);
-      handleY = sy + sh / 2;
+    handleX = sx + sw / 2;
+    handleY = sy + 25;
   }
-  
+
   const flipHandle = isHandleRight && !isAwning && !isHopper;
-  
-  // Calculate dynamic handle scale and exact visual tip offsets so meeting lines match handle tip perfectly
-  const handleScale = isDoor ? 2.4 : 3.6; // window is scaled up to 3.6 (exactly 2x larger than 1.8)
-  const leverLength = isDoor ? 32 : 26;
-  const pivotDistance = isDoor ? 42 : 26;
-  const handleTipOffset = pivotDistance + leverLength * handleScale;
 
   return (
     <g className="hardware-layer">
-      {/* Opening sash lines */}
+      {/* 1. Interactive Opening Lines Overlay (طرح خط نمایش بازشو استاندارد سازمان مهندسی) */}
       {isSideOpen && (
-        <path 
-          d={isHandleRight 
-            ? `M ${sx},${sy} L ${handleX},${sy + sh/2} L ${sx},${sy + sh}`
-            : `M ${sx + sw},${sy} L ${handleX},${sy + sh/2} L ${sx + sw},${sy + sh}`
-          } 
-          fill="none" 
-          stroke={CAD.colors.openingLine} 
-          strokeWidth="2.5" 
-          strokeLinecap="round"
-          strokeLinejoin="round" 
-          opacity="0.95" 
-        />
-      )}
-
-      {type.includes('Tilt') && (
-        <path 
-          d={`M ${sx + 8},${sy + sh - 8} L ${sx + sw/2},${sy + 8} L ${sx + sw - 8},${sy + sh - 8}`} 
-          fill="none" 
-          stroke={CAD.colors.openingLine} 
-          strokeWidth="2.5" 
-          strokeDasharray="10,6" 
+        <path
+          d={isHandleRight
+            ? `M ${sx},${sy} L ${handleX},${sy + sh / 2} L ${sx},${sy + sh}`
+            : `M ${sx + sw},${sy} L ${handleX},${sy + sh / 2} L ${sx + sw},${sy + sh}`
+          }
+          fill="none"
+          stroke={CAD.colors.openingLine}
+          strokeWidth="2.8"
           strokeLinecap="round"
           strokeLinejoin="round"
-          opacity="0.95" 
+        />
+      )}
+      
+      {/* Tilt and Turn dotted overhead lines */}
+      {type.includes('Tilt') && (
+        <path
+          d={`M ${sx + 10},${sy + sh - 10} L ${sx + sw / 2},${sy + 10} L ${sx + sw - 10},${sy + sh - 10}`}
+          fill="none"
+          stroke={CAD.colors.openingLine}
+          strokeWidth="2.2"
+          strokeDasharray="8,6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         />
       )}
 
+      {/* Awning window swing diagram link */}
       {isAwning && (
-         <path 
-           d={`M ${sx},${sy} L ${sx+sw/2},${sy+sh - 10} L ${sx+sw},${sy}`}
-           fill="none" 
-           stroke={CAD.colors.openingLine} 
-           strokeWidth="2.5" 
-           strokeDasharray="10,6" 
-           opacity="1" 
-         />
+        <path
+          d={`M ${sx},${sy} L ${sx + sw / 2},${sy + sh - 12} L ${sx + sw},${sy}`}
+          fill="none"
+          stroke={CAD.colors.openingLine}
+          strokeWidth="2.2"
+          strokeDasharray="8,6"
+          strokeLinecap="round"
+        />
       )}
 
+      {/* Hopper swing diagram link */}
       {isHopper && (
-         <path 
-           d={`M ${sx},${sy+sh} L ${sx+sw/2},${sy + 10} L ${sx+sw},${sy+sh}`}
-           fill="none" 
-           stroke={CAD.colors.openingLine} 
-           strokeWidth="2.5" 
-           strokeDasharray="10,6" 
-           opacity="1" 
-         />
+        <path
+          d={`M ${sx},${sy + sh} L ${sx + sw / 2},${sy + 12} L ${sx + sw},${sy + sh}`}
+          fill="none"
+          stroke={CAD.colors.openingLine}
+          strokeWidth="2.2"
+          strokeDasharray="8,6"
+          strokeLinecap="round"
+        />
       )}
 
+      {/* Sliding indicators paths */}
       {isSliding && (
-         <g opacity="0.95">
-             <line x1={sx + 15} y1={sy + sh/2} x2={sx + sw - 15} y2={sy + sh/2} stroke={CAD.colors.openingLine} strokeWidth="1" strokeDasharray="4,4" opacity="0.4" />
-             <g stroke={CAD.colors.openingLine} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none">
-                 <line x1={sx + sw/2 - 35} y1={sy + sh/2} x2={sx + sw/2 + 35} y2={sy + sh/2} />
-                 {type.includes('Right') ? (
-                     <path d={`M ${sx + sw/2 + 20},${sy + sh/2 - 10} L ${sx + sw/2 + 35},${sy + sh/2} L ${sx + sw/2 + 20},${sy + sh/2 + 10}`} />
-                 ) : (
-                     <path d={`M ${sx + sw/2 - 20},${sy + sh/2 - 10} L ${sx + sw/2 - 35},${sy + sh/2} L ${sx + sw/2 - 20},${sy + sh/2 + 10}`} />
-                 )}
-             </g>
-         </g>
-      )}
-
-      {/* LUXURY WHITE HARDWARE - BOTH WINDOW & DOOR HANDLES */}
-      <g transform={`translate(${handleX}, ${handleY}) ${isAwning || isHopper ? 'rotate(90)' : ''} scale(${flipHandle ? -1 : 1}, 1)`} filter="url(#shadow-soft)">
-        {isDoor ? (
-           <g transform="scale(2.4)">
-             {/* Drop shadow behind the plate */}
-             <rect x="-7" y="-35" width="14" height="90" rx="3.5" fill="#090d16" opacity="0.15" transform="translate(1, 1.2)" />
-             
-             {/* Luxury bevelled outer metallic-silver border */}
-             <rect x="-7.5" y="-35.5" width="15" height="91" rx="4" fill="none" stroke="#e2e8f0" strokeWidth="0.8" />
-             
-             {/* Pure white premium glossy lacquer backplate */}
-             <rect x="-7" y="-35" width="14" height="90" rx="3.5" fill="url(#white-hardware-grad)" stroke="#94a3b8" strokeWidth="0.6" />
-             
-             {/* Inner glossy inlay border */}
-             <rect x="-5.8" y="-33.8" width="11.6" height="87.6" rx="2.5" fill="none" stroke="#ffffff" strokeWidth="0.5" opacity="0.9" />
-             
-             {/* Tiny elegant chrome mounting screws at top and bottom */}
-             <circle cx="0" cy="-29" r="1.2" fill="url(#metal-grad-classic)" stroke="#94a3b8" strokeWidth="0.4" />
-             <line x1="-0.8" y1="-29" x2="0.8" y2="-29" stroke="#334155" strokeWidth="0.3" />
-             
-             <circle cx="0" cy="46" r="1.2" fill="url(#metal-grad-classic)" stroke="#94a3b8" strokeWidth="0.4" />
-             <line x1="-0.8" y1="46" x2="0.8" y2="46" stroke="#334155" strokeWidth="0.3" />
-             
-             {/* Premium EURO cylinder detail with key path slot */}
-             {/* Brass/bronze cylinder frame shadow */}
-             <path d="M -3.2,16 A 3.2,3.2 0 0,1 3.2,16 L 2.4,28.5 A 2.2,2.2 0 0,1 -2.4,28.5 Z" fill="#000000" opacity="0.12" transform="translate(0.5, 0.5)" />
-             {/* Premium chrome-plated high-security cylinder */}
-             <path d="M -3,16 A 3,3 0 0,1 3,16 L 2.2,28 A 2,2 0 0,1 -2.2,28 Z" fill="url(#metal-grad-classic)" stroke="#475569" strokeWidth="0.5" />
-             {/* Key way core */}
-             <circle cx="0" cy="16" r="1.5" fill="#1e293b" />
-             <rect x="-0.6" y="16" width="1.2" height="9" rx="0.3" fill="#0f172a" />
-             <line x1="0" y1="17" x2="0" y2="23" stroke="#cbd5e1" strokeWidth="0.4" opacity="0.6" />
-             
-             {/* Chrome dual-ring collar under the lever neck */}
-             <circle cx="0" cy="-15" r="5.2" fill="none" stroke="#cbd5e1" strokeWidth="0.8" />
-             <circle cx="0" cy="-15" r="4.2" fill="url(#metal-grad-classic)" stroke="#94a3b8" strokeWidth="0.6" />
-             
-             {/* ITALIAN DESIGNED CURVED LEVER */}
-             {/* Lever soft cast drop shadow */}
-             <path d="M -3,-18 C 12,-21 24,-19 32,-15 C 35,-13.5 35,-9.5 30,-10 C 20,-11.5 8,-11 -3,-12 Z" fill="#000000" opacity="0.15" transform="translate(1, 1.8)" />
-             {/* Glossy lacquered white main body curve */}
-             <path d="M -3,-18 C 12,-21 24,-19 32,-15 C 35,-13.5 35,-9.5 30,-10 C 20,-11.5 8,-11 -3,-12 Z" fill="url(#white-hardware-grad)" stroke="#94a3b8" strokeWidth="0.7" />
-             
-             {/* Sleek chrome accent inlay stripe */}
-             <path d="M 0,-15 C 10,-16.5 20,-15.5 28,-13.2" fill="none" stroke="url(#metal-grad-classic)" strokeWidth="0.9" strokeLinecap="round" />
-             <path d="M 0,-15 C 10,-16.5 20,-15.5 28,-13.2" fill="none" stroke="#ffffff" strokeWidth="0.4" strokeLinecap="round" opacity="0.8" />
-             
-             {/* Pure white highlight flare curve */}
-             <path d="M -1,-16.8 C 9,-18 19,-17.2 27,-14.8" fill="none" stroke="#ffffff" opacity="0.95" strokeWidth="0.6" />
-           </g>
-        ) : isSliding ? (
-           <g transform="scale(1.9)">
-             {/* Drop shadow */}
-             <rect x="-6" y="-25" width="12" height="50" rx="4" fill="#000000" opacity="0.1" transform="translate(0.8, 0.8)" />
-             {/* Glossy white body */}
-             <rect x="-6" y="-25" width="12" height="50" rx="4" fill="url(#white-hardware-grad)" stroke="#94a3b8" strokeWidth="0.8" />
-             <rect x="-5" y="-24" width="10" height="48" rx="3" fill="none" stroke="#ffffff" strokeWidth="0.5" opacity="0.6" />
-             
-             {/* Recessed grip panel */}
-             <rect x="-3" y="-18" width="6" height="36" rx="2" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="0.6" />
-             
-             {/* Slider status details */}
-             <circle cx="0" cy="-12" r="1.5" fill="#ef4444" />
-             <circle cx="0" cy="12" r="1.5" fill="#22c55e" />
-           </g>
-        ) : (
-           <g className="classic-lever-handle" transform="scale(3.6)">
-             {/* Backplate Shadow */}
-             <rect x="-5.5" y="-16.5" width="11" height="33" rx="3.5" fill="#000000" opacity="0.15" transform="translate(0.5, 0.8)" />
-             
-             {/* Backplate Border Chrome */}
-             <rect x="-5.5" y="-16.5" width="11" height="33" rx="3.5" fill="none" stroke="#e2e8f0" strokeWidth="0.4" />
-             
-             {/* Pure White Glossy Plate */}
-             <rect x="-5" y="-16" width="10" height="32" rx="3" fill="url(#white-hardware-grad)" stroke="#94a3b8" strokeWidth="0.6" />
-             
-             {/* White overlay inner glare bevel */}
-             <rect x="-4.2" y="-15.2" width="8.4" height="30.4" rx="2" fill="none" stroke="#ffffff" strokeWidth="0.4" opacity="0.8" />
-             
-             {/* Top/bottom micro screw indicators */}
-             <circle cx="0" cy="-12" r="0.6" fill="#64748b" />
-             <circle cx="0" cy="12" r="0.6" fill="#64748b" />
-             
-             {/* Pivot collar chrome ring */}
-             <circle cx="0" cy="0" r="4.2" fill="none" stroke="#cbd5e1" strokeWidth="0.6" />
-             <circle cx="0" cy="0" r="3.2" fill="url(#white-hardware-grad)" stroke="#94a3b8" strokeWidth="0.5" />
-             
-             {/* ERGONOMIC FLUID WINDOW LEVER */}
-             {/* Lever Shadow */}
-             <path d="M -1.5,-4 C 8,-5.5 17,-5 26,-3 C 28.5,-2.2 28.5,1.2 25,1.8 C 17,2.5 7,1.8 -1.5,1 Z" fill="#000000" opacity="0.12" transform="translate(0.5, 1.2)" />
-             {/* White Lacquered body */}
-             <path d="M -1.5,-4 C 8,-5.5 17,-5 26,-3 C 28.5,-2.2 28.5,1.2 25,1.8 C 17,2.5 7,1.8 -1.5,1 Z" fill="url(#white-hardware-grad)" stroke="#94a3b8" strokeWidth="0.6" />
-             
-             {/* Chrome designer groove line */}
-             <path d="M 2,-1.5 C 9,-2.4 17,-2.0 23,-1.0" fill="none" stroke="url(#metal-grad-classic)" strokeWidth="0.5" />
-             <path d="M 2,-1.5 C 9,-2.4 17,-2.0 23,-1.0" fill="none" stroke="#ffffff" strokeWidth="0.25" opacity="0.8" />
-             
-             {/* Handle Pivot cap */}
-             <circle cx="0" cy="0" r="2.2" fill="url(#white-hardware-grad)" stroke="#94a3b8" strokeWidth="0.4" />
-             <circle cx="0" cy="0" r="0.8" fill="#ffffff" opacity="0.9" />
-           </g>
-        )}
-      </g>
-
-      {/* DETAILED WHITE HINGES (MULTIPLE TIMES LARGER FOR PREMIUM GRAPHICAL TOUCH) */}
-      {isSideOpen && (
-        <g fill="url(#white-hardware-grad)" stroke="#94a3b8" strokeWidth="1.2" filter="url(#shadow-soft)">
-           {(() => {
-               // White hinges are designed significantly larger / thicker as requested
-               const hW = isDoor ? 18 : 12; // door hinges are heavy-duty and 3D
-               const hH = isDoor ? 88 : 55; // tall high-capacity white hinges
-               const hX = isHandleRight ? sx + 5 : sx + sw - hW - 5; 
-               const rx = isDoor ? 3 : 2;
-               return (
-                   <>
-                      {/* Top Hinge */}
-                      <g>
-                        <rect x={hX} y={sy + 35} width={hW} height={hH} rx={rx} />
-                        {/* Hinges structural details */}
-                        <line x1={hX} y1={sy + 35 + hH/2} x2={hX + hW} y2={sy + 35 + hH/2} stroke="#94a3b8" strokeWidth="1.2" />
-                        <line x1={hX} y1={sy + 35 + hH/2 + 1} x2={hX + hW} y2={sy + 35 + hH/2 + 1} stroke="#ffffff" strokeWidth="0.6" opacity="0.8" />
-                      </g>
-                      
-                      {/* Middle Hinge for doors */}
-                      {isDoor && (
-                        <g>
-                          <rect x={hX} y={sy + sh/2 - hH/2} width={hW} height={hH} rx={rx} />
-                          <line x1={hX} y1={sy + sh/2} x2={hX + hW} y2={sy + sh/2} stroke="#94a3b8" strokeWidth="1.2" />
-                          <line x1={hX} y1={sy + sh/2 + 1} x2={hX + hW} y2={sy + sh/2 + 1} stroke="#ffffff" strokeWidth="0.6" opacity="0.8" />
-                        </g>
-                      )}
-                      
-                      {/* Bottom Hinge */}
-                      <g>
-                        <rect x={hX} y={sy + sh - 35 - hH} width={hW} height={hH} rx={rx} />
-                        <line x1={hX} y1={sy + sh - 35 - hH/2} x2={hX + hW} y2={sy + sh - 35 - hH/2} stroke="#94a3b8" strokeWidth="1.2" />
-                        <line x1={hX} y1={sy + sh - 35 - hH/2 + 1} x2={hX + hW} y2={sy + sh - 35 - hH/2 + 1} stroke="#ffffff" strokeWidth="0.6" opacity="0.8" />
-                      </g>
-                   </>
-               )
-           })()}
+        <g opacity="0.95">
+          {/* Sliding track guide */}
+          <line
+            x1={sx + 20}
+            y1={sy + sh / 2}
+            x2={sx + sw - 20}
+            y2={sy + sh / 2}
+            stroke={CAD.colors.openingLine}
+            strokeWidth="1.2"
+            strokeDasharray="5,5"
+            opacity="0.6"
+          />
+          {/* Centered high fidelity action arrow in color */}
+          <g stroke={CAD.colors.openingLine} strokeWidth="3.0" strokeLinecap="round" fill="none">
+            <line x1={sx + sw / 2 - 35} y1={sy + sh / 2} x2={sx + sw / 2 + 35} y2={sy + sh / 2} />
+            {type.includes('Right') ? (
+              <path d={`M ${sx + sw / 2 + 18},${sy + sh / 2 - 8} L ${sx + sw / 2 + 35},${sy + sh / 2} L ${sx + sw / 2 + 18},${sy + sh / 2 + 8}`} strokeLinejoin="round" />
+            ) : (
+              <path d={`M ${sx + sw / 2 - 18},${sy + sh / 2 - 8} L ${sx + sw / 2 - 35},${sy + sh / 2} L ${sx + sw / 2 - 18},${sy + sh / 2 + 8}`} strokeLinejoin="round" />
+            )}
+          </g>
         </g>
       )}
-      
-      {/* Awning hinges: Large, robust, glossy white cylinders */}
-      {isAwning && (
-          <g fill="url(#white-hardware-grad)" stroke="#94a3b8" strokeWidth="1.2" filter="url(#shadow-soft)">
-              <rect x={sx + sw * 0.2} y={sy + 4} width={80} height={14} rx={3} />
-              <rect x={sx + sw * 0.8 - 80} y={sy + 4} width={80} height={14} rx={3} />
-              <line x1={sx + sw * 0.2 + 2} y1={sy + 10} x2={sx + sw * 0.2 + 78} y2={sy + 10} stroke="#cbd5e1" strokeWidth="0.8" />
-              <line x1={sx + sw * 0.8 - 78} y1={sy + 10} x2={sx + sw * 0.8 - 2} y2={sy + 10} stroke="#cbd5e1" strokeWidth="0.8" />
-          </g>
+
+      {/* 2. Visual Corner Metal Hinges - Drawn on the side opposite to the handle! (لولای مخفی و نمایان پنجره) */}
+      {isSideOpen && (
+        <g className="hinge-graphics" fill="url(#white-hardware-grad)" stroke="#475569" strokeWidth={CAD.stroke.hinge} filter="url(#shadow-hardware)">
+          {(() => {
+            const hingeW = isDoor ? 15 : 9;
+            const hingeH = isDoor ? 65 : 42;
+            const hingeXOffset = isHandleRight ? sx + 3 : sx + sw - hingeW - 3;
+            return (
+              <>
+                {/* Top Hinge */}
+                <rect x={hingeXOffset} y={sy + 20} width={hingeW} height={hingeH} rx={1.5} />
+                {/* Center Hinge for heavy doors */}
+                {isDoor && <rect x={hingeXOffset} y={sy + sh / 2 - hingeH / 2} width={hingeW} height={hingeH} rx={1.5} />}
+                {/* Bottom Hinge */}
+                <rect x={hingeXOffset} y={sy + sh - 20 - hingeH} width={hingeW} height={hingeH} rx={1.5} />
+              </>
+            );
+          })()}
+        </g>
       )}
-      {/* Hopper hinges: Large, robust, glossy white cylinders */}
-      {isHopper && (
-          <g fill="url(#white-hardware-grad)" stroke="#94a3b8" strokeWidth="1.2" filter="url(#shadow-soft)">
-              <rect x={sx + sw * 0.2} y={sy + sh - 18} width={80} height={14} rx={3} />
-              <rect x={sx + sw * 0.8 - 80} y={sy + sh - 18} width={80} height={14} rx={3} />
-              <line x1={sx + sw * 0.2 + 2} y1={sy + sh - 11} x2={sx + sw * 0.2 + 78} y2={sy + sh - 11} stroke="#cbd5e1" strokeWidth="0.8" />
-              <line x1={sx + sw * 0.8 - 78} y1={sy + sh - 11} x2={sx + sw * 0.8 - 2} y2={sy + sh - 11} stroke="#cbd5e1" strokeWidth="0.8" />
+
+      {/* 3. High Fidelity 3D Handle rendering (دستگیره لولایی و کشویی آلومینیوم فشرده) */}
+      <g
+        transform={`translate(${handleX}, ${handleY}) ${isAwning || isHopper ? 'rotate(90)' : ''} scale(${flipHandle ? -1 : 1}, 1)`}
+        filter="url(#shadow-hardware)"
+      >
+        {isDoor ? (
+          /* Multi-layer Door Handle with rosette and key cylinders */
+          <g transform="scale(2.0)">
+            {/* Rosette base plate */}
+            <rect x="-6" y="-32" width="12" height="78" rx="3.5" fill="url(#white-hardware-grad)" stroke="#64748b" strokeWidth="0.8" />
+            {/* Screws dots */}
+            <circle cx="0" cy="-24" r="1.5" fill="#475569" />
+            <circle cx="0" cy="38" r="1.5" fill="#475569" />
+            {/* Safety Key lock Hole (سوئیچ عبور قفل) */}
+            <path d="M-2.5,22 A2.5,2.5 0 0,1 2.5,22 L1.5,30 L-1.5,30 Z" fill="#1e293b" />
+            {/* Round handle pivot hub */}
+            <circle cx="0" cy="-6" r="5.2" fill="url(#alloy-grad)" stroke="#475569" strokeWidth="0.8" />
+            {/* Ergonomic handle arm Lever */}
+            <path
+              d="M -2,-14 C 10,-16 22,-13 32,-8 C 34,-7 34,-4 28,-5 C 18,-6 8,-6 -2,-8 Z"
+              fill="url(#white-hardware-grad)"
+              stroke="#64748b"
+              strokeWidth="0.8"
+            />
           </g>
-      )}
+        ) : isSliding ? (
+          /* Sleek inset sliding handle with finger hook and latch indicator */
+          <g transform="scale(1.7)">
+            {/* Main inset cup lock frame */}
+            <rect x="-6" y="-22" width="12" height="44" rx="4" fill="url(#white-hardware-grad)" stroke="#64748b" strokeWidth="1.0" />
+            {/* Pocket thumb groove overlay */}
+            <rect x="-3" y="-15" width="6" height="30" rx="1.5" fill="#1e293b" opacity="0.9" />
+            {/* Center safety lock switch indicator */}
+            <rect x="-1" y="-3" width="2" height="6" rx="0.5" fill="#ef4444" />
+          </g>
+        ) : (
+          /* Premium ergonomically curved window handle (دستگیره پنجره یک‌طرفه با روکش استاتیک) */
+          <g transform="scale(2.6)">
+            {/* Rotative oval base plate */}
+            <rect x="-4" y="-14" width="8" height="28" rx="3" fill="url(#white-hardware-grad)" stroke="#475569" strokeWidth="0.8" />
+            <circle cx="0" cy="-8" r="1.5" fill="#94a3b8" />
+            <circle cx="0" cy="8" r="1.5" fill="#94a3b8" />
+            {/* Main grip hub */}
+            <circle cx="0" cy="0" r="3.5" fill="url(#alloy-grad)" stroke="#475569" strokeWidth="0.8" />
+            {/* Elegant curved grip handle */}
+            <path
+              d="M -1.2,-4.5 C 7,-5.5 15,-5.5 22,-1.5 C 24,-0.5 24,1.8 19,2.2 C 13,2.5 5,1.8 -1.2,0.8 Z"
+              fill="url(#white-hardware-grad)"
+              stroke="#64748b"
+              strokeWidth="0.8"
+            />
+          </g>
+        )}
+      </g>
     </g>
   );
 };
 
+// 6. Professional Architectural dimension lines (ابعاداندازی طبق استانداردهای نقشه کشی)
 interface ArchDimensionProps {
-  start: number; end: number; orientation: 'h' | 'v'; linePos: number; leaderStart: number; onClick?: () => void;
+  start: number;
+  end: number;
+  orientation: 'h' | 'v';
+  linePos: number;
+  leaderStart: number;
+  onClick?: () => void;
 }
 
 const ArchDimension = ({ start, end, orientation, linePos, leaderStart, onClick }: ArchDimensionProps) => {
   const isH = orientation === 'h';
   const mid = start + (end - start) / 2;
-  const color = CAD.colors.dim;
-  const tickSize = 8; 
-  const isNegative = linePos < leaderStart;
-  const leaderEnd = isNegative ? linePos + 3 : linePos - 3;
-  const leaderBase = isNegative ? leaderStart - 5 : leaderStart + 5;
+  const tick = 8; // Large architectural cross tick radius
 
   return (
-    <g 
-      className="arch-dim" 
-      onClick={(e) => { 
+    <g
+      onClick={(e) => {
         if (onClick) {
-          e.stopPropagation(); 
-          onClick(); 
+          e.stopPropagation();
+          onClick();
         }
-      }} 
-      style={{ cursor: onClick ? 'pointer' : 'default', pointerEvents: 'all' }}
+      }}
+      style={{ cursor: onClick ? 'pointer' : 'default' }}
+      className="architectural-dimension"
     >
       {isH ? (
-         <rect x={start} y={linePos - 20} width={end - start} height={40} fill="transparent" />
+        <>
+          {/* Horizontal leader extension guidelines */}
+          <line x1={start} y1={leaderStart} x2={start} y2={linePos} stroke={CAD.colors.dim} strokeWidth="0.7" opacity="0.35" />
+          <line x1={end} y1={leaderStart} x2={end} y2={linePos} stroke={CAD.colors.dim} strokeWidth="0.7" opacity="0.35" />
+          {/* Core measurement line */}
+          <line x1={start} y1={linePos} x2={end} y2={linePos} stroke={CAD.colors.dim} strokeWidth={CAD.stroke.dimension} />
+          {/* Architectural ticks (45 degrees slash ticks - تیک معماری دو خط) */}
+          <line x1={start - tick} y1={linePos + tick} x2={start + tick} y2={linePos - tick} stroke={CAD.colors.dim} strokeWidth={CAD.stroke.tick} strokeLinecap="round" />
+          <line x1={end - tick} y1={linePos + tick} x2={end + tick} y2={linePos - tick} stroke={CAD.colors.dim} strokeWidth={CAD.stroke.tick} strokeLinecap="round" />
+        </>
       ) : (
-         <rect x={linePos - 20} y={start} width={40} height={end - start} fill="transparent" />
+        <>
+          {/* Vertical leader extension guidelines */}
+          <line x1={leaderStart} y1={start} x2={linePos} y2={start} stroke={CAD.colors.dim} strokeWidth="0.7" opacity="0.35" />
+          <line x1={leaderStart} y1={end} x2={linePos} y2={end} stroke={CAD.colors.dim} strokeWidth="0.7" opacity="0.35" />
+          {/* Core measurement line */}
+          <line x1={linePos} y1={start} x2={linePos} y2={end} stroke={CAD.colors.dim} strokeWidth={CAD.stroke.dimension} />
+          {/* Architectural ticks */}
+          <line x1={linePos + tick} y1={start + tick} x2={linePos - tick} y2={start - tick} stroke={CAD.colors.dim} strokeWidth={CAD.stroke.tick} strokeLinecap="round" />
+          <line x1={linePos + tick} y1={end + tick} x2={linePos - tick} y2={end - tick} stroke={CAD.colors.dim} strokeWidth={CAD.stroke.tick} strokeLinecap="round" />
+        </>
       )}
 
-      {isH ? (
-        <>
-          <line x1={start} y1={leaderBase} x2={start} y2={leaderEnd} stroke={color} strokeWidth="0.8" opacity="0.4"/>
-          <line x1={end} y1={leaderBase} x2={end} y2={leaderEnd} stroke={color} strokeWidth="0.8" opacity="0.4"/>
-          <line x1={start} y1={linePos} x2={end} y2={linePos} stroke={color} strokeWidth={CAD.stroke.dimension} />
-          <line x1={start - tickSize} y1={linePos + tickSize} x2={start + tickSize} y2={linePos - tickSize} stroke={color} strokeWidth={CAD.stroke.tick} />
-          <line x1={end - tickSize} y1={linePos + tickSize} x2={end + tickSize} y2={linePos - tickSize} stroke={color} strokeWidth={CAD.stroke.tick} />
-        </>
-      ) : (
-        <>
-          <line x1={leaderBase} y1={start} x2={leaderEnd} y2={start} stroke={color} strokeWidth="0.8" opacity="0.4"/>
-          <line x1={leaderBase} y1={end} x2={leaderEnd} y2={end} stroke={color} strokeWidth="0.8" opacity="0.4"/>
-          <line x1={linePos} y1={start} x2={linePos} y2={end} stroke={color} strokeWidth={CAD.stroke.dimension} />
-          <line x1={linePos + tickSize} y1={start + tickSize} x2={linePos - tickSize} y2={start - tickSize} stroke={color} strokeWidth={CAD.stroke.tick} />
-          <line x1={linePos + tickSize} y1={end + tickSize} x2={linePos - tickSize} y2={end - tickSize} stroke={color} strokeWidth={CAD.stroke.tick} />
-        </>
-      )}
-      <rect x={isH ? mid - 30 : linePos - 15} y={isH ? linePos - 15 : mid - 30} width={isH ? 60 : 30} height={isH ? 30 : 60} fill="white" />
-      <text 
-        x={isH ? mid : linePos} y={isH ? linePos : mid} 
-        textAnchor="middle" dominantBaseline="middle" fontSize={CAD.font.dimSize} fontWeight="bold" 
-        transform={isH ? '' : `rotate(-90, ${linePos}, ${mid})`}
-        fill={color}
-        style={{ fontFamily: 'Vazirmatn, sans-serif' }}
-      >
-        {toPersianDigits(Math.round(end - start))}
-      </text>
+      {/* High readability backdrop protective shield/capsule behind dimension values */}
+      <g>
+        <rect
+          x={isH ? mid - 32 : linePos - 16}
+          y={isH ? linePos - 16 : mid - 32}
+          width={isH ? 64 : 32}
+          height={isH ? 32 : 64}
+          fill="#ffffff"
+          rx={4}
+          stroke="#cbd5e1"
+          strokeWidth="0.5"
+          filter="url(#shadow-hardware)"
+        />
+        {/* Dimension numerical value in beautiful Persian Digits (نمایش خوانای ابعاد به فوت یا میلی‌متر فارسی) */}
+        <text
+          x={isH ? mid : linePos}
+          y={isH ? linePos : mid}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fontSize={CAD.font.dimSize}
+          fontWeight="900"
+          fill={CAD.colors.dim}
+          transform={isH ? '' : `rotate(-90, ${linePos}, ${mid})`}
+          style={{ fontFamily: 'Vazirmatn, sans-serif' }}
+        >
+          {toPersianDigits(Math.round(end - start))}
+        </text>
+      </g>
     </g>
   );
 };
 
-// --- CORE RENDER ENGINE ---
-
-interface RenderNodeProps {
+// 7. Recursive Blueprint Node visual parser - builds windows hierarchically (mullion slices & sashes)
+interface RenderBlueprintNodeProps {
   node: WindowNode;
   x: number;
   y: number;
@@ -558,226 +653,270 @@ interface RenderNodeProps {
   hardwareList?: React.ReactNode[];
   frameType?: 'standard' | 'slim' | 'heavy' | 'renovation';
   parentSystemType?: 'Casement' | 'Sliding';
-  parentSlidingRailType?: 'Monorail' | 'DoubleRail';
 }
 
-const RenderBlueprintNode = ({ 
-  node, x, y, w, h, isRoot, selectedId, onSelect, readOnly, hardwareList, frameType,
-  parentSystemType, parentSlidingRailType
-}: RenderNodeProps) => {
-  let innerX = x;
-  let innerY = y;
-  let innerW = w;
-  let innerH = h;
+const RenderBlueprintNode = ({
+  node,
+  x,
+  y,
+  w,
+  h,
+  isRoot,
+  selectedId,
+  onSelect,
+  readOnly,
+  hardwareList,
+  frameType,
+  parentSystemType
+}: RenderBlueprintNodeProps) => {
+  let innerX = x, innerY = y, innerW = w, innerH = h;
   const els: React.ReactNode[] = [];
-  
-  // 1. Draw Outer Frame if Root
+
+  // Anchor and draw outer principal window frame (فریم بیرونی اصلی قاب)
   if (isRoot) {
     const isRenovation = frameType === 'renovation';
-    // Standard frame is thicker now. If renovation frame is requested, it is visually thicker (104px instead of 62px)
     const currentFrameT = isRenovation ? 104 : CAD.geom.frameT;
-    els.push(<RenderFrame key={`root-frame-${node.id}`} x={x} y={y} w={w} h={h} thickness={currentFrameT} isRenovation={isRenovation} />);
+    els.push(
+      <RenderFrame
+        key={`f-${node.id}`}
+        x={x}
+        y={y}
+        w={w}
+        h={h}
+        thickness={currentFrameT}
+        isRenovation={isRenovation}
+      />
+    );
     innerX += currentFrameT;
     innerY += currentFrameT;
     innerW -= 2 * currentFrameT;
     innerH -= 2 * currentFrameT;
   }
-  
-  // 2. Check for Sash/Opening
+
   const op = node.openingType || 'Fixed';
   const currentSystemType = node.systemType || parentSystemType || (op.includes('Sliding') ? 'Sliding' : 'Casement');
-  const currentSlidingRailType = node.slidingRailType || parentSlidingRailType;
 
-  // In DoubleRail sliding, ALL positions except filler panels are sashes.
-  const isDoubleRail = currentSystemType === 'Sliding' && currentSlidingRailType === 'DoubleRail';
+  // Check if sashes profiles need rendering inside the nodes
   const isSash = !op.includes('Panel') && (
     node.type === 'leaf'
-      ? (isDoubleRail || op !== 'Fixed')
+      ? (op !== 'Fixed')
       : (currentSystemType === 'Casement' && op !== 'Fixed')
   );
-  
+
   let hwEl: React.ReactNode = null;
   if (isSash) {
     const isDoorSash = op.includes('Door');
-    // If door sash is active, make it visually thicker (92px instead of 68px)
     const currentSashT = isDoorSash ? 92 : CAD.geom.sashT;
-    els.push(<RenderFrame key={`sash-${node.id}`} x={innerX} y={innerY} w={innerW} h={innerH} thickness={currentSashT} isDoorSash={isDoorSash} />);
-    const actualHwEl = <TechnicalHardware key={`hw-${node.id}`} sx={innerX} sy={innerY} sw={innerW} sh={innerH} type={op} />;
+    const sashOverlap = 18; // Overlaps the frame or mullion
+    const sashX = innerX - sashOverlap;
+    const sashY = innerY - sashOverlap;
+    const sashW = innerW + 2 * sashOverlap;
+    const sashH = innerH + 2 * sashOverlap;
+
+    els.push(
+      <RenderFrame
+        key={`s-${node.id}`}
+        x={sashX}
+        y={sashY}
+        w={sashW}
+        h={sashH}
+        thickness={currentSashT}
+        isDoorSash={isDoorSash}
+      />
+    );
+    
+    // Physical hardware handles & swing visual overlay mapping
+    const actualHwEl = (
+      <TechnicalHardware
+        key={`hw-${node.id}`}
+        sx={sashX}
+        sy={sashY}
+        sw={sashW}
+        sh={sashH}
+        type={op}
+      />
+    );
     if (hardwareList) {
       hardwareList.push(actualHwEl);
     } else {
       hwEl = actualHwEl;
     }
-    innerX += currentSashT;
-    innerY += currentSashT;
-    innerW -= 2 * currentSashT;
-    innerH -= 2 * currentSashT;
+
+    innerX = sashX + currentSashT;
+    innerY = sashY + currentSashT;
+    innerW = sashW - 2 * currentSashT;
+    innerH = sashH - 2 * currentSashT;
   }
-  
-  // 3. Clip Path for internals ensures no overflow
-  const MathMax = Math.max;
-  const clipId = `clip-${node.id}`;
-  els.push(
-    <clipPath key={`clip-def-${node.id}`} id={clipId}>
-      <rect x={innerX} y={innerY} width={MathMax(0, innerW)} height={MathMax(0, innerH)} />
-    </clipPath>
-  );
-  
+
   const contentEls: React.ReactNode[] = [];
 
+  // Terminal nodes - draw glass panel or structural solid panels
   if (node.type === 'leaf' || !node.children || node.children.length === 0) {
-    // Fill specific properties
     if (op.includes('Panel')) {
-      contentEls.push(<RenderPanel key={`panel-${node.id}`} x={innerX} y={innerY} w={innerW} h={innerH} op={op} />);
+      contentEls.push(
+        <RenderPanel
+          key={`panel-${node.id}`}
+          x={innerX}
+          y={innerY}
+          w={innerW}
+          h={innerH}
+          op={op}
+        />
+      );
     } else {
-      contentEls.push(<RenderGlass key={`glass-${node.id}`} x={innerX} y={innerY} w={innerW} h={innerH} />);
+      contentEls.push(
+        <RenderGlass
+          key={`glass-${node.id}`}
+          x={innerX}
+          y={innerY}
+          w={innerW}
+          h={innerH}
+        />
+      );
     }
+    // Draw separate miter-cut glazing beading around every glass/panel space
+    contentEls.push(
+      <RenderBeading
+        key={`bead-${node.id}`}
+        x={innerX}
+        y={innerY}
+        w={innerW}
+        h={innerH}
+      />
+    );
   } else {
-    // Container mullion distribution
+    // Parent containers recursively split divisions
     const children = node.children;
     const dir = node.dir;
     const isSlidingContainer = node.systemType === 'Sliding' || parentSystemType === 'Sliding';
     const totalFlex = children.reduce((sum, c) => sum + (c.flex || 1), 0) || 1;
     
-    // In sliding, sashes overlap by 24px horizontally
-    const overlap = 24;
-    let childrenSpace = 0;
-    
-    if (isSlidingContainer && dir === 'row' && children.length > 1) {
-      childrenSpace = innerW + (children.length - 1) * overlap;
-    } else {
-      childrenSpace = dir === 'row' 
-        ? innerW - (children.length - 1) * CAD.geom.mullionT
-        : innerH - (children.length - 1) * CAD.geom.mullionT;
-    }
+    // Sliding profiles use a horizontal overlap instead of physical mullions (اینترلاک آلومینیوم و نوار مویی کشویی)
+    const overlap = CAD.geom.overlapSliding;
+    let childrenSpace = isSlidingContainer && dir === 'row' && children.length > 1
+      ? innerW + (children.length - 1) * overlap
+      : (dir === 'row' ? innerW - (children.length - 1) * CAD.geom.mullionT : innerH - (children.length - 1) * CAD.geom.mullionT);
 
     let currentPos = 0;
+    const fixedEls: React.ReactNode[] = [];
+    const sashEls: React.ReactNode[] = [];
+    const interlockEls: React.ReactNode[] = [];
 
     children.forEach((child, idx) => {
-      let flexSize = 0;
-      if (isSlidingContainer && dir === 'row' && children.length > 1) {
-        flexSize = (childrenSpace * (child.flex || 1)) / totalFlex;
-      } else {
-        flexSize = MathMax(0, (childrenSpace * (child.flex || 1)) / totalFlex);
-      }
-      
+      const flexSize = Math.max(0, (childrenSpace * (child.flex || 1)) / totalFlex);
       const cx = dir === 'row' ? innerX + currentPos : innerX;
       const cy = dir === 'col' ? innerY + currentPos : innerY;
       const cw = dir === 'row' ? flexSize : innerW;
       const ch = dir === 'col' ? flexSize : innerH;
-      
-      contentEls.push(
-        <RenderBlueprintNode 
-          key={child.id} 
-          node={child} 
-          x={cx} y={cy} w={cw} h={ch} 
-          isRoot={false} 
+
+      const childEl = (
+        <RenderBlueprintNode
+          key={child.id}
+          node={child}
+          x={cx}
+          y={cy}
+          w={cw}
+          h={ch}
+          isRoot={false}
           selectedId={selectedId}
           onSelect={onSelect}
           readOnly={readOnly}
           hardwareList={hardwareList}
           frameType={frameType}
           parentSystemType={node.systemType || parentSystemType}
-          parentSlidingRailType={node.slidingRailType || parentSlidingRailType}
         />
       );
-      
-      if (isSlidingContainer && dir === 'row' && children.length > 1) {
-        currentPos += flexSize - overlap;
+
+      const cop = child.openingType || 'Fixed';
+      const childIsSash = cop !== 'Fixed' && !cop.includes('Panel');
+
+      if (isSlidingContainer) {
+        if (childIsSash) sashEls.push(childEl); else fixedEls.push(childEl);
       } else {
-        currentPos += flexSize;
+        fixedEls.push(childEl);
       }
-      
+
+      currentPos += isSlidingContainer && dir === 'row' && children.length > 1
+        ? flexSize - overlap
+        : flexSize;
+
+      // Draw dividing mullion posts (مولیون‌های ثابت تقسیم‌کننده)
       if (!isSlidingContainer && idx < children.length - 1) {
         const isMullionSelected = !readOnly && selectedId === node.id;
-        if (dir === 'row') {
-          contentEls.push(
-            <RenderMullion 
-              key={`mullion-${child.id}`} 
-              x={cx + cw} 
-              y={innerY} 
-              w={CAD.geom.mullionT} 
-              h={innerH} 
-              onClick={() => onSelect(node.id)}
-              isSelected={isMullionSelected}
-              readOnly={readOnly}
-            />
-          );
-          currentPos += CAD.geom.mullionT;
-        } else {
-          contentEls.push(
-            <RenderMullion 
-              key={`mullion-${child.id}`} 
-              x={innerX} 
-              y={cy + ch} 
-              w={innerW} 
-              h={CAD.geom.mullionT} 
-              onClick={() => onSelect(node.id)}
-              isSelected={isMullionSelected}
-              readOnly={readOnly}
-            />
-          );
-          currentPos += CAD.geom.mullionT;
-        }
+        fixedEls.push(
+          <RenderMullion
+            key={`m-${child.id}`}
+            x={dir === 'row' ? cx + cw : innerX}
+            y={dir === 'col' ? cy + ch : innerY}
+            w={dir === 'row' ? CAD.geom.mullionT : innerW}
+            h={dir === 'row' ? innerH : CAD.geom.mullionT}
+            onClick={() => onSelect(node.id)}
+            isSelected={isMullionSelected}
+            readOnly={readOnly}
+          />
+        );
+        currentPos += CAD.geom.mullionT;
       } else if (isSlidingContainer && dir === 'row' && idx < children.length - 1) {
-        // Between overlapping sliding sashes, draw a beautiful slim vertical interlock overlap line/indicator in the overlapping area!
+        // Draw vertical sliding brush interlocks profiles inside sliding mode (پروفیل اینترلاک و آبرفت کشویی دوجداره)
         const interlockX = cx + cw - (overlap / 2);
-        contentEls.push(
-          <g key={`interlock-${child.id}`} opacity="0.6">
-            <line x1={interlockX} y1={innerY} x2={interlockX} y2={innerY + innerH} stroke="#000000" strokeWidth="2" opacity="0.3" />
-            <line x1={interlockX} y1={innerY} x2={interlockX} y2={innerY + innerH} stroke={CAD.colors.line} strokeWidth="1" strokeDasharray="3,3" />
+        interlockEls.push(
+          <g key={`int-${child.id}`} filter="url(#shadow-hardware)">
+            {/* Rubber and brush seals shadows */}
+            <line x1={interlockX} y1={innerY + 2} x2={interlockX} y2={innerY + innerH - 2} stroke="#020617" strokeWidth="3" opacity="0.45" />
+            <line x1={interlockX} y1={innerY} x2={interlockX} y2={innerY + innerH} stroke="#ffffff" strokeWidth="1" strokeDasharray="3,3" opacity="0.8" />
+            <line x1={interlockX - 4} y1={innerY} x2={interlockX - 4} y2={innerY + innerH} stroke={CAD.colors.line} strokeWidth="1" opacity="0.3" />
+            <line x1={interlockX + 4} y1={innerY} x2={interlockX + 4} y2={innerY + innerH} stroke={CAD.colors.line} strokeWidth="1" opacity="0.3" />
           </g>
         );
       }
     });
-  }
-  
-  // Wrap internals with clipping to prevent overflow artifacts
-  els.push(
-    <g key={`content-${node.id}`} clipPath={`url(#${clipId})`}>
-      {contentEls}
-    </g>
-  );
 
-  // Layer the opening line indicator arrows on top of the glass
-  if (hwEl) {
-    els.push(hwEl);
+    contentEls.push(...fixedEls, ...sashEls, ...interlockEls);
   }
-  
-  // 4. Hit Area & Focus State
+
+  els.push(<g key={`clip-${node.id}`}>{contentEls}</g>);
+  if (hwEl) els.push(hwEl);
+
+  // Outline selected components with responsive animated dashed lines
   const isSelected = !readOnly && selectedId === node.id;
   if (isSelected) {
     els.push(
-      <rect 
-        key={`sel-${node.id}`} 
-        x={isRoot ? x + 4 : x + 2} 
-        y={isRoot ? y + 4 : y + 2} 
-        width={isRoot ? MathMax(0, w - 8) : MathMax(0, w - 4)} 
-        height={isRoot ? MathMax(0, h - 8) : MathMax(0, h - 4)} 
-        fill="none" 
-        stroke={CAD.colors.activeFrame} 
-        strokeWidth="4" 
-        strokeDasharray="8 6" 
-        pointerEvents="none" 
-      />
-    );
-  }
-  
-  if (!readOnly && (node.type === 'leaf' || node.children?.length === 0)) {
-    els.push(
-      <rect 
-        key={`hit-${node.id}`} 
-        x={x} y={y} width={w} height={h} 
-        fill="transparent" 
-        cursor="pointer"
-        className="profile-hit-area"
-        onClick={(e) => { e.stopPropagation(); onSelect(node.id); }}
+      <rect
+        key={`sel-${node.id}`}
+        x={isRoot ? x + 4 : x + 2}
+        y={isRoot ? y + 4 : y + 2}
+        width={isRoot ? Math.max(0, w - 8) : Math.max(0, w - 4)}
+        height={isRoot ? Math.max(0, h - 8) : Math.max(0, h - 4)}
+        fill="none"
+        stroke={CAD.colors.activeFrame}
+        strokeWidth="3.5"
+        strokeDasharray="8,5"
+        pointerEvents="none"
       />
     );
   }
 
-  return <g key={`group-${node.id}`}>{els}</g>;
-}
+  // Hitbox triggers overlay to select panes
+  if (!readOnly && (node.type === 'leaf' || node.children?.length === 0)) {
+    els.push(
+      <rect
+        key={`hit-${node.id}`}
+        x={x}
+        y={y}
+        width={w}
+        height={h}
+        fill="transparent"
+        cursor="pointer"
+        onClick={(e) => {
+          e.stopPropagation();
+          onSelect(node.id);
+        }}
+      />
+    );
+  }
+
+  return <g className="blueprint-node-wrapper">{els}</g>;
+};
 
 export interface WindowCanvasProps {
   node: WindowNode;
@@ -790,70 +929,72 @@ export interface WindowCanvasProps {
   onChildResize?: (parentId: string, index: number, newSize: number, totalSize: number) => void;
   onGlobalResize?: (axis: 'w' | 'h') => void;
   canvasPadding?: number;
-  onUpdateNode?: (nodeId: string, updates: Partial<WindowNode>) => void;
+  frameType?: 'standard' | 'slim' | 'heavy' | 'renovation';
+  onUpdateNode?: (id: string, updates: Partial<WindowNode>) => void;
   isRoot?: boolean;
   isThumbnail?: boolean;
-  frameType?: 'standard' | 'slim' | 'heavy' | 'renovation';
   scale?: number;
 }
 
-export const WindowCanvas = (props: WindowCanvasProps) => {
-  const { node, width, height, showDimensions = true, onSelect, selectedId, readOnly, onChildResize, onGlobalResize, canvasPadding } = props;
-  
-  const padding = canvasPadding !== undefined ? canvasPadding : (showDimensions ? 160 : 10);
-
+// 8. Primary Exportable Drawing Canvas component - renders SVG blueprints complete with defs
+export const WindowCanvas = ({
+  node,
+  width,
+  height,
+  showDimensions = true,
+  onSelect,
+  selectedId,
+  readOnly,
+  onChildResize,
+  onGlobalResize,
+  canvasPadding,
+  frameType
+}: WindowCanvasProps) => {
+  const padding = canvasPadding !== undefined
+    ? canvasPadding
+    : (showDimensions ? 160 : 10);
   const hardwareList: React.ReactNode[] = [];
 
+  // Traverses nested sub divisions to render secondary dynamic dimensions
   const getNestedSegments = (targetDir: 'row' | 'col') => {
-    let segments: { start: number; end: number; parentId: string; index: number; layer: number; crossPos: number }[] = [];
-    let currentLayerTop = 1;
-    let currentLayerBot = 1;
-    let currentLayerLeft = 1;
-    let currentLayerRight = 1;
+    const segments: { start: number; end: number; parentId: string; index: number; layer: number; crossPos: number }[] = [];
+    let layerTop = 1, layerBot = 1, layerLeft = 1, layerRight = 1;
 
-    const traverse = (currentNode: WindowNode, x: number, y: number, w: number, h: number) => {
+    const traverse = (currentNode: WindowNode, px: number, py: number, pw: number, ph: number) => {
       if (currentNode.type !== 'container' || !currentNode.children || currentNode.children.length === 0) return;
-
+      
       const isMatchingDir = currentNode.dir === targetDir;
       const isRow = currentNode.dir === 'row';
-      const cy = y + h / 2;
-      const cx = x + w / 2;
-
+      const cy = py + ph / 2, cx = px + pw / 2;
       let myLayer = 0;
+
       if (isMatchingDir) {
         if (targetDir === 'row') {
-          myLayer = (cy <= height / 2.01) ? currentLayerTop++ : currentLayerBot++;
+          myLayer = (cy <= height / 2.01) ? layerTop++ : layerBot++;
         } else {
-          myLayer = (cx < width / 2) ? currentLayerLeft++ : currentLayerRight++;
+          myLayer = (cx < width / 2) ? layerLeft++ : layerRight++;
         }
       }
 
       const totalFlex = currentNode.children.reduce((s, c) => s + (c.flex || 1), 0) || 1;
-      let currentX = x;
-      let currentY = y;
+      let currentX = px, currentY = py;
 
       currentNode.children.forEach((child, idx) => {
-        if (isRow) {
-          const cw = ((child.flex || 1) / totalFlex) * w;
-          const ch = h;
-          if (isMatchingDir) {
-            if (currentNode.children!.length > 1) {
-              segments.push({ start: currentX, end: currentX + cw, parentId: currentNode.id, index: idx, layer: myLayer, crossPos: cy });
-            }
-          }
-          traverse(child, currentX, currentY, cw, ch);
-          currentX += cw;
-        } else {
-          const cw = w;
-          const ch = ((child.flex || 1) / totalFlex) * h;
-          if (isMatchingDir) {
-            if (currentNode.children!.length > 1) {
-              segments.push({ start: currentY, end: currentY + ch, parentId: currentNode.id, index: idx, layer: myLayer, crossPos: cx });
-            }
-          }
-          traverse(child, currentX, currentY, cw, ch);
-          currentY += ch;
+        const cw = isRow ? ((child.flex || 1) / totalFlex) * pw : pw;
+        const ch = isRow ? ph : ((child.flex || 1) / totalFlex) * ph;
+        
+        if (isMatchingDir && currentNode.children!.length > 1) {
+          segments.push({
+            start: isRow ? currentX : currentY,
+            end: isRow ? currentX + cw : currentY + ch,
+            parentId: currentNode.id,
+            index: idx,
+            layer: myLayer,
+            crossPos: isRow ? cy : cx
+          });
         }
+        traverse(child, currentX, currentY, cw, ch);
+        if (isRow) currentX += cw; else currentY += ch;
       });
     };
 
@@ -863,145 +1004,163 @@ export const WindowCanvas = (props: WindowCanvasProps) => {
 
   const rowSegments = getNestedSegments('row');
   const colSegments = getNestedSegments('col');
-
   const maxRowLayerBot = Math.max(0, ...rowSegments.filter(s => s.crossPos > height / 2.01).map(s => s.layer));
   const maxColLayerLeft = Math.max(0, ...colSegments.filter(s => s.crossPos < width / 2).map(s => s.layer));
 
-  const rowGlobalOffsetBase = 75;
-  const colGlobalOffsetBase = 75;
-
   return (
-    <div className="w-full h-full flex items-center justify-center">
-      <svg 
-        width="100%" height="100%" 
-        viewBox={`-${padding} -${padding} ${width + padding*2} ${height + padding*2}`}
+    <div className="w-full h-full flex items-center justify-center select-none">
+      <svg
+        width="100%"
+        height="100%"
+        viewBox={`-${padding} -${padding} ${width + padding * 2} ${height + padding * 2}`}
         className="overflow-visible"
         style={{ background: '#ffffff', touchAction: 'none' }}
         preserveAspectRatio="xMidYMid meet"
       >
         <defs>
-          <CadGrid />
+          {/* Vertical and Horizontal extruded structures mock profiles */}
           <linearGradient id="frame-grad-v" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor="#f8fafc" />
             <stop offset="6%" stopColor="#ffffff" />
             <stop offset="94%" stopColor="#ffffff" />
-            <stop offset="100%" stopColor="#f1f5f9" />
+            <stop offset="100%" stopColor="#e2e8f0" />
           </linearGradient>
           <linearGradient id="frame-grad-h" x1="0%" y1="0%" x2="0%" y2="100%">
             <stop offset="0%" stopColor="#f8fafc" />
             <stop offset="6%" stopColor="#ffffff" />
             <stop offset="94%" stopColor="#ffffff" />
-            <stop offset="100%" stopColor="#f1f5f9" />
+            <stop offset="100%" stopColor="#e2e8f0" />
           </linearGradient>
+          {/* Renovation frame flange visual */}
+          <linearGradient id="renovation-grad" x1="100%" y1="100%" x2="0%" y2="0%">
+            <stop offset="0%" stopColor="#e2e8f0" />
+            <stop offset="50%" stopColor="#ffffff" />
+            <stop offset="100%" stopColor="#b4c6e7" />
+          </linearGradient>
+          {/* Realistic double pane sky glass gradient */}
           <linearGradient id="glass-grad" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#bae6fd" stopOpacity="1" />
-            <stop offset="30%" stopColor="#e0f2fe" stopOpacity="1" />
-            <stop offset="45%" stopColor="#ffffff" stopOpacity="1" />
-            <stop offset="60%" stopColor="#bae6fd" stopOpacity="1" />
-            <stop offset="85%" stopColor="#a5f3fc" stopOpacity="1" />
+            <stop offset="42%" stopColor="#ffffff" stopOpacity="1" />
             <stop offset="100%" stopColor="#7dd3fc" stopOpacity="1" />
           </linearGradient>
+          {/* UPVC panel texture lines */}
           <linearGradient id="panel-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#ffffff" />
-            <stop offset="100%" stopColor="#e2e8f0" />
-          </linearGradient>
-          <linearGradient id="metal-grad" x1="0%" y1="0%" x2="0%" y2="100%">
             <stop offset="0%" stopColor="#f8fafc" />
-            <stop offset="50%" stopColor="#e2e8f0" />
-            <stop offset="100%" stopColor="#94a3b8" />
+            <stop offset="50%" stopColor="#ffffff" />
+            <stop offset="100%" stopColor="#cbd5e1" />
           </linearGradient>
-          <linearGradient id="profile-chamber-light" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#ffffff" />
-            <stop offset="60%" stopColor="#f1f5f9" />
-            <stop offset="100%" stopColor="#e2e8f0" />
-          </linearGradient>
-          <linearGradient id="profile-chamber-dark" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#e2e8f0" />
-            <stop offset="60%" stopColor="#cbd5e1" />
-            <stop offset="100%" stopColor="#94a3b8" />
-          </linearGradient>
-          <linearGradient id="titanium-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#1e293b" />
-            <stop offset="50%" stopColor="#475569" />
-            <stop offset="100%" stopColor="#0f172a" />
-          </linearGradient>
-          <linearGradient id="gold-grad-classic" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#b45309" />
-            <stop offset="30%" stopColor="#fbbf24" />
-            <stop offset="50%" stopColor="#fef08a" />
-            <stop offset="70%" stopColor="#f59e0b" />
-            <stop offset="100%" stopColor="#78350f" />
+          {/* Aluminium Alloy metal finish finish gradient */}
+          <linearGradient id="alloy-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#94a3b8" />
+            <stop offset="35%" stopColor="#e2e8f0" />
+            <stop offset="65%" stopColor="#cbd5e1" />
+            <stop offset="100%" stopColor="#64748b" />
           </linearGradient>
           <linearGradient id="metal-grad-classic" x1="0%" y1="0%" x2="0%" y2="100%">
             <stop offset="0%" stopColor="#f8fafc" />
             <stop offset="50%" stopColor="#cbd5e1" />
-            <stop offset="100%" stopColor="#64748b" />
+            <stop offset="100%" stopColor="#475569" />
           </linearGradient>
           <linearGradient id="white-hardware-grad" x1="0%" y1="0%" x2="0%" y2="100%">
             <stop offset="0%" stopColor="#ffffff" />
-            <stop offset="35%" stopColor="#ffffff" />
-            <stop offset="75%" stopColor="#f1f5f9" />
-            <stop offset="100%" stopColor="#cbd5e1" />
+            <stop offset="60%" stopColor="#f1f5f9" />
+            <stop offset="100%" stopColor="#94a3b8" />
           </linearGradient>
-          <filter id="shadow-soft" x="-15%" y="-15%" width="130%" height="130%">
-            <feDropShadow dx="2" dy="4" stdDeviation="5" floodColor="#0f172a" floodOpacity="0.22" />
+
+          {/* 3D Drop shadows and light diffuse filters for high-fidelity visualization */}
+          <filter id="shadow-frame-3d" x="-5%" y="-5%" width="112%" height="112%">
+            <feDropShadow dx="2" dy="4" stdDeviation="6" floodColor="#0f172a" floodOpacity="0.22" />
+          </filter>
+          <filter id="shadow-hardware" x="-15%" y="-15%" width="130%" height="130%">
+            <feDropShadow dx="1" dy="2.5" stdDeviation="2.5" floodColor="#0f172a" floodOpacity="0.25" />
+          </filter>
+          <filter id="shadow-glass-inset" x="-4%" y="-4%" width="108%" height="108%">
+            <feOffset dx="1" dy="1" />
+            <feGaussianBlur stdDeviation="1.5" result="offset-blur" />
+            <feComposite operator="out" in="SourceGraphic" in2="offset-blur" result="inverse" />
+            <feFlood floodColor="#020617" floodOpacity="0.18" result="color" />
+            <feComposite operator="in" in="color" in2="inverse" result="shadow" />
+            <feComposite operator="over" in="shadow" in2="SourceGraphic" />
           </filter>
         </defs>
-        {/* Solid white substrate layer to completely block any patterns and display a clean solid white backdrop */}
-        <rect x={-padding} y={-padding} width={width + padding*2} height={height + padding*2} fill="#ffffff" stroke="none" />
+
+        <rect x={-padding} y={-padding} width={width + padding * 2} height={height + padding * 2} fill="#ffffff" />
         
         <g className="blueprint-main">
-          <RenderBlueprintNode 
-            node={node} 
-            x={0} y={0} w={width} h={height} 
-            isRoot={true} 
-            selectedId={selectedId} 
-            onSelect={onSelect} 
-            readOnly={readOnly} 
+          {/* Main frame tree expansion recursion trigger */}
+          <RenderBlueprintNode
+            node={node}
+            x={0}
+            y={0}
+            w={width}
+            h={height}
+            isRoot={true}
+            selectedId={selectedId}
+            onSelect={onSelect}
+            readOnly={readOnly}
             hardwareList={hardwareList}
-            frameType={props.frameType}
+            frameType={frameType}
           />
-          
+
+          {/* Dimensions visual metrics layout layer */}
           {showDimensions && (
             <g className="dimensions-layer">
-              <ArchDimension 
-                start={0} end={width} orientation="h" 
-                linePos={height + rowGlobalOffsetBase + maxRowLayerBot * 35} 
-                leaderStart={height} 
-                onClick={() => onGlobalResize && onGlobalResize('w')} 
+              {/* Primary Total Width dimension */}
+              <ArchDimension
+                start={0}
+                end={width}
+                orientation="h"
+                linePos={height + 75 + maxRowLayerBot * 35}
+                leaderStart={height}
+                onClick={() => onGlobalResize?.('w')}
               />
-              <ArchDimension 
-                start={0} end={height} orientation="v" 
-                linePos={-(colGlobalOffsetBase + maxColLayerLeft * 35)} 
-                leaderStart={0} 
-                onClick={() => onGlobalResize && onGlobalResize('h')} 
+              {/* Primary Total Height dimension */}
+              <ArchDimension
+                start={0}
+                end={height}
+                orientation="v"
+                linePos={-(75 + maxColLayerLeft * 35)}
+                leaderStart={0}
+                onClick={() => onGlobalResize?.('h')}
               />
-              
+
+              {/* Fractional division Widths dimensions */}
               {rowSegments.map((seg, i) => {
                 const isBot = seg.crossPos > height / 2.01;
-                const linePos = isBot ? height + 55 + (seg.layer - 1) * 35 : -(55 + (seg.layer - 1) * 35);
-                const leaderStart = isBot ? height : 0;
                 return (
-                  <ArchDimension key={`h-${i}`} start={seg.start} end={seg.end} orientation="h" linePos={linePos} leaderStart={leaderStart} onClick={() => onChildResize?.(seg.parentId, seg.index, seg.end - seg.start, width)} />
+                  <ArchDimension
+                    key={`h-${i}`}
+                    start={seg.start}
+                    end={seg.end}
+                    orientation="h"
+                    linePos={isBot ? height + 55 + (seg.layer - 1) * 35 : -(55 + (seg.layer - 1) * 35)}
+                    leaderStart={isBot ? height : 0}
+                    onClick={() => onChildResize?.(seg.parentId, seg.index, seg.end - seg.start, width)}
+                  />
                 );
               })}
-              
+
+              {/* Fractional division Heights dimensions */}
               {colSegments.map((seg, i) => {
                 const isRight = seg.crossPos >= width / 2;
-                const linePos = isRight ? width + 55 + (seg.layer - 1) * 35 : -(55 + (seg.layer - 1) * 35);
-                const leaderStart = isRight ? width : 0;
                 return (
-                  <ArchDimension key={`v-${i}`} start={seg.start} end={seg.end} orientation="v" linePos={linePos} leaderStart={leaderStart} onClick={() => onChildResize?.(seg.parentId, seg.index, seg.end - seg.start, height)} />
+                  <ArchDimension
+                    key={`v-${i}`}
+                    start={seg.start}
+                    end={seg.end}
+                    orientation="v"
+                    linePos={isRight ? width + 55 + (seg.layer - 1) * 35 : -(55 + (seg.layer - 1) * 35)}
+                    leaderStart={isRight ? width : 0}
+                    onClick={() => onChildResize?.(seg.parentId, seg.index, seg.end - seg.start, height)}
+                  />
                 );
               })}
             </g>
           )}
         </g>
         
-        {/* Absolute top-most layer for sash hardware, handles, hinges, and opening indication lines to guarantee they sit above the glass and sashes */}
-        <g className="hardware-overlay-layer">
-          {hardwareList}
-        </g>
+        {/* Draw overlayer floating accessories for unclipped absolute rendering */}
+        <g className="hardware-overlay-layer">{hardwareList}</g>
       </svg>
     </div>
   );

@@ -635,7 +635,13 @@ export const InvoicePrint = () => {
        {/* Toolbar Actions */}
        <div className="no-print sticky top-0 left-0 right-0 z-[60] px-6 py-4 bg-white/90 backdrop-blur-2xl border-b border-slate-200 flex items-center justify-between shadow-sm w-full">
             <div className="flex items-center gap-3">
-                <button onClick={() => navigate(-1)} className="w-11 h-11 flex items-center justify-center bg-white shadow-sm rounded-2xl text-slate-700 border border-slate-200 active:scale-90 transition-all">
+                <button onClick={() => {
+                    if (state?.projectDetails) {
+                        navigate('/breakdown', { state: { projectDetails: state.projectDetails, items: state.items, fromProjectsList: (location.state as any)?.fromProjectsList } });
+                    } else {
+                        navigate('/dashboard');
+                    }
+                }} className="w-11 h-11 flex items-center justify-center bg-white shadow-sm rounded-2xl text-slate-700 border border-slate-200 active:scale-90 transition-all">
                     <ArrowRight size={20} />
                 </button>
                 <button onClick={() => navigate('/dashboard')} className="w-11 h-11 flex items-center justify-center bg-white shadow-sm rounded-2xl text-slate-700 border border-slate-200 active:scale-90 transition-all">

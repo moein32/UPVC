@@ -16,6 +16,8 @@ export const GlassHardware = () => {
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [tempPrice, setTempPrice] = useState('');
+  const [confirmDeleteGlassId, setConfirmDeleteGlassId] = useState<string | null>(null);
+  const [confirmDeleteHwId, setConfirmDeleteHwId] = useState<string | null>(null);
 
   // Form States
   const [showAddForm, setShowAddForm] = useState(false);
@@ -59,10 +61,9 @@ export const GlassHardware = () => {
   };
 
   const handleDeleteGlass = (id: string) => {
-      if(window.confirm('حذف شود؟')) {
-          pricingStore.deleteGlass(id);
-          setGlassList(pricingStore.getGlass());
-      }
+      pricingStore.deleteGlass(id);
+      setGlassList(pricingStore.getGlass());
+      setConfirmDeleteGlassId(null);
   }
 
   const handleAddHw = () => {
@@ -81,10 +82,9 @@ export const GlassHardware = () => {
   };
   
   const handleDeleteHw = (id: string) => {
-      if(window.confirm('حذف شود؟')) {
-          pricingStore.deleteHardware(id);
-          setHardwareList(pricingStore.getHardware());
-      }
+      pricingStore.deleteHardware(id);
+      setHardwareList(pricingStore.getHardware());
+      setConfirmDeleteHwId(null);
   }
 
   return (
@@ -180,9 +180,16 @@ export const GlassHardware = () => {
                      <button onClick={() => startEdit(glass.id, glass.pricePerSqm)} className="p-2 text-slate-400 hover:text-blue-500 bg-slate-50 rounded-lg">
                        <Edit2 size={18} />
                      </button>
-                     <button onClick={() => handleDeleteGlass(glass.id)} className="p-2 text-red-400 hover:bg-red-50 rounded-lg">
-                        <Trash2 size={18} />
-                     </button>
+                     {confirmDeleteGlassId === glass.id ? (
+                        <span className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
+                          <button onClick={() => handleDeleteGlass(glass.id)} className="px-2 py-1 text-xs bg-red-650 hover:bg-red-700 text-white rounded font-bold">بله</button>
+                          <button onClick={() => setConfirmDeleteGlassId(null)} className="px-2 py-1 text-xs bg-slate-200 text-slate-705 rounded font-bold">خیر</button>
+                        </span>
+                      ) : (
+                        <button onClick={() => setConfirmDeleteGlassId(glass.id)} className="p-2 text-red-400 hover:bg-red-50 rounded-lg">
+                          <Trash2 size={18} />
+                        </button>
+                      )}
                    </>
                  )}
               </div>
@@ -220,10 +227,17 @@ export const GlassHardware = () => {
                        <button onClick={() => startEdit(hw.id, hw.pricePerSet)} className="p-2 text-slate-400 hover:text-blue-500 bg-slate-50 rounded-lg">
                          <Edit2 size={18} />
                        </button>
-                       <button onClick={() => handleDeleteHw(hw.id)} className="p-2 text-red-400 hover:bg-red-50 rounded-lg">
+                       {confirmDeleteHwId === hw.id ? (
+                          <span className="flex items-center gap-1 bg-slate-50 p-1 rounded-lg">
+                            <button onClick={() => handleDeleteHw(hw.id)} className="px-2 py-1 text-xs bg-red-650 hover:bg-red-700 text-white rounded font-bold">بله</button>
+                            <button onClick={() => setConfirmDeleteHwId(null)} className="px-2 py-1 text-xs bg-slate-200 text-slate-705 rounded font-bold">خیر</button>
+                          </span>
+                        ) : (
+                          <button onClick={() => setConfirmDeleteHwId(hw.id)} className="p-2 text-red-400 hover:bg-red-50 rounded-lg">
                         <Trash2 size={18} />
                      </button>
-                     </>
+                    )}
+                  </>
                    )}
                 </div>
               </div>

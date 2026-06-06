@@ -70,6 +70,7 @@ export interface WindowNode {
   flex?: number; 
   systemType?: 'Casement' | 'Sliding'; 
   slidingRailType?: 'Monorail' | 'DoubleRail'; 
+  slidingModelIndex?: number;
   isFrenchWindow?: boolean; 
   sashMullions?: { horizontal: number, vertical: number };
 }
