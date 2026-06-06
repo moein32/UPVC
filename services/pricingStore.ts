@@ -15,69 +15,194 @@ const DEFAULT_COMPONENTS: ProfileComponent[] = [
 
 const INITIAL_BRANDS: ProfileBrand[] = [
   {
-    id: 'vistabest',
-    name: 'ویستابست',
-    logo: '🏆',
-    tier: 'لوکس',
-    series: ['۶۰', '۷۰'],
-    warrantyYears: 15,
-    components: DEFAULT_COMPONENTS.map(c => ({ 
-        ...c, 
-        price: c.id === 'frame' ? 450000 : 
-               c.id === 'monorail_frame' ? 620000 :
-               c.id === 'floating_mullion' ? 510000 :
-               c.id === 'galvanized' ? 150000 : 
-               c.id === 'bead' ? 60000 : 
-               460000 
-    }))
-  },
-  {
-    id: 'wintech',
-    name: 'وین‌تک',
+    id: 'wintech-w640-1',
+    name: 'Wintech - وین‌تک سری ۶۰ لولایی ۴ کاناله (W640)',
     logo: '🌍',
     tier: 'لوکس',
-    series: ['W640'],
+    series: ['سری ۶۰ لولایی ۴ کاناله (W640)'],
     warrantyYears: 10,
-    components: DEFAULT_COMPONENTS.map(c => ({ 
-        ...c, 
-        price: c.id === 'monorail_frame' ? 580000 :
-               c.id === 'floating_mullion' ? 480000 :
-               c.id === 'galvanized' ? 140000 : 
-               c.id === 'bead' ? 55000 : 
-               420000 
-    }))
+    components: [
+      { id: 'frame', name: 'فریم W640', unit: 'm', price: 450000, weight: 1.15 },
+      { id: 'monorail_frame', name: 'پروفیل فریم تک‌ریل (Monorail)', unit: 'm', price: 620000 },
+      { id: 'sash_window', name: 'لنگه پنجره W640', unit: 'm', price: 460000, weight: 1.3 },
+      { id: 'sash_door', name: 'لنگه درب W640', unit: 'm', price: 460000, weight: 1.65 },
+      { id: 'mullion', name: 'مولیون W640', unit: 'm', price: 460000, weight: 1.25 },
+      { id: 'floating_mullion', name: 'مولیون متحرک (French Mullion)', unit: 'm', price: 510000 },
+      { id: 'bead', name: 'زهوار', unit: 'm', price: 60000, weight: 0.29 },
+      { id: 'renovation', name: 'پروفیل بازسازی', unit: 'm', price: 460000 },
+      { id: 'galvanized', name: 'گالوانیزه تقویتی (Reinforcement)', unit: 'm', price: 150000 }
+    ]
   },
   {
-    id: 'hofmann',
-    name: 'هافمن',
+    id: 'wintech-w700-2',
+    name: 'Wintech - وین‌تک سری ۷۰ لولایی ۵ کاناله (W700)',
+    logo: '🌍',
+    tier: 'لوکس',
+    series: ['سری ۷۰ لولایی ۵ کاناله (W700)'],
+    warrantyYears: 10,
+    components: [
+      { id: 'frame', name: 'فریم W700', unit: 'm', price: 490000, weight: 1.4 },
+      { id: 'monorail_frame', name: 'پروفیل فریم تک‌ریل (Monorail)', unit: 'm', price: 650000 },
+      { id: 'sash_window', name: 'لنگه پنجره W700', unit: 'm', price: 500000, weight: 1.55 },
+      { id: 'sash_door', name: 'لنگه درب W700', unit: 'm', price: 500000, weight: 1.9 },
+      { id: 'mullion', name: 'مولیون W700', unit: 'm', price: 500000, weight: 1.48 },
+      { id: 'floating_mullion', name: 'مولیون متحرک (French Mullion)', unit: 'm', price: 550000 },
+      { id: 'bead', name: 'زهوار', unit: 'm', price: 65000, weight: 0.35 },
+      { id: 'renovation', name: 'پروفیل بازسازی', unit: 'm', price: 500000 },
+      { id: 'galvanized', name: 'گالوانیزه تقویتی (Reinforcement)', unit: 'm', price: 155000 }
+    ]
+  },
+  {
+    id: 'wintech-w260-3',
+    name: 'Wintech - وین‌تک سری کشویی تک ریل (W260)',
+    logo: '🌍',
+    tier: 'لوکس',
+    series: ['سری کشویی تک ریل (W260)'],
+    warrantyYears: 10,
+    components: [
+      { id: 'frame', name: 'فریم کشویی W260', unit: 'm', price: 620000, weight: 1.95 },
+      { id: 'monorail_frame', name: 'پروفیل فریم تک‌ریل (Monorail)', unit: 'm', price: 620000 },
+      { id: 'sash_window', name: 'لنگه کشویی W260', unit: 'm', price: 460000, weight: 1.65 },
+      { id: 'sash_door', name: 'لنگه درب W260', unit: 'm', price: 460000 },
+      { id: 'mullion', name: 'مولیون کشویی W260', unit: 'm', price: 460000, weight: 1.75 },
+      { id: 'floating_mullion', name: 'مولیون متحرک (French Mullion)', unit: 'm', price: 510000 },
+      { id: 'bead', name: 'زهوار', unit: 'm', price: 60000, weight: 0.38 },
+      { id: 'renovation', name: 'پروفیل بازسازی', unit: 'm', price: 460000 },
+      { id: 'galvanized', name: 'گالوانیزه تقویتی (Reinforcement)', unit: 'm', price: 150000 }
+    ]
+  },
+  {
+    id: 'wintech-w260-4',
+    name: 'Wintech - وین‌تک سری کشویی جفت ریل (W260)',
+    logo: '🌍',
+    tier: 'لوکس',
+    series: ['سری کشویی جفت ریل (W260)'],
+    warrantyYears: 10,
+    components: [
+      { id: 'frame', name: 'فریم کشویی W260', unit: 'm', price: 650000, weight: 2.1 },
+      { id: 'monorail_frame', name: 'پروفیل فریم تک‌ریل (Monorail)', unit: 'm', price: 650000 },
+      { id: 'sash_window', name: 'لنگه کشویی W260', unit: 'm', price: 460000, weight: 1.7 },
+      { id: 'sash_door', name: 'لنگه درب W260', unit: 'm', price: 460000 },
+      { id: 'mullion', name: 'مولیون کشویی W260', unit: 'm', price: 460000, weight: 1.8 },
+      { id: 'floating_mullion', name: 'مولیون متحرک (French Mullion)', unit: 'm', price: 510000 },
+      { id: 'bead', name: 'زهوار', unit: 'm', price: 60000, weight: 0.4 },
+      { id: 'renovation', name: 'پروفیل بازسازی', unit: 'm', price: 460000 },
+      { id: 'galvanized', name: 'گالوانیزه تقویتی (Reinforcement)', unit: 'm', price: 150000 }
+    ]
+  },
+  {
+    id: 'pluspen-w640-eco-5',
+    name: 'Pluspen - وین‌تک سری ۶۰ اقتصادی (پلاس‌پن)',
+    logo: '🌍',
+    tier: 'اقتصادی',
+    series: ['سری ۶۰ اقتصادی (پلاس‌پن)'],
+    warrantyYears: 5,
+    components: [
+      { id: 'frame', name: 'فریم W640 Eco', unit: 'm', price: 280000, weight: 1.0 },
+      { id: 'monorail_frame', name: 'پروفیل فریم تک‌ریل (Monorail)', unit: 'm', price: 380000 },
+      { id: 'sash_window', name: 'لنگه پنجره W640 Eco', unit: 'm', price: 290000, weight: 1.1 },
+      { id: 'sash_door', name: 'لنگه درب W640 Eco', unit: 'm', price: 290000, weight: 1.4 },
+      { id: 'mullion', name: 'مولیون W640 Eco', unit: 'm', price: 290000, weight: 1.05 },
+      { id: 'floating_mullion', name: 'مولیون متحرک (French Mullion)', unit: 'm', price: 320000 },
+      { id: 'bead', name: 'زهوار', unit: 'm', price: 40000, weight: 0.25 },
+      { id: 'renovation', name: 'پروفیل بازسازی', unit: 'm', price: 280000 },
+      { id: 'galvanized', name: 'گالوانیزه تقویتی (Reinforcement)', unit: 'm', price: 120000 }
+    ]
+  },
+  {
+    id: 'vistabest-standard-6',
+    name: 'Vistabest - ویستابست سری ۶۰ لولایی ۳ کاناله',
+    logo: '🏆',
+    tier: 'لوکس',
+    series: ['سری ۶۰ لولایی ۳ کاناله'],
+    warrantyYears: 15,
+    components: [
+      { id: 'frame', name: 'فریم Standard', unit: 'm', price: 450000, weight: 1.15 },
+      { id: 'monorail_frame', name: 'پروفیل فریم تک‌ریل (Monorail)', unit: 'm', price: 620000 },
+      { id: 'sash_window', name: 'لنگه پنجره Standard', unit: 'm', price: 460000, weight: 1.3 },
+      { id: 'sash_door', name: 'لنگه درب Standard', unit: 'm', price: 460000, weight: 1.65 },
+      { id: 'mullion', name: 'مولیون Standard', unit: 'm', price: 460000, weight: 1.25 },
+      { id: 'floating_mullion', name: 'مولیون متحرک (French Mullion)', unit: 'm', price: 510000 },
+      { id: 'bead', name: 'زهوار', unit: 'm', price: 60000, weight: 0.29 },
+      { id: 'renovation', name: 'پروفیل بازسازی', unit: 'm', price: 460000 },
+      { id: 'galvanized', name: 'گالوانیزه تقویتی (Reinforcement)', unit: 'm', price: 150000 }
+    ]
+  },
+  {
+    id: 'vistabest-exclusive-7',
+    name: 'Vistabest - ویستابست سری ۷۰ لولایی ۵ کاناله',
+    logo: '🏆',
+    tier: 'لوکس',
+    series: ['سری ۷۰ لولایی ۵ کاناله'],
+    warrantyYears: 15,
+    components: [
+      { id: 'frame', name: 'فریم Exclusive', unit: 'm', price: 490000, weight: 1.4 },
+      { id: 'monorail_frame', name: 'پروفیل فریم تک‌ریل (Monorail)', unit: 'm', price: 650000 },
+      { id: 'sash_window', name: 'لنگه پنجره Exclusive', unit: 'm', price: 500000, weight: 1.55 },
+      { id: 'sash_door', name: 'لنگه درب Exclusive', unit: 'm', price: 500000, weight: 1.9 },
+      { id: 'mullion', name: 'مولیون Exclusive', unit: 'm', price: 500000, weight: 1.48 },
+      { id: 'floating_mullion', name: 'مولیون متحرک (French Mullion)', unit: 'm', price: 550000 },
+      { id: 'bead', name: 'زهوار', unit: 'm', price: 65000, weight: 0.35 },
+      { id: 'renovation', name: 'پروفیل بازسازی', unit: 'm', price: 500000 },
+      { id: 'galvanized', name: 'گالوانیزه تقویتی (Reinforcement)', unit: 'm', price: 155000 }
+    ]
+  },
+  {
+    id: 'vistabest-sliding-8',
+    name: 'Vistabest - ویستابست سری کشویی جفت ریل',
+    logo: '🏆',
+    tier: 'لوکس',
+    series: ['سری کشویی جفت ریل'],
+    warrantyYears: 15,
+    components: [
+      { id: 'frame', name: 'فریم کشویی Sliding', unit: 'm', price: 650000, weight: 2.1 },
+      { id: 'monorail_frame', name: 'پروفیل فریم تک‌ریل (Monorail)', unit: 'm', price: 650000 },
+      { id: 'sash_window', name: 'لنگه کشویی Sliding', unit: 'm', price: 460000, weight: 1.7 },
+      { id: 'sash_door', name: 'لنگه درب Sliding', unit: 'm', price: 460000 },
+      { id: 'mullion', name: 'مولیون کشویی Sliding', unit: 'm', price: 460000, weight: 1.8 },
+      { id: 'floating_mullion', name: 'مولیون متحرک (French Mullion)', unit: 'm', price: 510000 },
+      { id: 'bead', name: 'زهوار', unit: 'm', price: 60000, weight: 0.4 },
+      { id: 'renovation', name: 'پروفیل بازسازی', unit: 'm', price: 460000 },
+      { id: 'galvanized', name: 'گالوانیزه تقویتی (Reinforcement)', unit: 'm', price: 150000 }
+    ]
+  },
+  {
+    id: 'hofmann-60mm-9',
+    name: 'Hofmann - هافمن سری ۶۰ لولایی ۴ کاناله',
     logo: '🇩🇪',
     tier: 'استاندارد',
-    series: ['۶۰'],
+    series: ['سری ۶۰ لولایی ۴ کاناله'],
     warrantyYears: 10,
-    components: DEFAULT_COMPONENTS.map(c => ({ 
-        ...c, 
-        price: c.id === 'monorail_frame' ? 520000 :
-               c.id === 'floating_mullion' ? 440000 :
-               c.id === 'galvanized' ? 130000 : 
-               c.id === 'bead' ? 50000 : 
-               380000 
-    }))
+    components: [
+      { id: 'frame', name: 'فریم 60mm', unit: 'm', price: 380000, weight: 1.15 },
+      { id: 'monorail_frame', name: 'پروفیل فریم تک‌ریل (Monorail)', unit: 'm', price: 520000 },
+      { id: 'sash_window', name: 'لنگه پنجره 60mm', unit: 'm', price: 390000, weight: 1.3 },
+      { id: 'sash_door', name: 'لنگه درب 60mm', unit: 'm', price: 390000, weight: 1.65 },
+      { id: 'mullion', name: 'مولیون 60mm', unit: 'm', price: 390000, weight: 1.25 },
+      { id: 'floating_mullion', name: 'مولیون متحرک (French Mullion)', unit: 'm', price: 440000 },
+      { id: 'bead', name: 'زهوار', unit: 'm', price: 50000, weight: 0.29 },
+      { id: 'renovation', name: 'پروفیل بازسازی', unit: 'm', price: 380000 },
+      { id: 'galvanized', name: 'گالوانیزه تقویتی (Reinforcement)', unit: 'm', price: 130000 }
+    ]
   },
   {
-    id: 'yazdwin',
-    name: 'یزد وین',
-    logo: '🏗️',
-    tier: 'اقتصادی',
-    series: ['Eco'],
-    warrantyYears: 5,
-    components: DEFAULT_COMPONENTS.map(c => ({ 
-        ...c, 
-        price: c.id === 'monorail_frame' ? 380000 :
-               c.id === 'floating_mullion' ? 320000 :
-               c.id === 'galvanized' ? 120000 : 
-               c.id === 'bead' ? 40000 : 
-               280000 
-    }))
+    id: 'hofmann-70mm-10',
+    name: 'Hofmann - هافمن سری ۷۰ لولایی ۵ کاناله',
+    logo: '🇩🇪',
+    tier: 'استاندارد',
+    series: ['سری ۷۰ لولایی ۵ کاناله'],
+    warrantyYears: 10,
+    components: [
+      { id: 'frame', name: 'فریم 70mm', unit: 'm', price: 410000, weight: 1.4 },
+      { id: 'monorail_frame', name: 'پروفیل فریم تک‌ریل (Monorail)', unit: 'm', price: 550000 },
+      { id: 'sash_window', name: 'لنگه پنجره 70mm', unit: 'm', price: 420000, weight: 1.55 },
+      { id: 'sash_door', name: 'لنگه درب 70mm', unit: 'm', price: 420000, weight: 1.9 },
+      { id: 'mullion', name: 'مولیون 70mm', unit: 'm', price: 420000, weight: 1.48 },
+      { id: 'floating_mullion', name: 'مولیون متحرک (French Mullion)', unit: 'm', price: 460000 },
+      { id: 'bead', name: 'زهوار', unit: 'm', price: 55000, weight: 0.35 },
+      { id: 'renovation', name: 'پروفیل بازسازی', unit: 'm', price: 410000 },
+      { id: 'galvanized', name: 'گالوانیزه تقویتی (Reinforcement)', unit: 'm', price: 135000 }
+    ]
   }
 ];
 
@@ -127,14 +252,14 @@ const DEFAULT_PROJECT: SavedProject = {
   companyName: 'گروه صنعتی نکس‌وین (NexWin)',
   date: new Date().toISOString(),
   status: 'Contract',
-  defaultProfileId: 'vistabest',
+  defaultProfileId: 'wintech-w640-1',
   totalPrice: 128450000, 
   payments: [],
   items: [
     {
       id: 'demo-item-1',
       config: {
-        id: 'conf-d1', width: 1600, height: 1800, profileId: 'vistabest', glassId: 'double_4_4', hardwareId: 'h1', type: 'دو لنگه با کتیبه بالا', mullions: 2, frameType: 'standard',
+        id: 'conf-d1', width: 1600, height: 1800, profileId: 'wintech-w640-1', glassId: 'double_4_4', hardwareId: 'h1', type: 'دو لنگه با کتیبه بالا', mullions: 2, frameType: 'standard',
         layout: { 
             id: 'root1', type: 'container', dir: 'col', flex: 1, 
             children: [
@@ -163,7 +288,7 @@ const DEFAULT_PROJECT: SavedProject = {
     {
       id: 'demo-item-2',
       config: {
-        id: 'conf-d2', width: 2100, height: 1400, profileId: 'vistabest', glassId: 'double_4_4', hardwareId: 'h2', type: 'سه لنگه (وسط بازشو دوحالته)', mullions: 2, frameType: 'standard',
+        id: 'conf-d2', width: 2100, height: 1400, profileId: 'wintech-w700-2', glassId: 'double_4_4', hardwareId: 'h2', type: 'سه لنگه (وسط بازشو دوحالته)', mullions: 2, frameType: 'standard',
         layout: { 
             id: 'root2', type: 'container', dir: 'row', flex: 1, 
             children: [
@@ -190,7 +315,7 @@ const DEFAULT_PROJECT: SavedProject = {
     {
       id: 'demo-item-3',
       config: {
-        id: 'conf-d3', width: 900, height: 2100, profileId: 'vistabest', glassId: 'double_4_4', hardwareId: 'h5', type: 'درب تراس (سنگین با پنل)', mullions: 1, frameType: 'standard',
+        id: 'conf-d3', width: 900, height: 2100, profileId: 'vistabest-standard-6', glassId: 'double_4_4', hardwareId: 'h5', type: 'درب تراس (سنگین با پنل)', mullions: 1, frameType: 'standard',
         layout: { 
             id: 'root3', type: 'container', dir: 'col', flex: 1, openingType: 'DoorRight',
             children: [
@@ -216,7 +341,7 @@ const DEFAULT_PROJECT: SavedProject = {
     {
       id: 'demo-item-4',
       config: {
-        id: 'conf-d4', width: 600, height: 600, profileId: 'wintech', glassId: 'double_4_4', hardwareId: 'h1', type: 'پنجره تک لنگه سرویس (کلنگی)', mullions: 0, frameType: 'standard',
+        id: 'conf-d4', width: 600, height: 600, profileId: 'wintech-w640-1', glassId: 'double_4_4', hardwareId: 'h1', type: 'پنجره تک لنگه سرویس (کلنگی)', mullions: 0, frameType: 'standard',
         layout: { id: 'root4', type: 'leaf', openingType: 'TiltTurnRight', flex: 1 }
       },
       quantity: 4,
@@ -235,7 +360,7 @@ const DEFAULT_PROJECT: SavedProject = {
     {
       id: 'demo-item-5',
       config: {
-        id: 'conf-d5', width: 1200, height: 2400, profileId: 'vistabest', glassId: 'double_6_4', hardwareId: 'h0', type: 'پنجره قدی ثابت (ویترینی)', mullions: 0, frameType: 'standard',
+        id: 'conf-d5', width: 1200, height: 2400, profileId: 'vistabest-exclusive-7', glassId: 'double_6_4', hardwareId: 'h0', type: 'پنجره قدی ثابت (ویترینی)', mullions: 0, frameType: 'standard',
         layout: { id: 'root5', type: 'leaf', openingType: 'Fixed', flex: 1 }
       },
       quantity: 2,
@@ -252,7 +377,7 @@ const DEFAULT_PROJECT: SavedProject = {
     {
       id: 'demo-item-6',
       config: {
-        id: 'conf-d6', width: 1400, height: 2200, profileId: 'vistabest', glassId: 'double_4_4', hardwareId: 'h5', type: 'درب فرانسوی (بدون ستون وسط)', mullions: 1, frameType: 'standard',
+        id: 'conf-d6', width: 1400, height: 2200, profileId: 'vistabest-standard-6', glassId: 'double_4_4', hardwareId: 'h5', type: 'درب فرانسوی (بدون ستون وسط)', mullions: 1, frameType: 'standard',
         layout: { 
             id: 'root6', type: 'container', dir: 'row', flex: 1, 
             children: [
@@ -280,8 +405,36 @@ const DEFAULT_PROJECT: SavedProject = {
 
 export const pricingStore = {
   getBrands: (): ProfileBrand[] => {
+    if (typeof window === 'undefined') return INITIAL_BRANDS;
     const stored = localStorage.getItem('lumina_brands');
-    return stored ? JSON.parse(stored) : INITIAL_BRANDS;
+    if (!stored) {
+      localStorage.setItem('lumina_brands', JSON.stringify(INITIAL_BRANDS));
+      return INITIAL_BRANDS;
+    }
+    try {
+      const brands: ProfileBrand[] = JSON.parse(stored);
+      const oldIds = ['vistabest', 'wintech', 'hofmann', 'yazdwin', 'sindaj'];
+      const hasOldBrand = brands.some(b => oldIds.includes(b.id));
+      const hasNewBrand = brands.some(b => b.id === 'wintech-w640-1');
+      if (hasOldBrand || !hasNewBrand) {
+        const customBrands = brands.filter(b => 
+          !oldIds.includes(b.id) && 
+          !b.id.startsWith('wintech-') && 
+          !b.id.startsWith('pluspen-') && 
+          !b.id.startsWith('vistabest-') && 
+          !b.id.startsWith('hofmann-')
+        );
+        const migratedBrands = [...INITIAL_BRANDS, ...customBrands];
+        localStorage.setItem('lumina_brands', JSON.stringify(migratedBrands));
+        localStorage.removeItem('lumina_projects');
+        localStorage.removeItem('lumina_demo_deleted');
+        return migratedBrands;
+      }
+      return brands;
+    } catch (e) {
+      console.error('Migration failed:', e);
+      return INITIAL_BRANDS;
+    }
   },
   
   saveBrands: (brands: ProfileBrand[]) => {
