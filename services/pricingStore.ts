@@ -10,7 +10,6 @@ const DEFAULT_COMPONENTS: ProfileComponent[] = [
   { id: 'floating_mullion', name: 'مولیون متحرک (French Mullion)', unit: 'm', price: 0 },
   { id: 'bead', name: 'زهوار (Bead)', unit: 'm', price: 0 },
   { id: 'renovation', name: 'پروفیل بازسازی', unit: 'm', price: 0 },
-  { id: 'galvanized', name: 'گالوانیزه تقویتی (Reinforcement)', unit: 'm', price: 150000 },
 ];
 
 const INITIAL_BRANDS: ProfileBrand[] = [
@@ -31,7 +30,8 @@ const INITIAL_BRANDS: ProfileBrand[] = [
       { id: 'bead', name: 'زهوار', unit: 'm', price: 60000, weight: 0.29 },
       { id: 'renovation', name: 'پروفیل بازسازی', unit: 'm', price: 460000 },
       { id: 'galvanized', name: 'گالوانیزه تقویتی (Reinforcement)', unit: 'm', price: 150000 }
-    ]
+    ],
+    glassDeductions: { frameFix: 10, sashWindow: 110, sashDoor: 160, slidingSash: 122 }
   },
   {
     id: 'wintech-w700-2',
@@ -50,7 +50,8 @@ const INITIAL_BRANDS: ProfileBrand[] = [
       { id: 'bead', name: 'زهوار', unit: 'm', price: 65000, weight: 0.35 },
       { id: 'renovation', name: 'پروفیل بازسازی', unit: 'm', price: 500000 },
       { id: 'galvanized', name: 'گالوانیزه تقویتی (Reinforcement)', unit: 'm', price: 155000 }
-    ]
+    ],
+    glassDeductions: { frameFix: 10, sashWindow: 120, sashDoor: 170, slidingSash: 128 }
   },
   {
     id: 'wintech-w260-3',
@@ -69,7 +70,8 @@ const INITIAL_BRANDS: ProfileBrand[] = [
       { id: 'bead', name: 'زهوار', unit: 'm', price: 60000, weight: 0.38 },
       { id: 'renovation', name: 'پروفیل بازسازی', unit: 'm', price: 460000 },
       { id: 'galvanized', name: 'گالوانیزه تقویتی (Reinforcement)', unit: 'm', price: 150000 }
-    ]
+    ],
+    glassDeductions: { frameFix: 10, sashWindow: 110, sashDoor: 160, slidingSash: 122 }
   },
   {
     id: 'wintech-w260-4',
@@ -88,7 +90,8 @@ const INITIAL_BRANDS: ProfileBrand[] = [
       { id: 'bead', name: 'زهوار', unit: 'm', price: 60000, weight: 0.4 },
       { id: 'renovation', name: 'پروفیل بازسازی', unit: 'm', price: 460000 },
       { id: 'galvanized', name: 'گالوانیزه تقویتی (Reinforcement)', unit: 'm', price: 150000 }
-    ]
+    ],
+    glassDeductions: { frameFix: 10, sashWindow: 110, sashDoor: 160, slidingSash: 122 }
   },
   {
     id: 'pluspen-w640-eco-5',
@@ -107,7 +110,8 @@ const INITIAL_BRANDS: ProfileBrand[] = [
       { id: 'bead', name: 'زهوار', unit: 'm', price: 40000, weight: 0.25 },
       { id: 'renovation', name: 'پروفیل بازسازی', unit: 'm', price: 280000 },
       { id: 'galvanized', name: 'گالوانیزه تقویتی (Reinforcement)', unit: 'm', price: 120000 }
-    ]
+    ],
+    glassDeductions: { frameFix: 10, sashWindow: 110, sashDoor: 160, slidingSash: 122 }
   },
   {
     id: 'vistabest-standard-6',
@@ -126,7 +130,8 @@ const INITIAL_BRANDS: ProfileBrand[] = [
       { id: 'bead', name: 'زهوار', unit: 'm', price: 60000, weight: 0.29 },
       { id: 'renovation', name: 'پروفیل بازسازی', unit: 'm', price: 460000 },
       { id: 'galvanized', name: 'گالوانیزه تقویتی (Reinforcement)', unit: 'm', price: 150000 }
-    ]
+    ],
+    glassDeductions: { frameFix: 10, sashWindow: 110, sashDoor: 160, slidingSash: 122 }
   },
   {
     id: 'vistabest-exclusive-7',
@@ -145,7 +150,8 @@ const INITIAL_BRANDS: ProfileBrand[] = [
       { id: 'bead', name: 'زهوار', unit: 'm', price: 65000, weight: 0.35 },
       { id: 'renovation', name: 'پروفیل بازسازی', unit: 'm', price: 500000 },
       { id: 'galvanized', name: 'گالوانیزه تقویتی (Reinforcement)', unit: 'm', price: 155000 }
-    ]
+    ],
+    glassDeductions: { frameFix: 10, sashWindow: 120, sashDoor: 170, slidingSash: 128 }
   },
   {
     id: 'vistabest-sliding-8',
@@ -164,7 +170,8 @@ const INITIAL_BRANDS: ProfileBrand[] = [
       { id: 'bead', name: 'زهوار', unit: 'm', price: 60000, weight: 0.4 },
       { id: 'renovation', name: 'پروفیل بازسازی', unit: 'm', price: 460000 },
       { id: 'galvanized', name: 'گالوانیزه تقویتی (Reinforcement)', unit: 'm', price: 150000 }
-    ]
+    ],
+    glassDeductions: { frameFix: 10, sashWindow: 110, sashDoor: 160, slidingSash: 122 }
   },
   {
     id: 'hofmann-60mm-9',
@@ -183,7 +190,8 @@ const INITIAL_BRANDS: ProfileBrand[] = [
       { id: 'bead', name: 'زهوار', unit: 'm', price: 50000, weight: 0.29 },
       { id: 'renovation', name: 'پروفیل بازسازی', unit: 'm', price: 380000 },
       { id: 'galvanized', name: 'گالوانیزه تقویتی (Reinforcement)', unit: 'm', price: 130000 }
-    ]
+    ],
+    glassDeductions: { frameFix: 10, sashWindow: 110, sashDoor: 160, slidingSash: 122 }
   },
   {
     id: 'hofmann-70mm-10',
@@ -202,7 +210,8 @@ const INITIAL_BRANDS: ProfileBrand[] = [
       { id: 'bead', name: 'زهوار', unit: 'm', price: 55000, weight: 0.35 },
       { id: 'renovation', name: 'پروفیل بازسازی', unit: 'm', price: 410000 },
       { id: 'galvanized', name: 'گالوانیزه تقویتی (Reinforcement)', unit: 'm', price: 135000 }
-    ]
+    ],
+    glassDeductions: { frameFix: 10, sashWindow: 120, sashDoor: 170, slidingSash: 128 }
   }
 ];
 

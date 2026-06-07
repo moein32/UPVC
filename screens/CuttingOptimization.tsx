@@ -112,9 +112,10 @@ export const CuttingOptimization = () => {
 
     project.items.forEach((unit, idx) => {
       const uId = (idx + 1).toString();
+      const unitBrand = pricingStore.getBrands().find(b => b.id === unit.config.profileId);
       
       // Calculate 100% precise materials according to the MasterWin technical manual
-      const cuts = calculateDetailedCuts(unit.config.layout || {} as any, unit.config.width, unit.config.height, unit.config.frameType);
+      const cuts = calculateDetailedCuts(unit.config.layout || {} as any, unit.config.width, unit.config.height, unit.config.frameType, unitBrand);
       
       cuts.forEach((cut, cIdx) => {
         const itemQuantity = cut.quantity * unit.quantity;

@@ -58,9 +58,19 @@ export function calculateDetailedCuts(
   node: WindowNode,
   w: number,
   h: number,
-  frameType: 'standard' | 'renovation' | 'threshold' = 'standard'
+  frameType: 'standard' | 'renovation' | 'threshold' = 'standard',
+  selectedProfile?: ProfileBrand
 ): FinishedCut[] {
   const cuts: FinishedCut[] = [];
+
+  // Determine dynamic frame variables responsive to the selected profile
+  const brandName = selectedProfile?.name?.toLowerCase() || '';
+  const brandId = selectedProfile?.id?.toLowerCase() || '';
+  const isW700 = brandId.includes('w700') || brandName.includes('70') || brandId.includes('exclusive') || brandId.includes('70mm');
+  const isW800 = brandId.includes('80mm') || brandName.includes('80');
+
+  const f_std = isW800 ? 55 : (isW700 ? 50 : CONSTANTS.F_std); // default 45
+  const f_renov_net = isW800 ? 48 : (isW700 ? 43 : CONSTANTS.F_renov_net); // default 38
 
   // 1. Calculate Frame cuts (done at root level)
   const isRenov = frameType === 'renovation';
@@ -74,8 +84,8 @@ export function calculateDetailedCuts(
     cuts.push({ id: 'frame-top', name: 'پروفیل فریم کتیبه بالا (استاندارد)', length: w + CONSTANTS.Z, quantity: 1, type: 'Frame', unit: 'm', angle: frameAngle });
     // Left & Right standard frames
     cuts.push({ id: 'frame-vertical', name: 'پروفیل فریم درب (ارتفاع استاندارد)', length: h + CONSTANTS.Z, quantity: 2, type: 'Frame', unit: 'm', angle: frameAngle });
-    // Bottom aluminum threshold (Alum threshold sits between frame, cut L = W - 2*F + joint_allowance = W - 90 + 3)
-    cuts.push({ id: 'threshold-bottom', name: 'آستانه آلومینیومی کف', length: w - CONSTANTS.F_std * 2 + 10, quantity: 1, type: 'Threshold', unit: 'm', angle: '90/90' });
+    // Bottom aluminum threshold (Alum threshold sits between frame, cut L = W - 2*F + joint_allowance = W - 2*f_std + 10)
+    cuts.push({ id: 'threshold-bottom', name: 'آستانه آلومینیومی کف', length: w - f_std * 2 + 10, quantity: 1, type: 'Threshold', unit: 'm', angle: '90/90' });
   } else {
     cuts.push({ id: 'frame-width', name: `پروفیل فریم ${frameSubLabel} (عرض)`, length: w + frameLengthAdd, quantity: 2, type: 'Frame', unit: 'm', angle: frameAngle });
     cuts.push({ id: 'frame-height', name: `پروفیل فریم ${frameSubLabel} (ارتفاع)`, length: h + frameLengthAdd, quantity: 2, type: 'Frame', unit: 'm', angle: frameAngle });
@@ -90,7 +100,7 @@ export function calculateDetailedCuts(
   };
 
   // Run recursive pane calculation
-  solveNode(node, w, h, initialBounds, cuts);
+  solveNode(node, w, h, initialBounds, cuts, selectedProfile);
 
   return cuts;
 }
@@ -100,16 +110,43 @@ function solveNode(
   w: number,
   h: number,
   bounds: { left: string, right: string, top: string, bottom: string },
-  cuts: FinishedCut[]
+  cuts: FinishedCut[],
+  brand?: ProfileBrand
 ) {
+  // Determine dynamic frame, sash, and mullion dimensions responsive to the selected profile
+  const brandName = brand?.name?.toLowerCase() || '';
+  const brandId = brand?.id?.toLowerCase() || '';
+  const isW700 = brandId.includes('w700') || brandName.includes('70') || brandId.includes('exclusive') || brandId.includes('70mm');
+  const isW800 = brandId.includes('80mm') || brandName.includes('80');
+
+  const f_std = isW800 ? 55 : (isW700 ? 50 : CONSTANTS.F_std); // fallback to 45
+  const f_renov_net = isW800 ? 48 : (isW700 ? 43 : CONSTANTS.F_renov_net); // fallback to 38
+  const m_mullion = isW800 ? 52 : (isW700 ? 48 : CONSTANTS.M_mullion); // fallback to 42
+
+  const frameFix = brand?.glassDeductions?.frameFix ?? 10;
+  const sashWindow = brand?.glassDeductions?.sashWindow ?? 110;
+  const sashDoor = brand?.glassDeductions?.sashDoor ?? 160;
+  const slidingSash = brand?.glassDeductions?.slidingSash ?? 122;
+
+  const getBoundarySubDynamic = (boundary: string): number => {
+    switch (boundary) {
+      case 'FrameStandard': return f_std;
+      case 'FrameRenovation': return f_renov_net;
+      case 'Mullion': return m_mullion / 2;
+      case 'FrenchMullion': return CONSTANTS.A_overhang / 2; // 4
+      case 'Threshold': return 20;
+      default: return 0;
+    }
+  };
+
   // If sliding container
   if (node.systemType === 'Sliding' && node.children) {
     const numSashes = node.children.length;
     const overlapsCount = numSashes === 4 ? 2 : (numSashes === 2 ? 1 : 2);
     
-    // Total opening boundaries
-    const openingW = w - getBoundarySub(bounds.left) - getBoundarySub(bounds.right);
-    const openingH = h - getBoundarySub(bounds.top) - getBoundarySub(bounds.bottom);
+    // Total opening boundaries using custom profile configurations
+    const openingW = w - getBoundarySubDynamic(bounds.left) - getBoundarySubDynamic(bounds.right);
+    const openingH = h - getBoundarySubDynamic(bounds.top) - getBoundarySubDynamic(bounds.bottom);
 
     // Calculate dimensions of each sliding sash according to pg 69 of handbook
     // W_sash = (W_opening + overlapping_term) / numSashes
@@ -134,21 +171,21 @@ function solveNode(
         cuts.push({ id: `${paneId}-sash-w`, name: 'سش کشویی تک‌ریل (عرض)', length: sashCutW, quantity: 2, type: 'Sash', unit: 'm', angle: '45/45' });
         cuts.push({ id: `${paneId}-sash-h`, name: 'سش کشویی تک‌ریل (ارتفاع)', length: sashCutH, quantity: 2, type: 'Sash', unit: 'm', angle: '45/45' });
 
-        // Glass inside sliding sash
-        const glassW = leafW + overlappingTerm - (2 * CONSTANTS.S_sliding) - CONSTANTS.B_sh; // Leaf size + 37 overlaps - 2 * 56 - 10
-        const glassH = leafH + (2 * CONSTANTS.Sh) - (2 * CONSTANTS.S_sliding) - CONSTANTS.B_sh;
+        // Glass inside sliding sash using dynamic deductions
+        const glassW = leafW + overlappingTerm - slidingSash;
+        const glassH = leafH - (slidingSash - 16);
         cuts.push({ id: `${paneId}-glass`, name: 'شیشه دوجداره (لنگه کشویی)', length: 0, width: glassW, height: glassH, quantity: 1, type: 'Glass', unit: 'm2' });
 
-        // Beading for sliding sash
-        cuts.push({ id: `${paneId}-bead-w`, name: 'زهوار لنگه کشویی (عرض)', length: leafW + overlappingTerm - (2 * CONSTANTS.S_sliding), quantity: 2, type: 'Bead', unit: 'm', angle: '45/45' });
-        cuts.push({ id: `${paneId}-bead-h`, name: 'زهوار لنگه کشویی (ارتفاع)', length: leafH + (2 * CONSTANTS.Sh) - (2 * CONSTANTS.S_sliding), quantity: 2, type: 'Bead', unit: 'm', angle: '45/45' });
+        // Beading for sliding sash matching exact glass cuts clearance (10mm)
+        cuts.push({ id: `${paneId}-bead-w`, name: 'زهوار لنگه کشویی (عرض)', length: leafW + overlappingTerm - (slidingSash - 10), quantity: 2, type: 'Bead', unit: 'm', angle: '45/45' });
+        cuts.push({ id: `${paneId}-bead-h`, name: 'زهوار لنگه کشویی (ارتفاع)', length: leafH + (2 * CONSTANTS.Sh) - (slidingSash - 10), quantity: 2, type: 'Bead', unit: 'm', angle: '45/45' });
 
         // Add sliding interlock brush length (Page 71: height opening - 2*50 + 2*8 - 2*2)
         cuts.push({ id: `${paneId}-interlock`, name: 'پروفیل اینترلاک کشویی', length: leafH + (2 * CONSTANTS.Sh) - 4, quantity: 1, type: 'Mullion', unit: 'm', angle: '90/90' });
       } else {
-        // Simple fixed sliding pane
-        let glassW = leafW - CONSTANTS.B_sh;
-        let glassH = leafH - CONSTANTS.B_sh;
+        // Simple fixed sliding pane using dynamic frame deductions
+        let glassW = leafW - frameFix;
+        let glassH = leafH - frameFix;
 
         if (isMonorail) {
           // Monorail fixed glass is larger (sits in the outer channel)
@@ -162,8 +199,8 @@ function solveNode(
       }
 
       if (op.includes('Panel')) {
-        let pW = leafW - CONSTANTS.B_sh;
-        let pH = leafH - CONSTANTS.B_sh;
+        let pW = leafW - frameFix;
+        let pH = leafH - frameFix;
         cuts.push({ id: `${paneId}-panel`, name: 'پنل UPVC متحرک کشویی', length: 0, width: pW, height: pH, quantity: 1, type: 'Panel', unit: 'm2' });
         const plankCnt = Math.ceil(pW / CONSTANTS.P_plank);
         cuts.push({ id: `${paneId}-panel-planks`, name: 'تیغه پنل UPVC کشویی', length: pH, quantity: plankCnt, type: 'Panel', unit: 'count' });
@@ -178,10 +215,10 @@ function solveNode(
     const isFrench = node.isFrenchWindow || false;
 
     // Add internal division mullions
-    const frameLeftSub = getBoundarySub(bounds.left);
-    const frameRightSub = getBoundarySub(bounds.right);
-    const frameTopSub = getBoundarySub(bounds.top);
-    const frameBottomSub = getBoundarySub(bounds.bottom);
+    const frameLeftSub = getBoundarySubDynamic(bounds.left);
+    const frameRightSub = getBoundarySubDynamic(bounds.right);
+    const frameTopSub = getBoundarySubDynamic(bounds.top);
+    const frameBottomSub = getBoundarySubDynamic(bounds.bottom);
 
     const containerW = w - frameLeftSub - frameRightSub;
     const containerH = h - frameTopSub - frameBottomSub;
@@ -217,7 +254,7 @@ function solveNode(
           if (idx === 1) childBounds.left = 'FrenchMullion';
         }
 
-        solveNode(child, widthSlice, containerH, childBounds, cuts);
+        solveNode(child, widthSlice, containerH, childBounds, cuts, brand);
         cumulativeX += widthSlice;
       });
 
@@ -241,7 +278,7 @@ function solveNode(
           bottom: idx === node.children!.length - 1 ? bounds.bottom : 'Mullion'
         };
 
-        solveNode(child, containerW, heightSlice, childBounds, cuts);
+        solveNode(child, containerW, heightSlice, childBounds, cuts, brand);
         cumulativeY += heightSlice;
       });
     }
@@ -251,21 +288,22 @@ function solveNode(
     const paneId = `pane-${node.id}`;
     const op = node.openingType || 'Fixed';
 
-    // Dimensions of this raw pane compartment inside boundaries
-    const paneW = w - getBoundarySub(bounds.left) - getBoundarySub(bounds.right);
-    const paneH = h - getBoundarySub(bounds.top) - getBoundarySub(bounds.bottom);
+    // Dimensions of this raw pane compartment inside boundaries using dynamic values
+    const paneW = w - getBoundarySubDynamic(bounds.left) - getBoundarySubDynamic(bounds.right);
+    const paneH = h - getBoundarySubDynamic(bounds.top) - getBoundarySubDynamic(bounds.bottom);
 
     const isSash = op !== 'Fixed' && !op.includes('Panel');
     const isDoorSash = op.includes('Door');
-    const sashS = isDoorSash ? CONSTANTS.S_door : CONSTANTS.S_win; // 83mm for door sash, 58mm for window sash
 
-    // Beading internal spans & Glass spans
-    let beadW = paneW;
-    let beadH = paneH;
-    let mainSashW = paneW;
-    let mainSashH = paneH;
+    let glassW = paneW;
+    let glassH = paneH;
 
     if (isSash) {
+      // Glass inside sash frame
+      const ded = isDoorSash ? sashDoor : sashWindow;
+      glassW = paneW - ded;
+      glassH = paneH - ded;
+
       // 1. Calculate active welded Sash length (Page 33: Nominal opening + 2*Sh + melt)
       const sashCutW = paneW + (2 * CONSTANTS.Sh) + CONSTANTS.Z; 
       const sashCutH = paneH + (2 * CONSTANTS.Sh) + CONSTANTS.Z; 
@@ -273,14 +311,15 @@ function solveNode(
       const sashLabel = isDoorSash ? 'سش درب سنگین' : 'سش پنجره بازشو';
       cuts.push({ id: `${paneId}-sash-w`, name: `پروفیل ${sashLabel} (عرض)`, length: sashCutW, quantity: 2, type: 'Sash', unit: 'm', angle: '45/45' });
       cuts.push({ id: `${paneId}-sash-h`, name: `پروفیل ${sashLabel} (ارتفاع)`, length: sashCutH, quantity: 2, type: 'Sash', unit: 'm', angle: '45/45' });
-
-      // Inside sash inner opening is bounded by the sash profile profile width (S) on all 4 sides!
-      // This is a major precision fix! (Page 44/51 formulas)
-      beadW = paneW + (2 * CONSTANTS.Sh) - (2 * sashS);
-      beadH = paneH + (2 * CONSTANTS.Sh) - (2 * sashS);
-      mainSashW = sashCutW;
-      mainSashH = sashCutH;
+    } else {
+      // Glass directly inside fixed frame
+      glassW = paneW - frameFix;
+      glassH = paneH - frameFix;
     }
+
+    // Beading physical sizes are exactly glass sizes plus the glass clearance (CONSTANTS.B_sh = 10)
+    const beadW = glassW + CONSTANTS.B_sh;
+    const beadH = glassH + CONSTANTS.B_sh;
 
     // Push beading
     cuts.push({ id: `${paneId}-bead-w`, name: `زهوار شیشه (عرض)`, length: beadW, quantity: 2, type: 'Bead', unit: 'm', angle: '45/45' });
@@ -288,15 +327,13 @@ function solveNode(
 
     // Glass piece
     if (!op.includes('Panel')) {
-      const glassW = beadW - CONSTANTS.B_sh;
-      const glassH = beadH - CONSTANTS.B_sh;
       cuts.push({ id: `${paneId}-glass`, name: 'شیشه دوجداره استاندارد', length: 0, width: glassW, height: glassH, quantity: 1, type: 'Glass', unit: 'm2' });
     }
 
     // Panel plank cuts if opening includes Panel (Page 54: calculated using plank divisions)
     if (op.includes('Panel')) {
-      const panelW = beadW - CONSTANTS.B_sh;
-      const panelH = beadH - CONSTANTS.B_sh;
+      const panelW = glassW;
+      const panelH = glassH;
       cuts.push({ id: `${paneId}-panel-block`, name: 'صفحه پنل UPVC فشرده', length: 0, width: panelW, height: panelH, quantity: 1, type: 'Panel', unit: 'm2' });
 
       const isHorizontalPlanks = op === 'PanelH' || op === 'Panel';

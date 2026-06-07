@@ -9,6 +9,7 @@ import { WindowConfig, ProjectDetails, InvoiceItem, ProfileBrand, GlassType, Har
 import { pricingStore } from '../services/pricingStore';
 import { calculateDetailedCuts, getGalvanizedCuts } from '../services/engineeringService';
 import { toPersianDigits, toEnglishDigits } from '../utils/formatting';
+import { useGlassCalculator } from '../hooks/useGlassCalculator';
 
 const CANVAS_PADDING = 30;
 
@@ -230,6 +231,9 @@ export const UnitDesigner = () => {
     layout: createDefaultLayout(),
     frameType: 'standard'
   });
+
+  const selectedBrand = brands.find(b => b.id === config.profileId);
+  const glassSizeList = useGlassCalculator(config.layout, selectedBrand, config.width, config.height, config.frameType || 'standard');
 
   const [history, setHistory] = useState<WindowNode[]>([]);
   const [future, setFuture] = useState<WindowNode[]>([]);
@@ -609,10 +613,10 @@ export const UnitDesigner = () => {
   const calculatePrice = () => {
     if (!config.layout) return { profileMeters: 0, profilePrice: 0, glassArea: 0, glassPrice: 0, sashCount: 0, hardwarePrice: 0, totalPrice: 0, unitPrice: 0, details: [] };
     
-    const cuts = calculateDetailedCuts(config.layout, config.width, config.height, config.frameType);
+    const brand = brands.find(b => b.id === config.profileId);
+    const cuts = calculateDetailedCuts(config.layout, config.width, config.height, config.frameType, brand);
     const galvCuts = getGalvanizedCuts(cuts);
 
-    const brand = brands.find(b => b.id === config.profileId);
     const glassType = glassList.find(g => g.id === config.glassId);
     const hwItems = pricingStore.getHardware();
     const panelType = hwItems.find(h => h.id === 'panel_upvc');
@@ -1019,6 +1023,32 @@ export const UnitDesigner = () => {
               <SelectField label="برند پروفیل" value={config.profileId} onChange={(e: any) => setConfig({ ...config, profileId: e.target.value })} options={brands.map((b: any) => ({ label: b.name, value: b.id }))} />
               <SelectField label="نوع شیشه" value={config.glassId} onChange={(e: any) => setConfig({ ...config, glassId: e.target.value })} options={glassList.map((g: any) => ({ label: g.name, value: g.id }))} />
               <SelectField label="نوع فریم" value={config.frameType || 'standard'} onChange={(e: any) => setConfig({ ...config, frameType: e.target.value })} options={[{ label: 'فریم استاندارد', value: 'standard' }, { label: 'فریم بازسازی', value: 'renovation' }]} />
+              
+              {/* لیست ابعاد دقیق شیشه‌ها بر اساس محاسبات فنی */}
+              <div className="mt-4 p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <div className="h-1.5 w-1.5 rounded-full bg-blue-600 animate-pulse"></div>
+                  <h4 className="font-bold text-slate-800 text-[11px]">ابعاد دقیق شیشه‌ها</h4>
+                </div>
+                <div className="flex flex-col gap-1.5 max-h-[160px] overflow-y-auto no-scrollbar">
+                  {glassSizeList.map((g, gIdx) => (
+                    <div key={gIdx} className="flex items-center justify-between p-2 bg-white rounded-lg border border-slate-150 shadow-xs">
+                      <div className="flex flex-col">
+                        <span className="text-[9px] font-bold text-slate-400">{g.label}</span>
+                        <span className="text-xs font-black text-slate-800 tracking-tight mt-0.5">
+                          {toPersianDigits(Math.round(g.width))} × {toPersianDigits(Math.round(g.height))} <span className="text-[9px] text-slate-400 font-normal">mm</span>
+                        </span>
+                      </div>
+                      <div className="px-1.5 py-0.5 bg-blue-50 text-blue-700 text-[9px] font-black rounded-md border border-blue-100/50 shrink-0">
+                        {toPersianDigits(g.count)} عدد
+                      </div>
+                    </div>
+                  ))}
+                  {glassSizeList.length === 0 && (
+                    <div className="text-center py-3 text-[9px] font-medium text-slate-400">هیچ شیشه‌ای محاسبه نشده است</div>
+                  )}
+                </div>
+              </div>
             </div>
             <div className="p-4 border-t border-slate-200 flex flex-col gap-3">
               <div className="flex items-center justify-between bg-slate-50 p-2 rounded-xl border border-slate-200">
@@ -1238,6 +1268,30 @@ export const UnitDesigner = () => {
               </div>
               <SelectField label="نوع شیشه" value={config.glassId} onChange={(e: any) => setConfig({ ...config, glassId: e.target.value })} options={glassList.map((g: any) => ({ label: g.name, value: g.id }))} />
               <SelectField label="نوع فریم" value={config.frameType || 'standard'} onChange={(e: any) => setConfig({ ...config, frameType: e.target.value })} options={[{ label: 'فریم استاندارد', value: 'standard' }, { label: 'فریم بازسازی', value: 'renovation' }]} />
+              
+              {/* لیست ابعاد دقیق شیشه‌ها بر اساس محاسبات فنی */}
+              <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <div className="h-1.5 w-1.5 rounded-full bg-blue-600 animate-pulse"></div>
+                  <h4 className="font-bold text-slate-800 text-[10px]">ابعاد دقیق شیشه‌ها</h4>
+                </div>
+                <div className="flex flex-col gap-1.5 max-h-[120px] overflow-y-auto no-scrollbar col-span-2">
+                  {glassSizeList.map((g, gIdx) => (
+                    <div key={gIdx} className="flex items-center justify-between p-2 bg-white rounded-lg border border-slate-150 shadow-xs">
+                      <span className="text-[9px] font-bold text-slate-400">{g.label}</span>
+                      <span className="text-xs font-black text-slate-800 tracking-tight">
+                        {toPersianDigits(Math.round(g.width))} × {toPersianDigits(Math.round(g.height))} <span className="text-[9px] text-slate-400 font-normal">mm</span>
+                      </span>
+                      <div className="px-1.5 py-0.5 bg-blue-50 text-blue-700 text-[9px] font-black rounded-md border border-blue-100/50 shrink-0">
+                        {toPersianDigits(g.count)} عدد
+                      </div>
+                    </div>
+                  ))}
+                  {glassSizeList.length === 0 && (
+                    <div className="text-center py-2 text-[9px] font-medium text-slate-400">هیچ شیشه‌ای محاسبه نشده است</div>
+                  )}
+                </div>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>

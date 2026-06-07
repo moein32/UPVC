@@ -9,6 +9,7 @@ export const BRANDS: ProfileBrand[] = [
     series: ['سری ۶۰ لولایی ۴ کاناله (W640)'],
     warrantyYears: 10,
     components: [],
+    glassDeductions: { frameFix: 10, sashWindow: 110, sashDoor: 160, slidingSash: 122 }
   },
   {
     id: 'wintech-w700-2',
@@ -18,6 +19,7 @@ export const BRANDS: ProfileBrand[] = [
     series: ['سری ۷۰ لولایی ۵ کاناله (W700)'],
     warrantyYears: 10,
     components: [],
+    glassDeductions: { frameFix: 10, sashWindow: 120, sashDoor: 170, slidingSash: 128 }
   },
   {
     id: 'wintech-w260-3',
@@ -27,6 +29,7 @@ export const BRANDS: ProfileBrand[] = [
     series: ['سری کشویی تک ریل (W260)'],
     warrantyYears: 10,
     components: [],
+    glassDeductions: { frameFix: 10, sashWindow: 110, sashDoor: 160, slidingSash: 122 }
   },
   {
     id: 'wintech-w260-4',
@@ -36,6 +39,7 @@ export const BRANDS: ProfileBrand[] = [
     series: ['سری کشویی جفت ریل (W260)'],
     warrantyYears: 10,
     components: [],
+    glassDeductions: { frameFix: 10, sashWindow: 110, sashDoor: 160, slidingSash: 122 }
   },
   {
     id: 'pluspen-w640-eco-5',
@@ -45,6 +49,7 @@ export const BRANDS: ProfileBrand[] = [
     series: ['سری ۶۰ اقتصادی (پلاس‌پن)'],
     warrantyYears: 5,
     components: [],
+    glassDeductions: { frameFix: 10, sashWindow: 110, sashDoor: 160, slidingSash: 122 }
   },
   {
     id: 'vistabest-standard-6',
@@ -54,6 +59,7 @@ export const BRANDS: ProfileBrand[] = [
     series: ['سری ۶۰ لولایی ۳ کاناله'],
     warrantyYears: 15,
     components: [],
+    glassDeductions: { frameFix: 10, sashWindow: 110, sashDoor: 160, slidingSash: 122 }
   },
   {
     id: 'vistabest-exclusive-7',
@@ -63,6 +69,7 @@ export const BRANDS: ProfileBrand[] = [
     series: ['سری ۷۰ لولایی ۵ کاناله'],
     warrantyYears: 15,
     components: [],
+    glassDeductions: { frameFix: 10, sashWindow: 120, sashDoor: 170, slidingSash: 128 }
   },
   {
     id: 'vistabest-sliding-8',
@@ -72,6 +79,7 @@ export const BRANDS: ProfileBrand[] = [
     series: ['سری کشویی جفت ریل'],
     warrantyYears: 15,
     components: [],
+    glassDeductions: { frameFix: 10, sashWindow: 110, sashDoor: 160, slidingSash: 122 }
   },
   {
     id: 'hofmann-60mm-9',
@@ -81,6 +89,7 @@ export const BRANDS: ProfileBrand[] = [
     series: ['سری ۶۰ لولایی ۴ کاناله'],
     warrantyYears: 10,
     components: [],
+    glassDeductions: { frameFix: 10, sashWindow: 110, sashDoor: 160, slidingSash: 122 }
   },
   {
     id: 'hofmann-70mm-10',
@@ -90,6 +99,7 @@ export const BRANDS: ProfileBrand[] = [
     series: ['سری ۷۰ لولایی ۵ کاناله'],
     warrantyYears: 10,
     components: [],
+    glassDeductions: { frameFix: 10, sashWindow: 120, sashDoor: 170, slidingSash: 128 }
   }
 ];
 

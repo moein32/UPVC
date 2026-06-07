@@ -1,6 +1,13 @@
 
 
 
+export interface GlassDeductions {
+  frameFix: number;      // glass deduction in fixed/kativeh frames (mm)
+  sashWindow: number;    // glass deduction in standard window sash (mm)
+  sashDoor: number;      // glass deduction in heavy door sash (mm)
+  slidingSash: number;   // glass deduction in sliding sash (mm)
+}
+
 export interface ProfileComponent {
   id: string;
   name: string;
@@ -17,6 +24,7 @@ export interface ProfileBrand {
   series: string[];
   warrantyYears: number;
   components: ProfileComponent[]; 
+  glassDeductions?: GlassDeductions;
 }
 
 export interface GlassType {
