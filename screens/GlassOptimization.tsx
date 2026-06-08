@@ -247,10 +247,10 @@ export const GlassOptimization = () => {
           <line x1={W} y1={H + 50} x2={W} y2={H + 110} stroke="#475569" strokeWidth="6" />
           
           {/* Label Card */}
-          <rect x={W / 2 - 280} y={H + 35} width="560" height="90" fill="#0f172a" rx="16" />
+          <rect x={W / 2 - 390} y={H + 35} width="780" height="95" fill="#0f172a" rx="16" />
           <text
             x={W / 2}
-            y={H + 95}
+            y={H + 102}
             fill="#ffffff"
             fontSize="75"
             fontWeight="900"
@@ -269,10 +269,10 @@ export const GlassOptimization = () => {
 
           {/* Rotated Label Card */}
           <g transform={`rotate(90, ${W + 130}, ${H / 2})`}>
-            <rect x={W + 130 - 280} y={H / 2 - 45} width="560" height="90" fill="#0f172a" rx="16" />
+            <rect x={W + 130 - 390} y={H / 2 - 47} width="780" height="95" fill="#0f172a" rx="16" />
             <text
               x={W + 130}
-              y={H / 2 + 15}
+              y={H / 2 + 20}
               fill="#ffffff"
               fontSize="75"
               fontWeight="900"
@@ -359,108 +359,89 @@ export const GlassOptimization = () => {
           const blockColor = getPieceColor(piece.w, piece.h);
           const fsWidth = Math.round(52 * fontScale);
           const fsHeight = Math.round(52 * fontScale);
-          const fsLabel = Math.round(56 * fontScale);
-          const fsUnit = Math.round(42 * fontScale);
+          const fsUnit = Math.round(50 * fontScale);
 
-          // Defensive edge-offset calculation based on text sizes
-          const widthY = piece.y + Math.max(fsWidth + 15, Math.min(piece.h * 0.25, 95));
-          const heightX = piece.x + piece.w - Math.max(fsHeight + 15, Math.min(piece.w * 0.25, 95));
-
-          const canShowLabel = piece.h >= 180 && piece.w >= 240;
-          const canShowUnit = piece.h >= 280 && piece.w >= 240;
-
-          // Smart text-truncating calculation ensuring Persian descriptions don't exceed container size
-          const getSmartTruncatedLabel = (label: string, pieceWidth: number) => {
-            const s = getSimplifiedLabel(label);
-            const charWidth = fsLabel * 0.55;
-            const maxAllowedChars = Math.max(2, Math.floor((pieceWidth - 60) / charWidth));
-            if (s.length > maxAllowedChars) {
-              return s.substring(0, Math.max(1, maxAllowedChars - 1)) + '..';
-            }
-            return s;
-          };
-
-          const truncatedLabel = getSmartTruncatedLabel(piece.label, piece.w);
+          const isTight = piece.w < 260 || piece.h < 180;
 
           return (
             <g key={`p-${pIdx}`}>
               <rect x={piece.x} y={piece.y} width={piece.w} height={piece.h} fill={blockColor} stroke="#ffffff" strokeWidth="6" rx="4" />
               
-              {/* Width dimension */}
-              {piece.w >= 100 && piece.h >= 60 && (
-                <text
-                  x={piece.x + piece.w / 2}
-                  y={widthY}
-                  fill="#ffffff"
-                  fontSize={fsWidth}
-                  fontWeight="900"
-                  textAnchor="middle"
-                  style={{ fontFamily: fontFamily }}
-                >
-                  {toPersianDigits(piece.w)}
-                </text>
-              )}
-
-              {/* Height dimension (Rotated with safe horizontal offset) */}
-              {piece.h >= 100 && piece.w >= 60 && (
-                <text
-                  x={heightX}
-                  y={piece.y + piece.h / 2}
-                  transform={`rotate(90, ${heightX}, ${piece.y + piece.h / 2})`}
-                  fill="#ffffff"
-                  fontSize={fsHeight}
-                  fontWeight="900"
-                  textAnchor="middle"
-                  style={{ fontFamily: fontFamily }}
-                >
-                  {toPersianDigits(piece.h)}
-                </text>
-              )}
-
-              {/* Label text in middle */}
-              {canShowLabel && (
-                <text
-                  x={piece.x + piece.w / 2}
-                  y={piece.y + piece.h / 2 + (canShowUnit ? 10 : 25)}
-                  fill="#ffffff"
-                  fontSize={fsLabel}
-                  fontWeight="black"
-                  textAnchor="middle"
-                  style={{ fontFamily: fontFamily }}
-                >
-                  {truncatedLabel}
-                </text>
-              )}
-
-              {/* Unit indicator at bottom */}
-              {canShowUnit ? (
-                <text
-                  x={piece.x + piece.w / 2}
-                  y={piece.y + piece.h / 2 + 75}
-                  fill="#ffffff"
-                  fillOpacity="0.85"
-                  fontSize={fsUnit}
-                  fontWeight="bold"
-                  textAnchor="middle"
-                  style={{ fontFamily: fontFamily }}
-                >
-                  یونیت {toPersianDigits(piece.unitId)}
-                </text>
+              {isTight ? (
+                // Safe centered layout for tight or small pieces preventing any overlapping with edges
+                <g>
+                  {piece.w >= 100 && piece.h >= 60 && (
+                    <text
+                      x={piece.x + piece.w / 2}
+                      y={piece.y + piece.h / 2 - 10}
+                      fill="#ffffff"
+                      fontSize={Math.round(44 * fontScale)}
+                      fontWeight="900"
+                      textAnchor="middle"
+                      style={{ fontFamily: fontFamily }}
+                    >
+                      {toPersianDigits(piece.w)}×{toPersianDigits(piece.h)}
+                    </text>
+                  )}
+                  {piece.w >= 120 && piece.h >= 110 && (
+                    <text
+                      x={piece.x + piece.w / 2}
+                      y={piece.y + piece.h / 2 + 35}
+                      fill="#ffffff"
+                      fillOpacity="0.9"
+                      fontSize={Math.round(34 * fontScale)}
+                      fontWeight="bold"
+                      textAnchor="middle"
+                      style={{ fontFamily: fontFamily }}
+                    >
+                      یـ {toPersianDigits(piece.unitId)}
+                    </text>
+                  )}
+                </g>
               ) : (
-                piece.h >= 140 && piece.w >= 140 && !canShowUnit && (
+                // Spacious layout: dimensions are placed far from borders, unit name is centered
+                <g>
+                  {/* Width dimension - beautifully padded from top border */}
                   <text
                     x={piece.x + piece.w / 2}
-                    y={piece.y + piece.h - 20}
+                    y={piece.y + Math.max(fsWidth + 35, Math.min(piece.h * 0.28, 125))}
                     fill="#ffffff"
-                    fillOpacity="0.8"
-                    fontSize={Math.round(28 * fontScale)}
-                    fontWeight="bold"
+                    fontSize={fsWidth}
+                    fontWeight="900"
                     textAnchor="middle"
                     style={{ fontFamily: fontFamily }}
                   >
-                    یـ {toPersianDigits(piece.unitId)}
+                    {toPersianDigits(piece.w)}
                   </text>
-                )
+
+                  {/* Height dimension - beautifully padded from right border (rotated) */}
+                  <text
+                    x={piece.x + piece.w - Math.max(fsHeight + 35, Math.min(piece.w * 0.28, 125))}
+                    y={piece.y + piece.h / 2}
+                    transform={`rotate(90, ${piece.x + piece.w - Math.max(fsHeight + 35, Math.min(piece.w * 0.28, 125))}, ${piece.y + piece.h / 2})`}
+                    fill="#ffffff"
+                    fontSize={fsHeight}
+                    fontWeight="900"
+                    textAnchor="middle"
+                    style={{ fontFamily: fontFamily }}
+                  >
+                    {toPersianDigits(piece.h)}
+                  </text>
+
+                  {/* Unit name - beautifully centered in middle of piece */}
+                  <text
+                    x={piece.x + piece.w / 2}
+                    y={piece.y + piece.h / 2 + 15}
+                    fill="#ffffff"
+                    fillOpacity="0.95"
+                    fontSize={fsUnit}
+                    fontWeight="black"
+                    textAnchor="middle"
+                    style={{ fontFamily: fontFamily }}
+                  >
+                    یونیت {toPersianDigits(piece.unitId)}
+                  </text>
+                </g>
               )}
             </g>
           );
