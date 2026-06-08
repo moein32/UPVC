@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Settings as SettingsIcon, Layers, Bell, Hammer, FolderOpen, Download, Banknote, Scissors, Package, Activity } from 'lucide-react';
+import { Plus, Settings as SettingsIcon, Layers, Bell, Hammer, FolderOpen, Download, Banknote, Scissors, Package, Activity, Layout } from 'lucide-react';
 import { GlassCard } from '../components/UIComponents';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -127,23 +127,25 @@ export const Dashboard = () => {
             <span className="font-black text-xs md:text-sm text-slate-800">شیشه و یراق</span>
           </GlassCard>
 
-          <GlassCard onClick={() => navigate('/optimization')} className="col-span-1 flex flex-col items-center justify-center gap-3 py-6 md:py-8 active:scale-95 transition-transform cursor-pointer border-slate-100">
+          <GlassCard onClick={() => navigate('/optimization/profile')} className="col-span-1 flex flex-col items-center justify-center gap-3 py-6 md:py-8 active:scale-95 transition-transform cursor-pointer border-slate-100">
             <div className="p-4 bg-violet-50 text-violet-600 rounded-2xl mb-1 shadow-sm border border-violet-100"><Scissors size={26} /></div>
-            <span className="font-black text-xs md:text-sm text-slate-800">بهینه‌سازی برش</span>
+            <span className="font-black text-xs md:text-sm text-slate-800 text-center leading-tight">بهینه برش پروفیل</span>
+          </GlassCard>
+
+          <GlassCard onClick={() => navigate('/optimization/glass')} className="col-span-1 flex flex-col items-center justify-center gap-3 py-6 md:py-8 active:scale-95 transition-transform cursor-pointer border-slate-100">
+            <div className="p-4 bg-sky-50 text-sky-600 rounded-2xl mb-1 shadow-sm border border-sky-100"><Layout size={26} /></div>
+            <span className="font-black text-xs md:text-sm text-slate-800 text-center leading-tight">بهینه برش شیشه</span>
           </GlassCard>
 
           <GlassCard onClick={() => navigate('/inventory')} className="col-span-1 flex flex-col items-center justify-center gap-3 py-6 md:py-8 active:scale-95 transition-transform cursor-pointer border-slate-100">
             <div className="p-4 bg-emerald-50 text-emerald-600 rounded-2xl mb-1 shadow-sm border border-emerald-100"><Package size={26} /></div>
-            <span className="font-black text-xs md:text-sm text-slate-800">انبارگردانی</span>
+            <span className="font-black text-xs md:text-sm text-slate-800 text-center leading-tight">انبارگردانی</span>
           </GlassCard>
 
-          <div onClick={() => navigate('/settings')} className="col-span-2 lg:col-span-2 flex items-center justify-between px-7 py-5 active:scale-[0.98] transition-transform cursor-pointer bg-white border border-slate-100 rounded-[1.5rem] shadow-sm hover:border-blue-100 transition-colors">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-slate-50 text-slate-500 rounded-xl"><SettingsIcon size={20} /></div>
-              <span className="font-black text-slate-800 text-sm">تنظیمات نرم‌افزار</span>
-            </div>
-            <div className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Version 1.2.0</div>
-          </div>
+          <GlassCard onClick={() => navigate('/settings')} className="col-span-1 flex flex-col items-center justify-center gap-3 py-6 md:py-8 active:scale-95 transition-transform cursor-pointer border-slate-100">
+            <div className="p-4 bg-slate-50 text-slate-500 rounded-2xl mb-1 shadow-sm border border-slate-150"><SettingsIcon size={26} /></div>
+            <span className="font-black text-xs md:text-sm text-slate-800 text-center leading-tight">تنظیمات سیستم</span>
+          </GlassCard>
         </div>
 
         <div className="bg-white/70 backdrop-blur-md rounded-[1.5rem] p-5 border border-white flex items-center justify-between shadow-sm">
