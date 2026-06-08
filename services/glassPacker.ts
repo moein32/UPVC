@@ -267,7 +267,9 @@ export const runGlassOptimization = (
   // Build the baseline list of pieces
   const basePieces: { w: number; h: number; unitId: string; label: string }[] = [];
   items.forEach(item => {
-    for (let i = 0; i < item.quantity; i++) {
+    // Each glass item is double-glazed (دوجداره), requiring 2 identical physical panes
+    const doubleGlazedQuantity = item.quantity * 2;
+    for (let i = 0; i < doubleGlazedQuantity; i++) {
       basePieces.push({
         w: Math.round(item.width),
         h: Math.round(item.height),
