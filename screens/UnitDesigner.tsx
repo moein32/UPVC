@@ -1247,6 +1247,7 @@ export const UnitDesigner = () => {
                       selectedId={selectedNodeId}
                       onSelect={handleCanvasNodeClick}
                       onUpdateNode={handleUpdateNode}
+                      onChildResize={handleChildResize}
                       onGlobalResize={handleGlobalResizeClick}
                       width={config.width}
                       height={config.height}
