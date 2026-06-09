@@ -811,7 +811,7 @@ const RenderBlueprintNode = ({
     
     // Sliding profiles use a horizontal overlap instead of physical mullions (اینترلاک آلومینیوم و نوار مویی کشویی)
     const overlap = CAD.geom.overlapSliding;
-    let childrenSpace = isSlidingContainer && dir === 'row' && children.length > 1
+    const childrenSpace = isSlidingContainer && dir === 'row' && children.length > 1
       ? innerW + (children.length - 1) * overlap
       : (dir === 'row' ? innerW - (children.length - 1) * CAD.geom.mullionT : innerH - (children.length - 1) * CAD.geom.mullionT);
 
@@ -851,7 +851,11 @@ const RenderBlueprintNode = ({
       if (isSlidingContainer) {
         if (childIsSash) sashEls.push(childEl); else fixedEls.push(childEl);
       } else {
-        fixedEls.push(childEl);
+        if (childIsSash) {
+          sashEls.push(childEl);
+        } else {
+          fixedEls.push(childEl);
+        }
       }
 
       currentPos += isSlidingContainer && dir === 'row' && children.length > 1
