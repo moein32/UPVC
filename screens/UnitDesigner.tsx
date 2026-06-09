@@ -237,7 +237,7 @@ export const UnitDesigner = () => {
 
   const [history, setHistory] = useState<WindowNode[]>([]);
   const [future, setFuture] = useState<WindowNode[]>([]);
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>('root');
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'openings' | 'splits' | 'tools'>('openings');
   const [zoomLevel, setZoomLevel] = useState(0.8);
   const [activeTool, setActiveTool] = useState<{ type: 'opening' | 'split', value: string, dir?: string, count?: number } | null>(null);
@@ -253,7 +253,7 @@ export const UnitDesigner = () => {
       const item = projectItems[editIndex];
       setConfig({ ...item.config, layout: item.config.layout || createDefaultLayout(), frameType: item.config.frameType || 'standard' });
       setUnitCount(item.quantity || 1);
-      setSelectedNodeId('root');
+      setSelectedNodeId(null);
     } else if (brands.length > 0 && !config.profileId) {
       setConfig(c => ({ ...c, profileId: projectDetails.defaultProfileId || brands[0].id, glassId: glassList[0]?.id || 'double_4_4' }));
     }
@@ -782,7 +782,7 @@ export const UnitDesigner = () => {
       navigate('/breakdown', { state: { projectDetails, items: updatedItems, fromProjectsList: (locationState as any).fromProjectsList } });
     } else {
       setConfig(prev => ({ ...prev, id: Date.now().toString(), width: 1500, height: 1500, layout: createDefaultLayout() }));
-      setUnitCount(1); setHistory([]); setFuture([]); setSelectedNodeId('root');
+      setUnitCount(1); setHistory([]); setFuture([]); setSelectedNodeId(null);
       setTimeout(() => setLastSavedId(null), 2000);
     }
   };
@@ -811,7 +811,28 @@ export const UnitDesigner = () => {
     setZoomLevel(Math.min(Math.max(scale, 0.1), 3.5));
   };
 
-  useEffect(() => { fitToScreen(); window.addEventListener('resize', fitToScreen); return () => window.removeEventListener('resize', fitToScreen); }, [config.width, config.height, isDesktop]);
+  useEffect(() => {
+    if (!canvasAreaRef.current) return;
+
+    // Call once initially
+    fitToScreen();
+
+    // Set up a robust ResizeObserver to dynamically and immediately adjust scale
+    // especially on mobile when components render/animate/adjust their layout height.
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.contentRect.width > 0 && entry.contentRect.height > 0) {
+          fitToScreen();
+        }
+      }
+    });
+
+    observer.observe(canvasAreaRef.current);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [canvasAreaRef.current, config.width, config.height, isDesktop]);
 
   const renderDesktop = () => {
     return (
