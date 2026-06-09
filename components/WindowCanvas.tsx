@@ -580,9 +580,27 @@ const ArchDimension = ({ start, end, orientation, linePos, leaderStart, onClick 
           onClick();
         }
       }}
+      onTouchEnd={(e) => {
+        if (onClick) {
+          e.stopPropagation();
+          e.preventDefault(); // Prevents simulated click double-fire behavior
+          onClick();
+        }
+      }}
       style={{ cursor: onClick ? 'pointer' : 'default' }}
-      className="architectural-dimension"
+      className="architectural-dimension cursor-pointer select-none"
     >
+      {/* Invisible touch/click receiver with generous padding (touch target area) */}
+      <rect
+        x={isH ? mid - 60 : linePos - 45}
+        y={isH ? linePos - 45 : mid - 60}
+        width={isH ? 120 : 90}
+        height={isH ? 90 : 120}
+        fill="transparent"
+        pointerEvents="all"
+        style={{ cursor: onClick ? 'pointer' : 'default' }}
+      />
+
       {isH ? (
         <>
           {/* Horizontal leader extension guidelines */}

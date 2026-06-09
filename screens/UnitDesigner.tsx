@@ -366,6 +366,8 @@ export const UnitDesigner = () => {
       }))
     }));
     setFrenchModal(null);
+    setActiveTool(null); // Clear selected design tool after French window confirm
+    setSelectedNodeId(null); // Deselect everything
   };
 
   const handleUpdateNode = (id: string, updates: Partial<WindowNode>) => {
@@ -422,6 +424,7 @@ export const UnitDesigner = () => {
         isFrenchWindow: false
       });
     }
+    setSelectedNodeId(null); // Clear selected node highlight after applying templates
   };
 
   const handleCanvasNodeClick = (id: string) => {
@@ -444,6 +447,8 @@ export const UnitDesigner = () => {
           }
         }
         handleUpdateNode(id, { openingType: activeTool.value as any, isFrenchWindow: activeTool.value.includes('FrenchWindow') });
+        setActiveTool(null); // Clear active tool after adding/updating opening (fixed sash, custom sash etc.)
+        setSelectedNodeId(null); // Force deselect so that the black selection border does not persist
       } else if (activeTool.type === 'split') {
         const currentOpeningType = targetNode.openingType || 'Fixed';
         const currentIsFrenchWindow = targetNode.isFrenchWindow || false;
@@ -460,6 +465,8 @@ export const UnitDesigner = () => {
             isFrenchWindow: false,
             systemType: 'Casement'
           });
+          setActiveTool(null); // Clear active tool after clear split operation
+          setSelectedNodeId(null); // Force deselect
           return;
         }
 
@@ -481,6 +488,8 @@ export const UnitDesigner = () => {
           isFrenchWindow: isSash ? currentIsFrenchWindow : false,
           systemType: currentSystemType
         });
+        setActiveTool(null); // Clear active tool after split operation (adding mullions or transoms)
+        setSelectedNodeId(null); // Force deselect so that the black selection border does not persist
       }
     } else {
       setSelectedNodeId(id);
@@ -1249,7 +1258,14 @@ export const UnitDesigner = () => {
                 <div className="w-10 text-center"><span className="text-xs font-black text-slate-800">{toPersianDigits(unitCount)}</span></div>
                 <button onClick={() => setUnitCount((p: number) => p + 1)} className="p-1.5 bg-white text-slate-700 rounded-full shadow-sm"><Plus size={14} /></button>
               </div>
-              <button onClick={handleAddToList} className={`flex-1 rounded-full text-[10px] font-black flex items-center justify-center gap-2 transition-all ${lastSavedId ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-101 text-slate-700'}`}>
+              <button 
+                onClick={handleAddToList} 
+                className={`flex-1 rounded-full text-[10px] font-black flex items-center justify-center gap-2 transition-all border ${
+                  lastSavedId 
+                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-500 shadow-md shadow-emerald-600/10' 
+                    : 'bg-cyan-600 hover:bg-cyan-700 text-white border-cyan-500 shadow-md shadow-cyan-600/10'
+                }`}
+              >
                 {lastSavedId ? <Check size={16} /> : <PlusCircle size={16} />} {editIndex !== undefined ? 'تایید' : 'افزودن'}
               </button>
               {(projectItems.length > 0 || lastSavedId) && (
