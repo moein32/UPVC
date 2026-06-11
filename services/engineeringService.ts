@@ -462,3 +462,96 @@ export function getGalvanizedCuts(cuts: FinishedCut[]): FinishedCut[] {
   });
   return galvCuts;
 }
+
+/**
+ * بررسی می‌کند که آیا یک گره یا کل درخت حاوی المان‌های طراحی شده (بازشو، تقسیم‌بندی یا مولیون) هست یا خیر.
+ * فریم خام فقط یک گره برگ منفرد (leaf) است که نوع بازشوی آن Fixed یا undefined باشد.
+ */
+export function hasWindowDesignElements(node: WindowNode | undefined): boolean {
+  if (!node) return false;
+
+  // ۱. اگر گره از نوع کانتینر باشد یا بچه‌هایی داشته باشد (تقسیم‌بندی افقی یا عمودی)
+  if (node.type === 'container' || (node.children && node.children.length > 0)) {
+    return true;
+  }
+
+  // ۲. اگر نوع بازشو مشخص شده باشد و چیزی غیر از ثابت (Fixed) یا پنل باشد
+  if (node.openingType && node.openingType !== 'Fixed' && node.openingType !== 'Panel' && node.openingType !== 'PanelV' && node.openingType !== 'PanelH') {
+    return true;
+  }
+
+  // ۳. اگر مولیون‌های داخلی سش وجود داشته باشد
+  if (node.sashMullions && (node.sashMullions.horizontal > 0 || node.sashMullions.vertical > 0)) {
+    return true;
+  }
+
+  // ۴. اگر فرانسوی یا مشابه باشد
+  if (node.isFrenchWindow) {
+    return true;
+  }
+
+  // ۵. پیمایش بازگشتی روی فرزندان (در صورت وجود)
+  if (node.children) {
+    for (const child of node.children) {
+      if (hasWindowDesignElements(child)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+export interface ProfileTransitionValidationResult {
+  isValid: boolean;
+  message?: string;
+}
+
+/**
+ * دپارتمان فنی مهندسی نکسوین (NexWin)
+ * ارزیابی صحت منطقی و فنی تغییر بین سیستم لولایی و کشویی بر اساس وضعیت بوم طراحی
+ */
+export function checkProfileTransitionValidation(
+  currentWindowData: WindowNode | WindowConfig | undefined,
+  targetProfileName: string
+): ProfileTransitionValidationResult {
+  if (!currentWindowData) {
+    return { isValid: true };
+  }
+
+  // استخراج ساختار درختی (layout) از ورودی مجهز به ساختار تایپ قوی
+  let layout: WindowNode | undefined;
+  if (currentWindowData) {
+    if ('layout' in currentWindowData && currentWindowData.layout) {
+      layout = currentWindowData.layout as WindowNode;
+    } else if ('type' in currentWindowData && (currentWindowData.type === 'leaf' || currentWindowData.type === 'container')) {
+      layout = currentWindowData as WindowNode;
+    }
+  }
+
+  if (!layout) {
+    return { isValid: true };
+  }
+
+  // تعیین نوع سیستم پروفیل بر اساس نام سری (لولایی یا کشویی)
+  const isTargetSliding = targetProfileName.includes('کشویی') || targetProfileName.toLowerCase().includes('sliding');
+
+  // ۱. شناسایی سیستم فعلی بوم بر اساس نوع بازشوی روت یا المان‌ها
+  // همچنین می‌توان سیستم فعلی را از فیلد systemType گره روت نیز استخراج کرد
+  const isCurrentSliding = layout.systemType === 'Sliding' || (layout.openingType && (layout.openingType.includes('Sliding') || layout.openingType.includes('SlidingMonorail')));
+
+  // ۲. اگر تغییری در سیستم صورت نمی‌گیرد (لولایی به لولایی، یا کشویی به کشویی)، تغییر همواره مجاز است
+  if (isCurrentSliding === isTargetSliding) {
+    return { isValid: true };
+  }
+
+  // ۳. اگر سیستم تغییر می‌کند، بوم طراحی حتماً باید خالی و خام (Empty Frame) باشد
+  if (hasWindowDesignElements(layout)) {
+    return {
+      isValid: false,
+      message: 'تغییر پروفیل مجاز نیست! این پنجره حاوی المان‌های طراحی شده (مانند کتیبه، مولیون یا بازشو) است. تغییر بین سیستم لولایی و کشویی فقط در حالت فریم خام امکان‌پذیر است.'
+    };
+  }
+
+  return { isValid: true };
+}

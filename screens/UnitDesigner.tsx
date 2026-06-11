@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
-import { ArrowRight, Trash2, PlusCircle, ZoomIn, ZoomOut, RefreshCcw, MousePointer2, Receipt, Undo, Redo, ChevronDown, PanelRightClose, PanelRightOpen, Minus, Plus, Sidebar, Monitor, MoveRight, Check } from 'lucide-react';
+import { ArrowRight, Trash2, PlusCircle, ZoomIn, ZoomOut, RefreshCcw, MousePointer2, Receipt, Undo, Redo, ChevronDown, PanelRightClose, PanelRightOpen, Minus, Plus, Sidebar, Monitor, MoveRight, Check, AlertTriangle } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -7,7 +7,7 @@ import { InputField, SelectField, PrimaryButton } from '../components/UIComponen
 import { WindowCanvas } from '../components/WindowCanvas';
 import { WindowConfig, ProjectDetails, InvoiceItem, ProfileBrand, GlassType, HardwareItem, WindowNode, OpeningDirection, InvoiceDetail } from '../types';
 import { pricingStore } from '../services/pricingStore';
-import { calculateDetailedCuts, getGalvanizedCuts } from '../services/engineeringService';
+import { calculateDetailedCuts, getGalvanizedCuts, checkProfileTransitionValidation, hasWindowDesignElements } from '../services/engineeringService';
 import { toPersianDigits, toEnglishDigits } from '../utils/formatting';
 import { useGlassCalculator } from '../hooks/useGlassCalculator';
 
@@ -203,6 +203,7 @@ export const UnitDesigner = () => {
   const [projectItems, setProjectItems] = useState<InvoiceItem[]>(locationState.items || []);
   const [editIndex, setEditIndex] = useState<number | undefined>(locationState.editIndex);
   const [lastSavedId, setLastSavedId] = useState<string | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   const [unitCount, setUnitCount] = useState(1);
   const [systemMode, setSystemMode] = useState<'Casement' | 'Sliding'>('Casement');
@@ -233,6 +234,14 @@ export const UnitDesigner = () => {
   });
 
   const selectedBrand = brands.find(b => b.id === config.profileId);
+  const isProfileSliding = selectedBrand?.name.includes('کشویی') || selectedBrand?.name.toLowerCase().includes('sliding') || false;
+
+  useEffect(() => {
+    if (selectedBrand) {
+      setSystemMode(isProfileSliding ? 'Sliding' : 'Casement');
+    }
+  }, [config.profileId, selectedBrand, isProfileSliding]);
+
   const glassSizeList = useGlassCalculator(config.layout, selectedBrand, config.width, config.height, config.frameType || 'standard');
 
   const [history, setHistory] = useState<WindowNode[]>([]);
@@ -513,6 +522,19 @@ export const UnitDesigner = () => {
     const num = Number(val);
     if (!isNaN(num)) setConfig(prev => ({ ...prev, [dim === 'w' ? 'width' : 'height']: num }));
   }
+
+  const handleProfileChange = (targetProfileId: string) => {
+    const targetBrand = brands.find(b => b.id === targetProfileId);
+    if (!targetBrand) return;
+
+    const validation = checkProfileTransitionValidation(config.layout, targetBrand.name);
+    if (!validation.isValid) {
+      setValidationError(validation.message || 'تغییر پروفیل مجاز نیست!');
+      return;
+    }
+
+    setConfig(prev => ({ ...prev, profileId: targetProfileId }));
+  };
 
   const handleGlobalResizeClick = (dim: 'w' | 'h') => {
     const currentVal = dim === 'w' ? config.width : config.height;
@@ -861,10 +883,20 @@ export const UnitDesigner = () => {
               </button>
             </div>
             <div className="flex border-b border-slate-700">
-              <button onClick={() => setSystemMode('Casement')} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-md text-xs font-bold transition-all ${systemMode === 'Casement' ? 'bg-blue-600 text-white font-black scale-102' : 'text-slate-404 hover:text-slate-200'}`}>
+              <button 
+                onClick={() => setSystemMode('Casement')} 
+                disabled={!!(selectedBrand && isProfileSliding)} 
+                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-md text-xs font-bold transition-all ${systemMode === 'Casement' ? 'bg-blue-600 text-white font-black scale-102' : 'text-slate-404 hover:text-slate-200'} disabled:opacity-20 disabled:cursor-not-allowed`}
+                title={selectedBrand && isProfileSliding ? 'پروفیل فعال پروژه کشویی است' : 'سیستم لولایی'}
+              >
                 <Sidebar size={16} /> {!isSidebarCollapsed && 'لولایی'}
               </button>
-              <button onClick={() => setSystemMode('Sliding')} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-md text-xs font-bold transition-all ${systemMode === 'Sliding' ? 'bg-blue-600 text-white font-black scale-102' : 'text-slate-404 hover:text-slate-200'}`}>
+              <button 
+                onClick={() => setSystemMode('Sliding')} 
+                disabled={!!(selectedBrand && !isProfileSliding)} 
+                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-md text-xs font-bold transition-all ${systemMode === 'Sliding' ? 'bg-blue-600 text-white font-black scale-102' : 'text-slate-404 hover:text-slate-200'} disabled:opacity-20 disabled:cursor-not-allowed`}
+                title={selectedBrand && !isProfileSliding ? 'پروفیل فعال پروژه لولایی است' : 'سیستم کشویی'}
+              >
                 <Monitor size={16} /> {!isSidebarCollapsed && 'کشویی'}
               </button>
             </div>
@@ -1050,7 +1082,7 @@ export const UnitDesigner = () => {
                   <InputField label="ارتفاع (mm)" type="number" value={config.height} onChange={(e: any) => handleGlobalResize(e.target.value, 'h')} />
                 </div>
               </div>
-              <SelectField label="برند پروفیل" value={config.profileId} onChange={(e: any) => setConfig({ ...config, profileId: e.target.value })} options={brands.map((b: any) => ({ label: b.name, value: b.id }))} />
+              <SelectField label="برند پروفیل" value={config.profileId} onChange={(e: any) => handleProfileChange(e.target.value)} options={brands.map((b: any) => ({ label: b.name, value: b.id }))} />
               <SelectField label="نوع شیشه" value={config.glassId} onChange={(e: any) => setConfig({ ...config, glassId: e.target.value })} options={glassList.map((g: any) => ({ label: g.name, value: g.id }))} />
               <SelectField label="نوع فریم" value={config.frameType || 'standard'} onChange={(e: any) => setConfig({ ...config, frameType: e.target.value })} options={[{ label: 'فریم استاندارد', value: 'standard' }, { label: 'فریم بازسازی', value: 'renovation' }]} />
               
@@ -1130,7 +1162,9 @@ export const UnitDesigner = () => {
                 setSystemMode((prev: 'Casement' | 'Sliding') => prev === 'Casement' ? 'Sliding' : 'Casement');
                 toggleTool(null);
               }}
-              className="flex flex-col items-center justify-center w-11 h-[46px] rounded-lg bg-slate-50 text-slate-600 hover:bg-slate-105 transition gap-0.5 border border-slate-200"
+              disabled={!!selectedBrand}
+              className="flex flex-col items-center justify-center w-11 h-[46px] rounded-lg bg-slate-50 text-slate-600 hover:bg-slate-105 transition gap-0.5 border border-slate-200 disabled:opacity-30 disabled:cursor-not-allowed"
+              title={selectedBrand ? 'نوع سیستم با برند پروفیل قفل شده است' : 'تغییر سیستم'}
             >
               {systemMode === 'Casement' ? (
                 <>
@@ -1429,11 +1463,38 @@ export const UnitDesigner = () => {
     );
   };
 
+  const renderValidationErrorDialog = () => {
+    if (!validationError) return null;
+    return (
+      <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+        <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-red-100 text-center space-y-4">
+          <div className="mx-auto w-12 h-12 bg-red-50 text-red-500 rounded-full flex items-center justify-center">
+            <AlertTriangle size={24} />
+          </div>
+          <div>
+            <h3 className="text-base font-black text-slate-800">تغییر پروفیل غیرمجاز</h3>
+            <p className="text-[11px] text-slate-500 font-bold mt-2 leading-relaxed">
+              {validationError}
+            </p>
+          </div>
+          <button 
+            type="button"
+            className="w-full py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold shadow-md shadow-red-200 transition-all border-none"
+            onClick={() => setValidationError(null)}
+          >
+            متوجه شدم
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
       {isDesktop ? renderDesktop() : renderMobile()}
       {renderDimensionModalDialog()}
       {renderFrenchModalDialog()}
+      {renderValidationErrorDialog()}
     </>
   );
 };
