@@ -35,6 +35,11 @@ export interface CutItem {
   label: string;
   type: 'Glass';
   unitId: string;
+  seriesName?: string;
+  inset?: number;
+  clearance?: number;
+  openingWidth?: number;
+  openingHeight?: number;
 }
 
 interface FreeRect {

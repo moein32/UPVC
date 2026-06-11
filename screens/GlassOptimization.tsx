@@ -5,7 +5,7 @@ import { InputField, PrimaryButton, GlassCard, SelectField } from '../components
 import { toPersianDigits, toEnglishDigits } from '../utils/formatting';
 import { pricingStore } from '../services/pricingStore';
 import { SavedProject } from '../types';
-import { calculateDetailedCuts } from '../services/engineeringService';
+import { calculateDetailedCuts, getProfileGlassDeductions, ProfileGlassDeductions } from '../services/engineeringService';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toJpeg } from 'html-to-image';
 import { jsPDF } from 'jspdf';
@@ -63,14 +63,35 @@ export const GlassOptimization = () => {
         const itemQuantity = cut.quantity * unit.quantity;
 
         if (cut.type === 'Glass') {
+          const seriesName = unitBrand?.name || 'سایر سری ۶۰ لولایی ۴ کاناله';
+          const deductions = getProfileGlassDeductions(seriesName);
+          
+          let inset = deductions.frameGlassInset;
+          if (cut.name.includes('بازشو') || cut.name.includes('لنگه') || cut.name.toLowerCase().includes('sash')) {
+            inset = deductions.sashGlassInset;
+          } else if (cut.name.includes('ثابت') || cut.name.includes('کتیبه') || cut.name.toLowerCase().includes('fix')) {
+            inset = deductions.frameGlassInset;
+          } else {
+            inset = deductions.mullionGlassInset;
+          }
+          
+          const clearance = deductions.defaultGlassClearance;
+          const glassW = Math.round(cut.width || 0);
+          const glassH = Math.round(cut.height || 0);
+
           glasses.push({
             id: `G-${idx}-${cIdx}`,
-            width: Math.round(cut.width || 0),
-            height: Math.round(cut.height || 0),
+            width: glassW,
+            height: glassH,
             quantity: itemQuantity,
             label: `${cut.name} (${Math.round(unit.config.width || 0)}x${Math.round(unit.config.height || 0)})`,
             type: 'Glass',
-            unitId: uId
+            unitId: uId,
+            seriesName: seriesName.split(' - ').pop() || seriesName,
+            inset,
+            clearance,
+            openingWidth: glassW + (2 * inset) + (2 * clearance),
+            openingHeight: glassH + (2 * inset) + (2 * clearance),
           });
         }
       });
@@ -570,6 +591,101 @@ export const GlassOptimization = () => {
               </div>
             )}
           </GlassCard>
+
+          {/* TECHNICAL DEDUCTION ANALYSIS CARD */}
+          {glassList.length > 0 && (
+            <GlassCard className="lg:col-span-2 border-slate-200 bg-white/90 backdrop-blur-md shadow-md">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2.5 bg-sky-50 text-sky-600 rounded-xl">
+                  <FileText size={20} />
+                </div>
+                <div>
+                  <h2 className="font-extrabold text-slate-800 text-sm">آنالیز فنی و کسر محاسباتی شیشه‌ها</h2>
+                  <p className="text-[9px] text-slate-400">نمایش زنجیره محاسباتی قالب معکوس پروفیل و کسر بادخور شیشه</p>
+                </div>
+              </div>
+
+              {/* Formula display banner */}
+              <div className="p-4 bg-gradient-to-r from-sky-50 to-indigo-50 border border-slate-150 rounded-2xl mb-4 text-center">
+                <span className="text-[10px] font-black text-sky-700 uppercase tracking-wider block mb-1">فرمول مهندسی کسر شیشه دپارتمان فنی NexWin</span>
+                <div className="text-sm font-black text-slate-800 tracking-tight" dir="ltr">
+                  Glass Size = Opening Size - (2 × Inset) - (2 × Clearance)
+                </div>
+                <div className="text-[9px] text-slate-400 font-medium mt-1">
+                  عرض و ارتفاع نهایی شیشه = ابعاد بازشو منهای دو برابر کسر پروفیل (Inset) و دو برابر بادخور الماسه (Clearance = {toPersianDigits(4)}mm)
+                </div>
+              </div>
+
+              {/* Detailed specs list */}
+              <div className="space-y-3 max-h-96 overflow-y-auto pr-1 no-scrollbar">
+                {glassList.map((glass, gIdx) => (
+                  <div key={glass.id} className="p-4 bg-slate-50 hover:bg-slate-100/70 border border-slate-150 rounded-2xl transition-all space-y-3">
+                    {/* Glass header info */}
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <span className="text-[10px] font-black text-slate-400 block">قطعه {toPersianDigits(gIdx + 1)} | یونیت {toPersianDigits(glass.unitId)}</span>
+                        <span className="text-xs font-black text-slate-800">{getSimplifiedLabel(glass.label)}</span>
+                      </div>
+                      <span className="px-2.5 py-1 bg-white text-indigo-700 text-[9px] font-extrabold rounded-lg border border-slate-200 shadow-sm leading-none">
+                        {glass.seriesName}
+                      </span>
+                    </div>
+
+                    {/* Calculations breakdown */}
+                    <div className="grid grid-cols-2 gap-4 pt-3 border-t border-slate-100 text-[10.5px]">
+                      <div>
+                        <span className="text-slate-400 font-bold block mb-1.5">عرض خالص شیشه (W):</span>
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between text-slate-500">
+                            <span>دهانه بازشو:</span>
+                            <span className="font-extrabold text-slate-700">{toPersianDigits(glass.openingWidth || 0)} mm</span>
+                          </div>
+                          <div className="flex items-center justify-between text-slate-500">
+                            <span>کسر (Inset):</span>
+                            <span className="font-extrabold text-slate-700">{toPersianDigits(glass.inset || 0)} mm</span>
+                          </div>
+                          <div className="flex items-center justify-between text-slate-500">
+                            <span>محاسبه:</span>
+                            <span className="font-black text-cyan-700" dir="ltr">
+                              {glass.openingWidth} - (2×{glass.inset}) - (2×4)
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1 pt-1 border-t border-dashed border-slate-200">
+                            <span className="font-bold text-slate-600">اندازه نهایی:</span>
+                            <span className="font-black text-emerald-600 text-xs">{toPersianDigits(glass.width)} mm</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div>
+                        <span className="text-slate-400 font-bold block mb-1.5">ارتفاع خالص شیشه (H):</span>
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between text-slate-500">
+                            <span>دهانه بازشو:</span>
+                            <span className="font-extrabold text-slate-700">{toPersianDigits(glass.openingHeight || 0)} mm</span>
+                          </div>
+                          <div className="flex items-center justify-between text-slate-500">
+                            <span>کسر (Inset):</span>
+                            <span className="font-extrabold text-slate-700">{toPersianDigits(glass.inset || 0)} mm</span>
+                          </div>
+                          <div className="flex items-center justify-between text-slate-500">
+                            <span>محاسبه:</span>
+                            <span className="font-black text-cyan-700" dir="ltr">
+                              {glass.openingHeight} - (2×{glass.inset}) - (2×4)
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1 pt-1 border-t border-dashed border-slate-200">
+                            <span className="font-bold text-slate-600">اندازه نهایی:</span>
+                            <span className="font-black text-emerald-600 text-xs">{toPersianDigits(glass.height)} mm</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </GlassCard>
+          )}
 
           {/* DYNAMIC SHET SIZE CONFIG - USER INPUT TO DEFINE AND SELECT SIMULTANEOUSLY */}
           <GlassCard className="border-slate-200 bg-white/80 backdrop-blur shadow-sm space-y-4">

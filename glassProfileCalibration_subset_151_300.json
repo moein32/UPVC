@@ -1,0 +1,1502 @@
+[
+  {
+    "id": "modulewin-60mm-151",
+    "name": "ماژول وین سری ۶۰ لولایی ۳ کاناله (Module)",
+    "brand": "Modulewin",
+    "series": "60MM",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "modulewin-sliding-152",
+    "name": "ماژول وین سری کشویی جفت ریل",
+    "brand": "Modulewin",
+    "series": "SLIDING",
+    "frameGlassInset": 70,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "iranwin-60mm-153",
+    "name": "ایران وین سری ۶۰ لولایی ۳ کاناله (Iranwin)",
+    "brand": "Iranwin",
+    "series": "60MM",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "iranwin-sliding-154",
+    "name": "ایران وین سری کشویی جفت ریل",
+    "brand": "Iranwin",
+    "series": "SLIDING",
+    "frameGlassInset": 70,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "akwin-60mm-155",
+    "name": "آکوین سری ۶۰ لولایی ۳ کاناله (Akwin)",
+    "brand": "Akwin",
+    "series": "60MM",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "akwin-70mm-156",
+    "name": "آکوین سری ۷۰ لولایی ۵ کاناله",
+    "brand": "Akwin",
+    "series": "70MM",
+    "frameGlassInset": 46,
+    "sashGlassInset": 50,
+    "mullionGlassInset": 28,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "akwin-sliding-157",
+    "name": "آکوین سری کشویی تک ریل",
+    "brand": "Akwin",
+    "series": "SLIDING",
+    "frameGlassInset": 70,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "averta-monorail-158",
+    "name": "آورتا سری کشویی تک ریل اختصاصی",
+    "brand": "Averta",
+    "series": "MONORAIL",
+    "frameGlassInset": 70,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "hofmann-monorail-159",
+    "name": "هافمن سری کشویی تک ریل اختصاصی",
+    "brand": "Hofmann",
+    "series": "MONORAIL",
+    "frameGlassInset": 70,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "arwin-60mm-160",
+    "name": "آروین سری ۶۰ لولایی ۳ کاناله (Arwin)",
+    "brand": "Arwin",
+    "series": "60MM",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "arwin-sliding-161",
+    "name": "آروین سری کشویی جفت ریل",
+    "brand": "Arwin",
+    "series": "SLIDING",
+    "frameGlassInset": 70,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "pikawin-60mm-162",
+    "name": "پیکاوین سری ۶۰ لولایی ۳ کاناله (Pikawin)",
+    "brand": "Pikawin",
+    "series": "60MM",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "pikawin-sliding-163",
+    "name": "پیکاوین سری کشویی",
+    "brand": "Pikawin",
+    "series": "SLIDING",
+    "frameGlassInset": 70,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "erno-60mm-164",
+    "name": "ارنو سری ۶۰ لولایی ۴ کاناله (Erno)",
+    "brand": "Erno",
+    "series": "60MM",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "erno-70mm-165",
+    "name": "ارنو سری ۷۰ لولایی ۵ کاناله",
+    "brand": "Erno",
+    "series": "70MM",
+    "frameGlassInset": 46,
+    "sashGlassInset": 50,
+    "mullionGlassInset": 28,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "sayanwin-70mm-166",
+    "name": "سایان وین سری ۷۰ لولایی ۵ کاناله",
+    "brand": "Sayanwin",
+    "series": "70MM",
+    "frameGlassInset": 46,
+    "sashGlassInset": 50,
+    "mullionGlassInset": 28,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "sayanwin-renovation-167",
+    "name": "سایان وین سری بازسازی لبه‌دار (L)",
+    "brand": "Sayanwin",
+    "series": "RENOVATION",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "mywin-60mm-168",
+    "name": "مای وین سری ۶۰ لولایی ۳ کاناله (Mywin)",
+    "brand": "Mywin",
+    "series": "60MM",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "mywin-sliding-169",
+    "name": "مای وین سری کشویی جفت ریل",
+    "brand": "Mywin",
+    "series": "SLIDING",
+    "frameGlassInset": 70,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "parswin-70mm-170",
+    "name": "پارس وین سری ۷۰ لولایی ۵ کاناله",
+    "brand": "Parswin",
+    "series": "70MM",
+    "frameGlassInset": 46,
+    "sashGlassInset": 50,
+    "mullionGlassInset": 28,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "parswin-renovation-171",
+    "name": "پارس وین سری بازسازی لبه‌دار (L)",
+    "brand": "Parswin",
+    "series": "RENOVATION",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "tektek-60mm-172",
+    "name": "تک‌تک سری ۶۰ لولایی ۳ کاناله (TekTek)",
+    "brand": "TekTek",
+    "series": "60MM",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "tektek-sliding-173",
+    "name": "تک‌تک سری کشویی جفت ریل",
+    "brand": "TekTek",
+    "series": "SLIDING",
+    "frameGlassInset": 70,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "asmanwin-60mm-174",
+    "name": "آسمان وین سری ۶۰ لولایی ۳ کاناله (Asman)",
+    "brand": "Asmanwin",
+    "series": "60MM",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "asmanwin-sliding-175",
+    "name": "آسمان وین سری کشویی",
+    "brand": "Asmanwin",
+    "series": "SLIDING",
+    "frameGlassInset": 70,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "aysanwin-60mm-176",
+    "name": "آیسان وین سری ۶۰ لولایی ۳ کاناله (Aysan)",
+    "brand": "Aysanwin",
+    "series": "60MM",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "aysanwin-70mm-177",
+    "name": "آیسان وین سری ۷۰ لولایی ۵ کاناله",
+    "brand": "Aysanwin",
+    "series": "70MM",
+    "frameGlassInset": 46,
+    "sashGlassInset": 50,
+    "mullionGlassInset": 28,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "komwin-60mm-178",
+    "name": "کوم وین سری ۶۰ لولایی ۳ کاناله (Komwin)",
+    "brand": "Komwin",
+    "series": "60MM",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "komwin-sliding-179",
+    "name": "کوم وین سری کشویی",
+    "brand": "Komwin",
+    "series": "SLIDING",
+    "frameGlassInset": 70,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "nowin-60mm-180",
+    "name": "نوین سری ۶۰ لولایی ۴ کاناله (Nowin)",
+    "brand": "Nowin",
+    "series": "60MM",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "nowin-sliding-181",
+    "name": "نوین سری کشویی جفت ریل",
+    "brand": "Nowin",
+    "series": "SLIDING",
+    "frameGlassInset": 70,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "uralwin-60mm-182",
+    "name": "اورال وین سری ۶۰ لولایی ۳ کاناله (Uralwin)",
+    "brand": "Uralwin",
+    "series": "60MM",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "uralwin-sliding-183",
+    "name": "اورال وین سری کشویی",
+    "brand": "Uralwin",
+    "series": "SLIDING",
+    "frameGlassInset": 70,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "almaswin-60mm-184",
+    "name": "الماس وین سری ۶۰ لولایی ۳ کاناله (Almas)",
+    "brand": "Almaswin",
+    "series": "60MM",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "almaswin-sliding-185",
+    "name": "الماس وین سری کشویی",
+    "brand": "Almaswin",
+    "series": "SLIDING",
+    "frameGlassInset": 70,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "persianwin-60mm-186",
+    "name": "پرشین وین سری ۶۰ لولایی ۳ کاناله (Persian)",
+    "brand": "Persianwin",
+    "series": "60MM",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "persianwin-sliding-187",
+    "name": "پرشین وین سری کشویی",
+    "brand": "Persianwin",
+    "series": "SLIDING",
+    "frameGlassInset": 70,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "azarwin-60mm-188",
+    "name": "آذروین سری ۶۰ لولایی ۳ کاناله (Azarwin)",
+    "brand": "Azarwin",
+    "series": "60MM",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "azarwin-sliding-189",
+    "name": "آذروین سری کشویی",
+    "brand": "Azarwin",
+    "series": "SLIDING",
+    "frameGlassInset": 70,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "khazarwin-60mm-190",
+    "name": "خزر وین سری ۶۰ لولایی ۳ کاناله (Khazar)",
+    "brand": "Khazarwin",
+    "series": "60MM",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "khazarwin-sliding-191",
+    "name": "خزر وین سری کشویی",
+    "brand": "Khazarwin",
+    "series": "SLIDING",
+    "frameGlassInset": 70,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "sahelwin-60mm-192",
+    "name": "ساحل وین سری ۶۰ لولایی ۳ کاناله (Sahel)",
+    "brand": "Sahelwin",
+    "series": "60MM",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "sahelwin-sliding-193",
+    "name": "ساحل وین سری کشویی",
+    "brand": "Sahelwin",
+    "series": "SLIDING",
+    "frameGlassInset": 70,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "deniz-monorail-194",
+    "name": "دنیز سری کشویی تک ریل (Deniz)",
+    "brand": "Deniz",
+    "series": "MONORAIL",
+    "frameGlassInset": 70,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "farbod-monorail-195",
+    "name": "فربد سری کشویی تک ریل (Farbod)",
+    "brand": "Farbod",
+    "series": "MONORAIL",
+    "frameGlassInset": 70,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "akprofile-renovation-196",
+    "name": "آک‌پروفیل سری بازسازی لبه‌دار (L)",
+    "brand": "Akprofile",
+    "series": "RENOVATION",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "ideal-renovation-197",
+    "name": "ایدئال سری بازسازی لبه‌دار (L)",
+    "brand": "Ideal",
+    "series": "RENOVATION",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "butia-renovation-198",
+    "name": "بوتیا سری بازسازی لبه‌دار (L)",
+    "brand": "Butia",
+    "series": "RENOVATION",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "pluspen-renovation-199",
+    "name": "پلاس‌پن سری بازسازی لبه‌دار (L)",
+    "brand": "Pluspen",
+    "series": "RENOVATION",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "homeland-monorail-200",
+    "name": "هوم‌لند سری کشویی تک ریل",
+    "brand": "Homeland",
+    "series": "MONORAIL",
+    "frameGlassInset": 70,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "aysawin-70mm-201",
+    "name": "آیسا وین سری ۷۰ لولایی ۵ کاناله (Aysa)",
+    "brand": "Aysawin",
+    "series": "70MM",
+    "frameGlassInset": 46,
+    "sashGlassInset": 50,
+    "mullionGlassInset": 28,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "aysawin-renovation-202",
+    "name": "آیسا وین سری بازسازی لبه‌دار (L)",
+    "brand": "Aysawin",
+    "series": "RENOVATION",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "deniz-80mm-203",
+    "name": "دنیز سری ۸۰ لولایی (سه لایه/عایق)",
+    "brand": "Deniz",
+    "series": "80MM",
+    "frameGlassInset": 46,
+    "sashGlassInset": 50,
+    "mullionGlassInset": 28,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "farbod-80mm-204",
+    "name": "فربد سری ۸۰ لولایی (سه لایه/عایق)",
+    "brand": "Farbod",
+    "series": "80MM",
+    "frameGlassInset": 46,
+    "sashGlassInset": 50,
+    "mullionGlassInset": 28,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "alphawin-60mm-205",
+    "name": "آلفا وین سری ۶۰ لولایی ۳ کاناله (Alpha)",
+    "brand": "Alphawin",
+    "series": "60MM",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "alphawin-sliding-206",
+    "name": "آلفا وین سری کشویی جفت ریل",
+    "brand": "Alphawin",
+    "series": "SLIDING",
+    "frameGlassInset": 70,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "atawin-60mm-207",
+    "name": "آتا وین سری ۶۰ لولایی ۴ کاناله (Ata)",
+    "brand": "Atawin",
+    "series": "60MM",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "atawin-monorail-208",
+    "name": "آتا وین سری کشویی تک ریل",
+    "brand": "Atawin",
+    "series": "MONORAIL",
+    "frameGlassInset": 70,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "prowin-renovation-209",
+    "name": "پرو وین سری بازسازی لبه‌دار (L)",
+    "brand": "Prowin",
+    "series": "RENOVATION",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "bluewin-renovation-210",
+    "name": "بلو وین سری بازسازی لبه‌دار (L)",
+    "brand": "Bluewin",
+    "series": "RENOVATION",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "kentwin-70mm-211",
+    "name": "کنت وین سری ۷۰ لولایی ۵ کاناله",
+    "brand": "Kentwin",
+    "series": "70MM",
+    "frameGlassInset": 46,
+    "sashGlassInset": 50,
+    "mullionGlassInset": 28,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "kentwin-renovation-212",
+    "name": "کنت وین سری بازسازی لبه‌دار (L)",
+    "brand": "Kentwin",
+    "series": "RENOVATION",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "eurowin-60mm-213",
+    "name": "یورو وین سری ۶۰ لولایی ۳ کاناله (Euro)",
+    "brand": "Eurowin",
+    "series": "60MM",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "eurowin-sliding-214",
+    "name": "یورو وین سری کشویی",
+    "brand": "Eurowin",
+    "series": "SLIDING",
+    "frameGlassInset": 70,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "technowin-70mm-215",
+    "name": "تکنو وین سری ۷۰ لولایی ۵ کاناله",
+    "brand": "Technowin",
+    "series": "70MM",
+    "frameGlassInset": 46,
+    "sashGlassInset": 50,
+    "mullionGlassInset": 28,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "technowin-renovation-216",
+    "name": "تکنو وین سری بازسازی لبه‌دار (L)",
+    "brand": "Technowin",
+    "series": "RENOVATION",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "hillwin-60mm-217",
+    "name": "هیل وین سری ۶۰ لولایی ۳ کاناله (Hill)",
+    "brand": "Hillwin",
+    "series": "60MM",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "hillwin-sliding-218",
+    "name": "هیل وین سری کشویی",
+    "brand": "Hillwin",
+    "series": "SLIDING",
+    "frameGlassInset": 70,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "starwin-60mm-219",
+    "name": "استار وین سری ۶۰ لولایی ۳ کاناله (Star)",
+    "brand": "Starwin",
+    "series": "60MM",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "starwin-sliding-220",
+    "name": "استار وین سری کشویی",
+    "brand": "Starwin",
+    "series": "SLIDING",
+    "frameGlassInset": 70,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "wintech-w603-221",
+    "name": "وین تک سری ۶۰ لولایی ۳ کاناله (سری اکونومی قدیم)",
+    "brand": "Wintech",
+    "series": "W603",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "vistabest-export-222",
+    "name": "ویستابست سری ۶۰ لولایی ۳ کاناله (مدل صادراتی)",
+    "brand": "Vistabest",
+    "series": "W60",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "hofmann-eco-223",
+    "name": "هافمن سری ۶۰ لولایی ۳ کاناله (سری اکو)",
+    "brand": "Hofmann",
+    "series": "W60",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "averta-eco-224",
+    "name": "آورتا سری ۶۰ لولایی ۳ کاناله (سری اکو)",
+    "brand": "Averta",
+    "series": "W60",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "manwin-70mm-225",
+    "name": "مان وین سری ۷۰ لولایی ۵ کاناله",
+    "brand": "Manwin",
+    "series": "70MM",
+    "frameGlassInset": 46,
+    "sashGlassInset": 50,
+    "mullionGlassInset": 28,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "sunwin-70mm-226",
+    "name": "سان وین سری ۷۰ لولایی ۵ کاناله",
+    "brand": "Sunwin",
+    "series": "70MM",
+    "frameGlassInset": 46,
+    "sashGlassInset": 50,
+    "mullionGlassInset": 28,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "parswin-60mm-227",
+    "name": "پارس وین سری ۶۰ لولایی ۴ کاناله",
+    "brand": "Parswin",
+    "series": "60MM",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "tekwin-60mm-228",
+    "name": "تک وین سری ۶۰ لولایی ۴ کاناله",
+    "brand": "Tekwin",
+    "series": "60MM",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "almaswin-70mm-229",
+    "name": "الماس وین سری ۷۰ لولایی ۵ کاناله",
+    "brand": "Almaswin",
+    "series": "70MM",
+    "frameGlassInset": 46,
+    "sashGlassInset": 50,
+    "mullionGlassInset": 28,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "almaswin-renovation-230",
+    "name": "الماس وین سری بازسازی لبه‌دار (L)",
+    "brand": "Almaswin",
+    "series": "RENOVATION",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "persianwin-70mm-231",
+    "name": "پرشین وین سری ۷۰ لولایی ۵ کاناله",
+    "brand": "Persianwin",
+    "series": "70MM",
+    "frameGlassInset": 46,
+    "sashGlassInset": 50,
+    "mullionGlassInset": 28,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "persianwin-renovation-232",
+    "name": "پرشین وین سری بازسازی لبه‌دار (L)",
+    "brand": "Persianwin",
+    "series": "RENOVATION",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "azarwin-70mm-233",
+    "name": "آذروین سری ۷۰ لولایی ۵ کاناله",
+    "brand": "Azarwin",
+    "series": "70MM",
+    "frameGlassInset": 46,
+    "sashGlassInset": 50,
+    "mullionGlassInset": 28,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "azarwin-renovation-234",
+    "name": "آذروین سری بازسازی لبه‌دار (L)",
+    "brand": "Azarwin",
+    "series": "RENOVATION",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "khazarwin-70mm-235",
+    "name": "خزر وین سری ۷۰ لولایی ۵ کاناله",
+    "brand": "Khazarwin",
+    "series": "70MM",
+    "frameGlassInset": 46,
+    "sashGlassInset": 50,
+    "mullionGlassInset": 28,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "khazarwin-renovation-236",
+    "name": "خزر وین سری بازسازی لبه‌دار (L)",
+    "brand": "Khazarwin",
+    "series": "RENOVATION",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "sahelwin-70mm-237",
+    "name": "ساحل وین سری ۷۰ لولایی ۵ کاناله",
+    "brand": "Sahelwin",
+    "series": "70MM",
+    "frameGlassInset": 46,
+    "sashGlassInset": 50,
+    "mullionGlassInset": 28,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "sahelwin-renovation-238",
+    "name": "ساحل وین سری بازسازی لبه‌دار (L)",
+    "brand": "Sahelwin",
+    "series": "RENOVATION",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "erno-sliding-239",
+    "name": "ارنو سری کشویی جفت ریل",
+    "brand": "Erno",
+    "series": "SLIDING",
+    "frameGlassInset": 70,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "erno-renovation-240",
+    "name": "ارنو سری بازسازی لبه‌دار (L)",
+    "brand": "Erno",
+    "series": "RENOVATION",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "arkawin-70mm-241",
+    "name": "آرکا وین سری ۷۰ لولایی ۵ کاناله",
+    "brand": "Arkawin",
+    "series": "70MM",
+    "frameGlassInset": 46,
+    "sashGlassInset": 50,
+    "mullionGlassInset": 28,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "bestwin-70mm-242",
+    "name": "بست وین سری ۷۰ لولایی ۵ کاناله",
+    "brand": "Bestwin",
+    "series": "70MM",
+    "frameGlassInset": 46,
+    "sashGlassInset": 50,
+    "mullionGlassInset": 28,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "komwin-70mm-243",
+    "name": "کوم وین سری ۷۰ لولایی ۵ کاناله",
+    "brand": "Komwin",
+    "series": "70MM",
+    "frameGlassInset": 46,
+    "sashGlassInset": 50,
+    "mullionGlassInset": 28,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "nowin-70mm-244",
+    "name": "نوین سری ۷۰ لولایی ۵ کاناله",
+    "brand": "Nowin",
+    "series": "70MM",
+    "frameGlassInset": 46,
+    "sashGlassInset": 50,
+    "mullionGlassInset": 28,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "uralwin-70mm-245",
+    "name": "اورال وین سری ۷۰ لولایی ۵ کاناله",
+    "brand": "Uralwin",
+    "series": "70MM",
+    "frameGlassInset": 46,
+    "sashGlassInset": 50,
+    "mullionGlassInset": 28,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "silwin-60mm-246",
+    "name": "سیلوین سری ۶۰ لولایی ۳ کاناله (Silwin)",
+    "brand": "Silwin",
+    "series": "60MM",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "silwin-sliding-247",
+    "name": "سیلوین سری کشویی",
+    "brand": "Silwin",
+    "series": "SLIDING",
+    "frameGlassInset": 70,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "mahanwin-60mm-248",
+    "name": "ماهان وین سری ۶۰ لولایی ۳ کاناله (Mahan)",
+    "brand": "Mahanwin",
+    "series": "60MM",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "mahanwin-sliding-249",
+    "name": "ماهان وین سری کشویی",
+    "brand": "Mahanwin",
+    "series": "SLIDING",
+    "frameGlassInset": 70,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "parspen-60mm-250",
+    "name": "پارس پن سری ۶۰ لولایی ۳ کاناله (Parspen)",
+    "brand": "Parspen",
+    "series": "60MM",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "parspen-sliding-251",
+    "name": "پارس پن سری کشویی جفت ریل (Parspen)",
+    "brand": "Parspen",
+    "series": "SLIDING",
+    "frameGlassInset": 70,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "akpa-60mm-252",
+    "name": "آک‌پا سری ۶۰ لولایی ۳ کاناله (Akpa)",
+    "brand": "Akpa",
+    "series": "60MM",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "akpa-sliding-253",
+    "name": "آک‌پا سری کشویی جفت ریل",
+    "brand": "Akpa",
+    "series": "SLIDING",
+    "frameGlassInset": 70,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "atatech-70mm-254",
+    "name": "آتاتک سری ۷۰ لولایی ۵ کاناله (ویژه مناطق سردسیر)",
+    "brand": "Atatech",
+    "series": "70MM",
+    "frameGlassInset": 46,
+    "sashGlassInset": 50,
+    "mullionGlassInset": 28,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "atatech-80mm-255",
+    "name": "آتاتک سری ۸۰ لولایی ۶ کاناله",
+    "brand": "Atatech",
+    "series": "80MM",
+    "frameGlassInset": 46,
+    "sashGlassInset": 50,
+    "mullionGlassInset": 28,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "silwin-70mm-256",
+    "name": "سیلوین سری ۷۰ لولایی ۵ کاناله (Silwin)",
+    "brand": "Silwin",
+    "series": "70MM",
+    "frameGlassInset": 46,
+    "sashGlassInset": 50,
+    "mullionGlassInset": 28,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "silwin-renovation-257",
+    "name": "سیلوین سری بازسازی لبه‌دار (L)",
+    "brand": "Silwin",
+    "series": "RENOVATION",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "mahanwin-70mm-258",
+    "name": "ماهان وین سری ۷۰ لولایی ۵ کاناله",
+    "brand": "Mahanwin",
+    "series": "70MM",
+    "frameGlassInset": 46,
+    "sashGlassInset": 50,
+    "mullionGlassInset": 28,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "mahanwin-renovation-259",
+    "name": "ماهان وین سری بازسازی لبه‌دار (L)",
+    "brand": "Mahanwin",
+    "series": "RENOVATION",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "ariapen-60mm-260",
+    "name": "آریا پن سری ۶۰ لولایی ۳ کاناله (Ariapen)",
+    "brand": "Ariapen",
+    "series": "60MM",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "ariapen-sliding-261",
+    "name": "آریا پن سری کشویی جفت ریل",
+    "brand": "Ariapen",
+    "series": "SLIDING",
+    "frameGlassInset": 70,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "arazwin-60mm-262",
+    "name": "آراز سری ۶۰ لولایی ۳ کاناله (Araz)",
+    "brand": "Arazwin",
+    "series": "60MM",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "arazwin-sliding-263",
+    "name": "آراز سری کشویی جفت ریل",
+    "brand": "Arazwin",
+    "series": "SLIDING",
+    "frameGlassInset": 70,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "vivawin-60mm-264",
+    "name": "ویوا وین سری ۶۰ لولایی ۳ کاناله (Viva)",
+    "brand": "Vivawin",
+    "series": "60MM",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "vivawin-sliding-265",
+    "name": "ویوا وین سری کشویی",
+    "brand": "Vivawin",
+    "series": "SLIDING",
+    "frameGlassInset": 70,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "sayanwin-monorail-266",
+    "name": "سایان وین سری کشویی تک ریل اختصاصی",
+    "brand": "Sayanwin",
+    "series": "MONORAIL",
+    "frameGlassInset": 70,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "sayanwin-sliding-267",
+    "name": "سایان وین سری کشویی جفت ریل",
+    "brand": "Sayanwin",
+    "series": "SLIDING",
+    "frameGlassInset": 70,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "mywin-70mm-268",
+    "name": "مای وین سری ۷۰ لولایی ۵ کاناله",
+    "brand": "Mywin",
+    "series": "70MM",
+    "frameGlassInset": 46,
+    "sashGlassInset": 50,
+    "mullionGlassInset": 28,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "mywin-renovation-269",
+    "name": "مای وین سری بازسازی لبه‌دار (L)",
+    "brand": "Mywin",
+    "series": "RENOVATION",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "arawin-60mm-270",
+    "name": "آراوین سری ۶۰ لولایی ۳ کاناله (Arawin)",
+    "brand": "Arawin",
+    "series": "60MM",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "arawin-sliding-271",
+    "name": "آراوین سری کشویی",
+    "brand": "Arawin",
+    "series": "SLIDING",
+    "frameGlassInset": 70,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "irsawin-60mm-272",
+    "name": "ایرسا وین سری ۶۰ لولایی ۳ کاناله (Irsa)",
+    "brand": "Irsawin",
+    "series": "60MM",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "irsawin-sliding-273",
+    "name": "ایرسا وین سری کشویی",
+    "brand": "Irsawin",
+    "series": "SLIDING",
+    "frameGlassInset": 70,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "sinawin-60mm-274",
+    "name": "سینا وین سری ۶۰ لولایی ۳ کاناله (Sina)",
+    "brand": "Sinawin",
+    "series": "60MM",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "sinawin-sliding-275",
+    "name": "سینا وین سری کشویی",
+    "brand": "Sinawin",
+    "series": "SLIDING",
+    "frameGlassInset": 70,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "abayan-60mm-276",
+    "name": "آبایان سری ۶۰ لولایی ۴ کاناله (Abayan)",
+    "brand": "Abayan",
+    "series": "60MM",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "abayan-sliding-277",
+    "name": "آبایان سری کشویی جفت ریل",
+    "brand": "Abayan",
+    "series": "SLIDING",
+    "frameGlassInset": 70,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "abayan-70mm-278",
+    "name": "آبایان سری ۷۰ لولایی ۵ کاناله",
+    "brand": "Abayan",
+    "series": "70MM",
+    "frameGlassInset": 46,
+    "sashGlassInset": 50,
+    "mullionGlassInset": 28,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "abayan-renovation-279",
+    "name": "آبایان سری بازسازی لبه‌دار (L)",
+    "brand": "Abayan",
+    "series": "RENOVATION",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "petrowin-60mm-280",
+    "name": "پترو وین سری ۶۰ لولایی ۳ کاناله (Petro)",
+    "brand": "Petrowin",
+    "series": "60MM",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "petrowin-sliding-281",
+    "name": "پترو وین سری کشویی",
+    "brand": "Petrowin",
+    "series": "SLIDING",
+    "frameGlassInset": 70,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "ideal-80mm-282",
+    "name": "ایده‌آل سری ۸۰ لولایی (فوق عایق)",
+    "brand": "Ideal",
+    "series": "80MM",
+    "frameGlassInset": 46,
+    "sashGlassInset": 50,
+    "mullionGlassInset": 28,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "ideal-monorail-283",
+    "name": "ایده‌آل سری کشویی تک ریل اختصاصی",
+    "brand": "Ideal",
+    "series": "MONORAIL",
+    "frameGlassInset": 70,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "syndej-80mm-284",
+    "name": "سیندژ سری ۸۰ لولایی ۶ کاناله",
+    "brand": "Syndej",
+    "series": "80MM",
+    "frameGlassInset": 46,
+    "sashGlassInset": 50,
+    "mullionGlassInset": 28,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "atatech-monorail-285",
+    "name": "آتاتک سری کشویی تک ریل (Monorail)",
+    "brand": "Atatech",
+    "series": "MONORAIL",
+    "frameGlassInset": 70,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "kayer-sliding-286",
+    "name": "کایار سری کشویی جفت ریل",
+    "brand": "Kayer",
+    "series": "SLIDING",
+    "frameGlassInset": 70,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "enzo-monorail-287",
+    "name": "انزو سری کشویی تک ریل (Monorail)",
+    "brand": "Enzo",
+    "series": "MONORAIL",
+    "frameGlassInset": 70,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "paksar-monorail-288",
+    "name": "پک‌سار سری کشویی تک ریل (Monorail)",
+    "brand": "Paksar",
+    "series": "MONORAIL",
+    "frameGlassInset": 70,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "kentwin-sliding-289",
+    "name": "کنت وین سری کشویی جفت ریل",
+    "brand": "Kentwin",
+    "series": "SLIDING",
+    "frameGlassInset": 70,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "drwin-monorail-290",
+    "name": "دکتر وین سری کشویی تک ریل (Monorail)",
+    "brand": "Dr.Win",
+    "series": "MONORAIL",
+    "frameGlassInset": 70,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "eurowin-70mm-291",
+    "name": "یورو وین سری ۷۰ لولایی ۵ کاناله",
+    "brand": "Eurowin",
+    "series": "70MM",
+    "frameGlassInset": 46,
+    "sashGlassInset": 50,
+    "mullionGlassInset": 28,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "eurowin-renovation-292",
+    "name": "یورو وین سری بازسازی لبه‌دار (L)",
+    "brand": "Eurowin",
+    "series": "RENOVATION",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "hillwin-70mm-293",
+    "name": "هیل وین سری ۷۰ لولایی ۵ کاناله",
+    "brand": "Hillwin",
+    "series": "70MM",
+    "frameGlassInset": 46,
+    "sashGlassInset": 50,
+    "mullionGlassInset": 28,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "hillwin-renovation-294",
+    "name": "هیل وین سری بازسازی لبه‌دار (L)",
+    "brand": "Hillwin",
+    "series": "RENOVATION",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "starwin-70mm-295",
+    "name": "استار وین سری ۷۰ لولایی ۵ کاناله",
+    "brand": "Starwin",
+    "series": "70MM",
+    "frameGlassInset": 46,
+    "sashGlassInset": 50,
+    "mullionGlassInset": 28,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "starwin-renovation-296",
+    "name": "استار وین سری بازسازی لبه‌دار (L)",
+    "brand": "Starwin",
+    "series": "RENOVATION",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "alphawin-70mm-297",
+    "name": "آلفا وین سری ۷۰ لولایی ۵ کاناله",
+    "brand": "Alphawin",
+    "series": "70MM",
+    "frameGlassInset": 46,
+    "sashGlassInset": 50,
+    "mullionGlassInset": 28,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "alphawin-renovation-298",
+    "name": "آلفا وین سری بازسازی لبه‌دار (L)",
+    "brand": "Alphawin",
+    "series": "RENOVATION",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "atawin-70mm-299",
+    "name": "آتا وین سری ۷۰ لولایی ۵ کاناله",
+    "brand": "Atawin",
+    "series": "70MM",
+    "frameGlassInset": 46,
+    "sashGlassInset": 50,
+    "mullionGlassInset": 28,
+    "defaultGlassClearance": 4
+  },
+  {
+    "id": "atawin-renovation-300",
+    "name": "آتا وین سری بازسازی لبه‌دار (L)",
+    "brand": "Atawin",
+    "series": "RENOVATION",
+    "frameGlassInset": 38,
+    "sashGlassInset": 45,
+    "mullionGlassInset": 24,
+    "defaultGlassClearance": 4
+  }
+]

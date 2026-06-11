@@ -11,6 +11,7 @@ import { SavedProject, WindowNode, AppSettings } from '../types';
 import { toPersianDigits, toEnglishDigits } from '../utils/formatting';
 import { GlassCard, PrimaryButton } from '../components/UIComponents';
 import { BRANDS } from '../constants';
+import { calculateDetailedCuts } from '../services/engineeringService';
 
 export const ProductionControl = () => {
   const navigate = useNavigate();
@@ -103,7 +104,7 @@ export const ProductionControl = () => {
           });
       } else {
           if (!node.openingType?.includes('Panel')) {
-              panes.push({ w: Math.round(w - 80), h: Math.round(h - 80), unitId });
+              panes.push({ w: Math.round(w - 80), h: Math.round(h - 80), unitId, name: 'شیشه استاندارد' });
           }
       }
       return panes;
@@ -111,9 +112,54 @@ export const ProductionControl = () => {
 
   const allGlassPanes = useMemo(() => {
       if (!selectedProject) return [];
-      return selectedProject.items.flatMap((item, idx) => 
-          extractGlassPanes(item.config.layout!, item.config.width, item.config.height, (idx + 1).toString())
-      );
+      const panes: any[] = [];
+      selectedProject.items.forEach((item, idx) => {
+          const unitId = (idx + 1).toString();
+          const brand = BRANDS.find(b => b.id === item.config.profileId);
+          
+          // Calculate precise physical cuts for this unit
+          const cuts = calculateDetailedCuts(
+              item.config.layout!,
+              item.config.width,
+              item.config.height,
+              item.config.frameType || 'standard',
+              brand
+          );
+          
+          let hasCalculatedGlass = false;
+          
+          cuts.forEach((cut) => {
+              if (cut.type === 'Glass' && cut.width && cut.height) {
+                  hasCalculatedGlass = true;
+                  const totalQty = (cut.quantity || 1) * (item.quantity || 1);
+                  let labelName = 'شیشه دوجداره';
+                  if (cut.name.includes('بازشو') || cut.name.includes('لنگه') || cut.name.toLowerCase().includes('sash')) {
+                      labelName = 'شیشه بازشو';
+                  } else if (cut.name.includes('ثابت') || cut.name.includes('کتیبه') || cut.name.toLowerCase().includes('fix')) {
+                      labelName = 'شیشه ثابت';
+                  } else if (cut.name.includes('کشویی') || cut.name.toLowerCase().includes('sliding')) {
+                      labelName = 'شیشه کشویی';
+                  }
+                  
+                  for (let i = 0; i < totalQty; i++) {
+                      panes.push({
+                          w: Math.round(cut.width),
+                          h: Math.round(cut.height),
+                          unitId,
+                          name: labelName
+                      });
+                  }
+              }
+          });
+          
+          if (!hasCalculatedGlass) {
+              const estimated = extractGlassPanes(item.config.layout!, item.config.width, item.config.height, unitId);
+              for (let q = 0; q < (item.quantity || 1); q++) {
+                  panes.push(...estimated);
+              }
+          }
+      });
+      return panes;
   }, [selectedProject]);
 
   const downloadBlueprints = async () => {
@@ -320,7 +366,7 @@ export const ProductionControl = () => {
                                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderTop: '2px solid #000', paddingTop: '10px' }}>
                                       <div style={{ fontSize: '11px', fontWeight: '900', color: '#000' }}>
                                           <div>مشتری: {selectedProject?.customerName}</div>
-                                          <div style={{ color: '#000', marginTop: '3px' }}>یونیت: {toPersianDigits(glass.unitId)}</div>
+                                          <div style={{ color: '#000', marginTop: '3px' }}>یونیت: {toPersianDigits(glass.unitId)} | {glass.name}</div>
                                       </div>
                                       <QrCode size={40} color="#000" strokeWidth={1.5} />
                                   </div>

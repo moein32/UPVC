@@ -1,5 +1,87 @@
 import { WindowConfig, WindowNode, InvoiceDetail, OpeningDirection, ProfileBrand, GlassType, HardwareItem } from '../types';
 
+export interface ProfileGlassDeductions {
+  frameGlassInset: number;
+  sashGlassInset: number;
+  mullionGlassInset: number;
+  defaultGlassClearance: number;
+}
+
+/**
+ * دپارتمان فنی مهندسی نکسوین (NexWin)
+ * ارزیابی متنی برند و سری پروفیل جهت استخراج مقادیر مکانیکی کسر شیشه (Inset / Clearance)
+ */
+export function getProfileGlassDeductions(seriesName: string): ProfileGlassDeductions {
+  const default60: ProfileGlassDeductions = {
+    frameGlassInset: 38,
+    sashGlassInset: 45,
+    mullionGlassInset: 24,
+    defaultGlassClearance: 4
+  };
+
+  if (!seriesName) return default60;
+
+  const normalized = seriesName.toString();
+
+  // ۳. قالب‌های کشویی ریل‌دار (Sliding)
+  if (normalized.includes('کشویی') || normalized.toLowerCase().includes('sliding')) {
+    return {
+      frameGlassInset: 70,
+      sashGlassInset: 45,
+      mullionGlassInset: 24,
+      defaultGlassClearance: 4
+    };
+  }
+
+  // ۴. قالب‌های عایق پیشرفته / سه لایه / سه جداره / سری ۸۰
+  if (
+    normalized.includes('سه لایه') ||
+    normalized.includes('سه جداره') ||
+    normalized.includes('۸۰') ||
+    normalized.includes('80')
+  ) {
+    return {
+      frameGlassInset: 46,
+      sashGlassInset: 50,
+      mullionGlassInset: 28,
+      defaultGlassClearance: 4
+    };
+  }
+
+  // ۲. قالب لولایی عریض سری ۷۰ یا ۵ کاناله
+  if (
+    normalized.includes('۷۰') ||
+    normalized.includes('70') ||
+    normalized.includes('۵ کانال') ||
+    normalized.includes('5 کانال')
+  ) {
+    return {
+      frameGlassInset: 46,
+      sashGlassInset: 50,
+      mullionGlassInset: 28,
+      defaultGlassClearance: 4
+    };
+  }
+
+  // ۱. قالب لولایی استاندارد سری ۶۰ یا ۴ کاناله (اقتصادی و معمولی بازار)
+  if (
+    normalized.includes('۶۰') ||
+    normalized.includes('60') ||
+    normalized.includes('۴ کانال') ||
+    normalized.includes('4 کانال')
+  ) {
+    return {
+      frameGlassInset: 38,
+      sashGlassInset: 45,
+      mullionGlassInset: 24,
+      defaultGlassClearance: 4
+    };
+  }
+
+  // دپارتمان فنی نکسوین - برگشت مقدار فالبک استاندارد بازار
+  return default60;
+}
+
 export const CONSTANTS = {
   Z: 6,           // Melt allowance in mm
   Ms: 8,          // Mullion overlap in mm
