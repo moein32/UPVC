@@ -20,16 +20,31 @@ import { GlassOptimization } from './screens/GlassOptimization';
 import { InventoryManagement } from './screens/InventoryManagement';
 import { ProductionControl } from './screens/ProductionControl';
 
-// نگهبان مسیرها بر اساس وضعیت لایسنس تایید شده در لوکال‌استوریج
+// نگهبان مسیرها بر اساس وضعیت لایسنس تایید شده در لوکال‌استوریج و سطح دسترسی اشتراک
 interface ProtectedRouteProps {
   children: React.ReactNode;
+  allowedTiers?: ('bronze' | 'silver' | 'gold')[];
 }
 
-const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const isAuth = !!localStorage.getItem('nexwin_user');
-  if (!isAuth) {
+const ProtectedRoute = ({ children, allowedTiers }: ProtectedRouteProps) => {
+  const userStr = localStorage.getItem('nexwin_user');
+  if (!userStr) {
     return <Navigate to="/login" replace />;
   }
+
+  if (allowedTiers) {
+    try {
+      const user = JSON.parse(userStr);
+      const userTier = user.tier || 'bronze';
+      if (!allowedTiers.includes(userTier)) {
+        // در صورت عدم دسترسی، کاربر را به داشبورد هدایت می‌کنیم
+        return <Navigate to="/dashboard" replace />;
+      }
+    } catch (e) {
+      return <Navigate to="/login" replace />;
+    }
+  }
+
   return <>{children}</>;
 };
 
@@ -55,16 +70,16 @@ function App() {
         <Route path="/designer" element={<ProtectedRoute><UnitDesigner /></ProtectedRoute>} />
         <Route path="/breakdown" element={<ProtectedRoute><PriceBreakdown /></ProtectedRoute>} />
         <Route path="/print-invoice" element={<ProtectedRoute><InvoicePrint /></ProtectedRoute>} />
-        <Route path="/profiles" element={<ProtectedRoute><ProfileSelection /></ProtectedRoute>} />
-        <Route path="/glass-hardware" element={<ProtectedRoute><GlassHardware /></ProtectedRoute>} />
+        <Route path="/profiles" element={<ProtectedRoute allowedTiers={['silver', 'gold']}><ProfileSelection /></ProtectedRoute>} />
+        <Route path="/glass-hardware" element={<ProtectedRoute allowedTiers={['silver', 'gold']}><GlassHardware /></ProtectedRoute>} />
         <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-        <Route path="/financial-mgmt" element={<ProtectedRoute><FinancialManagement /></ProtectedRoute>} />
-        <Route path="/project-financials/:id" element={<ProtectedRoute><ProjectFinancials /></ProtectedRoute>} />
-        <Route path="/optimization/profile" element={<ProtectedRoute><ProfileOptimization /></ProtectedRoute>} />
-        <Route path="/optimization/glass" element={<ProtectedRoute><GlassOptimization /></ProtectedRoute>} />
-        <Route path="/inventory" element={<ProtectedRoute><InventoryManagement /></ProtectedRoute>} />
-        <Route path="/production-control" element={<ProtectedRoute><ProductionControl /></ProtectedRoute>} />
+        <Route path="/financial-mgmt" element={<ProtectedRoute allowedTiers={['gold']}><FinancialManagement /></ProtectedRoute>} />
+        <Route path="/project-financials/:id" element={<ProtectedRoute allowedTiers={['gold']}><ProjectFinancials /></ProtectedRoute>} />
+        <Route path="/optimization/profile" element={<ProtectedRoute allowedTiers={['silver', 'gold']}><ProfileOptimization /></ProtectedRoute>} />
+        <Route path="/optimization/glass" element={<ProtectedRoute allowedTiers={['silver', 'gold']}><GlassOptimization /></ProtectedRoute>} />
+        <Route path="/inventory" element={<ProtectedRoute allowedTiers={['silver', 'gold']}><InventoryManagement /></ProtectedRoute>} />
+        <Route path="/production-control" element={<ProtectedRoute allowedTiers={['silver', 'gold']}><ProductionControl /></ProtectedRoute>} />
       </Routes>
     </HashRouter>
   );
