@@ -177,3 +177,16 @@ export interface AppSettings {
   currency: string;
   invoice: InvoiceSettings; 
 }
+
+export interface AppUser {
+  id: string;
+  owner_name: string;
+  company_name: string;
+  phone_number: string;
+  tier: 'bronze' | 'silver' | 'gold';
+  status: 'active' | 'suspended' | 'expired';
+  register_date: string;
+  expiry_date: string;
+  max_devices: number;
+  total_paid: number;
+}

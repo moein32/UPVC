@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, Moon, Globe, FileText, Database, Percent, Languages, Building2, MapPin, Phone, MessageSquare, Layout, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, Moon, Globe, FileText, Database, Percent, Languages, Building2, MapPin, Phone, MessageSquare, Layout, CheckCircle2, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { toPersianDigits } from '../utils/formatting';
@@ -168,6 +168,24 @@ export const Settings = () => {
                 suffix={<MessageSquare size={16} />}
             />
         </div>
+      </div>
+
+      <div className="mt-10 bg-red-50/50 rounded-2xl p-4 border border-red-100 flex items-center justify-between">
+        <div className="text-right">
+          <h4 className="font-black text-xs text-red-800">خروج از پورتال لایسنس</h4>
+          <p className="text-[10px] text-red-500 mt-1">حساب کارگاه از مرورگر پاک شده و به صفحه ورود هدایت می‌شوید.</p>
+        </div>
+        <button 
+          onClick={() => {
+            localStorage.removeItem('nexwin_user');
+            window.location.href = '#/login';
+            window.location.reload();
+          }}
+          className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-black shadow-md shadow-red-200 transition-all flex items-center gap-2 border-none cursor-pointer"
+        >
+          <LogOut size={14} />
+          خروج از سیستم
+        </button>
       </div>
 
       <div className="mt-12 text-center">
