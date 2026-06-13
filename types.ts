@@ -189,4 +189,6 @@ export interface AppUser {
   expiry_date: string;
   max_devices: number;
   total_paid: number;
+  is_trial?: boolean;
+  trial_start_date?: string;
 }

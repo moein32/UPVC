@@ -72,7 +72,13 @@ export const Dashboard = () => {
   const userTier = currentUser?.tier || 'bronze';
   const companyName = currentUser?.company_name || 'کارگاه نکس‌وین';
   const ownerName = currentUser?.owner_name || 'کاربر سیستم';
-  const expiryDate = currentUser?.expiry_date || '۱۴۰۶/۰۶/۱۳';
+  const expiryDate = currentUser?.is_trial && currentUser?.trial_start_date
+    ? (() => {
+        const start = new Date(currentUser.trial_start_date);
+        const end = new Date(start.getTime() + 7 * 24 * 60 * 60 * 1000);
+        return new Intl.DateTimeFormat('fa-IR', { dateStyle: 'medium' }).format(end);
+      })()
+    : currentUser?.expiry_date || '۱۴۰۶/۰۶/۱۳';
 
   // بررسی دقیق سطوح دسترسی
   const hasProductionAccess = userTier === 'silver' || userTier === 'gold';
@@ -96,6 +102,20 @@ export const Dashboard = () => {
 
   // استایل بدج پلن‌ها
   const getTierBadge = () => {
+    if (currentUser?.is_trial) {
+      const start = new Date(currentUser.trial_start_date || '');
+      const elapsed = Date.now() - start.getTime();
+      const remainingMs = Math.max(0, (7 * 24 * 60 * 60 * 1000) - elapsed);
+      const remainingDays = Math.ceil(remainingMs / (1000 * 60 * 60 * 24));
+      
+      return (
+        <span className="flex items-center gap-1.5 px-4 py-1.5 bg-gradient-to-r from-teal-500 via-emerald-600 to-indigo-600 text-white text-[11px] font-black rounded-full shadow-lg shadow-emerald-500/10 border border-emerald-300 animate-pulse">
+          <Sparkles size={14} className="animate-spin" />
+          حساب آزمایشی (۷ روزه - {remainingDays} روز مانده) 🚀
+        </span>
+      );
+    }
+
     switch (userTier) {
       case 'gold':
         return (
