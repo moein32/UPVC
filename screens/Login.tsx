@@ -10,7 +10,8 @@ import { initiateZarinpalPayment, ZARINPAL_CONFIG } from '../services/paymentSer
 // ==========================================
 // تنظیمات اتصال مستقیم به لایسنس‌سرور سوپابیس
 // ==========================================
-const VITE_SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL || '').trim();
+const rawSupaUrl = (import.meta.env.VITE_SUPABASE_URL || '').trim();
+const VITE_SUPABASE_URL = rawSupaUrl.endsWith('/') ? rawSupaUrl.slice(0, -1) : rawSupaUrl;
 const VITE_SUPABASE_ANON_KEY = (import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim();
 
 export const Login = () => {
@@ -187,7 +188,7 @@ export const Login = () => {
       // ثبت نهایی روی سوپابیس در صورت ست بودن کلیدها
       if (VITE_SUPABASE_URL && VITE_SUPABASE_ANON_KEY && !VITE_SUPABASE_URL.includes('YOUR_SUPABASE')) {
         try {
-          await fetch(`${VITE_SUPABASE_URL}/rest/v1/app_users`, {
+          const res = await fetch(`${VITE_SUPABASE_URL}/rest/v1/app_users?on_conflict=phone_number`, {
             method: 'POST',
             headers: {
               'apikey': VITE_SUPABASE_ANON_KEY,
@@ -207,8 +208,14 @@ export const Login = () => {
               is_trial: trialUser.is_trial
             })
           });
+          if (!res.ok) {
+            const errText = await res.text();
+            console.error(`Supabase trial user sync failed. HTTP status: ${res.status}. Body: ${errText}`);
+          } else {
+            console.log('Supabase trial user synced successfully.');
+          }
         } catch (err) {
-          console.error('Supabase trial user sync failed:', err);
+          console.error('Supabase trial user network/fetch error:', err);
         }
       }
 

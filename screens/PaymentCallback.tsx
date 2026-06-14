@@ -107,13 +107,14 @@ export function PaymentCallback() {
         }
 
         // اگر Supabase بود در Supabase هم ذخیره کنیم
-        const VITE_SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
+        const rawUrl = import.meta.env.VITE_SUPABASE_URL || '';
+        const VITE_SUPABASE_URL = rawUrl.endsWith('/') ? rawUrl.slice(0, -1) : rawUrl;
         const VITE_SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
         if (VITE_SUPABASE_URL && VITE_SUPABASE_ANON_KEY) {
           try {
-            // ۱. ثبت یا به‌روزرسانی مشخصات لایسنس کاربر در جدول app_users با قابلیت لغو تداخل نهایی کاربرها
-            await fetch(`${VITE_SUPABASE_URL}/rest/v1/app_users`, {
+            // ۱. ثبت یا به‌روزرسانی مشخصات لایسنس کاربر در جدول app_users با قابلیت لغو تداخل نهایی کاربرها (بر اساس شماره همراه یکتا)
+            const userRes = await fetch(`${VITE_SUPABASE_URL}/rest/v1/app_users?on_conflict=phone_number`, {
               method: 'POST',
               headers: {
                 'apikey': VITE_SUPABASE_ANON_KEY,
@@ -134,8 +135,15 @@ export function PaymentCallback() {
               })
             });
 
+            if (!userRes.ok) {
+              const errTxt = await userRes.text();
+              console.error(`Supabase app_users sync failed. HTTP status: ${userRes.status}. Body: ${errTxt}`);
+            } else {
+              console.log('Supabase premium app_user synced/updated successfully.');
+            }
+
             // ۲. ثبت آرشیو تراکنش مالی زرین‌پال / نکس‌وین در جدول payment_transactions جهت شفافیت حسابداری
-            await fetch(`${VITE_SUPABASE_URL}/rest/v1/payment_transactions`, {
+            const txRes = await fetch(`${VITE_SUPABASE_URL}/rest/v1/payment_transactions`, {
               method: 'POST',
               headers: {
                 'apikey': VITE_SUPABASE_ANON_KEY,
@@ -152,6 +160,13 @@ export function PaymentCallback() {
                 status: 'SUCCESS'
               })
             });
+
+            if (!txRes.ok) {
+              const txErrTxt = await txRes.text();
+              console.error(`Supabase payment_transactions insert failed. HTTP status: ${txRes.status}. Body: ${txErrTxt}`);
+            } else {
+              console.log('Supabase payment_transaction logged successfully.');
+            }
           } catch (supaErr) {
             console.error('Failed to sync payment and transaction with Supabase:', supaErr);
           }
