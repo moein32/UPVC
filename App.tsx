@@ -167,7 +167,7 @@ const IosInstallPrompt = () => {
         </button>
         <div className="flex items-start gap-4">
           <div className="w-12 h-12 flex-shrink-0 bg-slate-800 rounded-xl overflow-hidden shadow-lg border border-slate-700/50 p-1">
-            <img src="/pwa-192x192.png" alt="Nexwin" className="w-full h-full object-contain rounded-lg" />
+            <img src="/logo.png" alt="Nexwin" className="w-full h-full object-contain rounded-lg" />
           </div>
           <div className="flex-1 pl-4">
             <h3 className="text-white font-bold mb-2 text-sm leading-relaxed">برای نصب نسخه اپلیکیشن نکسوین در آیفون:</h3>

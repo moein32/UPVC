@@ -34,7 +34,8 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'logo.svg'],
+      injectRegister: 'inline',
+      includeAssets: ['favicon.ico', 'logo.png'],
       manifest: {
         name: 'سامانه مدیریت کلان نکسوین',
         short_name: 'نکسوین ادمین',
@@ -47,19 +48,15 @@ export default defineConfig({
         lang: 'fa-IR',
         icons: [
           {
-            src: 'logo.svg',
+            src: 'logo.png',
             sizes: '192x192',
-            type: 'image/svg+xml'
+            type: 'image/png',
+            purpose: 'any'
           },
           {
-            src: 'logo.svg',
+            src: 'logo.png',
             sizes: '512x512',
-            type: 'image/svg+xml'
-          },
-          {
-            src: 'logo.svg',
-            sizes: '512x512',
-            type: 'image/svg+xml',
+            type: 'image/png',
             purpose: 'any maskable'
           }
         ]
