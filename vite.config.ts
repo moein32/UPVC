@@ -15,21 +15,20 @@ export default defineConfig({
           if (id.includes('node_modules')) {
             return 'vendor';
           }
-        },
+        }
       },
       onwarn(warning, warn) {
-        // Suppress specific warnings from 'use client' directives in node_modules
         if (
           warning.code === 'MODULE_LEVEL_DIRECTIVE' &&
           warning.message.includes('"use client"') &&
           warning.id &&
           warning.id.includes('node_modules')
         ) {
-          return; // Ignore this warning
+          return;
         }
-        warn(warning); // Otherwise, call the default warn handler
-      },
-    },
+        warn(warning);
+      }
+    }
   },
   plugins: [
     react(),
@@ -75,7 +74,7 @@ export default defineConfig({
               cacheName: 'google-fonts-cache',
               expiration: {
                 maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365
+                maxAgeSeconds: 31536000
               },
               cacheableResponse: {
                 statuses: [0, 200]
@@ -89,7 +88,7 @@ export default defineConfig({
               cacheName: 'gstatic-fonts-cache',
               expiration: {
                 maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365
+                maxAgeSeconds: 31536000
               },
               cacheableResponse: {
                 statuses: [0, 200]
