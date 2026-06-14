@@ -33,5 +33,30 @@ export default defineConfig({
   },
   plugins: [
     react(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      manifest: {
+        name: "نرم افزار طراحی درب و پنجره نکس وین",
+        short_name: "نکس وین",
+        theme_color: "#0f172a",
+        background_color: "#0f172a",
+        display: "standalone",
+        orientation: "portrait",
+        dir: "rtl",
+        lang: "fa-IR",
+        icons: [
+          {
+            src: 'pwa-192x192.png',
+            sizes: '192x192',
+            type: 'image/png'
+          },
+          {
+            src: 'pwa-512x512.png',
+            sizes: '512x512',
+            type: 'image/png'
+          }
+        ]
+      }
+    })
   ]
 });
