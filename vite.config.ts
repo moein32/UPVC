@@ -35,15 +35,17 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'maskable-icon.png'],
       manifest: {
-        name: "نرم افزار طراحی درب و پنجره نکس وین",
-        short_name: "نکس وین",
-        theme_color: "#0f172a",
-        background_color: "#0f172a",
-        display: "standalone",
-        orientation: "portrait",
-        dir: "rtl",
-        lang: "fa-IR",
+        name: 'سامانه مدیریت کلان نکسوین',
+        short_name: 'نکسوین ادمین',
+        description: 'سیستم صدور، نظارت و کنترل مالی لایسنسهای اشتراک صنایع نکسوین',
+        theme_color: '#0f172a',
+        background_color: '#0f172a',
+        display: 'standalone',
+        orientation: 'portrait',
+        dir: 'rtl',
+        lang: 'fa-IR',
         icons: [
           {
             src: 'pwa-192x192.png',
@@ -54,6 +56,12 @@ export default defineConfig({
             src: 'pwa-512x512.png',
             sizes: '512x512',
             type: 'image/png'
+          },
+          {
+            src: 'pwa-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any maskable'
           }
         ]
       }
