@@ -35,7 +35,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'maskable-icon.png'],
+      includeAssets: ['favicon.ico', 'logo.png'],
       manifest: {
         name: 'سامانه مدیریت کلان نکسوین',
         short_name: 'نکسوین ادمین',
@@ -48,17 +48,17 @@ export default defineConfig({
         lang: 'fa-IR',
         icons: [
           {
-            src: 'pwa-192x192.png',
+            src: 'logo.png',
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: 'pwa-512x512.png',
+            src: 'logo.png',
             sizes: '512x512',
             type: 'image/png'
           },
           {
-            src: 'pwa-512x512.png',
+            src: 'logo.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable'
