@@ -188,7 +188,7 @@ export const Login = () => {
       // ثبت نهایی روی سوپابیس در صورت ست بودن کلیدها
       if (VITE_SUPABASE_URL && VITE_SUPABASE_ANON_KEY && !VITE_SUPABASE_URL.includes('YOUR_SUPABASE')) {
         try {
-          const res = await fetch(`${VITE_SUPABASE_URL}/rest/v1/app_users?on_conflict=phone_number`, {
+          const res = await fetch(`${VITE_SUPABASE_URL}/rest/v1/app_users?on_conflict=id`, {
             method: 'POST',
             headers: {
               'apikey': VITE_SUPABASE_ANON_KEY,
@@ -205,7 +205,9 @@ export const Login = () => {
               status: trialUser.status,
               max_devices: trialUser.max_devices,
               total_paid: trialUser.total_paid,
-              is_trial: trialUser.is_trial
+              is_trial: trialUser.is_trial,
+              register_date: trialUser.register_date,
+              expiry_date: trialUser.expiry_date
             })
           });
           if (!res.ok) {

@@ -114,7 +114,7 @@ export function PaymentCallback() {
         if (VITE_SUPABASE_URL && VITE_SUPABASE_ANON_KEY) {
           try {
             // ۱. ثبت یا به‌روزرسانی مشخصات لایسنس کاربر در جدول app_users با قابلیت لغو تداخل نهایی کاربرها (بر اساس شماره همراه یکتا)
-            const userRes = await fetch(`${VITE_SUPABASE_URL}/rest/v1/app_users?on_conflict=phone_number`, {
+            const userRes = await fetch(`${VITE_SUPABASE_URL}/rest/v1/app_users?on_conflict=id`, {
               method: 'POST',
               headers: {
                 'apikey': VITE_SUPABASE_ANON_KEY,
@@ -131,7 +131,9 @@ export function PaymentCallback() {
                 status: activeUser.status,
                 max_devices: activeUser.max_devices,
                 total_paid: activeUser.total_paid,
-                is_trial: activeUser.is_trial
+                is_trial: activeUser.is_trial,
+                register_date: activeUser.register_date,
+                expiry_date: activeUser.expiry_date
               })
             });
 
