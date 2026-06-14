@@ -356,32 +356,10 @@ export const Login = () => {
 
     setLoading(true);
 
-    // ۱. بررسی ست نبودن متغیرهای محیطی سوپابیس (ارائه راهنما + دمو جهت تسهیل پیش‌نمایش در Sandbox)
+    // ۱. بررسی ست نبودن متغیرهای محیطی سوپابیس
     if (!VITE_SUPABASE_URL || !VITE_SUPABASE_ANON_KEY || VITE_SUPABASE_URL.includes('YOUR_SUPABASE')) {
-      // شبیه‌سازی ورود لوکال جهت اینکه نرم‌افزار بالا بیاید و قابلیت تست داشته باشد در صورت عدم کانفیگ کلیدها
-      setTimeout(() => {
-        setLoading(false);
-        const trialStart = localStorage.getItem('nexwin_trial_start_date') || new Date().toISOString();
-        if (!localStorage.getItem('nexwin_trial_start_date')) {
-          localStorage.setItem('nexwin_trial_start_date', trialStart);
-        }
-        // یک کاربر نمونه برای حالت دمو فعال می‌کنیم
-        const demoUser: AppUser = {
-          id: cleanLicense,
-          owner_name: 'جناب آقای معین',
-          company_name: 'کارگاه برادران معین (صنایع نکس‌وین دمو)',
-          phone_number: cleanPhone,
-          tier: 'gold',
-          status: 'active',
-          register_date: '۱۴۰۳/۰۲/۱۵',
-          expiry_date: '۱۴۰۶/۰۲/۱۵',
-          max_devices: 5,
-          total_paid: 15000000,
-          is_trial: true,
-          trial_start_date: trialStart
-        };
-        saveAndAnimateWelcome(demoUser);
-      }, 1000);
+      setLoading(false);
+      setErrorMessage('امکان ارتباط با سرور وجود ندارد. لطفا تنظیمات سرور را بررسی کنید.');
       return;
     }
 
@@ -508,28 +486,6 @@ export const Login = () => {
     }, 1000);
   };
 
-  // شبیه‌سازی ورود سریع برای راحتی کاربران سیستم بدون وارد کردن اطلاعات بلند
-  const handleFastDemoLogin = () => {
-    const trialStart = localStorage.getItem('nexwin_trial_start_date') || new Date().toISOString();
-    if (!localStorage.getItem('nexwin_trial_start_date')) {
-      localStorage.setItem('nexwin_trial_start_date', trialStart);
-    }
-    const demoUser: AppUser = {
-      id: 'NW-98421',
-      owner_name: 'جناب معین (پیش فرض)',
-      company_name: 'مجموعه صنعتی نکس‌وین شیراز',
-      phone_number: '09171234567',
-      tier: 'gold',
-      status: 'active',
-      register_date: '۱۴۰۴/۰۱/۰۱',
-      expiry_date: '۱۴۰۷/۱۲/۲۹',
-      max_devices: 3,
-      total_paid: 25000000,
-      is_trial: true,
-      trial_start_date: trialStart
-    };
-    saveAndAnimateWelcome(demoUser);
-  };
 
   // گرفتن استایل‌های پلن بر اساس تگ طلا / نقره / برنز
   const getTierBadgeStyles = (tier: string) => {
@@ -708,12 +664,6 @@ export const Login = () => {
               </motion.div>
             )}
 
-            {/* راهنمایی کوچکی در صورتی که اتصال به اینترنت یا Supabase ست نشده باشد برای دمو */}
-            {!isSignUp && (!VITE_SUPABASE_URL || !VITE_SUPABASE_ANON_KEY) && (
-              <div className="mb-6 bg-amber-500/10 border border-amber-500/20 rounded-2xl p-3.5 text-amber-200 text-[10px] font-bold leading-relaxed">
-                🚀 سوپابیس ست نشده است. جهت بررسی سریع عملکرد، می‌توانید با هر شماره و لایسنسی دکمه ورود را بزنید یا مستقیماً از دکمه ورود سریع دمو استفاده نمایید.
-              </div>
-            )}
 
             {/* چیدمان فرم ورود نکس‌وین در برابر فرم ثبت‌نام چند گانه */}
             {!isSignUp ? (
@@ -1105,15 +1055,8 @@ export const Login = () => {
               </div>
             )}
 
-            {/* دکمه‌های ورود سریع دمو و پشتیبانی */}
-            <div className="mt-8 pt-6 border-t border-white/5 flex items-center justify-between gap-4 text-xs font-bold text-slate-400">
-              <button 
-                onClick={handleFastDemoLogin} 
-                className="text-slate-400 hover:text-white transition-colors bg-white/5 hover:bg-white/10 px-3.5 py-2 rounded-xl flex items-center gap-2 border border-white/5 active:scale-95"
-              >
-                ورود دمو (آفلاین دسکتاپ) ⚙️
-              </button>
-              
+            {/* دکمه پشتیبانی */}
+            <div className="mt-8 pt-6 border-t border-white/5 flex items-center justify-end gap-4 text-xs font-bold text-slate-400">
               <button 
                 onClick={() => setShowSupportModal(true)} 
                 className="text-slate-400 hover:text-white transition-colors flex items-center gap-1.5"
