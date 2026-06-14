@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#000080;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#000066;stop-opacity:1" />
+    </linearGradient>
+    <pattern id="grid" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+      <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+    </pattern>
+  </defs>
+  
+  <!-- Rounded Square Background -->
+  <rect width="512" height="512" rx="100" fill="url(#bgGrad)"/>
+  
+  <!-- Outer Window Frame -->
+  <rect x="100" y="100" width="312" height="312" rx="4" fill="white" fill-opacity="0.05" stroke="white" stroke-width="15"/>
+  
+  <!-- Blueprint Grid Area -->
+  <rect x="125" y="125" width="125" height="150" fill="url(#grid)"/>
+  
+  <!-- Window Mullions (T-Shape) -->
+  <line x1="256" y1="100" x2="256" y2="412" stroke="white" stroke-width="12"/>
+  <line x1="100" y1="285" x2="256" y2="285" stroke="white" stroke-width="12"/>
+  
+  <!-- Design Pen / Stylus -->
+  <g transform="translate(420, 420) rotate(-45)">
+    <path d="M-180,-10 L20,-10 L20,10 L-180,10 Z" fill="white" stroke="#000080" stroke-width="2"/>
+    <path d="M20,-10 L45,0 L20,10 Z" fill="#3b82f6"/>
+    <rect x="-160" y="-10" width="20" height="20" fill="#3b82f6"/>
+  </g>
+</svg>
