@@ -1,5 +1,5 @@
 {
-  "name": "NexWin UPVC Designer",
+  "name": "NexWin",
   "description": "A premium, next-generation UPVC window and door pricing calculator and designer featuring AI optimization and a glassmorphism aesthetic.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
