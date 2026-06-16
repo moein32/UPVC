@@ -9,7 +9,8 @@
     <link rel="icon" type="image/png" href="/logo.png">
     <link rel="apple-touch-icon" href="/logo.png">
     
-    <!-- iOS Specific Settings -->
+    <!-- PWA / Mobile Web App capabilities -->
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="NexWin">
@@ -22,32 +23,6 @@
     
     <!-- Optimized Font Loading -->
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100..900&display=swap&font-display=swap" rel="stylesheet" crossorigin="anonymous">
-    
-    <!-- Tailwind CSS Engine -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <style>
-      :root { --color-navy: #001f3f; }
-      body {
-        font-family: 'Vazirmatn', sans-serif;
-        background-color: #f3f4f6;
-        direction: rtl;
-        unicode-bidi: embed;
-        margin: 0;
-        padding: 0;
-        -webkit-tap-highlight-color: transparent;
-        overscroll-behavior-y: none;
-        /* Prevent layout shift during font load */
-        text-rendering: optimizeLegibility;
-      }
-      
-      .no-scrollbar::-webkit-scrollbar { display: none; }
-      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-      @media print {
-        .no-print { display: none !important; }
-      }
-    </style>
   </head>
   <body>
     <div id="root"></div>
