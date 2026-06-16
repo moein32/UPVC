@@ -59,14 +59,14 @@ export default defineConfig({
         lang: 'fa-IR',
         icons: [
           {
-            src: 'https://app.blubank.com/images/icon_144x144.png',
-            sizes: '144x144',
+            src: 'https://ais-pre-t4plvqmecyo5bpb34e5vbh-29501230031.us-east1.run.app/assets/images/logo-192.png',
+            sizes: '192x192',
             type: 'image/png',
             purpose: 'any'
           },
           {
-            src: 'https://app.blubank.com/images/icon_144x144.png',
-            sizes: '144x144',
+            src: 'https://ais-pre-t4plvqmecyo5bpb34e5vbh-29501230031.us-east1.run.app/assets/images/logo-512.png',
+            sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable'
           }
