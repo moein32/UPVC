@@ -59,13 +59,13 @@ export default defineConfig({
         lang: 'fa-IR',
         icons: [
           {
-            src: 'assets/images/logo-192.png',
+            src: 'https://ais-pre-t4plvqmecyo5bpb34e5vbh-29501230031.us-east1.run.app/assets/images/logo-192.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any'
           },
           {
-            src: 'assets/images/logo-512.png',
+            src: 'https://ais-pre-t4plvqmecyo5bpb34e5vbh-29501230031.us-east1.run.app/assets/images/logo-512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable'
