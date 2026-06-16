@@ -30,3 +30,10 @@ body {
     display: none !important;
   }
 }
+
+/* Ensure the logo.png has strict visual visibility properties to prevent any container collapse issues */
+img[src*="logo.png"] {
+  display: block;
+  min-width: 16px;
+  min-height: 16px;
+}
