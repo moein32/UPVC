@@ -1,5 +1,37 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: 'Vazirmatn';
+  src: url('/assets/fonts/Vazirmatn-Light.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Vazirmatn';
+  src: url('/assets/fonts/Vazirmatn-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Vazirmatn';
+  src: url('/assets/fonts/Vazirmatn-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Vazirmatn';
+  src: url('/assets/fonts/Vazirmatn-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --color-navy: #001f3f;
 }
@@ -31,8 +63,8 @@ body {
   }
 }
 
-/* Ensure the logo.png has strict visual visibility properties to prevent any container collapse issues */
-img[src*="logo.png"] {
+/* Ensure the logo has strict visual visibility properties to prevent any container collapse issues */
+img[src*="logo"] {
   display: block;
   min-width: 16px;
   min-height: 16px;
