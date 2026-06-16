@@ -4,6 +4,7 @@ import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-d
 import { useTranslation } from 'react-i18next';
 import { Lock, Phone, LogOut, X, Share } from 'lucide-react';
 import { Login } from './screens/Login';
+import { PwaInstallManager } from './components/PwaInstallManager';
 
 // Lazy loading sub-screens for ultra-fast startup and split bundling on mobile
 const Onboarding = React.lazy(() => import('./screens/Onboarding').then(m => ({ default: m.Onboarding })));
@@ -144,61 +145,7 @@ const TrialExpiredScreen = ({ user }: { user: any }) => {
   );
 };
 
-const IosInstallPrompt = () => {
-  const [showPrompt, setShowPrompt] = useState(false);
-  const location = useLocation();
-
-  useEffect(() => {
-    const userAgent = window.navigator.userAgent.toLowerCase();
-    const isIosDevice = /iphone|ipad|ipod/.test(userAgent);
-    const isInStandaloneMode = ('standalone' in window.navigator) && ((window.navigator as any).standalone === true);
-    const isPwaConfigured = window.matchMedia('(display-mode: standalone)').matches;
-
-    if (isIosDevice && !isInStandaloneMode && !isPwaConfigured) {
-      const hasDismissed = localStorage.getItem('ios_install_prompt_dismissed');
-      if (!hasDismissed) {
-        setShowPrompt(true);
-      }
-    }
-  }, []);
-
-  // Avoid showing the PWA installation guide bar on the Login screen
-  if (location.pathname === '/login' || !showPrompt) return null;
-
-  return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 p-4 pb-8 bg-slate-900 border-t border-slate-700 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] text-right" dir="rtl">
-      <div className="max-w-md mx-auto relative px-2">
-        <button 
-          onClick={() => {
-            setShowPrompt(false);
-            localStorage.setItem('ios_install_prompt_dismissed', 'true');
-          }} 
-          className="absolute left-0 top-0 p-1 text-slate-400 hover:text-white bg-slate-800 rounded-full"
-        >
-          <X size={16} />
-        </button>
-        <div className="flex items-start gap-4">
-          <div className="w-12 h-12 flex-shrink-0 bg-slate-800 rounded-xl overflow-hidden shadow-lg border border-slate-700/50 p-1">
-            <img src="/assets/images/logo.png" alt="Nexwin" className="w-full h-full object-contain rounded-lg" />
-          </div>
-          <div className="flex-1 pl-4">
-            <h3 className="text-white font-bold mb-2 text-sm leading-relaxed">برای نصب نسخه اپلیکیشن نکسوین در آیفون:</h3>
-            <ol className="text-xs text-slate-300 space-y-2 leading-relaxed">
-              <li className="flex items-center gap-1.5 flex-wrap">
-                <span>۱. در نوار پایین مرورگر دکمه Share (اشتراک‌گذاری)</span>
-                <span className="inline-flex items-center justify-center bg-slate-800 w-6 h-6 rounded border border-slate-700 text-blue-400">
-                  <Share size={12} />
-                </span>
-                <span>را لمس کنید.</span>
-              </li>
-              <li>۲. منو را بالا کشیده و گزینه <strong>Add to Home Screen</strong> (افزودن به صفحه اصلی) را انتخاب کنید.</li>
-            </ol>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
+// ProtectedRoute guards based on verified subscription tier
 
 function App() {
   const { i18n } = useTranslation();
@@ -261,7 +208,7 @@ function App() {
           <Route path="/payment-callback" element={<PaymentCallback />} />
         </Routes>
       </Suspense>
-      <IosInstallPrompt />
+      <PwaInstallManager />
     </HashRouter>
   );
 }

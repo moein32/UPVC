@@ -37,20 +37,11 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'inline',
-      includeAssets: [
-        'favicon.ico',
-        'assets/images/logo.png',
-        'assets/images/logo-192.png',
-        'assets/images/logo-512.png',
-        'assets/fonts/Vazirmatn-Light.woff2',
-        'assets/fonts/Vazirmatn-Regular.woff2',
-        'assets/fonts/Vazirmatn-Medium.woff2',
-        'assets/fonts/Vazirmatn-Bold.woff2'
-      ],
+      includeAssets: ['favicon.ico', 'logo.png'],
       manifest: {
-        name: 'NexWin',
-        short_name: 'NexWin',
-        description: 'طراحی، بیشینه‌سازی و محاسبه قیمت درب و پنجره دوجداره UPVC و آلومینیوم نکسوین',
+        name: 'سامانه مدیریت کلان نکسوین',
+        short_name: 'نکسوین ادمین',
+        description: 'سیستم صدور، نظارت و کنترل مالی لایسنسهای اشتراک صنایع نکسوین',
         theme_color: '#0f172a',
         background_color: '#0f172a',
         display: 'standalone',
@@ -59,13 +50,13 @@ export default defineConfig({
         lang: 'fa-IR',
         icons: [
           {
-            src: 'https://ais-pre-t4plvqmecyo5bpb34e5vbh-29501230031.us-east1.run.app/assets/images/logo-192.png',
+            src: 'logo.png?v=5',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any'
           },
           {
-            src: 'https://ais-pre-t4plvqmecyo5bpb34e5vbh-29501230031.us-east1.run.app/assets/images/logo-512.png',
+            src: 'logo.png?v=5',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable'

@@ -1,25 +1,13 @@
 {
-  "name": "NexWin",
+  "name": "NexWin UPVC Designer",
   "short_name": "NexWin",
   "description": "Premium UPVC window and door pricing calculator featuring AI optimization.",
   "icons": [
     {
-      "src": "https://ais-pre-t4plvqmecyo5bpb34e5vbh-29501230031.us-east1.run.app/assets/images/logo-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "https://ais-pre-t4plvqmecyo5bpb34e5vbh-29501230031.us-east1.run.app/assets/images/logo-512.png",
+      "src": "/logo.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "https://ais-pre-t4plvqmecyo5bpb34e5vbh-29501230031.us-east1.run.app/assets/images/logo.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     }
   ],
   "start_url": "/",

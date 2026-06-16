@@ -1,43 +1,11 @@
 @import "tailwindcss";
 
-@font-face {
-  font-family: 'Vazirmatn';
-  src: url('/assets/fonts/Vazirmatn-Light.woff2') format('woff2');
-  font-weight: 300;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Vazirmatn';
-  src: url('/assets/fonts/Vazirmatn-Regular.woff2') format('woff2');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Vazirmatn';
-  src: url('/assets/fonts/Vazirmatn-Medium.woff2') format('woff2');
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Vazirmatn';
-  src: url('/assets/fonts/Vazirmatn-Bold.woff2') format('woff2');
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-
 :root {
   --color-navy: #001f3f;
 }
 
 body {
-  font-family: 'Vazirmatn', sans-serif;
+  font-family: 'Vazirmatn', -apple-system, BlinkMacSystemFont, 'SF Pro Arabic', 'Geeza Pro', 'Segoe UI', Roboto, sans-serif;
   background-color: #f3f4f6;
   direction: rtl;
   unicode-bidi: embed;
@@ -46,8 +14,31 @@ body {
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior-y: none;
   text-rendering: optimizeLegibility;
+  /* Disable elastic viewport scroll behaviors on high-density touch targets */
+  -webkit-overflow-scrolling: touch;
 }
 
+/* iOS Standalone Safe Area Padding / Margins */
+.safe-pt {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+.safe-pb {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.safe-mt {
+  margin-top: env(safe-area-inset-top, 0px);
+}
+.safe-mb {
+  margin-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Premium micro-interactions native feedback mimicking iOS/Android native banking apps */
+button, [role="button"], a {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Custom scrollbar elimination for app container viewports */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
@@ -63,8 +54,8 @@ body {
   }
 }
 
-/* Ensure the logo has strict visual visibility properties to prevent any container collapse issues */
-img[src*="logo"] {
+/* Ensure the logo.png has strict visual visibility properties to prevent any container collapse issues */
+img[src*="logo.png"] {
   display: block;
   min-width: 16px;
   min-height: 16px;
