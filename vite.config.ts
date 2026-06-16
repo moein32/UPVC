@@ -37,7 +37,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'inline',
-      includeAssets: ['favicon.ico', 'logo.png'],
+      includeAssets: ['favicon.ico', 'logo.png', 'logo-192.png', 'logo-512.png'],
       manifest: {
         name: 'NexWin',
         short_name: 'NexWin',
@@ -50,16 +50,22 @@ export default defineConfig({
         lang: 'fa-IR',
         icons: [
           {
-            src: 'logo.png?v=5',
+            src: 'logo-192.png?v=5',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any'
           },
           {
-            src: 'logo.png?v=5',
+            src: 'logo-512.png?v=5',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable'
+          },
+          {
+            src: 'logo.png?v=5',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any'
           }
         ]
       },
