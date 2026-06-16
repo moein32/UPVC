@@ -1,26 +1,36 @@
 
-import React, { useEffect, useState } from 'react';
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect, useState, Suspense } from 'react';
+import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Lock, Phone, LogOut, X, Share } from 'lucide-react';
 import { Login } from './screens/Login';
-import { Onboarding } from './screens/Onboarding';
-import { Dashboard } from './screens/Dashboard';
-import { ProjectSetup } from './screens/ProjectSetup';
-import { UnitDesigner } from './screens/UnitDesigner';
-import { PriceBreakdown } from './screens/PriceBreakdown';
-import { InvoicePrint } from './screens/InvoicePrint';
-import { ProfileSelection } from './screens/ProfileSelection';
-import { GlassHardware } from './screens/GlassHardware';
-import { Projects } from './screens/Projects';
-import { Settings } from './screens/Settings';
-import { FinancialManagement } from './screens/FinancialManagement';
-import { ProjectFinancials } from './screens/ProjectFinancials';
-import { ProfileOptimization } from './screens/ProfileOptimization';
-import { GlassOptimization } from './screens/GlassOptimization';
-import { InventoryManagement } from './screens/InventoryManagement';
-import { ProductionControl } from './screens/ProductionControl';
-import { PaymentCallback } from './screens/PaymentCallback';
+
+// Lazy loading sub-screens for ultra-fast startup and split bundling on mobile
+const Onboarding = React.lazy(() => import('./screens/Onboarding').then(m => ({ default: m.Onboarding })));
+const Dashboard = React.lazy(() => import('./screens/Dashboard').then(m => ({ default: m.Dashboard })));
+const ProjectSetup = React.lazy(() => import('./screens/ProjectSetup').then(m => ({ default: m.ProjectSetup })));
+const UnitDesigner = React.lazy(() => import('./screens/UnitDesigner').then(m => ({ default: m.UnitDesigner })));
+const PriceBreakdown = React.lazy(() => import('./screens/PriceBreakdown').then(m => ({ default: m.PriceBreakdown })));
+const InvoicePrint = React.lazy(() => import('./screens/InvoicePrint').then(m => ({ default: m.InvoicePrint })));
+const ProfileSelection = React.lazy(() => import('./screens/ProfileSelection').then(m => ({ default: m.ProfileSelection })));
+const GlassHardware = React.lazy(() => import('./screens/GlassHardware').then(m => ({ default: m.GlassHardware })));
+const Projects = React.lazy(() => import('./screens/Projects').then(m => ({ default: m.Projects })));
+const Settings = React.lazy(() => import('./screens/Settings').then(m => ({ default: m.Settings })));
+const FinancialManagement = React.lazy(() => import('./screens/FinancialManagement').then(m => ({ default: m.FinancialManagement })));
+const ProjectFinancials = React.lazy(() => import('./screens/ProjectFinancials').then(m => ({ default: m.ProjectFinancials })));
+const ProfileOptimization = React.lazy(() => import('./screens/ProfileOptimization').then(m => ({ default: m.ProfileOptimization })));
+const GlassOptimization = React.lazy(() => import('./screens/GlassOptimization').then(m => ({ default: m.GlassOptimization })));
+const InventoryManagement = React.lazy(() => import('./screens/InventoryManagement').then(m => ({ default: m.InventoryManagement })));
+const ProductionControl = React.lazy(() => import('./screens/ProductionControl').then(m => ({ default: m.ProductionControl })));
+const PaymentCallback = React.lazy(() => import('./screens/PaymentCallback').then(m => ({ default: m.PaymentCallback })));
+
+// A lightweight, premium loading fallback spinner for dynamically loaded sub-screens
+const LoadingSpinner = () => (
+  <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#0f172a] font-['Vazirmatn'] text-white">
+    <div className="w-12 h-12 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin mb-4"></div>
+    <span className="text-xs text-slate-400 font-bold">در حال بارگذاری ایمن...</span>
+  </div>
+);
 
 // نگهبان مسیرها بر اساس وضعیت لایسنس تایید شده در لوکال‌استوریج و سطح دسترسی اشتراک
 interface ProtectedRouteProps {
@@ -136,6 +146,7 @@ const TrialExpiredScreen = ({ user }: { user: any }) => {
 
 const IosInstallPrompt = () => {
   const [showPrompt, setShowPrompt] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
     const userAgent = window.navigator.userAgent.toLowerCase();
@@ -151,7 +162,8 @@ const IosInstallPrompt = () => {
     }
   }, []);
 
-  if (!showPrompt) return null;
+  // Avoid showing the PWA installation guide bar on the Login screen
+  if (location.pathname === '/login' || !showPrompt) return null;
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 p-4 pb-8 bg-slate-900 border-t border-slate-700 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] text-right" dir="rtl">
@@ -226,27 +238,29 @@ function App() {
 
   return (
     <HashRouter>
-      <Routes>
-        <Route path="/" element={<Navigate to={hasSession ? "/dashboard" : "/login"} replace />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
-        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-        <Route path="/project-setup" element={<ProtectedRoute><ProjectSetup /></ProtectedRoute>} />
-        <Route path="/designer" element={<ProtectedRoute><UnitDesigner /></ProtectedRoute>} />
-        <Route path="/breakdown" element={<ProtectedRoute><PriceBreakdown /></ProtectedRoute>} />
-        <Route path="/print-invoice" element={<ProtectedRoute><InvoicePrint /></ProtectedRoute>} />
-        <Route path="/profiles" element={<ProtectedRoute allowedTiers={['silver', 'gold']}><ProfileSelection /></ProtectedRoute>} />
-        <Route path="/glass-hardware" element={<ProtectedRoute allowedTiers={['silver', 'gold']}><GlassHardware /></ProtectedRoute>} />
-        <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
-        <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-        <Route path="/financial-mgmt" element={<ProtectedRoute allowedTiers={['gold']}><FinancialManagement /></ProtectedRoute>} />
-        <Route path="/project-financials/:id" element={<ProtectedRoute allowedTiers={['gold']}><ProjectFinancials /></ProtectedRoute>} />
-        <Route path="/optimization/profile" element={<ProtectedRoute allowedTiers={['silver', 'gold']}><ProfileOptimization /></ProtectedRoute>} />
-        <Route path="/optimization/glass" element={<ProtectedRoute allowedTiers={['silver', 'gold']}><GlassOptimization /></ProtectedRoute>} />
-        <Route path="/inventory" element={<ProtectedRoute allowedTiers={['silver', 'gold']}><InventoryManagement /></ProtectedRoute>} />
-        <Route path="/production-control" element={<ProtectedRoute allowedTiers={['silver', 'gold']}><ProductionControl /></ProtectedRoute>} />
-        <Route path="/payment-callback" element={<PaymentCallback />} />
-      </Routes>
+      <Suspense fallback={<LoadingSpinner />}>
+        <Routes>
+          <Route path="/" element={<Navigate to={hasSession ? "/dashboard" : "/login"} replace />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
+          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/project-setup" element={<ProtectedRoute><ProjectSetup /></ProtectedRoute>} />
+          <Route path="/designer" element={<ProtectedRoute><UnitDesigner /></ProtectedRoute>} />
+          <Route path="/breakdown" element={<ProtectedRoute><PriceBreakdown /></ProtectedRoute>} />
+          <Route path="/print-invoice" element={<ProtectedRoute><InvoicePrint /></ProtectedRoute>} />
+          <Route path="/profiles" element={<ProtectedRoute allowedTiers={['silver', 'gold']}><ProfileSelection /></ProtectedRoute>} />
+          <Route path="/glass-hardware" element={<ProtectedRoute allowedTiers={['silver', 'gold']}><GlassHardware /></ProtectedRoute>} />
+          <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+          <Route path="/financial-mgmt" element={<ProtectedRoute allowedTiers={['gold']}><FinancialManagement /></ProtectedRoute>} />
+          <Route path="/project-financials/:id" element={<ProtectedRoute allowedTiers={['gold']}><ProjectFinancials /></ProtectedRoute>} />
+          <Route path="/optimization/profile" element={<ProtectedRoute allowedTiers={['silver', 'gold']}><ProfileOptimization /></ProtectedRoute>} />
+          <Route path="/optimization/glass" element={<ProtectedRoute allowedTiers={['silver', 'gold']}><GlassOptimization /></ProtectedRoute>} />
+          <Route path="/inventory" element={<ProtectedRoute allowedTiers={['silver', 'gold']}><InventoryManagement /></ProtectedRoute>} />
+          <Route path="/production-control" element={<ProtectedRoute allowedTiers={['silver', 'gold']}><ProductionControl /></ProtectedRoute>} />
+          <Route path="/payment-callback" element={<PaymentCallback />} />
+        </Routes>
+      </Suspense>
       <IosInstallPrompt />
     </HashRouter>
   );
