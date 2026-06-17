@@ -4,6 +4,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
+  base: '/',
   resolve: {
     dedupe: ['react', 'react-dom']
   },
@@ -67,7 +68,7 @@ export default defineConfig({
             src: '/icons/icon-192.png',
             sizes: '192x192',
             type: 'image/png',
-            purpose: 'any animate'
+            purpose: 'any'
           },
           {
             src: '/icons/icon-512.png',
