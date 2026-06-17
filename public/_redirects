@@ -1,1 +1,9 @@
-/*    /index.html   200
+# Direct static paths that should never be processed by React Router fallback redirect
+/assets/*      /assets/:splat      200
+/icons/*       /icons/:splat       200
+/logo.png      /logo.png           200
+/manifest.json /manifest.json      200
+/sw.js         /sw.js              200
+
+# React Router SPA Fallback (served as index.html for all other UI routes)
+/*             /index.html         200
