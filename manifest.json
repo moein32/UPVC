@@ -1,19 +1,39 @@
 {
-  "name": "NexWin UPVC Designer",
-  "short_name": "NexWin",
-  "description": "Premium UPVC window and door pricing calculator featuring AI optimization.",
+  "name": "سامانه مدیریت کلان نکسوین",
+  "short_name": "نکسوین ادمین",
+  "description": "سیستم صدور، نظارت و کنترل مالی لایسنسهای اشتراک صنایع نکسوین",
   "icons": [
+    {
+      "src": "/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
     {
       "src": "/logo.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ],
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "theme_color": "#001f3f",
-  "background_color": "#f8fafc",
-  "orientation": "portrait"
+  "theme_color": "#0f172a",
+  "background_color": "#0f172a",
+  "orientation": "portrait",
+  "dir": "rtl",
+  "lang": "fa-IR"
 }

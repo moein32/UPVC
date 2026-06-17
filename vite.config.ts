@@ -37,7 +37,16 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'inline',
-      includeAssets: ['favicon.ico', 'logo.png'],
+      includeAssets: [
+        'favicon.ico', 
+        'logo.png', 
+        'apple-touch-icon.png', 
+        'apple-touch-icon-152x152.png', 
+        'apple-touch-icon-167x167.png', 
+        'apple-touch-icon-180x180.png',
+        'favicon-32x32.png', 
+        'favicon-16x16.png'
+      ],
       manifest: {
         name: 'سامانه مدیریت کلان نکسوین',
         short_name: 'نکسوین ادمین',
@@ -50,16 +59,28 @@ export default defineConfig({
         lang: 'fa-IR',
         icons: [
           {
-            src: 'logo.png?v=5',
+            src: 'favicon-32x32.png',
+            sizes: '32x32',
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: 'android-chrome-192x192.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any'
           },
           {
-            src: 'logo.png?v=5',
+            src: 'android-chrome-512x512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable'
+          },
+          {
+            src: 'logo.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any'
           }
         ]
       },
