@@ -40,12 +40,11 @@ export default defineConfig({
       includeAssets: [
         'favicon.ico', 
         'logo.png', 
-        'apple-touch-icon.png', 
-        'apple-touch-icon-152x152.png', 
-        'apple-touch-icon-167x167.png', 
-        'apple-touch-icon-180x180.png',
-        'favicon-32x32.png', 
-        'favicon-16x16.png'
+        'icons/apple-touch-icon.png', 
+        'icons/icon-180.png',
+        'icons/favicon-32x32.png', 
+        'icons/favicon-16x16.png',
+        'apple-touch-icon.png'
       ],
       manifest: {
         name: 'سامانه مدیریت کلان نکسوین',
@@ -59,25 +58,25 @@ export default defineConfig({
         lang: 'fa-IR',
         icons: [
           {
-            src: 'favicon-32x32.png',
+            src: '/icons/favicon-32x32.png',
             sizes: '32x32',
             type: 'image/png',
             purpose: 'any'
           },
           {
-            src: 'android-chrome-192x192.png',
+            src: '/icons/icon-192.png',
             sizes: '192x192',
             type: 'image/png',
-            purpose: 'any'
+            purpose: 'any animate'
           },
           {
-            src: 'android-chrome-512x512.png',
+            src: '/icons/icon-512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable'
           },
           {
-            src: 'logo.png',
+            src: '/icons/icon-512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any'
