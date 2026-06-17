@@ -306,29 +306,47 @@ function solveNode(
     const containerH = h - frameTopSub - frameBottomSub;
 
     if (node.dir === 'row') {
+      const numChildren = node.children.length;
       // Divided by vertical mullions
       if (isFrench) {
         // Floating mullion (مولیون متحرک) between left and right active casement sashes
         const MullionLen = containerH + CONSTANTS.Ms; // Spans total height of division
         cuts.push({ id: `floating-mullion-${node.id}`, name: 'پروفیل مولیون متحرک فرانسوی (Floating)', length: MullionLen, quantity: 1, type: 'Mullion', unit: 'm', angle: '90/90' });
       } else {
-        const count = node.children.length - 1;
+        const count = numChildren - 1;
         const MullionLen = containerH + CONSTANTS.Ms; // vertical mullion length
         cuts.push({ id: `vertical-mullion-${node.id}`, name: 'پروفیل مولیون عمودی (وادار)', length: MullionLen, quantity: count, type: 'Mullion', unit: 'm', angle: '90/90' });
       }
+
+      const totalMullionW = (numChildren - 1) * m_mullion;
+      const netContainerW = Math.max(0, containerW - totalMullionW);
 
       // Solve each slice
       let cumulativeX = 0;
       node.children.forEach((child, idx) => {
         const ratio = (child.flex || 1) / totalFlex;
-        const widthSlice = containerW * ratio;
 
-        // Boundaries of child slice
+        const childLeftBound = idx === 0 ? bounds.left : 'Mullion';
+        const childRightBound = idx === numChildren - 1 ? bounds.right : 'Mullion';
+
+        const isL = isFrench && idx === 0;
+        const isR = isFrench && idx === 1;
+
+        const activeLeftBound = isL ? bounds.left : childLeftBound;
+        const activeRightBound = isR ? bounds.right : childRightBound;
+
+        const sliceLeftSub = getBoundarySubDynamic(activeLeftBound);
+        const sliceRightSub = getBoundarySubDynamic(activeRightBound);
+
+        // Physical slice width including boundary margins
+        const widthSlice = (netContainerW * ratio) + sliceLeftSub + sliceRightSub;
+
+        // Boundaries of child slice mapped to prevent double subtraction
         const childBounds = {
-          left: idx === 0 ? bounds.left : 'Mullion',
-          right: idx === node.children!.length - 1 ? bounds.right : 'Mullion',
-          top: bounds.top,
-          bottom: bounds.bottom
+          left: activeLeftBound,
+          right: activeRightBound,
+          top: 'Zero',
+          bottom: 'Zero'
         };
 
         if (isFrench) {
@@ -342,22 +360,33 @@ function solveNode(
 
     } else {
       // Divided by horizontal transoms (dir === 'col')
-      const count = node.children.length - 1;
+      const numChildren = node.children.length;
+      const count = numChildren - 1;
       const TransomLen = containerW + CONSTANTS.Ms; // horizontal transom length
       cuts.push({ id: `horizontal-mullion-${node.id}`, name: 'پروفیل مولیون افقی (ترنسم)', length: TransomLen, quantity: count, type: 'Mullion', unit: 'm', angle: '90/90' });
+
+      const totalTransomH = (numChildren - 1) * m_mullion;
+      const netContainerH = Math.max(0, containerH - totalTransomH);
 
       // Solve each slice
       let cumulativeY = 0;
       node.children.forEach((child, idx) => {
         const ratio = (child.flex || 1) / totalFlex;
-        const heightSlice = containerH * ratio;
 
-        // Boundaries of child slice
+        const childTopBound = idx === 0 ? bounds.top : 'Mullion';
+        const childBottomBound = idx === numChildren - 1 ? bounds.bottom : 'Mullion';
+
+        const sliceTopSub = getBoundarySubDynamic(childTopBound);
+        const sliceBottomSub = getBoundarySubDynamic(childBottomBound);
+
+        const heightSlice = (netContainerH * ratio) + sliceTopSub + sliceBottomSub;
+
+        // Boundaries of child slice mapped to prevent double subtraction
         const childBounds = {
-          left: bounds.left,
-          right: bounds.right,
-          top: idx === 0 ? bounds.top : 'Mullion',
-          bottom: idx === node.children!.length - 1 ? bounds.bottom : 'Mullion'
+          left: 'Zero',
+          right: 'Zero',
+          top: childTopBound,
+          bottom: childBottomBound
         };
 
         solveNode(child, containerW, heightSlice, childBounds, cuts, brand);

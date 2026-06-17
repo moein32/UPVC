@@ -181,8 +181,8 @@ export function calculateGlassList(
           const childBounds = {
             left: activeLeftBound,
             right: activeRightBound,
-            top: bounds.top,
-            bottom: bounds.bottom
+            top: 'Zero',
+            bottom: 'Zero'
           };
 
           if (isFrench) {
@@ -210,8 +210,8 @@ export function calculateGlassList(
           const heightSlice = (netContainerH * ratio) + sliceTopSub + sliceBottomSub;
 
           const childBounds = {
-            left: bounds.left,
-            right: bounds.right,
+            left: 'Zero',
+            right: 'Zero',
             top: childTopBound,
             bottom: childBottomBound
           };
