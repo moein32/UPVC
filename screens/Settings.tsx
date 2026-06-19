@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, Moon, Globe, FileText, Database, Percent, Languages, Building2, MapPin, Phone, MessageSquare, Layout, CheckCircle2, LogOut, Sparkles, ShieldCheck, Award, Zap, UserCheck } from 'lucide-react';
+import { ArrowRight, Moon, Globe, FileText, Database, Percent, Languages, Building2, MapPin, Phone, MessageSquare, Layout, CheckCircle2, LogOut, Sparkles, ShieldCheck, Award, Zap, UserCheck, CreditCard, Key } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -344,8 +344,10 @@ export const Settings = () => {
         </SettingItem>
       </div>
 
-      <div className="mb-8">
-        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 px-1">طراحی خروجی فاکتور (PDF)</h3>
+
+
+      <div className="mb-8 font-['Vazirmatn']">
+        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 px-1 font-['Vazirmatn']">طراحی خروجی فاکتور (PDF)</h3>
         <div className="grid grid-cols-2 gap-3 mb-4">
             <LayoutOption 
                 type="standard" 

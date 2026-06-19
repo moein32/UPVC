@@ -17,7 +17,17 @@ export interface PaymentRequestData {
 // تنظیمات درگاه پرداخت زرین‌پال شما
 export const ZARINPAL_CONFIG = {
   // ۱. مرچنت کد ۳۶ کاراکتری دریافتی از پنل زرین‌پال
-  MERCHANT_ID: 'YOUR-ZARINPAL-MERCHANT-ID-HERE-36-CHARS',
+  get MERCHANT_ID(): string {
+    const saved = localStorage.getItem('zarinpal_merchant_id');
+    if (saved && saved.trim() && saved.trim() !== 'YOUR-ZARINPAL-MERCHANT-ID-HERE-36-CHARS') {
+      return saved.trim();
+    }
+    const envVal = import.meta.env.VITE_ZARINPAL_MERCHANT_ID;
+    if (envVal && envVal.trim()) {
+      return envVal.trim();
+    }
+    return 'YOUR-ZARINPAL-MERCHANT-ID-HERE-36-CHARS';
+  },
 
   // ۲. آدرس بازگشت پس از تراکنش پرداخت (Callback URL)
   // به این آدرس پارامترهای Authority و Status پاس داده می‌شوند.
@@ -25,10 +35,22 @@ export const ZARINPAL_CONFIG = {
 
   // ۳. حالت آزمایشی (سندباکس زرین‌پال) - جهت تسریع فرآیند اعتبارسنجی
   // در صورتی که true باشد، پرداخت‌ها در محیط شبیه‌ساز واقعی زرین‌پال انجام می‌شود.
-  USE_SANDBOX: false,
+  get USE_SANDBOX(): boolean {
+    const saved = localStorage.getItem('zarinpal_use_sandbox');
+    if (saved !== null) {
+      return saved === 'true';
+    }
+    return import.meta.env.VITE_ZARINPAL_USE_SANDBOX === 'true';
+  },
 
   // ۴. وضعیت درگاه مستقیم زرین‌پال (برای هدایت بدون کلیک ثانویه به بانک)
-  USE_ZARINGATE: false,
+  get USE_ZARINGATE(): boolean {
+    const saved = localStorage.getItem('zarinpal_use_zaringate');
+    if (saved !== null) {
+      return saved === 'true';
+    }
+    return false;
+  },
 
   // ۵. واحد پول پیش‌فرض زرین‌پال که تومان (IRT) است.
   CURRENCY: 'IRT' 

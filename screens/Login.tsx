@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Lock, Phone, AlertCircle, HelpCircle, ArrowRight, ShieldCheck, Timer, Award, User, Briefcase, ChevronLeft, PhoneCall, Sparkles, Building, Check, CreditCard } from 'lucide-react';
+import { Lock, Phone, AlertCircle, HelpCircle, ArrowRight, ShieldCheck, Timer, Award, User, Briefcase, ChevronLeft, PhoneCall, Sparkles, Building, Check, CreditCard, Key } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toEnglishDigits, toPersianDigits } from '../utils/formatting';
 import { AppUser } from '../types';
@@ -49,6 +49,8 @@ export const Login = () => {
   const [generatedOtpCode, setGeneratedOtpCode] = useState('');
   const [smsSending, setSmsSending] = useState(false);
   const [smsSuccessMsg, setSmsSuccessMsg] = useState<string | null>(null);
+
+
 
   // ۱. هندلر درخواست پیامک کد تایید فعال‌سازی برای شماره موبایل کاربری جدید
   const handleRequestOtp = async (e: React.FormEvent) => {
@@ -982,6 +984,8 @@ export const Login = () => {
                         <div className="text-right">
                           <span className="text-[10px] text-slate-400 font-extrabold block">اکنون اقدام نمایید:</span>
                         </div>
+
+
 
                         {/* دکمه پرداخت الکترونیک زرین‌پال */}
                         <button
