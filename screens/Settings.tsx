@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect } from 'react';
-import { ArrowRight, Moon, Globe, FileText, Database, Percent, Languages, Building2, MapPin, Phone, MessageSquare, Layout, CheckCircle2, LogOut, Sparkles, ShieldCheck, Award, Zap, UserCheck, CreditCard, Key } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { ArrowRight, Moon, Globe, FileText, Database, Percent, Languages, Building2, MapPin, Phone, MessageSquare, Layout, CheckCircle2, LogOut, Sparkles, ShieldCheck, Award, Zap, UserCheck, CreditCard, Key, Download, Upload, AlertCircle, CloudLightning, Shield, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -49,9 +49,13 @@ export const Settings = () => {
 
   // لود اطلاعات مشترک کارگاه جاری
   const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [upgradeTargetTier, setUpgradeTargetTier] = useState<'silver' | 'gold'>('gold');
-  const [upgradeSuccess, setUpgradeSuccess] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // States for backup and sync tracking
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [isRestoring, setIsRestoring] = useState(false);
+  const [backupMsg, setBackupMsg] = useState<{ text: string; type: 'success' | 'error' | 'info' } | null>(null);
+  const [lastSync, setLastSync] = useState<string | null>(localStorage.getItem('nexwin_last_successful_sync'));
 
   useEffect(() => {
     setSettings(pricingStore.getSettings());
@@ -66,26 +70,227 @@ export const Settings = () => {
     }
   }, []);
 
-  const handleApplyUpgrade = (selectedTier: 'silver' | 'gold') => {
-    if (!currentUser) return;
-
-    const updatedUser: AppUser = {
-      ...currentUser,
-      tier: selectedTier,
-      max_devices: selectedTier === 'gold' ? 5 : 3,
-      is_trial: false, // در صورت ارتقای آنلاین، حساب از تریال خارج و تجاری ۳ ساله دائم می‌شود
-      expiry_date: '۱۴۰۹/۰۲/۱۵',
-      total_paid: currentUser.total_paid + (selectedTier === 'gold' ? 35000000 : 15000000)
-    };
-
-    localStorage.setItem('nexwin_user', JSON.stringify(updatedUser));
-    setCurrentUser(updatedUser);
-    setUpgradeSuccess(true);
-
+  const showBackupMessage = (text: string, type: 'success' | 'error' | 'info' = 'info') => {
+    setBackupMsg({ text, type });
     setTimeout(() => {
-      setUpgradeSuccess(false);
-      setShowUpgradeModal(false);
-    }, 2000);
+      setBackupMsg(null);
+    }, 5000);
+  };
+
+  // 1. Export local backup (.nxb file)
+  const handleExportNxbFile = () => {
+    try {
+      showBackupMessage('در حال گردآوری داده‌ها و فشرده‌سازی لایه‌های اطلاعاتی کارگاه...', 'info');
+
+      const backupObj = {
+        type: 'NEXWIN_USER_BACKUP',
+        version: '1.2.0',
+        createdAt: new Date().toISOString(),
+        licenseId: currentUser?.id || 'GUEST',
+        companyName: currentUser?.company_name || 'کارگاه نکس‌وین',
+        data: {
+          projects: JSON.parse(localStorage.getItem('lumina_projects') || '[]'),
+          settings: JSON.parse(localStorage.getItem('lumina_settings') || '{}'),
+          brands: JSON.parse(localStorage.getItem('lumina_brands') || '[]'),
+          glass: JSON.parse(localStorage.getItem('lumina_glass') || '[]'),
+          hardware: JSON.parse(localStorage.getItem('lumina_hardware') || '[]'),
+        }
+      };
+
+      const jsonStr = JSON.stringify(backupObj);
+      // UTF-8 supportive base64 encoding
+      const base64Str = btoa(unescape(encodeURIComponent(jsonStr)));
+      
+      const fileContent = `-----NEXWIN UPVC SYSTEM BACKUP FILE-----\n` +
+                          `VERSION: 1.2.0\n` +
+                          `LICENSE: ${backupObj.licenseId}\n` +
+                          `DATE: ${backupObj.createdAt}\n` +
+                          `========================================\n` +
+                          base64Str + 
+                          `\n========================================`;
+
+      const blob = new Blob([fileContent], { type: 'text/plain;charset=utf-8' });
+      const downloadUrl = URL.createObjectURL(blob);
+      
+      const dateStr = new Date().toLocaleDateString('fa-IR').replace(/\//g, '-');
+      const fileName = `nexwin_backup_${currentUser?.id || 'workshop'}_${dateStr}.nxb`;
+      
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      showBackupMessage('فایل پشتیبان کارگاهی با موفقیت تولید و دانلود گردید.', 'success');
+    } catch (e: any) {
+      console.error('Failed to export local backup:', e);
+      showBackupMessage('اختلال در صدور فایل اطلاعات: ' + e?.message, 'error');
+    }
+  };
+
+  // 2. Import local backup from .nxb file
+  const handleImportNxbFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Verify extension
+    if (!file.name.endsWith('.nxb')) {
+      showBackupMessage('قالب فایل نامعتبر است! لطفا فقط فایلی با پسوند .nxb را انتخاب کنید.', 'error');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const text = event.target?.result as string;
+        if (!text) return;
+
+        // Strip and grab anything between delimiters
+        const lines = text.split('\n');
+        let base64Content = '';
+        let insideDataSection = false;
+
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (line.startsWith('=====')) {
+            insideDataSection = !insideDataSection;
+            continue;
+          }
+          if (insideDataSection) {
+            base64Content += line;
+          }
+        }
+
+        if (!base64Content) {
+          // Fallback to find long non-spaced block
+          base64Content = lines.find(line => line.length > 50 && !line.includes(' ')) || '';
+        }
+
+        if (!base64Content) {
+          throw new Error('سیستم قادر به تشخیص گرید رمزنگاری اطلاعات نیست.');
+        }
+
+        // Decode UTF-8 string from Base64
+        const jsonStr = decodeURIComponent(escape(atob(base64Content.trim())));
+        const backupObj = JSON.parse(jsonStr);
+
+        if (backupObj.type !== 'NEXWIN_USER_BACKUP' || !backupObj.data) {
+          throw new Error('ساختار کلیدهای درونی بسته معتبر نیست.');
+        }
+
+        const data = backupObj.data;
+
+        // Hydrate local storages
+        if (data.projects && Array.isArray(data.projects)) {
+          localStorage.setItem('lumina_projects', JSON.stringify(data.projects));
+        }
+        if (data.settings && typeof data.settings === 'object') {
+          localStorage.setItem('lumina_settings', JSON.stringify(data.settings));
+          setSettings(data.settings);
+        }
+        if (data.brands && Array.isArray(data.brands)) {
+          localStorage.setItem('lumina_brands', JSON.stringify(data.brands));
+        }
+        if (data.glass && Array.isArray(data.glass)) {
+          localStorage.setItem('lumina_glass', JSON.stringify(data.glass));
+        }
+        if (data.hardware && Array.isArray(data.hardware)) {
+          localStorage.setItem('lumina_hardware', JSON.stringify(data.hardware));
+        }
+
+        showBackupMessage('مخازن محلی با موفقیت بازیابی شد! راه اندازی مجدد بوم...', 'success');
+        
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      } catch (err: any) {
+        console.error('Failed to restore archive:', err);
+        showBackupMessage('شکست در خواندن فایل: اطلاعات رمزگذاری شده تخریب گردیده است.', 'error');
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  // 3. Sync and push projects to Supabase central
+  const handleCloudBackupSync = async () => {
+    if (!navigator.onLine) {
+      showBackupMessage('سیستم آفلاین است. لطفا اتصال اینترنت را بررسی نمایید.', 'error');
+      return;
+    }
+    
+    setIsSyncing(true);
+    showBackupMessage('در حال اتصال ایمن به هسته محاسباتی ابر نکس‌وین...', 'info');
+
+    try {
+      const { fetchLocalSavedProjects, syncProjectToCloud } = await import('../services/syncService');
+      const projects = fetchLocalSavedProjects();
+      
+      if (projects.length === 0) {
+        showBackupMessage('پروژه ذخیره شده‌ای جهت آپلود ابری یافت نگردید.', 'info');
+        setIsSyncing(false);
+        return;
+      }
+
+      let successCount = 0;
+      for (const proj of projects) {
+        if (currentUser) {
+          proj.userLicenseId = currentUser.id;
+        }
+        const res = await syncProjectToCloud(proj);
+        if (res.success) {
+          successCount++;
+        }
+      }
+
+      const timestamp = new Date().toISOString();
+      localStorage.setItem('nexwin_last_successful_sync', timestamp);
+      setLastSync(timestamp);
+      
+      showBackupMessage(`مجموعاً ${successCount} پروژه با موفقیت در بانک ابری نکس‌وین یکپارچه‌ شد.`, 'success');
+    } catch (err: any) {
+      console.error('Cloud upload failure:', err);
+      showBackupMessage('خطا در همگام‌سازی ابری: ' + (err?.message || 'خطای سرور'), 'error');
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  // 4. Restore/download user projects from Supabase
+  const handleCloudRestore = async () => {
+    if (!currentUser?.id) {
+      showBackupMessage('خطا: لایسنس کارگاهی معتبری برای همگام‌سازی یافت نشد.', 'error');
+      return;
+    }
+
+    if (!navigator.onLine) {
+      showBackupMessage('عدم دسترسی به اینترنت! اتصال دستگاه را تایید نمایید.', 'error');
+      return;
+    }
+
+    setIsRestoring(true);
+    showBackupMessage('در حال بررسی و دریافت نسخه‌های پروژه از مخزن ابری نکس‌وین...', 'info');
+
+    try {
+      const { fetchUserProjectsFromCloud } = await import('../services/syncService');
+      const pulledProjects = await fetchUserProjectsFromCloud(currentUser.id);
+      
+      if (pulledProjects && Array.isArray(pulledProjects)) {
+        localStorage.setItem('lumina_projects', JSON.stringify(pulledProjects));
+        showBackupMessage(`پروژه‌های کارگاه (${pulledProjects.length} طرح) با موفقیت بازیابی و با کش هماهنگ شد.`, 'success');
+        
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      } else {
+        showBackupMessage('هیچ پروژه‌ای در فضای ابری برای این لایسنس ثبت نشده است.', 'info');
+      }
+    } catch (err: any) {
+      console.error('Cloud pull/restore failure:', err);
+      showBackupMessage('خطا در فرآیند بازیابی: ' + (err?.message || 'اختلال شبکه'), 'error');
+    } finally {
+      setIsRestoring(false);
+    }
   };
 
   const save = (newSettings: AppSettings) => {
@@ -121,205 +326,41 @@ export const Settings = () => {
         <h1 className="text-xl font-bold text-slate-900">{t('settings')}</h1>
       </div>
 
-      {/* بخش جدید مدیریت حساب کاربری و نوع اشتراک کارگاه */}
+      {/* مشخصات ساده و شناسنامه واحد صنفی فعال */}
       {currentUser && (
-        <div className="mb-8 bg-gradient-to-br from-slate-900 via-slate-950 to-indigo-950 rounded-3xl p-6 text-right text-white border border-indigo-500/20 shadow-xl relative overflow-hidden">
-          {/* هاله‌های نوری تزیینی */}
-          <div className="absolute top-[-30%] right-[-20%] w-72 h-72 bg-indigo-500/10 rounded-full blur-[80px] pointer-events-none"></div>
-          <div className="absolute bottom-[-35%] left-[-20%] w-64 h-64 bg-emerald-500/10 rounded-full blur-[60px] pointer-events-none"></div>
-
-          <div className="flex items-center justify-between mb-5 border-b border-white/5 pb-4">
-            <h3 className="text-sm font-black text-indigo-300 flex items-center gap-2">
-              <UserCheck size={18} />
-              <span>پروفایل و مدیریت اشتراک کارگاه</span>
+        <div className="mb-8 bg-white border border-slate-100 rounded-2xl p-5 shadow-sm text-right font-['Vazirmatn']">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+            <h3 className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+              <Shield size={16} className="text-blue-500" />
+              <span>اطلاعات تفصیلی کارگاه فعال</span>
             </h3>
-            {currentUser.is_trial ? (
-              <span className="text-[9px] bg-amber-500/10 border border-amber-500/20 text-amber-400 font-bold px-2.5 py-1 rounded-full animate-pulse">
-                حساب آزمایشی فعال (۷ روزه) ⏳
-              </span>
-            ) : (
-              <span className="text-[9px] bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold px-2.5 py-1 rounded-full">
-                لایسنس تجاری فعال دائم ✔️
-              </span>
-            )}
+            <span className="text-[9px] bg-emerald-50 text-emerald-600 font-bold px-2 py-1 rounded-lg border border-emerald-100">
+              لایسنس کارگاهی فعال ✔️
+            </span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs mb-5">
-            <div className="flex items-center justify-between bg-white/5 p-3 rounded-xl border border-white/5">
-              <span className="text-slate-400">نام کارگاه:</span>
-              <span className="font-extrabold text-slate-100">{currentUser.company_name}</span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+            <div className="flex flex-col gap-1 bg-slate-50/50 p-2.5 rounded-xl border border-slate-100/50">
+              <span className="text-[10px] text-slate-400">نام کارگاه / واحد تجاری:</span>
+              <span className="font-bold text-slate-800">{currentUser.company_name}</span>
             </div>
-            <div className="flex items-center justify-between bg-white/5 p-3 rounded-xl border border-white/5">
-              <span className="text-slate-400">کارفرما:</span>
-              <span className="font-extrabold text-slate-100">{currentUser.owner_name}</span>
+            <div className="flex flex-col gap-1 bg-slate-50/50 p-2.5 rounded-xl border border-slate-100/50">
+              <span className="text-[10px] text-slate-400">مدیریت / تکنسین مسئول:</span>
+              <span className="font-bold text-slate-800">{currentUser.owner_name}</span>
             </div>
-            <div className="flex items-center justify-between bg-white/5 p-3 rounded-xl border border-white/5">
-              <span className="text-slate-400">شماره موبایل فعال:</span>
-              <span className="font-mono text-slate-200">{currentUser.phone_number}</span>
+            <div className="flex flex-col gap-1 bg-slate-50/50 p-2.5 rounded-xl border border-slate-100/50">
+              <span className="text-[10px] text-slate-400">شماره تماس تایید شده:</span>
+              <span className="font-mono font-bold text-slate-800 text-left">{currentUser.phone_number}</span>
             </div>
-            <div className="flex items-center justify-between bg-white/5 p-3 rounded-xl border border-white/5">
-              <span className="text-slate-400">شناسه اختصاصی لایسنس:</span>
-              <span className="font-mono text-yellow-400 font-black">{currentUser.id}</span>
+            <div className="flex flex-col gap-1 bg-slate-50/50 p-2.5 rounded-xl border border-slate-100/50">
+              <span className="text-[10px] text-slate-400">کد اختصاصی پروانه (License ID):</span>
+              <span className="font-mono font-bold text-blue-600 text-left">{currentUser.id}</span>
             </div>
-          </div>
-
-          <div className="bg-slate-950/40 border border-white/5 rounded-2xl p-4.5 flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="text-right">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-xs text-slate-300">سطح اشتراک شما:</span>
-                <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black ${
-                  currentUser.tier === 'gold' 
-                    ? 'bg-gradient-to-r from-amber-500 to-yellow-600 text-white' 
-                    : currentUser.tier === 'silver'
-                    ? 'bg-gradient-to-r from-slate-400 to-slate-500 text-white'
-                    : 'bg-gradient-to-r from-orange-400 to-orange-500 text-white'
-                }`}>
-                  {currentUser.tier === 'gold' ? 'طلایی (GOLD - حداکثر توان)' : currentUser.tier === 'silver' ? 'نقره‌ای (SILVER - استاندارد)' : 'برنزی (BRONZE - پایه)'}
-                </span>
-              </div>
-              <p className="text-[10px] text-slate-400 leading-relaxed">
-                {currentUser.tier === 'gold' 
-                  ? 'شما به تمامی کدهای بهینه‌ساز برش شیشه، سیستم محاسبه پروفیل، کتیبه و درب‌ها دسترسی نامحدود دارید.'
-                  : currentUser.tier === 'silver'
-                  ? 'دسترسی به برش شیشه و بهینه‌ساز خط فعال است. فاقد محاسبات ترکیبی کتیبه فوق پیشرفته.'
-                  : 'اشتراک پایه بازار. فاقد دسترسی به نقشه چیدمان شیشه و خروجی زوایای دستگاه‌های CNC.'
-                }
-              </p>
-            </div>
-
-            {/* در صورتی که اشتراک نقره‌ای یا برنزی است، دکمه ارتقا نمایش داده شود */}
-            {(currentUser.tier === 'bronze' || currentUser.tier === 'silver') && (
-              <button
-                onClick={() => {
-                  setUpgradeTargetTier(currentUser.tier === 'bronze' ? 'silver' : 'gold');
-                  setShowUpgradeModal(true);
-                  setUpgradeSuccess(false);
-                }}
-                className="px-5 py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 active:scale-95 text-white font-black text-xs rounded-2xl flex items-center gap-2 shadow-lg shadow-blue-500/20 cursor-pointer border-none transition-all duration-150"
-              >
-                <Zap size={14} className="animate-bounce" />
-                <span>ارتقای آنلاین لایسنس کارگاه 🚀</span>
-              </button>
-            )}
           </div>
         </div>
       )}
 
-      {/* مودال ارتقای آنلاین حساب کاربری / لایسنس */}
-      <AnimatePresence>
-        {showUpgradeModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setShowUpgradeModal(false)}
-            className="fixed inset-0 bg-slate-950/85 backdrop-blur-sm z-[100] flex items-center justify-center p-4 font-['Vazirmatn']"
-          >
-            <motion.div
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-slate-900 border border-white/10 rounded-[2.5rem] p-6 max-w-md w-full text-right text-white space-y-6 shadow-2xl relative"
-            >
-              {upgradeSuccess ? (
-                <div className="text-center py-12 space-y-4">
-                  <div className="inline-flex p-5 bg-emerald-500/20 text-emerald-400 rounded-full shadow-[0_0_50px_rgba(16,185,129,0.3)] border border-emerald-500/30 animate-bounce">
-                    <CheckCircle2 size={48} />
-                  </div>
-                  <h3 className="text-xl font-black text-emerald-400">ارتقای موفقیت‌آمیز لایسنس 🎉</h3>
-                  <p className="text-xs text-slate-300 leading-relaxed font-bold">
-                    حساب کاربری شما با موفقیت به سطح تجاری 
-                    <span className="text-yellow-400 font-extrabold mx-1">
-                      {upgradeTargetTier === 'gold' ? 'طلایی (GOLD)' : 'نقره‌ای (SILVER)'}
-                    </span>
-                     ارتقا یافت و دسترسی نامحدود به ابزارها فعال گردید.
-                  </p>
-                </div>
-              ) : (
-                <>
-                  <div className="text-center space-y-2">
-                    <div className="w-12 h-12 bg-indigo-500/20 mx-auto rounded-2xl flex items-center justify-center text-indigo-400">
-                      <Zap size={22} className="animate-pulse" />
-                    </div>
-                    <h3 className="text-base font-black">ارتقا و افزایش نامحدود لایسنس</h3>
-                    <p className="text-[10px] text-slate-400 leading-relaxed font-bold">ارتقای حساب به ابزارهای بهینه‌ساز چیدمان شیشه و خروجی‌های خط تولید نکس‌وین</p>
-                  </div>
-
-                  <div className="space-y-3">
-                    {/* انتخاب سطح مقصد ارتقا */}
-                    <div className="grid grid-cols-2 gap-3">
-                      <div
-                        onClick={() => setUpgradeTargetTier('silver')}
-                        className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex flex-col items-center justify-center gap-1.5 text-center ${
-                          upgradeTargetTier === 'silver'
-                            ? 'border-slate-300 bg-white/10 text-white'
-                            : 'border-slate-800 bg-slate-950/40 text-slate-400'
-                        }`}
-                      >
-                        <ShieldCheck size={18} className="text-slate-300" />
-                        <span className="text-xs font-bold">نقره‌ای (Silver)</span>
-                        <span className="text-[8px] opacity-70 font-bold">بهینه‌برش خط تولید</span>
-                      </div>
-
-                      <div
-                        onClick={() => setUpgradeTargetTier('gold')}
-                        className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex flex-col items-center justify-center gap-1.5 text-center ${
-                          upgradeTargetTier === 'gold'
-                            ? 'border-yellow-500 bg-yellow-500/10 text-yellow-300'
-                            : 'border-slate-800 bg-slate-950/40 text-slate-400'
-                        }`}
-                      >
-                        <Sparkles size={18} className="text-yellow-400" />
-                        <span className="text-xs font-bold">طلایی (Gold)</span>
-                        <span className="text-[8px] opacity-70 font-bold">نقشه شیشه + تمام قابلیت‌ها</span>
-                      </div>
-                    </div>
-
-                    <div className="bg-slate-950/60 rounded-2xl p-4 border border-white/5 space-y-2.5 text-xs text-right">
-                      <div className="flex items-center justify-between pb-2 border-b border-white/5">
-                        <span className="text-slate-400">سطح مبدا:</span>
-                        <span className="font-bold text-orange-400">اشتراک {currentUser?.tier === 'bronze' ? 'برنزی' : 'نقره‌ای'} فعلی</span>
-                      </div>
-                      <div className="flex items-center justify-between pb-2 border-b border-white/5">
-                        <span className="text-slate-400">سطح مقصد:</span>
-                        <span className="font-bold text-emerald-400">
-                          {upgradeTargetTier === 'gold' ? 'طلایی تجاری دائم' : 'نقره‌ای تجاری دائم'}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-slate-400">نوع لایسنس ثبتی:</span>
-                        <span className="font-extrabold text-white">بدون منقضی - چند کاربره</span>
-                      </div>
-                    </div>
-
-                    <div className="p-3 bg-amber-500/5 rounded-xl border border-amber-500/10 text-[9px] text-amber-300 leading-normal text-right">
-                      💡 در Sandbox نکس‌وین؛ با فشردن دکمه زیر لایسنس کاربری شما به طور خودکار به سطح تجاری ارتقا می‌یابد تا بتوانید فوراً قابلیت‌های بهینه‌سازی پیشرفته را تست کنید.
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleApplyUpgrade(upgradeTargetTier)}
-                      className="flex-1 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-black transition-all border-none cursor-pointer"
-                    >
-                      تایید ارتقا و فعالسازی آنی ⚡
-                    </button>
-                    <button
-                      type="button"
-                      className="px-4 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition-all border-none cursor-pointer"
-                      onClick={() => setShowUpgradeModal(false)}
-                    >
-                      بستن
-                    </button>
-                  </div>
-                </>
-              )}
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* بخش ارتقای لایسنس به دلیل جداسازی نرم‌افزار مدیریتی حذف گردید */}
 
       <div className="mb-8">
         <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 px-1">{t('general')}</h3>
@@ -407,6 +448,105 @@ export const Settings = () => {
                 onChange={(e: any) => updateInvoice('footerNote', e.target.value)}
                 suffix={<MessageSquare size={16} />}
             />
+        </div>
+      </div>
+
+      {/* سامانه پیشرفته مدیریت یکپارچه پشتیبان‌گیری و بازیابی اطلاعات کارگاه (آفلاین و ابری) */}
+      <div className="mb-8 font-['Vazirmatn'] border-t border-slate-100 pt-8" id="backup-sync-management">
+        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 px-1">سامانه پشتیبان‌گیری و همگام‌سازی کارگاه</h3>
+        
+        {backupMsg && (
+          <div className={`mb-4 p-4 rounded-xl text-xs font-bold flex items-center gap-2 text-right border transition-all ${
+            backupMsg.type === 'success' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+            backupMsg.type === 'error' ? 'bg-rose-50 text-rose-700 border-rose-100' :
+            'bg-blue-50 text-blue-700 border-blue-100'
+          }`}>
+            <AlertCircle size={15} />
+            <span>{backupMsg.text}</span>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {/* گرید چپ: پشتیبان‌گیری و بازیابی دستی با پسوند .nxb (سبک و آفلاین) */}
+          <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-col justify-between">
+            <div className="text-right mb-4">
+              <span className="inline-flex px-2 py-0.5 rounded-md text-[9px] bg-indigo-50 border border-indigo-100 text-indigo-600 font-black mb-2">فایل فشرده محلی (.nxb)</span>
+              <h4 className="font-extrabold text-xs text-slate-800 flex items-center gap-1.5">
+                <FileText size={16} className="text-indigo-500" />
+                آرشیوگیری و بازنشانی دستی آفلاین
+              </h4>
+              <p className="text-[10px] text-slate-400 mt-1.5 leading-relaxed">
+                صدور و ورود اطلاعات کامل کارگاه شامل پروژه‌ها، فرم‌های محاسباتی، لیست‌های قیمت شیشه/یراق/پروفیل و تنظیمات فاکتور بر روی حافظه دستگاه در چند ثانیه به صورت فایل متنی فشرده (.nxb).
+              </p>
+            </div>
+            
+            <div className="flex gap-2.5">
+              <button 
+                onClick={handleExportNxbFile}
+                className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-xl text-[11px] font-black transition-all flex items-center justify-center gap-2 border-none cursor-pointer"
+              >
+                <Download size={13} />
+                تهیه فایل پشتیبان (.nxb)
+              </button>
+              
+              <button 
+                onClick={() => fileInputRef.current?.click()}
+                className="flex-1 py-3 bg-indigo-50 hover:bg-indigo-100 active:scale-95 text-indigo-700 rounded-xl text-[11px] font-black transition-all flex items-center justify-center gap-2 border border-indigo-200 cursor-pointer"
+              >
+                <Upload size={13} />
+                بازیابی اطلاعات (.nxb)
+              </button>
+              
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                onChange={handleImportNxbFile} 
+                accept=".nxb" 
+                className="hidden" 
+              />
+            </div>
+          </div>
+
+          {/* گرید راست: همگام‌سازی ابری امن زنده با Supabase */}
+          <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-col justify-between">
+            <div className="text-right mb-4">
+              <span className="inline-flex px-2 py-0.5 rounded-md text-[9px] bg-emerald-50 border border-emerald-100 text-emerald-600 font-black mb-2">بانک ابری امن (Supabase)</span>
+              <h4 className="font-extrabold text-xs text-slate-800 flex items-center gap-1.5">
+                <Database size={16} className="text-emerald-500" />
+                همگام‌سازی و همسان‌سازی زنده ابری
+              </h4>
+              <p className="text-[10px] text-slate-400 mt-1.5 leading-relaxed">
+                بروزرسانی زنده پرونده پروژه‌ها بر روی مخزن اصلی دیتابیس Supabase جهت بازیابی اتوماتیک پروژه‌ها در صورت فرمت دستگاه یا تغییر ابزارهای کاری.
+              </p>
+              
+              <div className="mt-3.5 flex items-center gap-1.5 justify-end text-[9px] text-slate-400">
+                <span className="font-bold flex items-center gap-1">⏱️ آخرین همگام‌سازی موفق با ابر:</span>
+                <span className="font-mono text-emerald-600 font-extrabold">
+                  {lastSync ? new Intl.DateTimeFormat('fa-IR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(lastSync)) : 'هرگز هماهنگ نشده'}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex gap-2.5">
+              <button 
+                onClick={handleCloudBackupSync}
+                disabled={isSyncing}
+                className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 active:scale-95 text-white rounded-xl text-[11px] font-black transition-all flex items-center justify-center gap-2 border-none cursor-pointer"
+              >
+                <CloudLightning size={13} className={isSyncing ? "animate-spin" : ""} />
+                {isSyncing ? "در حال انتقال..." : "پشتیبان‌گیری در ابر"}
+              </button>
+              
+              <button 
+                onClick={handleCloudRestore}
+                disabled={isRestoring}
+                className="flex-1 py-3 bg-emerald-50 hover:bg-emerald-100 disabled:bg-slate-100 text-emerald-700 disabled:text-slate-400 rounded-xl text-[11px] font-black transition-all flex items-center justify-center gap-2 border border-emerald-200 cursor-pointer"
+              >
+                <RefreshCw size={13} className={isRestoring ? "animate-spin" : ""} />
+                {isRestoring ? "در حال دریافت..." : "بازیابی مجدد از ابر"}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
