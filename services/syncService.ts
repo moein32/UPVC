@@ -137,7 +137,7 @@ export function getSupabaseClient(): SupabaseClient | null {
 }
 
 // Local Storage Keys
-const LOCAL_PROJECTS_KEY = 'nexwin_local_projects';
+const LOCAL_PROJECTS_KEY = 'lumina_projects';
 const SYNC_QUEUE_KEY = 'nexwin_sync_write_queue';
 const SYNC_LOGS_KEY = 'nexwin_sync_syslogs';
 const LAST_SYNC_KEY = 'nexwin_last_successful_sync';
