@@ -200,6 +200,8 @@ export async function syncProjectToCloud(project: WindowProjectPayload): Promise
       license_id: project.userLicenseId,
       project_name: project.project_name,
       total_items: project.total_items,
+      status: project.status || 'Draft',
+      metadata: project.metadata,
       created_at: project.created_at || new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -214,10 +216,7 @@ export async function syncProjectToCloud(project: WindowProjectPayload): Promise
 
     // 2. Transaction Simulation Phase 2: Relational batch upsert for individual window configurations
     // First, clear existing orphaned item entries for this project to maintain structural integrity
-    const metadataRowId = project.id.substring(0, 24) + 'e7e7e7e7e7e7';
     const fileItemIds = project.items.filter(item => item.id).map(item => item.id as string);
-    // Include metadataRowId to guard it against deletion
-    fileItemIds.push(metadataRowId);
 
     await supabase
       .from('window_items')
@@ -233,19 +232,6 @@ export async function syncProjectToCloud(project: WindowProjectPayload): Promise
       profile_data: item.profile_data,
       calculated_glass: item.calculated_glass,
     }));
-
-    // Append metadata and status row
-    windowItemsBatches.push({
-      id: metadataRowId,
-      project_id: project.id,
-      window_name: '__NEXWIN_PROJECT_METADATA__',
-      raw_inputs: {
-        metadata: project.metadata,
-        status: project.status
-      } as any,
-      profile_data: {} as any,
-      calculated_glass: {} as any,
-    });
 
     const { error: itemsError } = await supabase
       .from('window_items')
@@ -296,6 +282,8 @@ export async function fetchUserProjectsFromCloud(licenseId: string): Promise<Win
         license_id,
         project_name,
         total_items,
+        status,
+        metadata,
         created_at,
         updated_at
       `)
@@ -335,7 +323,7 @@ export async function fetchUserProjectsFromCloud(licenseId: string): Promise<Win
         calculated_glass: typeof rawItem.calculated_glass === 'string' ? JSON.parse(rawItem.calculated_glass) : rawItem.calculated_glass,
       }));
 
-      // Parse metadata & status
+      // Parse metadata & status (First checking native project table level, then falling back to legacy metadata record)
       let metadataResolved = {
         customerName: 'نامشخص',
         address: 'بدون آدرس ثبت شده',
@@ -345,9 +333,17 @@ export async function fetchUserProjectsFromCloud(licenseId: string): Promise<Win
         totalPrice: 0,
         payments: []
       };
-      let statusResolved: 'Draft' | 'Contract' | 'Production' | 'Produced' = 'Draft';
+      let statusResolved: 'Draft' | 'Contract' | 'Production' | 'Produced' = (rawProj as any).status || 'Draft';
 
-      if (metadataItem) {
+      if ((rawProj as any).metadata) {
+        const parsedMeta = typeof (rawProj as any).metadata === 'string'
+          ? JSON.parse((rawProj as any).metadata)
+          : (rawProj as any).metadata;
+        if (parsedMeta) {
+          metadataResolved = { ...metadataResolved, ...parsedMeta };
+        }
+      } else if (metadataItem) {
+        // Fallback to legacy row
         const rawInputsParsed = typeof metadataItem.raw_inputs === 'string'
           ? JSON.parse(metadataItem.raw_inputs)
           : metadataItem.raw_inputs;
@@ -519,6 +515,8 @@ async function uploadSingleProjectDirect(supabase: SupabaseClient, project: Wind
     license_id: project.userLicenseId,
     project_name: project.project_name,
     total_items: project.total_items,
+    status: project.status || 'Draft',
+    metadata: project.metadata,
     created_at: project.created_at || new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };
@@ -530,10 +528,7 @@ async function uploadSingleProjectDirect(supabase: SupabaseClient, project: Wind
   if (projectError) return { success: false, message: projectError.message };
 
   // Sync window items child batch
-  const metadataRowId = project.id.substring(0, 24) + 'e7e7e7e7e7e7';
   const fileItemIds = project.items.filter(item => item.id).map(item => item.id as string);
-  // Include metadata row to protect from delete
-  fileItemIds.push(metadataRowId);
 
   await supabase
     .from('window_items')
@@ -549,19 +544,6 @@ async function uploadSingleProjectDirect(supabase: SupabaseClient, project: Wind
     profile_data: item.profile_data,
     calculated_glass: item.calculated_glass,
   }));
-
-  // Append metadata row
-  windowItemsBatches.push({
-    id: metadataRowId,
-    project_id: project.id,
-    window_name: '__NEXWIN_PROJECT_METADATA__',
-    raw_inputs: {
-      metadata: project.metadata,
-      status: project.status
-    } as any,
-    profile_data: {} as any,
-    calculated_glass: {} as any,
-  });
 
   const { error: itemsError } = await supabase
     .from('window_items')
