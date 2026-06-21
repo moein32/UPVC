@@ -196,7 +196,7 @@ export const PwaInstallManager = () => {
 
               {/* Logo icon with glow */}
               <div className="w-14 h-14 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-[1.25rem] flex-shrink-0 flex items-center justify-center shadow-lg shadow-blue-600/30 border border-blue-400/30 p-2">
-                <img src="/logo.png?v=5" alt="NexWin" className="w-full h-full object-contain rounded-md" />
+                <img src="/logo.png" alt="NexWin" className="w-full h-full object-contain rounded-md" />
               </div>
 
               {/* Text Body */}
@@ -373,7 +373,7 @@ export const PwaInstallManager = () => {
                             </div>
                             <div className="flex items-center gap-3 mt-3">
                               <div className="w-10 h-10 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-xl p-1.5">
-                                <img src="/logo.png?v=5" className="w-full h-full object-contain" />
+                                <img src="/logo.png" className="w-full h-full object-contain" />
                               </div>
                               <div className="text-right">
                                 <span className="text-xs font-bold text-white block">Nexwin</span>
