@@ -4,6 +4,7 @@ import { Lock, Phone, AlertCircle, HelpCircle, ArrowRight, ShieldCheck, Timer, A
 import { useNavigate } from 'react-router-dom';
 import { toEnglishDigits, toPersianDigits } from '../utils/formatting';
 import { AppUser } from '../types';
+import { NexWinLogo } from '../src/components/icons/NexWinLogo';
 import { generateVerificationCode, sendOtpSMS, SMS_PANEL_CONFIG } from '../services/smsService';
 import { initiateZarinpalPayment, ZARINPAL_CONFIG } from '../services/paymentService';
 
@@ -517,12 +518,12 @@ export const Login = () => {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-[#0f172a] relative overflow-hidden font-['Vazirmatn'] px-4 py-8 select-none">
+    <div className="min-h-screen w-full flex items-center justify-center bg-[#fafbfe] relative overflow-hidden font-['Vazirmatn'] px-4 py-8 select-none">
       
-      {/* هاله‌های نوری شناور سینمایی در پس‌زمینه */}
-      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none"></div>
-      <div className="absolute bottom-[-15%] right-[-10%] w-[600px] h-[600px] bg-sky-500/10 rounded-full blur-[140px] pointer-events-none"></div>
-      <div className="absolute top-[40%] right-[20%] w-[300px] h-[300px] bg-indigo-500/10 rounded-full blur-[100px] pointer-events-none"></div>
+      {/* هاله‌های نوری شناور بسیار ملایم در پس‌زمینه */}
+      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-[120px] pointer-events-none"></div>
+      <div className="absolute bottom-[-15%] right-[-10%] w-[600px] h-[600px] bg-indigo-500/10 rounded-full blur-[140px] pointer-events-none"></div>
+      <div className="absolute top-[40%] right-[20%] w-[300px] h-[300px] bg-sky-500/10 rounded-full blur-[100px] pointer-events-none"></div>
 
       <AnimatePresence mode="wait">
         
@@ -534,15 +535,15 @@ export const Login = () => {
             animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
             exit={{ opacity: 0, scale: 1.05 }}
             transition={{ duration: 0.6 }}
-            className="w-full max-w-xl bg-slate-900/40 backdrop-blur-3xl rounded-[3rem] border border-white/10 p-8 md:p-12 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] relative text-right text-white z-50 overflow-hidden"
+            className="w-full max-w-xl bg-white/90 backdrop-blur-3xl rounded-[3rem] border border-slate-200/60 p-8 md:p-12 shadow-[0_30px_70px_rgba(15,23,42,0.06)] relative text-right text-slate-800 z-50 overflow-hidden"
           >
             {/* بار پیشرفت افقی لودینگ بالا */}
-            <div className="absolute top-0 left-0 right-0 h-1.5 bg-slate-800">
+            <div className="absolute top-0 left-0 right-0 h-1.5 bg-slate-100">
               <motion.div 
                 initial={{ width: '0%' }}
                 animate={{ width: '100%' }}
                 transition={{ duration: 3, ease: 'linear' }}
-                className="h-full bg-gradient-to-r from-blue-500 via-sky-400 to-emerald-400"
+                className="h-full bg-gradient-to-r from-blue-600 via-indigo-500 to-emerald-500"
               />
             </div>
 
@@ -551,38 +552,38 @@ export const Login = () => {
                 initial={{ rotate: -15, scale: 0.8 }}
                 animate={{ rotate: 0, scale: 1 }}
                 transition={{ type: 'spring', delay: 0.2 }}
-                className="inline-flex p-4 bg-blue-500/20 text-blue-400 rounded-3xl mb-4 shadow-[0_0_40px_rgba(59,130,246,0.3)]"
+                className="inline-flex p-4 bg-blue-50 text-blue-600 rounded-3xl mb-4 shadow-[0_10px_30px_rgba(37,99,235,0.1)]"
               >
                 <ShieldCheck size={48} strokeWidth={1.5} />
               </motion.div>
-              <h1 className="text-2xl md:text-3xl font-black text-slate-100 tracking-tight leading-normal">اتصال ایمن برقرار شد</h1>
-              <p className="text-slate-400 text-xs md:text-sm font-semibold mt-1">خوش آمدید به پلتفرم مهندسی نکس‌وین</p>
+              <h1 className="text-2xl md:text-3xl font-black text-slate-950 tracking-tight leading-normal">اتصال ایمن برقرار شد</h1>
+              <p className="text-slate-500 text-xs md:text-sm font-semibold mt-1">خوش‌آمدید به پورتال هوشمند NexWin</p>
             </div>
 
-            <div className="bg-slate-950/50 backdrop-blur-md rounded-2xl p-6 border border-white/5 space-y-4 mb-8">
+            <div className="bg-slate-50/80 backdrop-blur-md rounded-2xl p-6 border border-slate-100 space-y-4 mb-8">
               {/* نام کارفرما */}
-              <div className="flex items-center justify-between border-b border-white/5 pb-3">
-                <div className="flex items-center gap-2.5 text-slate-300">
-                  <User size={18} className="text-blue-400" />
-                  <span className="text-xs font-bold">کارفرمای محترم:</span>
+              <div className="flex items-center justify-between border-b border-slate-200/50 pb-3">
+                <div className="flex items-center gap-2.5 text-slate-600">
+                  <User size={18} className="text-blue-600" />
+                  <span className="text-xs font-bold">نام و نام خانوادگی:</span>
                 </div>
-                <span className="text-sm font-black text-white">{loginSuccessData.owner_name}</span>
+                <span className="text-sm font-black text-slate-900">{loginSuccessData.owner_name}</span>
               </div>
 
               {/* نام مجموعه کارگاهی */}
-              <div className="flex items-center justify-between border-b border-white/5 pb-3">
-                <div className="flex items-center gap-2.5 text-slate-300">
-                  <Briefcase size={18} className="text-blue-400" />
-                  <span className="text-xs font-bold">مجموعه برتر صنعتی:</span>
+              <div className="flex items-center justify-between border-b border-slate-200/50 pb-3">
+                <div className="flex items-center gap-2.5 text-slate-600">
+                  <Briefcase size={18} className="text-blue-600" />
+                  <span className="text-xs font-bold">نام مجموعه / کارگاه:</span>
                 </div>
-                <span className="text-sm font-black text-white">{loginSuccessData.company_name}</span>
+                <span className="text-sm font-black text-slate-900">{loginSuccessData.company_name}</span>
               </div>
 
               {/* نوع پلن فعال لایسنس */}
-              <div className="flex items-center justify-between border-b border-white/5 pb-3">
-                <div className="flex items-center gap-2.5 text-slate-300">
-                  <Award size={18} className="text-blue-400" />
-                  <span className="text-xs font-bold">سطح اشتراک فعال:</span>
+              <div className="flex items-center justify-between border-b border-slate-200/50 pb-3">
+                <div className="flex items-center gap-2.5 text-slate-600">
+                  <Award size={18} className="text-blue-600" />
+                  <span className="text-xs font-bold font-extrabold">اشتراک فعال:</span>
                 </div>
                 <span className={`px-3 py-1 rounded-full text-[10px] font-black ${getTierBadgeStyles(loginSuccessData.tier)}`}>
                   {getTierBadgeLabel(loginSuccessData.tier)}
@@ -591,42 +592,42 @@ export const Login = () => {
 
               {/* تاریخ انقضا */}
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5 text-slate-300">
-                  <Timer size={18} className="text-blue-400" />
-                  <span className="text-xs font-bold">مهلت اعتبار لایسنس:</span>
+                <div className="flex items-center gap-2.5 text-slate-600">
+                  <Timer size={18} className="text-blue-600" />
+                  <span className="text-xs font-bold font-extrabold">اعتبار لایسنس:</span>
                 </div>
-                <span className="text-sm font-black text-emerald-400 font-mono tracking-wide">{toPersianDigits(loginSuccessData.expiry_date)}</span>
+                <span className="text-sm font-black text-emerald-600 font-mono tracking-wide">{toPersianDigits(loginSuccessData.expiry_date)}</span>
               </div>
             </div>
 
             <div className="flex flex-col items-center justify-center gap-3">
-              <div className="flex items-center gap-3 bg-blue-500/10 px-4 py-2.5 rounded-xl border border-blue-500/20">
+              <div className="flex items-center gap-3 bg-blue-50 px-4 py-2.5 rounded-xl border border-blue-100">
                 <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-ping"></div>
-                <span className="text-[11px] font-bold text-slate-300">در حال بارگذاری ایمن هسته محاسباتی نکس‌وین در {toPersianDigits(countdown)} ثانیه...</span>
+                <span className="text-[11px] font-bold text-slate-600">در حال ارجاع به صفحه بوم طراحی در {toPersianDigits(countdown)} ثانیه...</span>
               </div>
             </div>
           </motion.div>
         ) : (
           
-          /* ۲. فرم لاگین زیبا و گلس‌مورفیک اصلی */
+          /* ۲. فرم لاگین زیبا و گلس‌مورفیک اصلی با پس‌زمینه روشن */
           <motion.div
             key={isSignUp ? "signup-form-container" : "login-form-container"}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.5, type: 'spring' }}
-            className="w-full max-w-md bg-slate-900/50 backdrop-blur-2xl rounded-[2.5rem] border border-white/10 p-6 md:p-8 shadow-[0_40px_80px_-15px_rgba(0,0,0,0.6)] relative z-50 text-right text-white"
+            className="w-full max-w-md bg-white/95 backdrop-blur-2xl rounded-[2.5rem] border border-slate-200/70 p-6 md:p-8 shadow-[0_20px_60px_rgba(15,23,42,0.08)] relative z-50 text-right text-slate-800"
           >
             {/* سربرگ */}
             <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-gradient-to-tr from-blue-600 to-sky-500 rounded-3xl mx-auto flex items-center justify-center shadow-lg shadow-blue-500/20 font-black text-2xl text-white select-none border border-white/10 mb-4 scale-102">
-                NW
+              <div className="w-20 h-20 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-3xl mx-auto flex items-center justify-center shadow-xl shadow-blue-500/20 mb-5 select-none border border-white/20 p-1 scale-102">
+                <NexWinLogo size="100%" className="w-full h-full" />
               </div>
-              <h2 className="text-2xl font-black tracking-tight text-white mb-1">
-                {isSignUp ? 'ثبت‌نام کارگاه جدید نکس‌وین' : 'صنایع یوپی‌وی‌سی نکس‌وین'}
+              <h2 className="text-3xl font-black tracking-tight text-slate-900 mb-1 leading-normal">
+                {isSignUp ? 'ثبت‌نام در نکس‌وین' : 'نکس‌وین'}
               </h2>
-              <p className="text-[11px] text-slate-400 font-bold tracking-wider uppercase">
-                {isSignUp ? 'ایجاد حساب کارگاهی معتبر و لایسنس آزمایشی' : 'سامانه مرکزی تایید لایسنس و ورود به طراح'}
+              <p className="text-[12px] text-slate-500 font-bold tracking-wide">
+                {isSignUp ? 'شروع رایگان فرآیند طراحی آنلاین درب و پنجره' : 'سیستم یکپارچه طراحی و محاسبات درب و پنجره'}
               </p>
             </div>
 
@@ -635,17 +636,17 @@ export const Login = () => {
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
-                className="mb-6 bg-red-500/10 border border-red-500/20 rounded-2xl p-4 text-red-100 text-xs font-bold leading-relaxed flex items-start gap-3"
+                className="mb-6 bg-red-50 border border-red-100 rounded-2xl p-4 text-red-800 text-xs font-bold leading-relaxed flex items-start gap-3"
               >
-                <AlertCircle size={18} className="text-red-400 shrink-0 mt-0.5" />
+                <AlertCircle size={18} className="text-red-500 shrink-0 mt-0.5" />
                 <div className="flex-1">
                   <p>{errorMessage}</p>
                   {(errorMessage.includes('تعلیق') || errorMessage.includes('منقضی')) && (
                     <button 
                       onClick={() => setShowSupportModal(true)} 
-                      className="mt-2 text-red-300 hover:text-red-200 underline font-black block"
+                      className="mt-2 text-red-600 hover:text-red-700 underline font-black block bg-transparent border-none cursor-pointer"
                     >
-                      ارتباط با واحد مانیتورینگ و پشتیبانی
+                      ارتباط با پشتیبانی
                     </button>
                   )}
                 </div>
@@ -657,9 +658,9 @@ export const Login = () => {
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="mb-5 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4 text-emerald-300 text-xs font-bold leading-relaxed flex items-start gap-2.5"
+                className="mb-5 bg-emerald-50 border border-emerald-100 rounded-2xl p-4 text-emerald-800 text-xs font-bold leading-relaxed flex items-start gap-2.5"
               >
-                <div className="p-1 bg-emerald-500/20 text-emerald-400 rounded-lg shrink-0">
+                <div className="p-1 bg-emerald-100 text-emerald-600 rounded-lg shrink-0">
                   <Check size={14} />
                 </div>
                 <span>{smsSuccessMsg}</span>
@@ -670,11 +671,11 @@ export const Login = () => {
             {/* چیدمان فرم ورود نکس‌وین در برابر فرم ثبت‌نام چند گانه */}
             {!isSignUp ? (
               <>
-                {/* فرم ورود قدیمی */}
+                {/* فرم ورود */}
                 <form onSubmit={handleLogin} className="space-y-5">
                   {/* ورودی شماره همراه */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-black text-slate-300 block select-none px-1">شماره همراه کارفرما / کارگاه</label>
+                    <label className="text-xs font-black text-slate-700 block select-none px-1">شماره همراه</label>
                     <div className="relative">
                       <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-slate-400">
                         <Phone size={18} />
@@ -686,14 +687,14 @@ export const Login = () => {
                         placeholder="مثال: 09121234567"
                         disabled={loading}
                         dir="ltr"
-                        className="w-full pl-4 pr-12 py-3.5 bg-slate-950/40 border border-white/10 rounded-2xl text-white text-sm font-bold tracking-wider placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all disabled:opacity-50 text-left font-mono"
+                        className="w-full pl-4 pr-12 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 text-sm font-bold tracking-wider placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all disabled:opacity-50 text-left font-mono"
                       />
                     </div>
                   </div>
 
                   {/* ورودی شناسه لایسنس */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-black text-slate-300 block select-none px-1">شناسه لایسنس نکس‌وین</label>
+                    <label className="text-xs font-black text-slate-700 block select-none px-1">کد لایسنس</label>
                     <div className="relative">
                       <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-slate-400">
                         <Lock size={18} />
@@ -705,7 +706,7 @@ export const Login = () => {
                         placeholder="مثال: NW-83921"
                         disabled={loading}
                         dir="ltr"
-                        className="w-full pl-4 pr-12 py-3.5 bg-slate-950/40 border border-white/10 rounded-2xl text-white text-sm font-bold tracking-wider placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all disabled:opacity-50 text-left font-mono"
+                        className="w-full pl-4 pr-12 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 text-sm font-bold tracking-wider placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all disabled:opacity-50 text-left font-mono"
                       />
                     </div>
                   </div>
@@ -714,16 +715,16 @@ export const Login = () => {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-2xl font-black text-sm shadow-xl shadow-blue-900/30 flex items-center justify-center gap-3 active:scale-98 transition-all disabled:opacity-55 disabled:scale-100 hover:shadow-2xl hover:shadow-blue-500/10 cursor-pointer border-none"
+                    className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-2xl font-black text-sm shadow-lg shadow-blue-500/25 flex items-center justify-center gap-3 active:scale-98 transition-all disabled:opacity-55 disabled:scale-100 hover:shadow-2xl hover:shadow-blue-500/10 cursor-pointer border-none"
                   >
                     {loading ? (
                       <>
                         <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                        <span>در حال ارزیابی اتصال لایسنس سرور...</span>
+                        <span>در حال تایید ورود...</span>
                       </>
                     ) : (
                       <>
-                        <span>بررسی لایسنس و ورود به بوم طراح</span>
+                        <span>ورود به نرم‌افزار NexWin</span>
                         <ArrowRight size={18} />
                       </>
                     )}
@@ -732,7 +733,7 @@ export const Login = () => {
 
                 {/* دکمه انتقال به منوی ثبت نام آنلاین با پیامک */}
                 <div className="text-center mt-5">
-                  <span className="text-xs text-slate-400 font-bold">هنوز عضو نشده‌اید؟ </span>
+                  <span className="text-xs text-slate-500 font-bold">حساب کاربری جدید نیاز دارید؟ </span>
                   <button
                     type="button"
                     onClick={() => {
@@ -741,28 +742,28 @@ export const Login = () => {
                       setErrorMessage(null);
                       setSmsSuccessMsg(null);
                     }}
-                    className="text-blue-400 hover:text-blue-300 font-black text-xs hover:underline bg-transparent border-none cursor-pointer"
+                    className="text-blue-600 hover:text-blue-700 font-black text-xs hover:underline bg-transparent border-none cursor-pointer"
                   >
-                    ثبت‌نام آنلاین با شماره موبایل (رایگان) ⚡
+                    ثبت‌نام و تست رایگان نکس‌وین ⚡
                   </button>
                 </div>
               </>
             ) : (
               <div className="space-y-4">
                 {/* وضعیت مراحل بالای کادر */}
-                <div className="flex justify-around items-center bg-slate-950/40 p-2.5 rounded-2xl border border-white/5 text-[10px] font-black text-slate-400 mb-2">
-                  <span className={`${signupStep === 'phone' ? 'text-blue-400 font-black' : ''}`}>۱. شماره موبایل</span>
+                <div className="flex justify-around items-center bg-slate-100 p-2.5 rounded-2xl border border-slate-200/50 text-[10px] font-black text-slate-500 mb-2">
+                  <span className={`${signupStep === 'phone' ? 'text-blue-600 font-black' : ''}`}>۱. شماره موبایل</span>
                   <ChevronLeft size={12} className="opacity-50" />
-                  <span className={`${signupStep === 'otp' ? 'text-blue-400 font-black' : ''}`}>۲. تایید اس‌ام‌اس</span>
+                  <span className={`${signupStep === 'otp' ? 'text-blue-600 font-black' : ''}`}>۲. تایید پیامکی</span>
                   <ChevronLeft size={12} className="opacity-50" />
-                  <span className={`${signupStep === 'details' ? 'text-blue-400 font-black' : ''}`}>۳. مشخصات کارگاه</span>
+                  <span className={`${signupStep === 'details' ? 'text-blue-600 font-black' : ''}`}>۳. مشخصات شرکت</span>
                 </div>
 
                 {/* گام اول: ثبت شماره همراه */}
                 {signupStep === 'phone' && (
                   <form onSubmit={handleRequestOtp} className="space-y-4">
                     <div className="space-y-1.5 text-right">
-                      <label className="text-xs font-black text-slate-300 block select-none px-1">شماره همراه کارفرما (مدیر کارگاه)</label>
+                      <label className="text-xs font-black text-slate-700 block select-none px-1">شماره همراه</label>
                       <div className="relative">
                         <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-slate-400">
                           <Phone size={18} />
@@ -774,22 +775,22 @@ export const Login = () => {
                           placeholder="مثال: 09121234567"
                           disabled={smsSending}
                           dir="ltr"
-                          className="w-full pl-4 pr-12 py-3.5 bg-slate-950/40 border border-white/10 rounded-2xl text-white text-sm font-bold tracking-wider placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-left font-mono"
+                          className="w-full pl-4 pr-12 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 text-sm font-bold tracking-wider placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-left font-mono"
                           required
                         />
                       </div>
-                      <p className="text-[10px] text-slate-400 mt-1 leading-normal text-right">یک کلمه تأییدیه یا کد فعال‌سازی برای احراز و راه‌اندازی سریع به شماره ثبت ارسالی مخابره می‌شود.</p>
+                      <p className="text-[10px] text-slate-500 mt-1 leading-normal text-right">کد تایید پیامکی برای احراز و راه‌اندازی سریع به شماره شما ارسال خواهد شد.</p>
                     </div>
 
                     <button
                       type="submit"
                       disabled={smsSending}
-                      className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black text-sm shadow-xl flex items-center justify-center gap-2 active:scale-98 transition-all cursor-pointer border-none"
+                      className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-2xl font-black text-sm shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2 active:scale-98 transition-all cursor-pointer border-none"
                     >
                       {smsSending ? (
                         <>
                           <div className="w-4 h-4 border-2 border-white/25 border-t-white rounded-full animate-spin"></div>
-                          <span>در حال ارسال پیامک فعال‌سازی...</span>
+                          <span>در حال ارسال پیامک...</span>
                         </>
                       ) : (
                         <>
@@ -805,7 +806,7 @@ export const Login = () => {
                 {signupStep === 'otp' && (
                   <form onSubmit={handleVerifyOtp} className="space-y-4">
                     <div className="space-y-1.5 text-right">
-                      <label className="text-xs font-black text-slate-300 block select-none px-1">کد فعال‌سازی پیامک شده را وارد کنید</label>
+                      <label className="text-xs font-black text-slate-700 block select-none px-1">کد تایید پیامکی</label>
                       <div className="relative">
                         <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-slate-400">
                           <Lock size={18} />
@@ -817,7 +818,7 @@ export const Login = () => {
                           placeholder="کد ۵ رقمی ارسالی"
                           dir="ltr"
                           maxLength={5}
-                          className="w-full pl-4 pr-12 py-3.5 bg-slate-950/40 border border-white/10 rounded-2xl text-white text-sm font-bold tracking-[0.25em] placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-center font-mono"
+                          className="w-full pl-4 pr-12 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 text-sm font-bold tracking-[0.25em] placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-center font-mono shadow-sm"
                           required
                         />
                       </div>
@@ -825,9 +826,9 @@ export const Login = () => {
 
                     <button
                       type="submit"
-                      className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-black text-sm shadow-xl flex items-center justify-center gap-2 active:scale-98 transition-all cursor-pointer border-none"
+                      className="w-full py-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-2xl font-black text-sm shadow-md shadow-emerald-500/20 flex items-center justify-center gap-2 active:scale-98 transition-all cursor-pointer border-none"
                     >
-                      <span>تایید و انطباق با کد فعال‌ساز</span>
+                      <span>تایید و بررسی لایسنس جدید</span>
                       <Check size={18} />
                     </button>
 
@@ -838,9 +839,9 @@ export const Login = () => {
                         setErrorMessage(null);
                         setSmsSuccessMsg(null);
                       }}
-                      className="w-full py-2.5 bg-slate-800/80 hover:bg-slate-800 text-slate-300 rounded-xl text-xs font-bold transition-all border border-slate-700 cursor-pointer"
+                      className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all border border-slate-200 cursor-pointer"
                     >
-                      ویرایش و تصحیح شماره تلفن همراه ↩️
+                      ویرایش شماره همراه ↩️
                     </button>
                   </form>
                 )}
@@ -850,7 +851,7 @@ export const Login = () => {
                   <div className="space-y-4 text-right">
                     {/* نام کارشناس */}
                     <div className="space-y-1.5">
-                      <label className="text-xs font-black text-slate-300 block px-1">نام و نام خانوادگی کارفرمای کارگاه</label>
+                      <label className="text-xs font-black text-slate-700 block px-1">نام و نام خانوادگی</label>
                       <div className="relative">
                         <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-slate-400">
                           <User size={18} />
@@ -860,7 +861,7 @@ export const Login = () => {
                           value={signupOwnerName}
                           onChange={(e) => setSignupOwnerName(e.target.value)}
                           placeholder="مثال: مهندس معین"
-                          className="w-full pl-4 pr-12 py-3.5 bg-slate-950/40 border border-white/10 rounded-2xl text-white text-sm font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                          className="w-full pl-4 pr-12 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 text-sm font-bold focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                           required
                         />
                       </div>
@@ -868,7 +869,7 @@ export const Login = () => {
 
                     {/* نام کارگاه */}
                     <div className="space-y-1.5">
-                      <label className="text-xs font-black text-slate-300 block px-1">نام کارگاه یا شرکت شما</label>
+                      <label className="text-xs font-black text-slate-700 block px-1">نام شرکت یا فروشگاه</label>
                       <div className="relative">
                         <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-slate-400">
                           <Building size={18} />
@@ -877,8 +878,8 @@ export const Login = () => {
                           type="text"
                           value={signupCompanyName}
                           onChange={(e) => setSignupCompanyName(e.target.value)}
-                          placeholder="مثال: کارگاه صنعتی نکس‌وین شمال"
-                          className="w-full pl-4 pr-12 py-3.5 bg-slate-950/40 border border-white/10 rounded-2xl text-white text-sm font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                          placeholder="مثال: نکس‌وین شمال"
+                          className="w-full pl-4 pr-12 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 text-sm font-bold focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                           required
                         />
                       </div>
@@ -886,8 +887,8 @@ export const Login = () => {
 
                     {/* انتخاب سطح شروع اشتراک و قیمت‌ها */}
                     <div className="space-y-2">
-                      <label className="text-xs font-black text-slate-300 block px-1 select-none">
-                        یکی از بسته‌های اشتراک را انتخاب نمایید:
+                      <label className="text-xs font-black text-slate-700 block px-1 select-none">
+                        بخش اشتراک مورد نظر را انتخاب کنید:
                       </label>
                       
                       <div className="grid grid-cols-1 gap-2.5">
@@ -899,22 +900,22 @@ export const Login = () => {
                           }}
                           className={`p-3.5 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between ${
                             signupTier === 'bronze' && hasClickedTier
-                              ? 'border-orange-500 bg-orange-500/10 text-orange-400 shadow-[0_4px_20px_rgba(249,115,22,0.15)]' 
-                              : 'border-slate-800 bg-slate-950/30 text-slate-400 hover:border-slate-700 hover:bg-slate-950/50'
+                              ? 'border-orange-500 bg-orange-50 text-orange-700 shadow-[0_4px_20px_rgba(249,115,22,0.08)]' 
+                              : 'border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200 hover:bg-slate-100'
                           }`}
                         >
                           <div className="flex items-center gap-3">
-                            <div className="p-2 bg-orange-500/10 text-orange-400 rounded-xl">
+                            <div className="p-2 bg-orange-100 text-orange-600 rounded-xl">
                               <Sparkles size={18} />
                             </div>
                             <div className="text-right">
-                              <h4 className="text-[12px] font-black text-white">اشتراک برنزی (Bronze)</h4>
-                              <p className="text-[9px] opacity-75 mt-0.5">محاسبات پایه و طراحی درب و پنجره دوجداره</p>
+                              <h4 className="text-[12px] font-black text-slate-900">اشتراک پایه</h4>
+                              <p className="text-[9px] text-slate-500 mt-0.5">محاسبه و طراحی پایه درب و پنجره دوجداره</p>
                             </div>
                           </div>
                           <div className="text-left">
-                            <span className="text-xs font-black text-orange-400">۲۰۰,۰۰۰ تومان</span>
-                            <span className="text-[9px] block opacity-60">ماهیانه</span>
+                            <span className="text-xs font-black text-orange-600">۲۰۰,۰۰۰ تومان</span>
+                            <span className="text-[9px] block text-slate-400">ماهیانه</span>
                           </div>
                         </div>
 
@@ -926,22 +927,22 @@ export const Login = () => {
                           }}
                           className={`p-3.5 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between ${
                             signupTier === 'silver' && hasClickedTier
-                              ? 'border-indigo-500 bg-indigo-500/10 text-indigo-400 shadow-[0_4px_20px_rgba(99,102,241,0.15)]' 
-                              : 'border-slate-800 bg-slate-950/30 text-slate-400 hover:border-slate-700 hover:bg-slate-950/50'
+                              ? 'border-indigo-500 bg-indigo-50 text-indigo-700 shadow-[0_4px_20px_rgba(99,102,241,0.08)]' 
+                              : 'border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200 hover:bg-slate-100'
                           }`}
                         >
                           <div className="flex items-center gap-3">
-                            <div className="p-2 bg-indigo-500/10 text-indigo-400 rounded-xl">
+                            <div className="p-2 bg-indigo-100 text-indigo-600 rounded-xl">
                               <ShieldCheck size={18} />
                             </div>
                             <div className="text-right">
-                              <h4 className="text-[12px] font-black text-white">اشتراک نقره‌ای (Silver)</h4>
-                              <p className="text-[9px] opacity-75 mt-0.5">بهینه‌ساز پیشرفته برش خط تولید و خروجی پروفیل</p>
+                              <h4 className="text-[12px] font-black text-slate-900">اشتراک نقره‌ای</h4>
+                              <p className="text-[9px] text-slate-500 mt-0.5">بهینه‌ساز برش خط تولید و خروجی پروفیل</p>
                             </div>
                           </div>
                           <div className="text-left">
-                            <span className="text-xs font-black text-indigo-400">۴۵۰,۰۰۰ تومان</span>
-                            <span className="text-[9px] block opacity-60">ماهیانه</span>
+                            <span className="text-xs font-black text-indigo-600">۴۵۰,۰۰۰ تومان</span>
+                            <span className="text-[9px] block text-slate-400">ماهیانه</span>
                           </div>
                         </div>
 
@@ -953,22 +954,22 @@ export const Login = () => {
                           }}
                           className={`p-3.5 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between ${
                             signupTier === 'gold' && hasClickedTier
-                              ? 'border-yellow-500 bg-yellow-500/10 text-yellow-500 shadow-[0_4px_20px_rgba(234,179,8,0.15)]' 
-                              : 'border-slate-800 bg-slate-950/30 text-slate-400 hover:border-slate-700 hover:bg-slate-950/50'
+                              ? 'border-amber-500 bg-amber-50 text-amber-700 shadow-[0_4px_20px_rgba(234,179,8,0.08)]' 
+                              : 'border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200 hover:bg-slate-100'
                           }`}
                         >
                           <div className="flex items-center gap-3">
-                            <div className="p-2 bg-yellow-500/10 text-yellow-500 rounded-xl">
+                            <div className="p-2 bg-amber-100 text-amber-600 rounded-xl">
                               <Award size={18} />
                             </div>
                             <div className="text-right">
-                              <h4 className="text-[12px] font-black text-white">اشتراک طلایی (Gold) ⭐</h4>
-                              <p className="text-[9px] opacity-75 mt-0.5">دسترسی نامحدود مالی، انبار، و قراردادها</p>
+                              <h4 className="text-[12px] font-black text-slate-900">اشتراک طلایی ⭐</h4>
+                              <p className="text-[9px] text-slate-500 mt-0.5">مالی پیشرفته، سیستم انبار و قراردادها</p>
                             </div>
                           </div>
                           <div className="text-left">
-                            <span className="text-xs font-black text-yellow-500">۷۹۰,۰۰۰ تومان</span>
-                            <span className="text-[9px] block opacity-60">ماهیانه</span>
+                            <span className="text-xs font-black text-amber-600">۷۹۰,۰۰۰ تومان</span>
+                            <span className="text-[9px] block text-slate-400">ماهیانه</span>
                           </div>
                         </div>
                       </div>
@@ -979,38 +980,36 @@ export const Login = () => {
                       <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="bg-slate-950/60 p-4 rounded-3xl border border-white/5 space-y-3.5 mt-2"
+                        className="bg-slate-50 p-4 rounded-3xl border border-slate-200/50 space-y-3.5 mt-2 shadow-inner"
                       >
                         <div className="text-right">
-                          <span className="text-[10px] text-slate-400 font-extrabold block">اکنون اقدام نمایید:</span>
+                          <span className="text-[10px] text-slate-500 font-extrabold block">طریقه فعالسازی:</span>
                         </div>
-
-
 
                         {/* دکمه پرداخت الکترونیک زرین‌پال */}
                         <button
                           type="button"
                           onClick={handlePayment}
                           disabled={paymentLoading || loading}
-                          className="w-full py-4 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white rounded-2xl font-black text-sm shadow-lg shadow-emerald-950/30 flex items-center justify-center gap-2.5 transition-all cursor-pointer border-none"
+                          className="w-full py-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-2xl font-black text-sm shadow-md shadow-emerald-500/20 flex items-center justify-center gap-2.5 transition-all cursor-pointer border-none"
                         >
                           {paymentLoading ? (
                             <>
                               <div className="w-4 h-4 border-2 border-white/25 border-t-white rounded-full animate-spin"></div>
-                              <span>در حال اتصال به درگاه پرداخت...</span>
+                              <span>در حال اتصال به درگاه...</span>
                             </>
                           ) : (
                             <>
                               <CreditCard size={18} />
-                              <span>پرداخت آنلاین و فعالسازی آنی لایسنس 💳</span>
+                              <span>پرداخت آنلاین و فعالسازی لایسنس 💳</span>
                             </>
                           )}
                         </button>
 
                         <div className="relative flex py-1 items-center">
-                          <div className="flex-grow border-t border-white/5"></div>
-                          <span className="flex-shrink mx-4 text-[9px] text-slate-500 font-extrabold">یا شروع رایگان</span>
-                          <div className="flex-grow border-t border-white/5"></div>
+                          <div className="flex-grow border-t border-slate-200"></div>
+                          <span className="flex-shrink mx-4 text-[9px] text-slate-400 font-extrabold">یا شروع آزمایشی</span>
+                          <div className="flex-grow border-t border-slate-200"></div>
                         </div>
 
                         {/* دکمه دریافت ۷ روزه آزمایشی */}
@@ -1018,32 +1017,32 @@ export const Login = () => {
                           type="button"
                           onClick={handleCompleteSignup}
                           disabled={paymentLoading || loading}
-                          className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-100 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer border border-slate-700"
+                          className="w-full py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer border border-slate-200"
                         >
                           {loading ? (
                             <>
-                              <div className="w-4 h-4 border-2 border-white/25 border-t-white rounded-full animate-spin"></div>
-                              <span>تخصیص موقت لایسنس آزمایشی...</span>
+                              <div className="w-4 h-4 border-2 border-slate-400 border-t-slate-700 rounded-full animate-spin"></div>
+                              <span>در حال راه‌اندازی لایسنس آزمایشی...</span>
                             </>
                           ) : (
                             <>
-                              <Timer size={16} className="text-blue-400" />
-                              <span>ثبت نهایی و دریافت ۷ روزه آزمایشی (رایگان)</span>
+                              <Timer size={16} className="text-blue-600 animate-pulse" />
+                              <span>شروع اشتراک آزمایشی رایگان (۷ روزه)</span>
                             </>
                           )}
                         </button>
                       </motion.div>
                     ) : (
-                      <div className="bg-blue-500/5 p-4 rounded-2xl text-center border border-blue-500/10">
-                        <p className="text-[11px] text-blue-300 leading-relaxed font-bold">
-                          💡 لطفاً جهت مشاهده گزینه‌های پرداخت و ثبت نهایی، یکی از مدل‌های اشتراک بالا را کلیک کنید.
+                      <div className="bg-blue-50/50 p-4 rounded-2xl text-center border border-blue-100/50">
+                        <p className="text-[11px] text-slate-600 leading-relaxed font-bold">
+                          💡 لطفاً جهت مشاهده گزینه‌های فعالسازی، یکی از طرح‌های اشتراک بالا را انتخاب بفرمایید.
                         </p>
                       </div>
                     )}
                   </div>
                 )}
 
-                <div className="text-center mt-3">
+                <div className="text-center mt-4">
                   <button
                     type="button"
                     onClick={() => {
@@ -1051,9 +1050,9 @@ export const Login = () => {
                       setErrorMessage(null);
                       setSmsSuccessMsg(null);
                     }}
-                    className="text-slate-400 hover:text-white font-bold text-xs select-none bg-transparent border-none cursor-pointer"
+                    className="text-slate-500 hover:text-slate-800 font-bold text-xs select-none bg-transparent border-none cursor-pointer"
                   >
-                    ← بازگشت به صفحه ورود سابق کاربری
+                    ← بازگشت به صفحه ورود
                   </button>
                 </div>
               </div>
@@ -1291,40 +1290,40 @@ export const Login = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setShowSupportModal(false)}
-            className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4"
+            className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4"
           >
             <motion.div
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-slate-900 border border-white/10 rounded-[2rem] p-6 max-w-sm w-full text-right text-white space-y-6 shadow-2xl relative"
+              className="bg-white border border-slate-200 rounded-[2rem] p-6 max-w-sm w-full text-right text-slate-800 space-y-6 shadow-2xl relative"
             >
               <div className="text-center space-y-2">
-                <div className="w-12 h-12 bg-blue-500/10 mx-auto rounded-2xl flex items-center justify-center text-blue-400">
+                <div className="w-12 h-12 bg-blue-50 mx-auto rounded-2xl flex items-center justify-center text-blue-600">
                   <PhoneCall size={22} />
                 </div>
-                <h3 className="text-base font-black">پشتیبانی و تمدید لایسنس نکس‌وین</h3>
-                <p className="text-[10px] text-slate-400 leading-relaxed font-bold">جهت تمدید اعتبار، افزایش ظرفیت دستگاه‌ها یا فعال‌سازی لایسک‌های مسدوده با شماره‌های واحد ناظر تماس حاصل فرمایید.</p>
+                <h3 className="text-base font-black text-slate-900">پشتیبانی و تمدید لایسنس نکس‌وین</h3>
+                <p className="text-[10px] text-slate-500 leading-relaxed font-bold">جهت تمدید اعتبار، افزایش ظرفیت دستگاه‌ها یا رفع موارد مسدودی لایسنس، با شماره‌های پشتیبانی تماس حاصل فرمایید.</p>
               </div>
 
               <div className="space-y-3">
-                <div className="bg-slate-950/50 p-3.5 rounded-xl border border-white/5 flex items-center justify-between text-xs">
-                  <span className="text-slate-400">تلفن پشتیبانی مرکزی:</span>
-                  <a href="tel:09120000000" className="font-mono text-blue-400 font-extrabold hover:underline">0912-000-0000</a>
+                <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 flex items-center justify-between text-xs">
+                  <span className="text-slate-500">تلفن پشتیبانی مرکزی:</span>
+                  <a href="tel:09120000000" className="font-mono text-blue-600 font-extrabold hover:underline">0912-000-0000</a>
                 </div>
-                <div className="bg-slate-950/50 p-3.5 rounded-xl border border-white/5 flex items-center justify-between text-xs">
-                  <span className="text-slate-400">کارشناس تمدید لایسنس:</span>
-                  <a href="tel:09170000000" className="font-mono text-blue-400 font-extrabold hover:underline">0917-000-0000</a>
+                <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 flex items-center justify-between text-xs">
+                  <span className="text-slate-500">کارشناس تمدید لایسنس:</span>
+                  <a href="tel:09170000000" className="font-mono text-blue-600 font-extrabold hover:underline">0917-000-0000</a>
                 </div>
-                <div className="p-3 bg-blue-500/5 rounded-xl border border-blue-500/10 text-[9px] text-blue-300 leading-normal text-justify">
-                  💡 لطفا شناسه لایسنس خود (مثال: NW-83921) یا فیش واریزی آخر را در پلتفرم تلگرام یا واتساپ برای کارشناسان تمدید ارسال فرمایید تا فعال‌سازی آنی صورت گیرد.
+                <div className="p-3 bg-blue-50 text-[9px] text-blue-700 rounded-xl border border-blue-100 leading-normal text-justify font-semibold">
+                  💡 لطفاً شناسه لایسنس خود (NW-xxxxx) را به همراه فیش واریزی در شبکه‌های اجتماعی برای کارشناسان تمدید ارسال فرمایید تا فعال‌سازی آنی صورت گیرد.
                 </div>
               </div>
 
               <button
                 type="button"
-                className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition-all border-none cursor-pointer"
+                className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold transition-all border-none cursor-pointer"
                 onClick={() => setShowSupportModal(false)}
               >
                 بستن راهنما

@@ -48,9 +48,9 @@ export default defineConfig({
         'apple-touch-icon.png'
       ],
       manifest: {
-        name: 'سامانه مدیریت کلان نکسوین',
-        short_name: 'نکسوین ادمین',
-        description: 'سیستم صدور، نظارت و کنترل مالی لایسنسهای اشتراک صنایع نکسوین',
+        name: 'NexWin',
+        short_name: 'NexWin',
+        description: 'پرتال و سیستم یکپارچه طراحی و محاسبات نکس‌وین',
         theme_color: '#0f172a',
         background_color: '#0f172a',
         display: 'standalone',
