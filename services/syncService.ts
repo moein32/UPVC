@@ -136,6 +136,47 @@ export function getSupabaseClient(): SupabaseClient | null {
   }
 }
 
+/**
+ * Deterministically maps any client-side ID (such as numeric timestamps) to a valid UUID format
+ * to guarantee compatibility with Supabase primary key constraints while avoiding duplication on upserts.
+ */
+export function toDeterministicUUID(str: string): string {
+  if (!str) return crypto.randomUUID();
+  
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (uuidRegex.test(str)) {
+    return str.toLowerCase();
+  }
+
+  let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+  for (let i = 0; i < str.length; i++) {
+    const ch = str.charCodeAt(i);
+    h1 = Math.imul(h1 ^ ch, 2654435761);
+    h2 = Math.imul(h2 ^ ch, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  
+  const part1 = (h1 >>> 0).toString(16).padStart(8, '0');
+  const part2 = (h2 >>> 0).toString(16).padStart(8, '0');
+  
+  let h3 = h1, h4 = h2;
+  h3 = Math.imul(h3 ^ 0xbadf00d, 2654435761);
+  h4 = Math.imul(h4 ^ 0xfee1900d, 1597334677);
+  const part3 = (h3 >>> 0).toString(16).padStart(8, '0');
+  const part4 = (h4 >>> 0).toString(16).padStart(8, '0');
+  
+  const hex = (part1 + part2 + part3 + part4).substring(0, 32);
+  
+  const p1 = hex.substring(0, 8);
+  const p2 = hex.substring(8, 12);
+  const p3 = '4' + hex.substring(13, 16);
+  const p4 = 'a' + hex.substring(17, 20);
+  const p5 = hex.substring(20, 32);
+  
+  return `${p1}-${p2}-${p3}-${p4}-${p5}`.toLowerCase();
+}
+
 // Local Storage Keys
 const LOCAL_PROJECTS_KEY = 'lumina_projects';
 const SYNC_QUEUE_KEY = 'nexwin_sync_write_queue';
@@ -165,14 +206,86 @@ function logSystemEvent(msg: string) {
 // ==========================================
 
 /**
+ * Normalizes any project format (including local SavedProject format with customerName, payments etc.)
+ * into the standardized WindowProjectPayload format needed for cloud upserts.
+ */
+export function normalizeLocalProjectToPayload(project: any): WindowProjectPayload {
+  if (!project) {
+    throw new Error('مقدار پروژه نامعتبر است.');
+  }
+
+  let localUser: any = null;
+  try {
+    const userStr = localStorage.getItem('nexwin_user');
+    if (userStr) {
+      localUser = JSON.parse(userStr);
+    }
+  } catch (e) {
+    console.warn('Failed to parse nexwin_user from localStorage:', e);
+  }
+
+  const licenseId = project.userLicenseId || project.license_id || localUser?.id || 'GUEST';
+
+  // Handle name mapping (customerName in local SavedProject, project_name in payload)
+  const projectName = project.project_name || project.customerName || 'پروژه نکس‌وین';
+  
+  // Extract and map items securely
+  const items = (project.items || []).map((item: any, idx: number) => {
+    return {
+      id: item.id || crypto.randomUUID(),
+      window_name: item.window_name || item.config?.type || `پنجره ردیف ${idx + 1}`,
+      raw_inputs: item.raw_inputs || {
+        config: item.config || {},
+        quantity: item.quantity || 1,
+        calculations: item.calculations || {}
+      },
+      profile_data: item.profile_data || item.config || {},
+      calculated_glass: item.calculated_glass || item.calculations || {},
+    };
+  });
+
+  // Extract and map metadata
+  const metadata = project.metadata || {
+    customerName: project.customerName || 'میهمان',
+    address: project.address || '',
+    installPercent: project.installPercent || 10,
+    companyName: project.companyName || '',
+    date: project.date || new Date().toISOString(),
+    totalPrice: project.totalPrice || 0,
+    payments: project.payments || [],
+  };
+
+  const totalItems = project.total_items || items.length || 0;
+
+  return {
+    id: project.id,
+    userLicenseId: licenseId,
+    project_name: projectName,
+    total_items: totalItems,
+    status: project.status || 'Draft',
+    metadata,
+    items,
+    created_at: project.created_at || project.date || new Date().toISOString(),
+    updated_at: project.updated_at || new Date().toISOString(),
+  };
+}
+
+/**
  * Performs a synchronized write (upsert) to Supabase Cloud, mapping client state to structural tables.
  * Falls back to offline-mode write queue if a network partition or server error occurs.
  */
-export async function syncProjectToCloud(project: WindowProjectPayload): Promise<{
+export async function syncProjectToCloud(rawProject: any): Promise<{
   success: boolean;
   mode: 'cloud' | 'local_queue';
   message: string;
 }> {
+  let project: WindowProjectPayload;
+  try {
+    project = normalizeLocalProjectToPayload(rawProject);
+  } catch (err: any) {
+    return { success: false, mode: 'local_queue', message: `خطای ساختار لایه محلی: ${err.message}` };
+  }
+
   logSystemEvent(`شروع جفت‌سازی پروژه "${project.project_name}" با پایگاه ابر...`);
   
   // Verify/Normalize license identifier
@@ -187,16 +300,55 @@ export async function syncProjectToCloud(project: WindowProjectPayload): Promise
     // offline bypass fallback
     enqueueLocalMutation(project, 'UPSERT');
     return {
-      success: true,
+      success: false,
       mode: 'local_queue',
-      message: 'سرویس ابری متصل نیست. اطلاعات در صف تریگر محلی ذخیره گردید.',
+      message: 'سرویس ابری متصل نیست یا اطلاعات اتصال ناقص است. پروژه در صف تریگر محلی ذخیره گردید.',
     };
   }
 
   try {
+    // Ensure the license exists in public.app_users to satisfy the foreign-key constraint
+    let localUser: any = null;
+    try {
+      const userStr = localStorage.getItem('nexwin_user');
+      if (userStr) {
+        localUser = JSON.parse(userStr);
+      }
+    } catch (e) {
+      console.warn('Failed to parse nexwin_user from localStorage:', e);
+    }
+
+    const licenseId = project.userLicenseId || localUser?.id || 'GUEST';
+    project.userLicenseId = licenseId; // Ensure payload is enriched
+
+    const appUserUpsert = {
+      id: licenseId,
+      owner_name: localUser?.owner_name || 'کارفرمای میهمان',
+      company_name: localUser?.company_name || 'کارگاه نکس‌وین میهمان',
+      phone_number: localUser?.phone_number || '09000000000',
+      tier: localUser?.tier || 'silver',
+      status: localUser?.status || 'active',
+      register_date: localUser?.register_date || new Intl.DateTimeFormat('fa-IR', { dateStyle: 'medium' }).format(new Date()),
+      expiry_date: localUser?.expiry_date || new Intl.DateTimeFormat('fa-IR', { dateStyle: 'medium' }).format(new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)),
+      max_devices: localUser?.max_devices || 3,
+      total_paid: localUser?.total_paid || 0,
+      is_trial: localUser?.is_trial || false
+    };
+
+    const { error: userError } = await supabase
+      .from('app_users')
+      .upsert(appUserUpsert, { onConflict: 'id' });
+
+    if (userError) {
+      throw new Error(`خطای ثبت لایسنس کارگاه در دیتابیس ابر: ${userError.message}`);
+    }
+
+    // Standardize IDs to clean UUIDs deterministically
+    const projectUUID = toDeterministicUUID(project.id);
+
     // 1. Transaction Simulation Phase 1: Top-level primary Project metadata upsert
     const projectUpsertData = {
-      id: project.id,
+      id: projectUUID,
       license_id: project.userLicenseId,
       project_name: project.project_name,
       total_items: project.total_items,
@@ -215,23 +367,26 @@ export async function syncProjectToCloud(project: WindowProjectPayload): Promise
     }
 
     // 2. Transaction Simulation Phase 2: Relational batch upsert for individual window configurations
-    // First, clear existing orphaned item entries for this project to maintain structural integrity
-    const fileItemIds = project.items.filter(item => item.id).map(item => item.id as string);
+    const windowItemsBatches = project.items.map((item, idx) => {
+      const itemUUID = toDeterministicUUID(item.id || `${project.id}_item_${idx}`);
+      return {
+        id: itemUUID,
+        project_id: projectUUID,
+        window_name: item.window_name || `پنجره ردیف ${idx + 1}`,
+        raw_inputs: item.raw_inputs,
+        profile_data: item.profile_data,
+        calculated_glass: item.calculated_glass,
+      };
+    });
 
+    const fileItemIds = windowItemsBatches.map(batch => batch.id);
+
+    // First, clear existing orphaned item entries for this project to maintain structural integrity
     await supabase
       .from('window_items')
       .delete()
-      .eq('project_id', project.id)
+      .eq('project_id', projectUUID)
       .not('id', 'in', `(${fileItemIds.join(',')})`);
-
-    const windowItemsBatches = project.items.map((item, idx) => ({
-      id: item.id || crypto.randomUUID(), // Guarantee a primary block UUID
-      project_id: project.id,
-      window_name: item.window_name || `پنجره ردیف ${idx + 1}`,
-      raw_inputs: item.raw_inputs,
-      profile_data: item.profile_data,
-      calculated_glass: item.calculated_glass,
-    }));
 
     const { error: itemsError } = await supabase
       .from('window_items')
@@ -239,6 +394,34 @@ export async function syncProjectToCloud(project: WindowProjectPayload): Promise
 
     if (itemsError) {
       throw new Error(`خطای درج تک تک واحدهای محاسباتی: ${itemsError.message}`);
+    }
+
+    // Local ID Sync to standardize our local store to use UUIDs
+    try {
+      const stored = localStorage.getItem(LOCAL_PROJECTS_KEY);
+      if (stored) {
+        const localProjects = JSON.parse(stored);
+        let changed = false;
+        const updatedLocal = localProjects.map((p: any) => {
+          if (p.id === project.id) {
+            changed = true;
+            return {
+              ...p,
+              id: projectUUID,
+              items: p.items.map((it: any, idx: number) => ({
+                ...it,
+                id: windowItemsBatches[idx]?.id || it.id
+              }))
+            };
+          }
+          return p;
+        });
+        if (changed) {
+          localStorage.setItem(LOCAL_PROJECTS_KEY, JSON.stringify(updatedLocal));
+        }
+      }
+    } catch (e) {
+      console.warn('[SyncService local ID sync warning]', e);
     }
 
     // Mark successful sync timestamp
@@ -255,9 +438,9 @@ export async function syncProjectToCloud(project: WindowProjectPayload): Promise
     // Push mutation to localized queue for automatic background drain
     enqueueLocalMutation(project, 'UPSERT', err.message || '');
     return {
-      success: true,
+      success: false,
       mode: 'local_queue',
-      message: 'پروژه به صورت محلی ذخیره شد و در صف همگام‌سازی پس‌زمینه قرار گرفت.',
+      message: `خطا در همگام‌سازی ابری: ${err.message || err}`,
     };
   }
 }
@@ -509,9 +692,54 @@ export async function flushSyncQueue(): Promise<{
 }
 
 // Low-level helper specifically bypassing queue check to avoid infinite recurrence
-async function uploadSingleProjectDirect(supabase: SupabaseClient, project: WindowProjectPayload) {
+async function uploadSingleProjectDirect(supabase: SupabaseClient, rawProject: any) {
+  let project: WindowProjectPayload;
+  try {
+    project = normalizeLocalProjectToPayload(rawProject);
+  } catch (err: any) {
+    return { success: false, message: `خطای ساختار لایه محلی در آپلود مستقیم: ${err.message}` };
+  }
+
+  // Ensure corresponding app_users record exists for foreign-key constraint
+  let localUser: any = null;
+  try {
+    const userStr = localStorage.getItem('nexwin_user');
+    if (userStr) {
+      localUser = JSON.parse(userStr);
+    }
+  } catch (e) {
+    console.warn('Failed to parse nexwin_user from localStorage in uploadSingleProjectDirect:', e);
+  }
+
+  const licenseId = project.userLicenseId || localUser?.id || 'GUEST';
+  project.userLicenseId = licenseId;
+
+  const appUserUpsert = {
+    id: licenseId,
+    owner_name: localUser?.owner_name || 'کارفرمای میهمان',
+    company_name: localUser?.company_name || 'کارگاه نکس‌وین میهمان',
+    phone_number: localUser?.phone_number || '09000000000',
+    tier: localUser?.tier || 'silver',
+    status: localUser?.status || 'active',
+    register_date: localUser?.register_date || new Intl.DateTimeFormat('fa-IR', { dateStyle: 'medium' }).format(new Date()),
+    expiry_date: localUser?.expiry_date || new Intl.DateTimeFormat('fa-IR', { dateStyle: 'medium' }).format(new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)),
+    max_devices: localUser?.max_devices || 3,
+    total_paid: localUser?.total_paid || 0,
+    is_trial: localUser?.is_trial || false
+  };
+
+  const { error: userError } = await supabase
+    .from('app_users')
+    .upsert(appUserUpsert, { onConflict: 'id' });
+
+  if (userError) {
+    return { success: false, message: `خطای ثبت لایسنس کارگاه در دیتابیس ابر: ${userError.message}` };
+  }
+
+  const projectUUID = toDeterministicUUID(project.id);
+
   const projectUpsertData = {
-    id: project.id,
+    id: projectUUID,
     license_id: project.userLicenseId,
     project_name: project.project_name,
     total_items: project.total_items,
@@ -528,22 +756,25 @@ async function uploadSingleProjectDirect(supabase: SupabaseClient, project: Wind
   if (projectError) return { success: false, message: projectError.message };
 
   // Sync window items child batch
-  const fileItemIds = project.items.filter(item => item.id).map(item => item.id as string);
+  const windowItemsBatches = project.items.map((item, idx) => {
+    const itemUUID = toDeterministicUUID(item.id || `${project.id}_item_${idx}`);
+    return {
+      id: itemUUID,
+      project_id: projectUUID,
+      window_name: item.window_name || `پنجره ردیف ${idx + 1}`,
+      raw_inputs: item.raw_inputs,
+      profile_data: item.profile_data,
+      calculated_glass: item.calculated_glass,
+    };
+  });
+
+  const fileItemIds = windowItemsBatches.map(batch => batch.id);
 
   await supabase
     .from('window_items')
     .delete()
-    .eq('project_id', project.id)
+    .eq('project_id', projectUUID)
     .not('id', 'in', `(${fileItemIds.join(',')})`);
-
-  const windowItemsBatches = project.items.map((item, idx) => ({
-    id: item.id || crypto.randomUUID(),
-    project_id: project.id,
-    window_name: item.window_name || `پنجره ردیف ${idx + 1}`,
-    raw_inputs: item.raw_inputs,
-    profile_data: item.profile_data,
-    calculated_glass: item.calculated_glass,
-  }));
 
   const { error: itemsError } = await supabase
     .from('window_items')

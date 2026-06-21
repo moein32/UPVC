@@ -233,6 +233,9 @@ export const Settings = () => {
       }
 
       let successCount = 0;
+      let failCount = 0;
+      let lastErrorMessage = '';
+
       for (const proj of projects) {
         if (currentUser) {
           proj.userLicenseId = currentUser.id;
@@ -240,14 +243,24 @@ export const Settings = () => {
         const res = await syncProjectToCloud(proj);
         if (res.success) {
           successCount++;
+        } else {
+          failCount++;
+          lastErrorMessage = res.message || 'خطای اتصال به پایگاه داده ابری';
         }
       }
 
       const timestamp = new Date().toISOString();
-      localStorage.setItem('nexwin_last_successful_sync', timestamp);
-      setLastSync(timestamp);
-      
-      showBackupMessage(`مجموعاً ${successCount} پروژه با موفقیت در بانک ابری نکس‌وین یکپارچه‌ شد.`, 'success');
+      if (successCount > 0) {
+        localStorage.setItem('nexwin_last_successful_sync', timestamp);
+        setLastSync(timestamp);
+        if (failCount > 0) {
+          showBackupMessage(`مجموعاً ${successCount} پروژه با موفقیت یکپارچه شد. دیتای ${failCount} پروژه به علت تداخل ارسال نگردید: ${lastErrorMessage}`, 'info');
+        } else {
+          showBackupMessage(`مجموعاً ${successCount} پروژه با موفقیت در بانک ابری نکس‌وین یکپارچه‌ شد.`, 'success');
+        }
+      } else {
+        showBackupMessage(`شکست در همگام‌سازی ابری: ${lastErrorMessage}`, 'error');
+      }
     } catch (err: any) {
       console.error('Cloud upload failure:', err);
       showBackupMessage('خطا در همگام‌سازی ابری: ' + (err?.message || 'خطای سرور'), 'error');
