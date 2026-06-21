@@ -17,6 +17,7 @@ import {
   PlusSquare,
   Compass
 } from 'lucide-react';
+import { NexWinLogo } from '../src/components/icons/NexWinLogo';
 
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: string[];
@@ -195,8 +196,8 @@ export const PwaInstallManager = () => {
               </button>
 
               {/* Logo icon with glow */}
-              <div className="w-14 h-14 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-[1.25rem] flex-shrink-0 flex items-center justify-center shadow-lg shadow-blue-600/30 border border-blue-400/30 p-2">
-                <img src="/logo.png" alt="NexWin" className="w-full h-full object-contain rounded-md" />
+              <div className="w-14 h-14 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-[1.25rem] flex-shrink-0 flex items-center justify-center shadow-lg shadow-blue-600/30 border border-blue-400/30 p-1">
+                <NexWinLogo size="100%" className="w-full h-full" />
               </div>
 
               {/* Text Body */}
@@ -372,8 +373,8 @@ export const PwaInstallManager = () => {
                               <span className="text-xs font-black text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-lg animate-pulse">Add</span>
                             </div>
                             <div className="flex items-center gap-3 mt-3">
-                              <div className="w-10 h-10 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-xl p-1.5">
-                                <img src="/logo.png" className="w-full h-full object-contain" />
+                              <div className="w-10 h-10 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-xl p-1">
+                                <NexWinLogo size="100%" className="w-full h-full" />
                               </div>
                               <div className="text-right">
                                 <span className="text-xs font-bold text-white block">Nexwin</span>
