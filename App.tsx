@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Lock, Phone, LogOut, X, Share } from 'lucide-react';
 import { Login } from './screens/Login';
 import { PwaInstallManager } from './components/PwaInstallManager';
+import { Analytics } from '@vercel/analytics/react';
 
 // Lazy loading sub-screens for ultra-fast startup and split bundling on mobile
 const Onboarding = React.lazy(() => import('./screens/Onboarding').then(m => ({ default: m.Onboarding })));
@@ -209,9 +210,9 @@ function App() {
         </Routes>
       </Suspense>
       <PwaInstallManager />
+      <Analytics />
     </HashRouter>
   );
 }
 
 export default App;
-
