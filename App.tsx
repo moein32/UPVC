@@ -3,6 +3,7 @@ import React, { useEffect, useState, Suspense } from 'react';
 import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Lock, Phone, LogOut, X, Share } from 'lucide-react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import { Login } from './screens/Login';
 import { PwaInstallManager } from './components/PwaInstallManager';
 
@@ -209,6 +210,7 @@ function App() {
         </Routes>
       </Suspense>
       <PwaInstallManager />
+      <SpeedInsights />
     </HashRouter>
   );
 }
