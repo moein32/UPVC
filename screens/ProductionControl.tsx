@@ -29,8 +29,54 @@ export const ProductionControl = () => {
   const loadData = () => {
     const all = pricingStore.getProjects();
     setProjects(all.filter(p => p.status !== 'Draft' || p.items.length > 0));
-    const savedInv = localStorage.getItem('lumina_inventory_v3');
-    if (savedInv) setInventory(JSON.parse(savedInv));
+    
+    let savedInv = localStorage.getItem('lumina_inventory_v3');
+    if (!savedInv) {
+      // Auto-initialize empty/test inventory based on existing brands and items so Production Control always works
+      const testInventory: any[] = [];
+      const brands = pricingStore.getBrands();
+      
+      // Profiles
+      brands.forEach(b => {
+        b.components.forEach(c => {
+          testInventory.push({
+            id: `prof_${b.id}_${c.id}`,
+            name: c.name,
+            brandId: b.id,
+            currentStock: 0,
+            minStock: 10,
+            unit: 'شاخه',
+            category: 'profiles'
+          });
+        });
+      });
+
+      // Galvanized
+      ['galv_125', 'galv_150', 'galv_200'].forEach(id => {
+        testInventory.push({ id, name: 'گالوانیزه', currentStock: 0, minStock: 20, unit: 'شاخه', category: 'galvanized' });
+      });
+
+      // Glass sheets
+      const GLASS_SHEET_SIZES = { long: { width: 3210, height: 2250, label: 'جام بلند' }, short: { width: 2250, height: 1605, label: 'جام کوتاه' } };
+      const SINGLE_PANE_GLASS_TYPES = [ { id: 'sp_4_simple', name: 'شیشه ۴ میل ساده' }, { id: 'sp_6_simple', name: 'شیشه ۴ میل ساده' }, { id: 'sp_4_reflex', name: 'شیشه ۴ میل رفلکس' } ];
+      SINGLE_PANE_GLASS_TYPES.forEach(g => {
+          ['long', 'short'].forEach(type => {
+              const sid = `glass_${g.id}_${type}`;
+              const size = GLASS_SHEET_SIZES[type as 'long' | 'short'];
+              testInventory.push({ id: sid, name: `${g.name} - ${size.label}`, currentStock: 0, minStock: 5, unit: 'جام', category: 'glass', width: size.width, height: size.height, glassTypeId: g.id, sheetType: type as any });
+          });
+      });
+
+      // Hardware sets
+      pricingStore.getHardware().filter(h => h.id !== 'panel_upvc').forEach(h => {
+        testInventory.push({ id: `hw_set_${h.id}`, name: h.name, currentStock: 0, minStock: 10, unit: 'ست کامل', category: 'hardware' });
+      });
+
+      localStorage.setItem('lumina_inventory_v3', JSON.stringify(testInventory));
+      savedInv = JSON.stringify(testInventory);
+    }
+
+    setInventory(JSON.parse(savedInv));
     setSettings(pricingStore.getSettings());
   };
 
@@ -43,23 +89,25 @@ export const ProductionControl = () => {
   [projects, selectedProjectId]);
 
   const analysisReport = useMemo(() => {
-      if (!selectedProject || !inventory.length) return null;
+      if (!selectedProject) return null;
       const needed: Record<string, { req: number, stock: number, unit: string, isShort: boolean, invId?: string }> = {};
       selectedProject.items.forEach(unit => {
-          unit.calculations.details.forEach(d => {
-              let current = needed[d.name];
-              if (!current) {
-                  current = { req: 0, stock: 0, unit: d.unit, isShort: false, invId: undefined };
-                  needed[d.name] = current;
-              }
-              current.req += (d.quantity * unit.quantity);
-              const invItem = inventory.find(i => i.name === d.name || i.id.includes(d.name));
-              if (invItem) {
-                  current.stock = invItem.currentStock;
-                  current.invId = invItem.id;
-              }
-              current.isShort = current.stock < current.req;
-          });
+          if (unit.calculations && unit.calculations.details) {
+              unit.calculations.details.forEach(d => {
+                  let current = needed[d.name];
+                  if (!current) {
+                      current = { req: 0, stock: 0, unit: d.unit, isShort: false, invId: undefined };
+                      needed[d.name] = current;
+                  }
+                  current.req += (d.quantity * unit.quantity);
+                  const invItem = inventory.find(i => i.name === d.name || i.id.includes(d.name));
+                  if (invItem) {
+                      current.stock = invItem.currentStock;
+                      current.invId = invItem.id;
+                  }
+                  current.isShort = current.stock < current.req;
+              });
+          }
       });
       return needed;
   }, [selectedProject, inventory]);
@@ -508,20 +556,26 @@ export const ProductionControl = () => {
                       </div>
 
                       <div className="space-y-3 mb-8">
-                          {(Object.entries(analysisReport) as [string, any][]).map(([name, data]) => (
-                              <div key={name} className={`flex items-center justify-between p-5 rounded-2xl border ${data.isShort ? 'bg-rose-50 border-rose-200' : 'bg-slate-50 border-slate-100'}`}>
-                                  <div className="flex items-center gap-4">
-                                      {data.isShort ? <AlertTriangle size={18} className="text-rose-500" /> : <CheckCircle2 size={18} className="text-emerald-500" />}
-                                      <div>
-                                          <h4 className="text-sm font-black text-slate-800">{name}</h4>
-                                          <p className="text-[10px] text-slate-400 font-black uppercase mt-0.5">مقدار کل: {toPersianDigits(Math.ceil(data.req))} {data.unit}</p>
+                          {Object.keys(analysisReport || {}).length === 0 ? (
+                              <div className="text-center py-8 bg-slate-50 rounded-2xl border border-slate-100 text-slate-400 font-bold text-xs">
+                                  ⚠️ هیچ متریال یا یراقی برای محاسبات انبار این پروژه یافت نشد.
+                              </div>
+                          ) : (
+                              (Object.entries(analysisReport) as [string, any][]).map(([name, data]) => (
+                                  <div key={name} className={`flex items-center justify-between p-5 rounded-2xl border ${data.isShort ? 'bg-rose-50 border-rose-200' : 'bg-slate-50 border-slate-100'}`}>
+                                      <div className="flex items-center gap-4">
+                                          {data.isShort ? <AlertTriangle size={18} className="text-rose-500" /> : <CheckCircle2 size={18} className="text-emerald-500" />}
+                                          <div>
+                                              <h4 className="text-sm font-black text-slate-800">{name}</h4>
+                                              <p className="text-[10px] text-slate-400 font-black uppercase mt-0.5">مقدار کل: {toPersianDigits(Math.ceil(data.req))} {data.unit}</p>
+                                          </div>
+                                      </div>
+                                      <div className="text-left">
+                                          <div className={`text-sm font-black ${data.isShort ? 'text-rose-600' : 'text-slate-900'}`}>انبار: {toPersianDigits(Math.floor(data.stock))}</div>
                                       </div>
                                   </div>
-                                  <div className="text-left">
-                                      <div className={`text-sm font-black ${data.isShort ? 'text-rose-600' : 'text-slate-900'}`}>انبار: {toPersianDigits(Math.floor(data.stock))}</div>
-                                  </div>
-                              </div>
-                          ))}
+                              ))
+                          )}
                       </div>
 
                       <div className="flex gap-4">
