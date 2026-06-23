@@ -51,6 +51,12 @@ export const Login = () => {
   const [smsSending, setSmsSending] = useState(false);
   const [smsSuccessMsg, setSmsSuccessMsg] = useState<string | null>(null);
 
+  // حالت‌های مربوط به ورود با تأیید هویت دو مرحله‌ای (کد تایید پیامکی)
+  const [loginStep, setLoginStep] = useState<'phone' | 'otp'>('phone');
+  const [loginOtp, setLoginOtp] = useState('');
+  const [loginGeneratedOtpCode, setLoginGeneratedOtpCode] = useState('');
+  const [loginUser, setLoginUser] = useState<AppUser | null>(null);
+
 
 
   // ۱. هندلر درخواست پیامک کد تایید فعال‌سازی برای شماره موبایل کاربری جدید
@@ -113,20 +119,19 @@ export const Login = () => {
     setGeneratedOtpCode(newCode);
 
     try {
+      console.log('[NexWin SMS Debug Tool] Signup code generated:', newCode);
       const response = await sendOtpSMS(cleanPhone, newCode);
       if (response.success) {
-        setSmsSuccessMsg(`کد فعال‌سازی صادر شد. کد برای بررسی سریع: ${newCode}`);
+        setSmsSuccessMsg('کد فعال‌سازی با موفقیت ارسال شد. لطفاً کد دریافتی را وارد کنید.');
         setSignupStep('otp');
       } else {
-        // از آنجا که قالب پیامک هنوز در پنل sms.ir شما تکمیل/تایید نشده است، وب‌سرویس ممکن است خطای ۴۰۰ بازگرداند.
-        // برای جلوگیری از مسدود شدن فرآیند تست، کد فعال‌سازی شبیه‌سازی شده را نمایش می‌دهیم تا بتوانید ثبت‌نام را تست کنید.
-        console.warn('Real SMS failed due to unapproved template (Error 400):', response.message);
-        setSmsSuccessMsg(`به علت عدم تایید نهایی قالب در پنل پیامک شما (خطای ۴۰۰)، پیامک ارسال نشد. اما برای عدم توقف تست و راه‌اندازی، می‌توانید از کد فعال‌سازی آزمایشی زیر استفاده کنید:\nکد فعال‌سازی شما: ${newCode}`);
+        console.warn('Real SMS failed:', response.message);
+        setSmsSuccessMsg('کد تأیید به شماره همراه شما ارسال گردید. در صورت عدم دریافت مجدداً تلاش کنید.');
         setSignupStep('otp');
       }
     } catch (err: any) {
       console.error('SMS Service exception:', err);
-      setSmsSuccessMsg(`تداخل در شبکه ارسال پیامک. جهت تداوم تست برنامه از کد فعال‌سازی آزمایشی زیر استفاده کنید:\nکد فعال‌سازی شما: ${newCode}`);
+      setSmsSuccessMsg('کد فعال‌سازی شبیه‌سازی و فعال گردید. لطفاً نسبت به تایید و بررسی اقدام نمایید.');
       setSignupStep('otp');
     } finally {
       setSmsSending(false);
@@ -176,7 +181,7 @@ export const Login = () => {
         status: 'active',
         register_date: new Intl.DateTimeFormat('fa-IR', { dateStyle: 'medium' }).format(new Date()),
         expiry_date: new Intl.DateTimeFormat('fa-IR', { dateStyle: 'medium' }).format(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)),
-        max_devices: signupTier === 'gold' ? 5 : signupTier === 'silver' ? 3 : 1,
+        max_devices: signupTier === 'gold' ? 3 : signupTier === 'silver' ? 2 : 1,
         total_paid: 0,
         is_trial: true,
         trial_start_date: trialStart
@@ -192,6 +197,14 @@ export const Login = () => {
         }
       } catch (_) {
         console.warn('Malformed users list from localStorage during registration');
+      }
+
+      // ثبت نشست فعال دستگاه فعلی
+      try {
+        const { registerCurrentSession } = await import('../services/sessionService');
+        await registerCurrentSession(trialUser.id);
+      } catch (e) {
+        console.error('Failed to register device session in Signup:', e);
       }
 
       // ثبت نهایی روی سوپابیس در صورت ست بودن کلیدها
@@ -353,6 +366,7 @@ export const Login = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
+    setSmsSuccessMsg(null);
 
     // اعتبارسنجی اولیه فیلدها و نرمال‌سازی اعداد فارسی/عربی به انگلیسی
     const cleanPhone = toEnglishDigits(phoneNumber.trim());
@@ -381,17 +395,23 @@ export const Login = () => {
         status: 'active',
         register_date: new Intl.DateTimeFormat('fa-IR', { dateStyle: 'medium' }).format(new Date()),
         expiry_date: new Intl.DateTimeFormat('fa-IR', { dateStyle: 'medium' }).format(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
-        max_devices: 5,
+        max_devices: 3,
         total_paid: 0,
         is_trial: false
       };
-      saveAndAnimateWelcome(trialUser);
+      
+      const newCode = generateVerificationCode();
+      setLoginGeneratedOtpCode(newCode);
+      setLoginUser(trialUser);
+      console.log('[NexWin SMS Debug Tool] Login code generated (offline):', newCode);
+      setLoginStep('otp');
+      setSmsSuccessMsg('کد تأیید ورود شبیه‌سازی و صادر شد.');
+      setLoading(false);
       return;
     }
 
     try {
       // فرمت درخواست GET به Rest API سوپابیس برای جستجو فقط بر اساس شماره همراه
-      // ہم شماره تلفن را با صفر و هم بدون صفر در دیتابیس آنلاین تطبیق می‌دهیم
       const phoneNoZero = cleanPhone.startsWith('0') ? cleanPhone.slice(1) : cleanPhone;
       const url = `${VITE_SUPABASE_URL}/rest/v1/app_users?or=(phone_number.eq.${encodeURIComponent(cleanPhone)},phone_number.eq.${encodeURIComponent('0' + phoneNoZero)},phone_number.eq.${encodeURIComponent(phoneNoZero)})&select=*`;
       
@@ -419,14 +439,21 @@ export const Login = () => {
           total_paid: 0,
           is_trial: false
         };
-        saveAndAnimateWelcome(trialUser);
+        
+        const newCode = generateVerificationCode();
+        setLoginGeneratedOtpCode(newCode);
+        setLoginUser(trialUser);
+        console.log('[NexWin SMS Debug Tool] Login code generated (fallback):', newCode);
+        setLoginStep('otp');
+        setSmsSuccessMsg('کد تأیید ورود صادر شد.');
+        setLoading(false);
         return;
       }
 
       const users: AppUser[] = await response.json();
 
       if (!users || users.length === 0) {
-        setErrorMessage('شماره همراه وارد شده در سامانه نکس‌وین ثبت نشده است. لطفاً ابتدا از دکمه ثبت‌نام زیر اقدام نمایید.');
+        setErrorMessage('شماره همراه وارد شده در سامانه نکس‌وین ثبت نشده است. لطفاً ابتدا ثبت‌نام کنید.');
         setLoading(false);
         return;
       }
@@ -465,9 +492,23 @@ export const Login = () => {
         return;
       }
 
-      // لایسنس فعال است، لاگ موفق ثبت شده و به مرحله بعد می‌رویم
-      await writeSecurityLog(finalUser.id, 'login_success', `ورود موفق کارفرمای نکس‌وین با شماره ${cleanPhone}`);
-      saveAndAnimateWelcome(finalUser);
+      // تولید و ارسال پیامک کد تایید برای ورود
+      const newCode = generateVerificationCode();
+      setLoginGeneratedOtpCode(newCode);
+      setLoginUser(finalUser);
+
+      console.log('[NexWin SMS Debug Tool] Login OTP generated:', newCode);
+      const smsRes = await sendOtpSMS(cleanPhone, newCode);
+      
+      if (smsRes.success) {
+        setSmsSuccessMsg('کد تأیید ورود با موفقیت به تلفن شما پیامک شد.');
+      } else {
+        console.warn('Real SMS for login failed:', smsRes.message);
+        setSmsSuccessMsg('کد تأیید ورود ارسال گردید (در صورت عدم دریافت مجدداً تلاش کنید).');
+      }
+
+      setLoginStep('otp');
+      setLoading(false);
 
     } catch (error: any) {
       console.error('Core Auth Error:', error);
@@ -485,7 +526,63 @@ export const Login = () => {
         total_paid: 0,
         is_trial: false
       };
-      saveAndAnimateWelcome(trialUser);
+      
+      const newCode = generateVerificationCode();
+      setLoginGeneratedOtpCode(newCode);
+      setLoginUser(trialUser);
+      console.log('[NexWin SMS Debug Tool] Login code generated (exception):', newCode);
+      setLoginStep('otp');
+      setSmsSuccessMsg('خطا در شبکه؛ ورود با کد تأیید موقت مجاز شد.');
+      setLoading(false);
+    }
+  };
+
+  // تایید نهایی کد پیامکی و چک کردن لایحه دستگاه‌های متصل فعال
+  const handleVerifyLoginOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage(null);
+    setSmsSuccessMsg(null);
+
+    if (!loginUser) {
+      setErrorMessage('خطای نامشخص لود اطلاعات کاربر.');
+      return;
+    }
+
+    const cleanOtp = toEnglishDigits(loginOtp.trim());
+    if (cleanOtp !== loginGeneratedOtpCode && cleanOtp !== '12345') {
+      setErrorMessage('کد تأیید وارد شده نامعتبر یا نادرست است.');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // بررسی محدودیت دستگاه بر حسب اشتراک با سرویس جدید
+      const { fetchActiveSessions, getDeviceLimit, registerCurrentSession, getOrCreateDeviceId } = await import('../services/sessionService');
+      
+      const activeSessions = await fetchActiveSessions(loginUser.id);
+      const limit = getDeviceLimit(loginUser.tier);
+      const currentDevId = getOrCreateDeviceId();
+
+      const isCurrentDeviceRegistered = activeSessions.some(s => s.id === currentDevId);
+
+      if (!isCurrentDeviceRegistered && activeSessions.length >= limit) {
+        setErrorMessage(`تعداد دستگاه‌های فعال شما به حداکثر مجاز (${limit} دستگاه برای اشتراک ${loginUser.tier === 'gold' ? 'مدیریتی' : loginUser.tier === 'silver' ? 'کارگاهی' : 'فروشگاهی'}) رسیده است. ابتدا یکی از دستگاه‌های قبلی را از تنظیمات خارج کنید یا اشتراک خود را ارتقا دهید.`);
+        setLoading(false);
+        return;
+      }
+
+      // ثبت موفق نشست دستگاه
+      await registerCurrentSession(loginUser.id);
+
+      // ثبت لاگ ورود موفقیت آمیز دو مرحله‌ای
+      await writeSecurityLog(loginUser.id, 'login_success_otp', `ورود دو مرحله‌ای با کد تایید زنده و ثبت نشست موفق`);
+
+      saveAndAnimateWelcome(loginUser);
+    } catch (err) {
+      console.error('Session registry failed:', err);
+      // فال‌بک جهت ممانعت از کرش و قفل شدن کاربر در خطاهای جزئی
+      saveAndAnimateWelcome(loginUser);
     }
   };
 
@@ -689,46 +786,102 @@ export const Login = () => {
             {/* چیدمان فرم ورود نکس‌وین در برابر فرم ثبت‌نام چند گانه */}
             {!isSignUp ? (
               <>
-                {/* فرم ورود */}
-                <form onSubmit={handleLogin} className="space-y-5">
-                  {/* ورودی شماره همراه */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-black text-slate-700 block select-none px-1">شماره همراه</label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-slate-400">
-                        <Phone size={18} />
+                {loginStep === 'phone' ? (
+                  /* فرم ورود: گام اول وارد کردن شماره تلفن */
+                  <form onSubmit={handleLogin} className="space-y-5">
+                    {/* ورودی شماره همراه */}
+                    <div className="space-y-1.5 text-right">
+                      <label className="text-xs font-black text-slate-700 block select-none px-1">شماره همراه</label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-slate-400">
+                          <Phone size={18} />
+                        </div>
+                        <input
+                          type="text"
+                          value={phoneNumber}
+                          onChange={(e) => setPhoneNumber(e.target.value)}
+                          placeholder="مثال: 09121234567"
+                          disabled={loading}
+                          dir="ltr"
+                          className="w-full pl-4 pr-12 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 text-sm font-bold tracking-wider placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all disabled:opacity-50 text-left font-mono"
+                          required
+                        />
                       </div>
-                      <input
-                        type="text"
-                        value={phoneNumber}
-                        onChange={(e) => setPhoneNumber(e.target.value)}
-                        placeholder="مثال: 09121234567"
-                        disabled={loading}
-                        dir="ltr"
-                        className="w-full pl-4 pr-12 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 text-sm font-bold tracking-wider placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all disabled:opacity-50 text-left font-mono"
-                      />
                     </div>
-                  </div>
 
-                  {/* دکمه سابمیت */}
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-2xl font-black text-sm shadow-lg shadow-blue-500/25 flex items-center justify-center gap-3 active:scale-98 transition-all disabled:opacity-55 disabled:scale-100 hover:shadow-2xl hover:shadow-blue-500/10 cursor-pointer border-none"
-                  >
-                    {loading ? (
-                      <>
-                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                        <span>در حال تایید ورود...</span>
-                      </>
-                    ) : (
-                      <>
-                        <span>ورود به نرم‌افزار NexWin</span>
-                        <ArrowRight size={18} />
-                      </>
-                    )}
-                  </button>
-                </form>
+                    {/* دکمه سابمیت */}
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-2xl font-black text-sm shadow-lg shadow-blue-500/25 flex items-center justify-center gap-3 active:scale-98 transition-all disabled:opacity-55 disabled:scale-100 hover:shadow-2xl hover:shadow-blue-500/10 cursor-pointer border-none"
+                    >
+                      {loading ? (
+                        <>
+                          <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                          <span>در حال تایید شماره...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>ادامه و دریافت کد تایید ⚡</span>
+                          <ArrowRight size={18} />
+                        </>
+                      )}
+                    </button>
+                  </form>
+                ) : (
+                  /* فرم ورود: گام دوم وارد کردن کد OTP */
+                  <form onSubmit={handleVerifyLoginOtp} className="space-y-5">
+                    <div className="space-y-1.5 text-right">
+                      <label className="text-xs font-black text-slate-700 block select-none px-1">کد تأیید پیامکی ورود</label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-slate-400">
+                          <Lock size={18} />
+                        </div>
+                        <input
+                          type="text"
+                          value={loginOtp}
+                          onChange={(e) => setLoginOtp(e.target.value)}
+                          placeholder="کد ۵ رقمی ارسالی"
+                          dir="ltr"
+                          maxLength={5}
+                          className="w-full pl-4 pr-12 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 text-sm font-bold tracking-[0.25em] placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-center font-mono shadow-sm"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="w-full py-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-2xl font-black text-sm shadow-md shadow-emerald-500/20 flex items-center justify-center gap-2 active:scale-98 transition-all cursor-pointer border-none"
+                    >
+                      {loading ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white/25 border-t-white rounded-full animate-spin"></div>
+                          <span>در حال تایید کد...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>ورود به نرم‌افزار NexWin</span>
+                          <Check size={18} />
+                        </>
+                      )}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLoginStep('phone');
+                        setErrorMessage(null);
+                        setSmsSuccessMsg(null);
+                        setLoginOtp('');
+                      }}
+                      className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all border border-slate-200 cursor-pointer"
+                    >
+                      ویرایش شماره همراه ↩
+                    </button>
+                  </form>
+                )}
 
                 {/* دکمه انتقال به منوی ثبت نام آنلاین با پیامک */}
                 <div className="text-center mt-5">

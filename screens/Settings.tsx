@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowRight, Moon, Globe, FileText, Database, Percent, Languages, Building2, MapPin, Phone, MessageSquare, Layout, CheckCircle2, LogOut, Sparkles, ShieldCheck, Award, Zap, UserCheck, CreditCard, Key, Download, Upload, AlertCircle, CloudLightning, Shield, RefreshCw } from 'lucide-react';
+import { ArrowRight, Moon, Globe, FileText, Database, Percent, Languages, Building2, MapPin, Phone, MessageSquare, Layout, CheckCircle2, LogOut, Sparkles, ShieldCheck, Award, Zap, UserCheck, CreditCard, Key, Download, Upload, AlertCircle, CloudLightning, Shield, RefreshCw, Smartphone, Monitor, Trash2, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -8,6 +8,7 @@ import { toPersianDigits } from '../utils/formatting';
 import { pricingStore } from '../services/pricingStore';
 import { AppSettings, InvoiceLayoutType, AppUser } from '../types';
 import { InputField } from '../components/UIComponents';
+import { fetchActiveSessions, revokeSession, getDeviceLimit, addMockDeviceSession, DeviceSession } from '../services/sessionService';
 
 const SettingItem = ({ icon: Icon, label, value, children, className }: any) => (
   <div className={`flex items-center justify-between p-4 bg-white rounded-xl shadow-sm border border-slate-100 mb-3 ${className}`}>
@@ -57,18 +58,83 @@ export const Settings = () => {
   const [backupMsg, setBackupMsg] = useState<{ text: string; type: 'success' | 'error' | 'info' } | null>(null);
   const [lastSync, setLastSync] = useState<string | null>(localStorage.getItem('nexwin_last_successful_sync'));
 
+  // Active sessions management
+  const [activeSessionsList, setActiveSessionsList] = useState<DeviceSession[]>([]);
+  const [sessionsLoading, setSessionsLoading] = useState(false);
+
+  const loadSessions = async (userId: string) => {
+    setSessionsLoading(true);
+    try {
+      const list = await fetchActiveSessions(userId);
+      setActiveSessionsList(list);
+    } catch (e) {
+      console.error('Failed to load active sessions:', e);
+    } finally {
+      setSessionsLoading(false);
+    }
+  };
+
   useEffect(() => {
     setSettings(pricingStore.getSettings());
 
     const userStr = localStorage.getItem('nexwin_user');
     if (userStr) {
       try {
-        setCurrentUser(JSON.parse(userStr));
+        const user = JSON.parse(userStr) as AppUser;
+        setCurrentUser(user);
+        loadSessions(user.id);
       } catch (e) {
         console.error('Failed to parse user state in Settings:', e);
       }
     }
   }, []);
+
+  const handleRevokeSession = async (sessionId: string) => {
+    if (!currentUser) return;
+    const confirmRevoke = window.confirm('آیا مایل به قطع اتصال این دستگاه از حساب کاربری خود هستید؟');
+    if (!confirmRevoke) return;
+
+    try {
+      const success = await revokeSession(currentUser.id, sessionId);
+      if (success) {
+        // If they revoked the current device, log them out
+        const isCurrent = activeSessionsList.find(s => s.id === sessionId)?.is_current;
+        if (isCurrent) {
+          localStorage.removeItem('nexwin_user');
+          window.location.href = '#/login';
+          window.location.reload();
+          return;
+        }
+        await loadSessions(currentUser.id);
+        showBackupMessage('اتصال دستگاه با موفقیت قطع گردید.', 'success');
+      } else {
+        showBackupMessage('خطا در قطع اتصال دستگاه.', 'error');
+      }
+    } catch (e) {
+      showBackupMessage('خطا در برقراری ارتباط با سرور.', 'error');
+    }
+  };
+
+  const handleAddMockSession = () => {
+    if (!currentUser) return;
+    const limit = getDeviceLimit(currentUser.tier);
+    if (activeSessionsList.length >= limit) {
+      showBackupMessage(`تعداد دستگاه‌های متصل به حد مجاز (${limit} دستگاه برای این سطح اشتراک) رسیده است. ابتدا یکی از دستگاه‌ها را خارج کنید.`, 'error');
+      return;
+    }
+
+    const testDevices = [
+      'iPhone 15 Pro (سافاری)',
+      'Samsung Galaxy S24 (کروم)',
+      'Firefox - Windows 11 (دفتر فروش)',
+      'iPad Air (سافاری کارگاه)',
+      'iMac 24 (مدیریت کارخانه)'
+    ];
+    const randomName = testDevices[Math.floor(Math.random() * testDevices.length)];
+    addMockDeviceSession(currentUser.id, randomName);
+    loadSessions(currentUser.id);
+    showBackupMessage(`دستگاه فرضی "${randomName}" جهت تست به لیست نشست‌های فعال شما اضافه شد.`, 'success');
+  };
 
   const showBackupMessage = (text: string, type: 'success' | 'error' | 'info' = 'info') => {
     setBackupMsg({ text, type });
@@ -562,6 +628,94 @@ export const Settings = () => {
           </div>
         </div>
       </div>
+
+      {/* بخش مدیریت دستگاه‌ها و نشست‌های فعال */}
+      {currentUser && (
+        <div className="mb-8 font-['Vazirmatn'] border-t border-slate-100 pt-8">
+          <div className="flex justify-between items-center mb-4 px-1">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">دستگاه‌ها و نشست‌های فعال</h3>
+            <span className="text-[10px] font-bold text-slate-500">
+              حد مجاز: {toPersianDigits(getDeviceLimit(currentUser.tier))} دستگاه
+              {currentUser.tier === 'bronze' && ' (فروشگاهی)'}
+              {currentUser.tier === 'silver' && ' (کارگاهی)'}
+              {currentUser.tier === 'gold' && ' (مدیریتی)'}
+            </span>
+          </div>
+
+          <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+            <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
+              <div className="text-right">
+                <p className="text-[11px] text-slate-500 leading-relaxed">
+                  لیست مرورگرها و دستگاه‌هایی که به حساب کاربری شما متصل هستند. شما می‌توانید هر زمان مایل بودید، اتصال دستگاه‌های دیگر را قطع کنید.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleAddMockSession}
+                className="py-1.5 px-3 bg-slate-50 hover:bg-blue-50 hover:text-blue-600 text-slate-600 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1.5 border border-slate-200 cursor-pointer"
+              >
+                <Plus size={12} />
+                شبیه‌سازی دستگاه جدید
+              </button>
+            </div>
+
+            {sessionsLoading ? (
+              <div className="py-6 flex justify-center items-center gap-2">
+                <RefreshCw size={16} className="text-blue-500 animate-spin" />
+                <span className="text-xs text-slate-400">در حال دریافت لیست نشست‌های فعال...</span>
+              </div>
+            ) : activeSessionsList.length === 0 ? (
+              <div className="py-6 text-center text-xs text-slate-400">هیچ نشستی یافت نشد.</div>
+            ) : (
+              <div className="space-y-3">
+                {activeSessionsList.map((session) => (
+                  <div 
+                    key={session.id} 
+                    className={`flex items-center justify-between p-3.5 rounded-xl border transition-all ${
+                      session.is_current 
+                        ? 'border-blue-100 bg-blue-50/20' 
+                        : 'border-slate-100 bg-slate-50/50 hover:bg-slate-50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-lg ${session.is_current ? 'bg-blue-100 text-blue-600' : 'bg-slate-200 text-slate-500'}`}>
+                        {session.device_name.toLowerCase().includes('windows') || session.device_name.toLowerCase().includes('mac') ? (
+                          <Monitor size={18} />
+                        ) : (
+                          <Smartphone size={18} />
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-black text-slate-800">{session.device_name}</span>
+                          {session.is_current && (
+                            <span className="bg-blue-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded-md">همین دستگاه</span>
+                          )}
+                        </div>
+                        <span className="text-[9px] text-slate-400 block mt-0.5">
+                          آخرین فعالیت: {new Intl.DateTimeFormat('fa-IR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(session.last_active))}
+                        </span>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleRevokeSession(session.id)}
+                      className={`p-2 rounded-lg hover:bg-red-50 hover:text-red-600 transition-colors cursor-pointer border-none ${
+                        session.is_current ? 'text-slate-300 hover:text-slate-400' : 'text-slate-400'
+                      }`}
+                      title={session.is_current ? "خروج از حساب" : "قطع اتصال دستگاه"}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
 
       <div className="mt-10 bg-red-50/50 rounded-2xl p-4 border border-red-100 flex items-center justify-between">
         <div className="text-right">

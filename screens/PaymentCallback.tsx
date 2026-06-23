@@ -106,13 +106,21 @@ export function PaymentCallback() {
           status: 'active',
           register_date: new Intl.DateTimeFormat('fa-IR', { dateStyle: 'medium' }).format(new Date()),
           expiry_date: 'بدون منقضی (تجاری ۳ ساله دائم)',
-          max_devices: pendingSignup.tier === 'gold' ? 5 : pendingSignup.tier === 'silver' ? 3 : 1,
+          max_devices: pendingSignup.tier === 'gold' ? 3 : pendingSignup.tier === 'silver' ? 2 : 1,
           total_paid: pendingSignup.amountTomans,
           is_trial: false
         };
 
         // ذخیره در بانک لوکال سیستم (جهت دمو و آفلاین)
         localStorage.setItem('nexwin_user', JSON.stringify(activeUser));
+
+        // ثبت نشست فعال دستگاه فعلی
+        try {
+          const { registerCurrentSession } = await import('../services/sessionService');
+          await registerCurrentSession(activeUser.id);
+        } catch (e) {
+          console.error('Failed to register session in PaymentCallback:', e);
+        }
         
         // همچنین اضافه کردن به لیست شماره همراه‌های ثبت شده در مرورگر جهت پیشگیری از ثبت‌نام مجدد
         const registeredStr = localStorage.getItem('nexwin_registered_users') || '[]';
