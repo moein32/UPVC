@@ -6,7 +6,7 @@ import { toEnglishDigits, toPersianDigits } from '../utils/formatting';
 import { AppUser } from '../types';
 import { NexWinLogo } from '../src/components/icons/NexWinLogo';
 import { generateVerificationCode, sendOtpSMS, SMS_PANEL_CONFIG } from '../services/smsService';
-import { initiateZarinpalPayment, ZARINPAL_CONFIG } from '../services/paymentService';
+import { initiateZibalPayment, ZARINPAL_CONFIG } from '../services/paymentService';
 
 // ==========================================
 // تنظیمات اتصال مستقیم به لایسنس‌سرور سوپابیس
@@ -228,7 +228,7 @@ export const Login = () => {
     }, 1200);
   };
 
-  // ۴. هدایت کاربر به درگاه بانکی معتبر زرین‌پال یا لود سیستم شبیه‌ساز گیت‌وی
+  // ۴. هدایت کاربر به درگاه بانکی معتبر زیبال یا لود سیستم شبیه‌ساز گیت‌وی
   const handlePayment = async () => {
     setErrorMessage(null);
     if (!signupOwnerName.trim() || !signupCompanyName.trim()) {
@@ -252,7 +252,7 @@ export const Login = () => {
 
     setPaymentLoading(true);
 
-    // ذخیره موقت سبد خرید خریدار برای اعتبارسنجی در بازگشت از به پرداخت یا زرین‌پال
+    // ذخیره موقت سبد خرید خریدار برای اعتبارسنجی در بازگشت از به پرداخت یا زیبال
     const pendingData = {
       ownerName: signupOwnerName.trim(),
       companyName: signupCompanyName.trim(),
@@ -263,7 +263,7 @@ export const Login = () => {
     localStorage.setItem('nexwin_pending_signup', JSON.stringify(pendingData));
 
     try {
-      const res = await initiateZarinpalPayment({
+      const res = await initiateZibalPayment({
         amountTomans,
         phoneNumber: cleanPhone,
         description: `خرید لایسنس تجاری ۳ ساله ${tierLabels[signupTier]}`,
@@ -274,7 +274,7 @@ export const Login = () => {
 
       if (res.success) {
         if (res.redirectUrl) {
-          // هدایت مستقیم فیزیکی مرورگر به سرور پرداخت زرین‌پال
+          // هدایت مستقیم فیزیکی مرورگر به سرور پرداخت زیبال
           window.location.href = res.redirectUrl;
         } else if (res.authority) {
           // در صورت پوینت کردن به پلیس هودر، شبیه‌ساز بانک را روی صفحه باز می‌کنیم
@@ -307,7 +307,7 @@ export const Login = () => {
     }
   }, [navigate]);
 
-  // شمارش معکوس برای درخواست رمز پویای آزمایشی درگاه شبیه‌ساز زرین‌پال نکس‌وین
+  // شمارش معکوس برای درخواست رمز پویای آزمایشی درگاه شبیه‌ساز زیبال نکس‌وین
   useEffect(() => {
     let interval: any;
     if (showSimulatedPortal && simOtpTimer > 0) {
@@ -986,7 +986,7 @@ export const Login = () => {
                           <span className="text-[10px] text-slate-500 font-extrabold block">طریقه فعالسازی:</span>
                         </div>
 
-                        {/* دکمه پرداخت الکترونیک زرین‌پال */}
+                        {/* دکمه پرداخت الکترونیک زیبال */}
                         <button
                           type="button"
                           onClick={handlePayment}
@@ -1072,7 +1072,7 @@ export const Login = () => {
         )}
       </AnimatePresence>
 
-      {/* درگاه شبکه‌ای شبیه‌ساز پرداخت شتاب زرین‌پال و شاپرک */}
+      {/* درگاه شبکه‌ای شبیه‌ساز پرداخت شتاب زیبال و شاپرک */}
       <AnimatePresence>
         {showSimulatedPortal && (
           <motion.div
@@ -1092,7 +1092,7 @@ export const Login = () => {
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center font-black text-white text-base">💳</div>
                   <div>
-                    <h2 className="text-sm font-black tracking-tight">دروازه پرداخت الکترونیکی زرین‌پال</h2>
+                    <h2 className="text-sm font-black tracking-tight">دروازه پرداخت الکترونیکی زیبال</h2>
                     <p className="text-[10px] text-teal-200 mt-0.5">شبکه تبادل اطلاعات بانکی ایران (شاپرک)</p>
                   </div>
                 </div>
@@ -1158,7 +1158,7 @@ export const Login = () => {
                   </div>
                   <div className="mt-4 text-center bg-slate-100 p-3 rounded-xl border border-slate-200 max-w-[240px]">
                     <p className="text-[10px] text-slate-500 font-bold leading-relaxed text-justify">
-                      💡 این درگاه برای شبیه‌سازی دقیق زرین‌پال تعبیه شده است. اطلاعات ورودی الزامی به کارت واقعی نداشته و شما می‌توانید دکمه پرداخت موفق آزمایشی را مستقیماً بزنید.
+                      💡 این درگاه برای شبیه‌سازی دقیق زیبال تعبیه شده است. اطلاعات ورودی الزامی به کارت واقعی نداشته و شما می‌توانید دکمه پرداخت موفق آزمایشی را مستقیماً بزنید.
                     </p>
                   </div>
                 </div>
