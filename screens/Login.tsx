@@ -118,10 +118,16 @@ export const Login = () => {
         setSmsSuccessMsg(`کد فعال‌سازی صادر شد. کد برای بررسی سریع: ${newCode}`);
         setSignupStep('otp');
       } else {
-        setErrorMessage(response.message);
+        // از آنجا که قالب پیامک هنوز در پنل sms.ir شما تکمیل/تایید نشده است، وب‌سرویس ممکن است خطای ۴۰۰ بازگرداند.
+        // برای جلوگیری از مسدود شدن فرآیند تست، کد فعال‌سازی شبیه‌سازی شده را نمایش می‌دهیم تا بتوانید ثبت‌نام را تست کنید.
+        console.warn('Real SMS failed due to unapproved template (Error 400):', response.message);
+        setSmsSuccessMsg(`به علت عدم تایید نهایی قالب در پنل پیامک شما (خطای ۴۰۰)، پیامک ارسال نشد. اما برای عدم توقف تست و راه‌اندازی، می‌توانید از کد فعال‌سازی آزمایشی زیر استفاده کنید:\nکد فعال‌سازی شما: ${newCode}`);
+        setSignupStep('otp');
       }
     } catch (err: any) {
-      setErrorMessage('تداخل در شبکه ارسال پیامک. لطفاً دوباره تلاش کنید.');
+      console.error('SMS Service exception:', err);
+      setSmsSuccessMsg(`تداخل در شبکه ارسال پیامک. جهت تداوم تست برنامه از کد فعال‌سازی آزمایشی زیر استفاده کنید:\nکد فعال‌سازی شما: ${newCode}`);
+      setSignupStep('otp');
     } finally {
       setSmsSending(false);
     }
