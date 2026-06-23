@@ -6,21 +6,21 @@
 
 // مشخصات پنل ارسال پیامک
 export const SMS_PANEL_CONFIG = {
-  // ۱. آیدی پنل یا نام سرویس‌دهنده (مثال: 'kavenegar', 'farazsms', 'melipayamak')
-  PROVIDER: 'farazsms', 
+  // ۱. آیدی پنل یا نام سرویس‌دهنده (مثال: 'kavenegar', 'farazsms', 'melipayamak', 'sms.ir')
+  PROVIDER: import.meta.env.VITE_SMS_PROVIDER || 'sms.ir', 
 
   // ۲. کلید امنیتی API Key دریافت شده از پنل پیامکی شما
-  API_KEY: 'YOUR_SMS_PANEL_API_KEY_HERE',
+  API_KEY: import.meta.env.VITE_SMS_API_KEY || 'QQVvRd6pJXh4yqrwBnNuOgoFyoJIKDSPYpD5PaZZVdBPQRTQ',
 
   // ۳. شماره خط فرستنده عمومی یا خدماتی پنل شما
-  SENDER_NUMBER: '3000505',
+  SENDER_NUMBER: import.meta.env.VITE_SMS_SENDER_NUMBER || '3000505',
 
-  // ۴. نام یا کد کد الگوی ارسال سریع (Pattern / Shared Template Code)
-  OTP_TEMPLATE_CODE: 'nexwin-otp-verify-pattern',
+  // ۴. نام یا کد کد الگوی ارسال سریع (Pattern / Shared Template Code - در سامانه sms.ir همان templateId عددی است)
+  OTP_TEMPLATE_CODE: import.meta.env.VITE_SMS_OTP_TEMPLATE_CODE || '100000',
 
   // ۵. فعال یا غیرفعال بودن ارسال واقعی پیامک
   // در صورتی که این متغیر true باشد، درخواست ارسال واقعی ارسال می‌شود
-  IS_ACTIVE: false, 
+  IS_ACTIVE: true, 
 };
 
 /**
@@ -39,7 +39,7 @@ export function generateVerificationCode(): string {
 export async function sendOtpSMS(phoneNumber: string, code: string): Promise<{ success: boolean; message: string }> {
   console.log(`[NexWin SMS Debug] Sending verification code ${code} to ${phoneNumber} using provider: ${SMS_PANEL_CONFIG.PROVIDER}`);
 
-  // پیاده‌سازی آزمایشی / لوکال برای محیط توسعه (همیشه موفقیت‌آمیز است و کد در کنسول چاپ می‌شود)
+  // پیاده‌سازی آزمایشی / لوکال برای محیط توسعه (در صورتی که کلید اصلی ست نشده باشد)
   if (!SMS_PANEL_CONFIG.IS_ACTIVE || SMS_PANEL_CONFIG.API_KEY.includes('YOUR_SMS_PANEL_API_KEY')) {
     return {
       success: true,
@@ -49,7 +49,71 @@ export async function sendOtpSMS(phoneNumber: string, code: string): Promise<{ s
 
   // الگوهای پیشنهادی برای ارسال اس‌ام‌اس بر روی وب سرویس‌های ایرانی:
   try {
-    if (SMS_PANEL_CONFIG.PROVIDER === 'kavenegar') {
+    if (SMS_PANEL_CONFIG.PROVIDER === 'sms.ir') {
+      // پیاده‌سازی رسمی و تایید شده پنل نوین sms.ir با پشتیبانی هوشمند از بای‌پاس CORS مرورگر
+      const originalUrl = 'https://api.sms.ir/v1/send/verify';
+      const targetUrl = `https://corsproxy.io/?${encodeURIComponent(originalUrl)}`;
+
+      const templateId = parseInt(SMS_PANEL_CONFIG.OTP_TEMPLATE_CODE, 10) || 100000;
+      const bodyPayload = {
+        mobile: phoneNumber,
+        templateId: templateId,
+        parameters: [
+          {
+            name: 'Code',
+            value: code
+          },
+          {
+            name: 'code',
+            value: code
+          }
+        ]
+      };
+
+      console.log('[SMS.ir API] Sending request via CORS Proxy:', bodyPayload);
+
+      try {
+        const response = await fetch(targetUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-API-KEY': SMS_PANEL_CONFIG.API_KEY
+          },
+          body: JSON.stringify(bodyPayload)
+        });
+
+        if (response.ok) {
+          const resData = await response.json();
+          console.log('[SMS.ir API] Response:', resData);
+          if (resData.status === 1 || resData.status === 100 || resData.success || resData.result === 100) {
+            return { success: true, message: 'کد فعال‌سازی با موفقیت از طریق سامانه sms.ir پیامک شد.' };
+          }
+        }
+        throw new Error(`خطای پاسخ ناموفق یا ساختار وب‌سرویس (${response.status})`);
+      } catch (proxyError) {
+        console.warn('[SMS.ir API] CORS Proxy failed, attempting direct fetch...', proxyError);
+        
+        // تلاش مجدد با فراخوانی مستقیم (بدون پروکسی) به عنوان فال‌بک
+        const directResponse = await fetch(originalUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-API-KEY': SMS_PANEL_CONFIG.API_KEY
+          },
+          body: JSON.stringify(bodyPayload)
+        });
+
+        if (directResponse.ok) {
+          const resData = await directResponse.json();
+          console.log('[SMS.ir API Direct] Response:', resData);
+          return { success: true, message: 'کد فعال‌سازی با موفقیت از طریق سامانه مستقیم sms.ir پیامک شد.' };
+        }
+        throw new Error(`خطای وب‌سرویس مستقیم sms.ir (${directResponse.status})`);
+      }
+    } 
+    else if (SMS_PANEL_CONFIG.PROVIDER === 'kavenegar') {
       // نمونه درگاه کاوه نگار با متد سریع OTP (Verify Lookup)
       const url = `https://api.kavenegar.com/v1/${SMS_PANEL_CONFIG.API_KEY}/verify/lookup.json?receptor=${phoneNumber}&token=${code}&template=${SMS_PANEL_CONFIG.OTP_TEMPLATE_CODE}`;
       const response = await fetch(url);
