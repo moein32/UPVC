@@ -31,7 +31,7 @@ export const ZIBAL_CONFIG = {
     if (envValZarinpal && envValZarinpal.trim()) {
       return envValZarinpal.trim();
     }
-    return 'zibal'; // درگاه پیش‌فرض تستی فعال بر روی زیبال
+    return '6a2da1bf87adc92a530c787c'; // درگاه پیش‌فرض فعال بر روی زیبال
   },
 
   // ۲. آدرس بازگشت پس از تراکنش پرداخت (Callback URL)
