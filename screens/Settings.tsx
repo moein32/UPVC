@@ -69,6 +69,24 @@ export const Settings = () => {
   const [editOwnerName, setEditOwnerName] = useState('');
   const [editTier, setEditTier] = useState<'bronze' | 'silver' | 'gold'>('bronze');
   const [isProfileSaving, setIsProfileSaving] = useState(false);
+  const [showSimulatedPortal, setShowSimulatedPortal] = useState(false);
+  const [simOtpTimer, setSimOtpTimer] = useState(60);
+  const [simOtpRequested, setSimOtpRequested] = useState(false);
+  const [simCardNo, setSimCardNo] = useState('');
+  const [simCvv, setSimCvv] = useState('');
+  const [simPin, setSimPin] = useState('');
+  const [finalPayableAmount, setFinalPayableAmount] = useState(0);
+
+  // شمارش معکوس رمز پویای آزمایشی درگاه شبیه‌ساز زیبال در صفحه تنظیمات
+  useEffect(() => {
+    let interval: any;
+    if (showSimulatedPortal && simOtpTimer > 0) {
+      interval = setInterval(() => {
+        setSimOtpTimer((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [showSimulatedPortal, simOtpTimer]);
 
   useEffect(() => {
     if (currentUser) {
@@ -205,8 +223,14 @@ export const Settings = () => {
           companyName: editCompanyName.trim()
         });
 
-        if (res.success && res.redirectUrl) {
-          window.location.href = res.redirectUrl;
+        setFinalPayableAmount(finalPayable);
+        if (res.success) {
+          if (res.redirectUrl) {
+            window.location.href = res.redirectUrl;
+          } else if (res.authority) {
+            localStorage.setItem('nexwin_pending_authority', res.authority);
+            setShowSimulatedPortal(true);
+          }
         } else {
           showBackupMessage(res.message || 'اتصال به درگاه پرداخت با خطا مواجه شد. لطفاً دوباره تلاش کنید.', 'error');
         }
@@ -1189,6 +1213,209 @@ export const Settings = () => {
       <div className="mt-12 text-center">
         <p className="text-slate-400 text-sm">{t('version')} {toPersianDigits("1.2.0")} {t('app_name')}</p>
       </div>
+
+      {/* درگاه شبکه‌ای شبیه‌ساز پرداخت شتاب زیبال و شاپرک */}
+      <AnimatePresence>
+        {showSimulatedPortal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-[#0a0f1d]/95 z-[120] flex items-center justify-center p-4 overflow-y-auto font-['Vazirmatn'] select-none text-slate-800"
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 15 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 15 }}
+              className="bg-white rounded-[2rem] w-full max-w-2xl shadow-[0_30px_70px_rgba(0,0,0,0.6)] overflow-hidden text-right"
+            >
+              {/* هدر شاپرک */}
+              <div className="bg-gradient-to-r from-teal-700 via-slate-800 to-sky-800 p-5 px-6 text-white flex justify-between items-center border-b border-white/10">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center font-black text-white text-base">💳</div>
+                  <div>
+                    <h2 className="text-sm font-black tracking-tight">دروازه پرداخت الکترونیکی زیبال</h2>
+                    <p className="text-[10px] text-teal-200 mt-0.5">شبکه تبادل اطلاعات بانکی ایران (شاپرک)</p>
+                  </div>
+                </div>
+                <div className="text-left">
+                  <span className="text-xs bg-black/20 text-teal-300 font-bold px-3 py-1.5 rounded-full border border-teal-500/20">اتصال امن (SSL)</span>
+                </div>
+              </div>
+
+              {/* خلاصه فاکتور */}
+              <div className="bg-slate-50 p-5 px-6 border-b border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-bold leading-normal">
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">پذیرنده دیجیتال:</span>
+                    <span className="text-slate-900 font-black">پلتفرم محاسباتی دوجداره نکس‌وین (NexWin)</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">مجموعه خریدار:</span>
+                    <span className="text-slate-900 font-black">{editCompanyName || 'کارگاه صنعتی جدید'}</span>
+                  </div>
+                </div>
+                <div className="space-y-2 border-r border-slate-200 pr-0 md:pr-4">
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">بسته اشتراکی:</span>
+                    <span className="text-blue-700 font-black">
+                      {editTier === 'gold' ? 'طلایی نامحدود' : editTier === 'silver' ? 'نقره‌ای خط تولید' : 'برنزی محاسباتی'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">مجموع کل فاکتور:</span>
+                    <span className="text-emerald-600 font-black text-sm">
+                      {toPersianDigits(finalPayableAmount * 10)} ریال ({toPersianDigits(finalPayableAmount)} تومان)
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* فرم مشخصات کارت شتاب */}
+              <div className="p-6 md:p-8 grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+                {/* قسمت چپ: کارت شتاب فیزیکی دمو */}
+                <div className="md:col-span-5 flex flex-col items-center">
+                  <div className="w-full max-w-[240px] aspect-[1.58] bg-gradient-to-tr from-sky-700 via-indigo-700 to-indigo-900 rounded-2xl p-4 text-white relative shadow-lg overflow-hidden flex flex-col justify-between">
+                    <div className="absolute top-0 right-0 left-0 bottom-0 bg-[radial-gradient(circle_at_80%_20%,rgba(255,255,255,0.1),transparent_40%)]"></div>
+                    <div className="flex justify-between items-center z-10">
+                      <span className="text-[10px] font-black tracking-widest opacity-80">عضو شبکه شتاب IRAN</span>
+                      <span className="text-yellow-400 font-black text-xs">نکس‌بانک ★</span>
+                    </div>
+
+                    <div className="my-3 z-10 text-center font-mono text-base font-bold tracking-widest leading-none drop-shadow-md text-slate-100 select-all">
+                      {simCardNo ? toPersianDigits(simCardNo.replace(/(\d{4})/g, '$1 ').trim()) : '۶۲۷۴  ۱۲۳۴  ۵۶۷۸  ۹۰۱۲'}
+                    </div>
+
+                    <div className="flex justify-between items-end z-10 leading-none">
+                      <div className="text-right">
+                        <span className="text-[7px] text-slate-300 block">صاحب کارت:</span>
+                        <span className="text-[10px] font-bold mt-0.5 block">{editOwnerName || 'مدیر محترم کارگاه'}</span>
+                      </div>
+                      <div className="text-left font-mono">
+                        <span className="text-[7px] text-slate-300 block">CVV2:</span>
+                        <span className="text-[10px] font-bold mt-0.5 block">{simCvv || '***'}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-4 text-center bg-slate-100 p-3 rounded-xl border border-slate-200 max-w-[240px]">
+                    <p className="text-[10px] text-slate-500 font-bold leading-relaxed text-justify">
+                      💡 این درگاه برای شبیه‌سازی دقیق زیبال تعبیه شده است. اطلاعات ورودی الزامی به کارت واقعی نداشته و شما می‌توانید دکمه پرداخت موفق آزمایشی را مستقیماً بزنید.
+                    </p>
+                  </div>
+                </div>
+
+                {/* سمت راست: ورودی‌ها */}
+                <div className="md:col-span-7 space-y-4">
+                  {/* شماره کارت */}
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-black text-slate-600 block">شماره کارت ۱۶ رقمی</label>
+                    <input
+                      type="text"
+                      className="w-full text-center px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl font-mono text-sm tracking-widest font-black focus:outline-none focus:border-indigo-500 focus:bg-white text-slate-800 transition-all"
+                      placeholder="6274-XXXX-XXXX-XXXX"
+                      maxLength={16}
+                      value={simCardNo}
+                      onChange={(e) => setSimCardNo(e.target.value.replace(/\D/g, ''))}
+                    />
+                  </div>
+
+                  {/* CVV2  و تاریخ انقضاء */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-black text-slate-600 block">کد امنیتی CVV2</label>
+                      <input
+                        type="password"
+                        className="w-full text-center px-3 py-3 bg-slate-50 border border-slate-300 rounded-xl font-mono font-black focus:outline-none focus:border-indigo-500 focus:bg-white text-slate-800 transition-all text-sm"
+                        placeholder="***"
+                        maxLength={4}
+                        value={simCvv}
+                        onChange={(e) => setSimCvv(e.target.value.replace(/\D/g, ''))}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-black text-slate-600 block">تاریخ انقضاء (ماه/سال)</label>
+                      <div className="flex gap-1">
+                        <input
+                          type="text"
+                          className="w-full text-center py-2.5 bg-slate-50 border border-slate-300 rounded-xl font-mono focus:outline-none focus:border-indigo-500 focus:bg-white text-xs font-bold"
+                          placeholder="ماه"
+                          maxLength={2}
+                        />
+                        <input
+                          type="text"
+                          className="w-full text-center py-2.5 bg-slate-50 border border-slate-300 rounded-xl font-mono focus:outline-none focus:border-indigo-500 focus:bg-white text-xs font-bold"
+                          placeholder="سال"
+                          maxLength={2}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* رمز دوم پویا شتاب */}
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-black text-slate-600 block">رمز دوم اینترنتی (پویا)</label>
+                    <div className="flex gap-2.5">
+                      <input
+                        type="password"
+                        className="flex-1 text-center px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl font-mono font-black focus:outline-none focus:border-indigo-500 focus:bg-white text-slate-800 tracking-wider transition-all text-sm"
+                        placeholder="رمز پویا"
+                        maxLength={8}
+                        value={simPin}
+                        onChange={(e) => setSimPin(e.target.value.replace(/\D/g, ''))}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSimOtpRequested(true);
+                          setSimOtpTimer(60);
+                          setSimPin('98320'); // کلمه پیش‌فرض اتوماتیک
+                          alert('کد شبیه‌ساز رمز یکبار مصرف به گوشی شما پیامک شد: 98320');
+                        }}
+                        disabled={simOtpRequested && simOtpTimer > 0}
+                        className={`px-4.5 rounded-xl text-[10px] font-black transition-all border cursor-pointer border-indigo-600 whitespace-nowrap ${
+                          simOtpRequested && simOtpTimer > 0
+                            ? 'bg-slate-100 text-slate-400 border-slate-200'
+                            : 'bg-indigo-50 hover:bg-indigo-100 text-indigo-700'
+                        }`}
+                      >
+                        {simOtpRequested && simOtpTimer > 0 ? `ارسال مجدد (${simOtpTimer} ثانیه)` : 'درخواست رمز پویا'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* اکشن بار نهایی زیرگاه پرداخت شتاب */}
+              <div className="bg-slate-100 p-5 px-6 flex flex-col md:flex-row gap-3 justify-between items-center border-t border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => {
+                    // انصراف از به پرداخت
+                    const auth = localStorage.getItem('nexwin_pending_authority') || 'SIM-AUTH';
+                    window.location.href = `${window.location.origin}/#/payment-callback?Status=NOK&Authority=${auth}`;
+                  }}
+                  className="w-full md:w-auto px-6 py-3 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs rounded-xl border border-rose-200 transition-all cursor-pointer"
+                >
+                  انصراف و ابطال فاکتور پرداخت ✕
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    // پرداخت موفق با موفقیت
+                    const auth = localStorage.getItem('nexwin_pending_authority') || 'SIM-AUTH';
+                    window.location.href = `${window.location.origin}/#/payment-callback?Status=OK&Authority=${auth}`;
+                  }}
+                  className="w-full md:w-auto px-10 py-3.5 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-black text-xs rounded-xl shadow-lg transition-all border-none cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <span>پرداخت موفقیت‌آمیز آزمایشی (سریع)</span>
+                  <Check size={16} />
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
