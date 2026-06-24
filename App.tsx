@@ -105,7 +105,7 @@ const GlobalUserStatusGuard = () => {
           }
         }
       } catch (err) {
-        console.error('[Security Guard] Offline check bypass:', err);
+        console.warn('[Security Guard] Offline check bypass:', err);
       }
     };
 

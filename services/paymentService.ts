@@ -52,7 +52,51 @@ export async function initiateZibalPayment(data: PaymentRequestData): Promise<{ 
   const merchant = ZIBAL_CONFIG.MERCHANT_ID;
   const amountRials = data.amountTomans * 10;
 
-  // به منظور هدایت به درگاه پرداخت رسمی یا تستی زیبال به صورت آنلاین، درخواست را با بای‌پاس CORS ارسال می‌کنیم تا تراکنش واقعی در زیبال ثبت شود.
+  // ۱. تلاش اول: استفاده از سرور پروکسی امن خود اپلیکیشن (/api/zibal) که فاقد هرگونه محدودیت CORS مرورگر یا فیلترینگ است
+  try {
+    const payload = {
+      action: 'request',
+      merchant: merchant,
+      amount: amountRials,
+      callbackUrl: ZIBAL_CONFIG.CALLBACK_URL,
+      description: data.description,
+      mobile: data.phoneNumber,
+      orderId: 'NW-' + Date.now()
+    };
+
+    console.log('[Zibal API] Sending request to Zibal via Server Proxy:', payload);
+
+    const response = await fetch('/api/zibal', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (response.ok) {
+      const resData = await response.json();
+      console.log('[Zibal API] Response from Server Proxy:', resData);
+
+      if (resData.result === 100) {
+        const trackId = resData.trackId;
+        const payUrl = `https://gateway.zibal.ir/start/${trackId}`;
+        return {
+          success: true,
+          authority: String(trackId),
+          redirectUrl: payUrl,
+          message: 'اتصال به زیبال با موفقیت انجام شد.'
+        };
+      } else {
+        console.warn(`[Zibal API] Server Proxy returned failure code: ${resData.result}`);
+      }
+    }
+  } catch (proxyError) {
+    console.warn('[Zibal API] Server Proxy attempt failed, falling back to browser-level cors proxies...', proxyError);
+  }
+
+  // ۲. تلاش دوم (فال‌بک): ارسال درخواست مستقیم با بای‌پاس CORS مرورگر
   try {
     const originalUrl = 'https://gateway.zibal.ir/v1/request';
     const baseUrl = `https://corsproxy.io/?${encodeURIComponent(originalUrl)}`;
@@ -135,7 +179,7 @@ export async function initiateZibalPayment(data: PaymentRequestData): Promise<{ 
         }
       }
     } catch (directErr) {
-      console.error('[Zibal API] Direct request failed:', directErr);
+      console.warn('[Zibal API] Direct request failed:', directErr);
     }
 
     // پروکسی جایگزین AllOrigins
@@ -175,11 +219,11 @@ export async function initiateZibalPayment(data: PaymentRequestData): Promise<{ 
         }
       }
     } catch (aoError) {
-      console.error('AllOrigins failed as well:', aoError);
+      console.warn('AllOrigins failed as well:', aoError);
     }
 
     // اگر کاملا خطای شبکه وجود داشت، پیغام خطا بازمی‌گردانیم
-    console.error('[Zibal API] All connection attempts failed.');
+    console.warn('[Zibal API] All connection attempts failed.');
     return {
       success: false,
       message: 'عدم امکان برقراری ارتباط با درگاه پرداخت زیبال. لطفاً اتصال اینترنت خود را بررسی کرده یا بعداً تلاش کنید.'
@@ -198,6 +242,44 @@ export async function verifyZibalPayment(trackId: string, amountTomans: number):
     };
   }
 
+  // ۱. تلاش اول: تایید تراکنش با استفاده از سرور پروکسی امن خود اپلیکیشن (/api/zibal) جهت دور زدن تمام محدودیت‌ها
+  try {
+    const payload = {
+      action: 'verify',
+      merchant: ZIBAL_CONFIG.MERCHANT_ID,
+      trackId: Number(trackId)
+    };
+
+    console.log('[Zibal API] Verifying payment via Server Proxy:', payload);
+
+    const response = await fetch('/api/zibal', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (response.ok) {
+      const resData = await response.json();
+      console.log('[Zibal API] Verify response from Server Proxy:', resData);
+
+      if (resData.result === 100 || resData.result === 101) {
+        return {
+          success: true,
+          refId: String(resData.refNumber || 'ZBL-REF-REAL'),
+          message: 'پرداخت با موفقیت در سیستم زیبال تایید و نهایی گردید.'
+        };
+      } else {
+        console.warn(`[Zibal API] Server Proxy verification failure code: ${resData.result}`);
+      }
+    }
+  } catch (proxyError) {
+    console.warn('[Zibal API] Server Proxy verify failed, falling back to browser-level proxies...', proxyError);
+  }
+
+  // ۲. تلاش دوم (فال‌بک): تایید تراکنش با پروکسی مرورگر
   try {
     const originalUrl = 'https://gateway.zibal.ir/v1/verify';
     const baseUrl = `https://corsproxy.io/?${encodeURIComponent(originalUrl)}`;
@@ -234,7 +316,7 @@ export async function verifyZibalPayment(trackId: string, amountTomans: number):
       throw new Error(`پرداخت توسط زیبال تایید نگردید: کد ${resData.result} - ${resData.message}`);
     }
   } catch (error: any) {
-    console.error('Error verifying Zibal transaction via proxy, trying direct/alternative:', error);
+    console.warn('Error verifying Zibal transaction via proxy, trying direct/alternative:', error);
 
     // بک‌آپ ۱: تایید مستقیم بدون پروکسی
     try {
@@ -264,7 +346,7 @@ export async function verifyZibalPayment(trackId: string, amountTomans: number):
         }
       }
     } catch (directErr) {
-      console.error('Direct verify failed:', directErr);
+      console.warn('Direct verify failed:', directErr);
     }
 
     // بک‌آپ ۲: تایید از طریق AllOrigins
@@ -296,7 +378,7 @@ export async function verifyZibalPayment(trackId: string, amountTomans: number):
         }
       }
     } catch (aoErr) {
-      console.error('AllOrigins verify failed:', aoErr);
+      console.warn('AllOrigins verify failed:', aoErr);
     }
 
     return {
