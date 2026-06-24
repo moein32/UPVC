@@ -39,6 +39,88 @@ interface ProtectedRouteProps {
   allowedTiers?: ('bronze' | 'silver' | 'gold')[];
 }
 
+// سرویس بررسی برخط تعلیق یا حذف لایسنس کاربری جهت خروج آنی و خودکار
+const GlobalUserStatusGuard = () => {
+  const location = useLocation();
+
+  useEffect(() => {
+    let active = true;
+
+    const checkUserStatus = async () => {
+      const userStr = localStorage.getItem('nexwin_user');
+      if (!userStr) return;
+
+      try {
+        const user = JSON.parse(userStr);
+        if (!user || !user.id) return;
+
+        const supaUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supaKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+        // در صورتی که دیتابیس سوپابیس ست نشده باشد، لایسنس آفلاین تایید شده است
+        if (!supaUrl || !supaKey || supaUrl.includes('YOUR_SUPABASE') || supaUrl === 'zibal' || supaUrl.trim() === '') {
+          return;
+        }
+
+        const cleanUrl = supaUrl.endsWith('/') ? supaUrl.slice(0, -1) : supaUrl;
+        const queryUrl = `${cleanUrl}/rest/v1/app_users?id=eq.${encodeURIComponent(user.id)}&select=*`;
+        
+        const response = await fetch(queryUrl, {
+          method: 'GET',
+          headers: {
+            'apikey': supaKey,
+            'Authorization': `Bearer ${supaKey}`
+          }
+        });
+
+        if (!active) return;
+
+        if (response.ok) {
+          const data = await response.json();
+          if (!data || data.length === 0) {
+            // کاربر در دیتابیس ابری وجود ندارد (حذف شده است)
+            console.warn('[Security Guard] User deleted from database. Logging out...');
+            localStorage.removeItem('nexwin_user');
+            window.location.reload();
+            return;
+          }
+
+          const onlineUser = data[0];
+          if (onlineUser.status !== 'active') {
+            // کاربر تعلیق شده است
+            console.warn('[Security Guard] User suspended or inactive. Logging out...');
+            localStorage.removeItem('nexwin_user');
+            window.location.reload();
+            return;
+          }
+
+          // هماهنگ‌سازی خودکار سطح اشتراک در صورتی که به صورت آنلاین ارتقا یافته باشد
+          if (onlineUser.tier !== user.tier) {
+            const updated = { 
+              ...user, 
+              tier: onlineUser.tier, 
+              max_devices: onlineUser.max_devices 
+            };
+            localStorage.setItem('nexwin_user', JSON.stringify(updated));
+          }
+        }
+      } catch (err) {
+        console.error('[Security Guard] Offline check bypass:', err);
+      }
+    };
+
+    checkUserStatus();
+    const interval = setInterval(checkUserStatus, 8000);
+
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, [location.pathname]);
+
+  return null;
+};
+
 const ProtectedRoute = ({ children, allowedTiers }: ProtectedRouteProps) => {
   const userStr = localStorage.getItem('nexwin_user');
   if (!userStr) {
@@ -185,6 +267,7 @@ function App() {
 
   return (
     <HashRouter>
+      <GlobalUserStatusGuard />
       <Suspense fallback={<LoadingSpinner />}>
         <Routes>
           <Route path="/" element={<Navigate to={hasSession ? "/dashboard" : "/login"} replace />} />

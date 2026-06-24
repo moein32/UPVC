@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowRight, Moon, Globe, FileText, Database, Percent, Languages, Building2, MapPin, Phone, MessageSquare, Layout, CheckCircle2, LogOut, Sparkles, ShieldCheck, Award, Zap, UserCheck, CreditCard, Key, Download, Upload, AlertCircle, CloudLightning, Shield, RefreshCw, Smartphone, Monitor, Trash2, Plus } from 'lucide-react';
+import { ArrowRight, Moon, Globe, FileText, Database, Percent, Languages, Building2, MapPin, Phone, MessageSquare, Layout, CheckCircle2, LogOut, Sparkles, ShieldCheck, Award, Zap, UserCheck, CreditCard, Key, Download, Upload, AlertCircle, CloudLightning, Shield, RefreshCw, Smartphone, Monitor, Trash2, Plus, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -8,7 +8,8 @@ import { toPersianDigits } from '../utils/formatting';
 import { pricingStore } from '../services/pricingStore';
 import { AppSettings, InvoiceLayoutType, AppUser } from '../types';
 import { InputField } from '../components/UIComponents';
-import { fetchActiveSessions, revokeSession, getDeviceLimit, addMockDeviceSession, DeviceSession } from '../services/sessionService';
+import { fetchActiveSessions, revokeSession, getDeviceLimit, DeviceSession } from '../services/sessionService';
+import { initiateZibalPayment } from '../services/paymentService';
 
 const SettingItem = ({ icon: Icon, label, value, children, className }: any) => (
   <div className={`flex items-center justify-between p-4 bg-white rounded-xl shadow-sm border border-slate-100 mb-3 ${className}`}>
@@ -61,6 +62,212 @@ export const Settings = () => {
   // Active sessions management
   const [activeSessionsList, setActiveSessionsList] = useState<DeviceSession[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
+
+  // Profile editing and tier upgrading states
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [editCompanyName, setEditCompanyName] = useState('');
+  const [editOwnerName, setEditOwnerName] = useState('');
+  const [editTier, setEditTier] = useState<'bronze' | 'silver' | 'gold'>('bronze');
+  const [isProfileSaving, setIsProfileSaving] = useState(false);
+
+  useEffect(() => {
+    if (currentUser) {
+      setEditCompanyName(currentUser.company_name || '');
+      setEditOwnerName(currentUser.owner_name || '');
+      setEditTier(currentUser.tier || 'bronze');
+    }
+  }, [currentUser]);
+
+  const getRemainingDays = (user: AppUser): number => {
+    if (user.is_trial && user.trial_start_date) {
+      const start = new Date(user.trial_start_date);
+      const elapsed = Date.now() - start.getTime();
+      const remainingMs = Math.max(0, (7 * 24 * 60 * 60 * 1000) - elapsed);
+      return Math.max(1, Math.ceil(remainingMs / (1000 * 60 * 60 * 24)));
+    }
+    
+    if ((user as any).expiry_timestamp) {
+      const remainingMs = Math.max(0, (user as any).expiry_timestamp - Date.now());
+      return Math.max(1, Math.ceil(remainingMs / (1000 * 60 * 60 * 24)));
+    }
+    
+    if (user.expiry_date) {
+      if (user.expiry_date.includes('بدون منقضی') || user.expiry_date.includes('۳ ساله') || user.expiry_date.includes('3 ساله')) {
+        return 30;
+      }
+      
+      try {
+        const farsiDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+        let clean = user.expiry_date;
+        for (let i = 0; i < 10; i++) {
+          clean = clean.replace(new RegExp(farsiDigits[i], 'g'), String(i));
+        }
+        
+        const match = clean.match(/(\d{4})[/-](\d{1,2})[/-](\d{1,2})/);
+        if (match) {
+          const jYear = parseInt(match[1], 10);
+          const jMonth = parseInt(match[2], 10);
+          const jDay = parseInt(match[3], 10);
+          
+          const currentJYear = 1405;
+          const currentJMonth = 4;
+          const currentJDay = 4;
+          
+          const totalDaysTarget = jYear * 365 + jMonth * 30 + jDay;
+          const totalDaysCurrent = currentJYear * 365 + currentJMonth * 30 + currentJDay;
+          const diff = totalDaysTarget - totalDaysCurrent;
+          if (diff > 0 && diff < 150) {
+            return diff;
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to parse Farsi expiry_date:', err);
+      }
+    }
+    
+    return 20;
+  };
+
+  const getTierPrice = (tier: 'bronze' | 'silver' | 'gold'): number => {
+    if (tier === 'gold') return 790000;
+    if (tier === 'silver') return 450000;
+    return 200000;
+  };
+
+  const getTierDailyPrice = (tier: 'bronze' | 'silver' | 'gold'): number => {
+    return Math.floor(getTierPrice(tier) / 30);
+  };
+
+  const getTierWeight = (t: string) => {
+    if (t === 'gold') return 3;
+    if (t === 'silver') return 2;
+    return 1;
+  };
+
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentUser) return;
+
+    if (!editCompanyName.trim()) {
+      showBackupMessage('نام کارگاه نمی‌تواند خالی باشد.', 'error');
+      return;
+    }
+    if (!editOwnerName.trim()) {
+      showBackupMessage('نام مدیریت نمی‌تواند خالی باشد.', 'error');
+      return;
+    }
+
+    setIsProfileSaving(true);
+    const VITE_SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+    const VITE_SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+    const isTierChanged = editTier !== currentUser.tier;
+
+    if (isTierChanged) {
+      if (getTierWeight(editTier) < getTierWeight(currentUser.tier)) {
+        showBackupMessage('تنزل سطح اشتراک لایسنس به صورت خودکار امکان‌پذیر نیست. لطفا با پشتیبانی تماس بگیرید.', 'error');
+        setIsProfileSaving(false);
+        return;
+      }
+
+      // It is an UPGRADE! Redirect to gateway instead of saving directly for free!
+      try {
+        const remainingDays = getRemainingDays(currentUser);
+        const unusedValue = remainingDays * getTierDailyPrice(currentUser.tier);
+        const discount = Math.floor(unusedValue * 0.5);
+        const baseNewPrice = getTierPrice(editTier);
+        const finalPayable = Math.max(10000, baseNewPrice - discount);
+        const extraValue = unusedValue - discount;
+        const extraDays = Math.round(extraValue / getTierDailyPrice(editTier));
+        const totalDurationDays = 30 + extraDays;
+
+        // Save pending signup data for upgrading
+        const pendingData = {
+          isUpgrade: true,
+          userId: currentUser.id,
+          ownerName: editOwnerName.trim(),
+          companyName: editCompanyName.trim(),
+          phoneDigits: currentUser.phone_number,
+          tier: editTier,
+          amountTomans: finalPayable,
+          newDurationDays: totalDurationDays
+        };
+        localStorage.setItem('nexwin_pending_signup', JSON.stringify(pendingData));
+
+        showBackupMessage('در حال اتصال به درگاه پرداخت ایمن زیبال جهت ارتقای حساب...', 'info');
+
+        const res = await initiateZibalPayment({
+          amountTomans: finalPayable,
+          phoneNumber: currentUser.phone_number,
+          description: `ارتقای لایسنس نکس‌وین به ${editTier === 'gold' ? 'طلایی' : 'نقره‌ای'} (${totalDurationDays} روز)`,
+          userTier: editTier,
+          ownerName: editOwnerName.trim(),
+          companyName: editCompanyName.trim()
+        });
+
+        if (res.success && res.redirectUrl) {
+          window.location.href = res.redirectUrl;
+        } else {
+          showBackupMessage(res.message || 'اتصال به درگاه پرداخت با خطا مواجه شد. لطفاً دوباره تلاش کنید.', 'error');
+        }
+      } catch (err: any) {
+        console.error('Failed to initiate upgrade payment:', err);
+        showBackupMessage('خطایی در اتصال به درگاه رخ داد.', 'error');
+      } finally {
+        setIsProfileSaving(false);
+      }
+      return;
+    }
+
+    // Normal profile update (without tier changes)
+    const updatedUser: AppUser = {
+      ...currentUser,
+      company_name: editCompanyName.trim(),
+      owner_name: editOwnerName.trim(),
+    };
+
+    try {
+      // ۱. به‌روزرسانی محلی لایسنس
+      localStorage.setItem('nexwin_user', JSON.stringify(updatedUser));
+      setCurrentUser(updatedUser);
+
+      // ۲. هماهنگ‌سازی با سوپابیس (در صورت فعال بودن)
+      if (VITE_SUPABASE_URL && VITE_SUPABASE_ANON_KEY && !VITE_SUPABASE_URL.includes('YOUR_SUPABASE') && VITE_SUPABASE_URL !== 'zibal' && VITE_SUPABASE_URL.trim() !== '') {
+        const cleanUrl = VITE_SUPABASE_URL.endsWith('/') ? VITE_SUPABASE_URL.slice(0, -1) : VITE_SUPABASE_URL;
+        const res = await fetch(`${cleanUrl}/rest/v1/app_users?id=eq.${encodeURIComponent(currentUser.id)}`, {
+          method: 'PATCH',
+          headers: {
+            'apikey': VITE_SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${VITE_SUPABASE_ANON_KEY}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify({
+            owner_name: updatedUser.owner_name,
+            company_name: updatedUser.company_name,
+          })
+        });
+
+        if (!res.ok) {
+          const errText = await res.text();
+          console.error('Supabase profile update failed:', errText);
+          showBackupMessage('تغییرات به صورت آفلاین ذخیره شد، هماهنگ‌سازی ابری با تاخیر انجام می‌شود.', 'info');
+        } else {
+          showBackupMessage('مشخصات کارگاه شما با موفقیت در فضای ابری به‌روزرسانی شد.', 'success');
+        }
+      } else {
+        showBackupMessage('مشخصات کارگاه شما به صورت آفلاین با موفقیت ذخیره گردید.', 'success');
+      }
+
+      setIsEditingProfile(false);
+      loadSessions(updatedUser.id);
+    } catch (err: any) {
+      console.error('Failed to update user profile:', err);
+      showBackupMessage('خطایی در هنگام به‌روزرسانی رخ داد. مجدداً تلاش کنید.', 'error');
+    } finally {
+      setIsProfileSaving(false);
+    }
+  };
 
   const loadSessions = async (userId: string) => {
     setSessionsLoading(true);
@@ -115,26 +322,7 @@ export const Settings = () => {
     }
   };
 
-  const handleAddMockSession = () => {
-    if (!currentUser) return;
-    const limit = getDeviceLimit(currentUser.tier);
-    if (activeSessionsList.length >= limit) {
-      showBackupMessage(`تعداد دستگاه‌های متصل به حد مجاز (${limit} دستگاه برای این سطح اشتراک) رسیده است. ابتدا یکی از دستگاه‌ها را خارج کنید.`, 'error');
-      return;
-    }
 
-    const testDevices = [
-      'iPhone 15 Pro (سافاری)',
-      'Samsung Galaxy S24 (کروم)',
-      'Firefox - Windows 11 (دفتر فروش)',
-      'iPad Air (سافاری کارگاه)',
-      'iMac 24 (مدیریت کارخانه)'
-    ];
-    const randomName = testDevices[Math.floor(Math.random() * testDevices.length)];
-    addMockDeviceSession(currentUser.id, randomName);
-    loadSessions(currentUser.id);
-    showBackupMessage(`دستگاه فرضی "${randomName}" جهت تست به لیست نشست‌های فعال شما اضافه شد.`, 'success');
-  };
 
   const showBackupMessage = (text: string, type: 'success' | 'error' | 'info' = 'info') => {
     setBackupMsg({ text, type });
@@ -408,17 +596,32 @@ export const Settings = () => {
       {/* مشخصات ساده و شناسنامه واحد صنفی فعال */}
       {currentUser && (
         <div className="mb-8 bg-white border border-slate-100 rounded-2xl p-5 shadow-sm text-right font-['Vazirmatn']">
-          <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 pb-3 border-b border-slate-100">
             <h3 className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
               <Shield size={16} className="text-blue-500" />
-              <span>اطلاعات تفصیلی کارگاه فعال</span>
+              <span>اطلاعات تفصیلی و لایسنس کارگاه فعال</span>
             </h3>
-            <span className="text-[9px] bg-emerald-50 text-emerald-600 font-bold px-2 py-1 rounded-lg border border-emerald-100">
-              لایسنس کارگاهی فعال ✔️
-            </span>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[9px] bg-emerald-50 text-emerald-600 font-bold px-2 py-1 rounded-lg border border-emerald-100">
+                لایسنس کارگاه فعال ✔️
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsEditingProfile(!isEditingProfile);
+                  setEditCompanyName(currentUser.company_name || '');
+                  setEditOwnerName(currentUser.owner_name || '');
+                  setEditTier(currentUser.tier || 'bronze');
+                }}
+                className="py-1.5 px-3 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-xl text-[10px] font-bold transition-all flex items-center gap-1.5 border border-blue-200/50 cursor-pointer"
+              >
+                <Sparkles size={13} className="text-blue-500 animate-pulse" />
+                {isEditingProfile ? 'انصراف از ویرایش ×' : 'ارتقای اشتراک و ویرایش اطلاعات ⚡'}
+              </button>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs mb-1">
             <div className="flex flex-col gap-1 bg-slate-50/50 p-2.5 rounded-xl border border-slate-100/50">
               <span className="text-[10px] text-slate-400">نام کارگاه / واحد تجاری:</span>
               <span className="font-bold text-slate-800">{currentUser.company_name}</span>
@@ -432,10 +635,257 @@ export const Settings = () => {
               <span className="font-mono font-bold text-slate-800 text-left">{currentUser.phone_number}</span>
             </div>
             <div className="flex flex-col gap-1 bg-slate-50/50 p-2.5 rounded-xl border border-slate-100/50">
-              <span className="text-[10px] text-slate-400">کد اختصاصی پروانه (License ID):</span>
-              <span className="font-mono font-bold text-blue-600 text-left">{currentUser.id}</span>
+              <span className="text-[10px] text-slate-400">سطح اشتراک فعال:</span>
+              <span className="font-bold text-blue-600">
+                {currentUser.tier === 'bronze' ? 'برنز (فروشگاهی)' : currentUser.tier === 'silver' ? 'نقره‌ای (کارگاهی)' : 'طلایی (مدیریتی)'}
+              </span>
             </div>
           </div>
+
+          <AnimatePresence>
+            {isEditingProfile && (
+              <motion.form
+                onSubmit={handleSaveProfile}
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mt-5 pt-5 border-t border-dashed border-slate-200 space-y-5 overflow-hidden"
+              >
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* ویرایش نام کارگاه */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold text-slate-600 block">نام کارگاه / واحد تجاری</label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400">
+                        <Building2 size={16} />
+                      </div>
+                      <input
+                        type="text"
+                        value={editCompanyName}
+                        onChange={(e) => setEditCompanyName(e.target.value)}
+                        placeholder="نام واحد تجاری یا کارگاه خود را وارد کنید"
+                        className="w-full pl-3 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs font-bold focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all text-right"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {/* ویرایش نام مدیریت */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold text-slate-600 block">نام مدیریت / کارفرما مسئول</label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400">
+                        <UserCheck size={16} />
+                      </div>
+                      <input
+                        type="text"
+                        value={editOwnerName}
+                        onChange={(e) => setEditOwnerName(e.target.value)}
+                        placeholder="نام و نام خانوادگی مدیر مسئول"
+                        className="w-full pl-3 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs font-bold focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all text-right"
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* انتخاب سطح اشتراک */}
+                <div className="space-y-2">
+                  <label className="text-[11px] font-bold text-slate-600 block flex items-center gap-1">
+                    <Zap size={14} className="text-amber-500 animate-bounce" />
+                    <span>انتخاب سطح اشتراک و ارتقای لایسنس کارگاهی</span>
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {/* سطح برنز */}
+                    <div
+                      onClick={() => setEditTier('bronze')}
+                      className={`p-3.5 rounded-xl border-2 cursor-pointer transition-all flex flex-col justify-between text-right ${
+                        editTier === 'bronze'
+                          ? 'border-amber-500/80 bg-amber-50/20'
+                          : 'border-slate-100 bg-slate-50/30 hover:border-slate-200'
+                      }`}
+                    >
+                      <div>
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="text-xs font-black text-amber-700 flex items-center gap-1">
+                            <Award size={14} />
+                            برنز (فروشگاهی)
+                          </span>
+                          {editTier === 'bronze' && <CheckCircle2 size={15} className="text-amber-500" />}
+                        </div>
+                        <p className="text-[10px] text-slate-500 leading-normal">
+                          مناسب برای دفاتر فروش و پاسخگویی سریع به مشتریان جهت صدور پیش‌فاکتور.
+                        </p>
+                      </div>
+                      <div className="flex justify-between items-center mt-3 pt-2 border-t border-slate-100/50">
+                        <span className="text-[9px] text-slate-400 font-bold">دستگاه‌های مجاز:</span>
+                        <span className="text-[10px] font-bold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded-lg">۱ دستگاه</span>
+                      </div>
+                    </div>
+
+                    {/* سطح نقره ای */}
+                    <div
+                      onClick={() => setEditTier('silver')}
+                      className={`p-3.5 rounded-xl border-2 cursor-pointer transition-all flex flex-col justify-between text-right ${
+                        editTier === 'silver'
+                          ? 'border-slate-400 bg-slate-50'
+                          : 'border-slate-100 bg-slate-50/30 hover:border-slate-200'
+                      }`}
+                    >
+                      <div>
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="text-xs font-black text-slate-700 flex items-center gap-1">
+                            <Sparkles size={14} className="text-slate-400" />
+                            نقره‌ای (کارگاهی)
+                          </span>
+                          {editTier === 'silver' && <CheckCircle2 size={15} className="text-slate-500" />}
+                        </div>
+                        <p className="text-[10px] text-slate-500 leading-normal">
+                          بسیار مناسب برای کارگاه‌های تولیدی متوسط با بخش طراحی و پاسخگویی مجزا.
+                        </p>
+                      </div>
+                      <div className="flex justify-between items-center mt-3 pt-2 border-t border-slate-100/50">
+                        <span className="text-[9px] text-slate-400 font-bold">دستگاه‌های مجاز:</span>
+                        <span className="text-[10px] font-bold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded-lg">۲ دستگاه</span>
+                      </div>
+                    </div>
+
+                    {/* سطح طلایی */}
+                    <div
+                      onClick={() => setEditTier('gold')}
+                      className={`p-3.5 rounded-xl border-2 cursor-pointer transition-all flex flex-col justify-between text-right ${
+                        editTier === 'gold'
+                          ? 'border-blue-600 bg-blue-50/10'
+                          : 'border-slate-100 bg-slate-50/30 hover:border-slate-200'
+                      }`}
+                    >
+                      <div>
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="text-xs font-black text-blue-700 flex items-center gap-1">
+                            <ShieldCheck size={14} className="text-blue-500 animate-pulse" />
+                            طلایی (مدیریتی)
+                          </span>
+                          {editTier === 'gold' && <CheckCircle2 size={15} className="text-blue-600" />}
+                        </div>
+                        <p className="text-[10px] text-slate-500 leading-normal">
+                          کامل‌ترین دسترسی نکس‌وین؛ دارای کلیه بخش‌های محاسبات، نقشه‌ها، و لایسنس کارفرمایی.
+                        </p>
+                      </div>
+                      <div className="flex justify-between items-center mt-3 pt-2 border-t border-slate-100/50">
+                        <span className="text-[9px] text-slate-400 font-bold">دستگاه‌های مجاز:</span>
+                        <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded-lg">۳ دستگاه</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* بخش محاسبه هزینه ارتقا به شکل زنده */}
+                {currentUser && editTier !== currentUser.tier && (() => {
+                  const isUpgrade = getTierWeight(editTier) > getTierWeight(currentUser.tier);
+                  if (!isUpgrade) return null;
+
+                  const remainingDays = getRemainingDays(currentUser);
+                  const unusedValue = remainingDays * getTierDailyPrice(currentUser.tier);
+                  const discount = Math.floor(unusedValue * 0.5);
+                  const baseNewPrice = getTierPrice(editTier);
+                  const finalPayable = Math.max(10000, baseNewPrice - discount);
+                  const extraValue = unusedValue - discount;
+                  const extraDays = Math.round(extraValue / getTierDailyPrice(editTier));
+                  const totalDurationDays = 30 + extraDays;
+
+                  const tierLabels: Record<string, string> = {
+                    bronze: 'برنزی',
+                    silver: 'نقره‌ای',
+                    gold: 'طلایی'
+                  };
+
+                  return (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="bg-blue-50/70 border border-blue-200/60 rounded-2xl p-5 text-right space-y-3.5 my-4"
+                    >
+                      <div className="flex items-center gap-2 text-blue-800 font-extrabold text-xs mb-1">
+                        <CreditCard size={15} className="text-blue-600" />
+                        <span>جزئیات و شفافیت محاسبه مابه‌التفاوت ارتقای اشتراک</span>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-[11px]">
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center bg-white/50 p-2 rounded-lg border border-slate-100">
+                            <span className="text-slate-500">روزهای باقی‌مانده طرح فعلی:</span>
+                            <span className="font-extrabold text-slate-800 font-mono">{toPersianDigits(remainingDays)} روز</span>
+                          </div>
+                          <div className="flex justify-between items-center bg-white/50 p-2 rounded-lg border border-slate-100">
+                            <span className="text-slate-500">ارزش باقیمانده لایسنس {tierLabels[currentUser.tier]}:</span>
+                            <span className="font-extrabold text-slate-800">{toPersianDigits(unusedValue.toLocaleString())} تومان</span>
+                          </div>
+                          <div className="flex justify-between items-center bg-emerald-50/50 p-2 rounded-lg border border-emerald-100 text-emerald-800">
+                            <span className="font-bold">تخفیف کسرشده از فاکتور (۵۰٪):</span>
+                            <span className="font-black">-{toPersianDigits(discount.toLocaleString())} تومان</span>
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center bg-white/50 p-2 rounded-lg border border-slate-100">
+                            <span className="text-slate-500">هزینه ۳۰ روزه طرح جدید ({tierLabels[editTier]}):</span>
+                            <span className="font-extrabold text-slate-800">{toPersianDigits(baseNewPrice.toLocaleString())} تومان</span>
+                          </div>
+                          <div className="flex justify-between items-center bg-blue-50/50 p-2 rounded-lg border border-blue-100 text-blue-800">
+                            <span className="font-bold">روزهای اعتبار هدیه اضافه (۵۰٪):</span>
+                            <span className="font-black">+{toPersianDigits(extraDays)} روز</span>
+                          </div>
+                          <div className="flex justify-between items-center bg-indigo-50/50 p-2 rounded-lg border border-indigo-100 text-indigo-800">
+                            <span className="font-bold">مدت زمان اعتبار طرح ارتقا یافته:</span>
+                            <span className="font-black">{toPersianDigits(totalDurationDays)} روز ({toPersianDigits(30)} روز پایه + {toPersianDigits(extraDays)} روز هدیه)</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="pt-3 border-t border-dashed border-blue-200/60 flex flex-col sm:flex-row justify-between items-center gap-2.5">
+                        <div className="text-[10px] text-slate-500 leading-normal max-w-sm">
+                          💡 فرمول محاسبه عادلانه: ۵۰٪ از ارزش روزهای استفاده‌نشده طرح فعلی شما مستقیماً از قیمت طرح جدید کسر شده و ۵۰٪ باقیمانده به صورت روزهای اعتبار اضافه (هدیه) به انتهای لایسنس جدید شما افزوده می‌شود.
+                        </div>
+                        <div className="bg-blue-600 text-white px-4 py-2.5 rounded-xl flex flex-col items-center sm:items-end">
+                          <span className="text-[9px] opacity-80">مبلغ نهایی مابه‌التفاوت جهت تسویه:</span>
+                          <span className="text-xs font-black">{toPersianDigits(finalPayable.toLocaleString())} تومان</span>
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                })()}
+
+                {/* دکمه ذخیره */}
+                <div className="flex justify-end pt-2">
+                  <button
+                    type="submit"
+                    disabled={isProfileSaving}
+                    className="py-2.5 px-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-500/10 flex items-center gap-2 active:scale-98 transition-all disabled:opacity-50 cursor-pointer border-none"
+                  >
+                    {isProfileSaving ? (
+                      <>
+                        <RefreshCw size={14} className="animate-spin" />
+                        <span>در حال اتصال به درگاه پرداخت...</span>
+                      </>
+                    ) : (
+                      <>
+                        {currentUser && editTier !== currentUser.tier && getTierWeight(editTier) > getTierWeight(currentUser.tier) ? (
+                          <>
+                            <CreditCard size={14} />
+                            <span>انتقال به درگاه زیبال و ارتقای لایسنس 💳</span>
+                          </>
+                        ) : (
+                          <>
+                            <span>ذخیره تغییرات و ارتقای لایسنس 💾</span>
+                          </>
+                        )}
+                      </>
+                    )}
+                  </button>
+                </div>
+              </motion.form>
+            )}
+          </AnimatePresence>
         </div>
       )}
 
@@ -643,20 +1093,10 @@ export const Settings = () => {
           </div>
 
           <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
-            <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
-              <div className="text-right">
-                <p className="text-[11px] text-slate-500 leading-relaxed">
-                  لیست مرورگرها و دستگاه‌هایی که به حساب کاربری شما متصل هستند. شما می‌توانید هر زمان مایل بودید، اتصال دستگاه‌های دیگر را قطع کنید.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={handleAddMockSession}
-                className="py-1.5 px-3 bg-slate-50 hover:bg-blue-50 hover:text-blue-600 text-slate-600 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1.5 border border-slate-200 cursor-pointer"
-              >
-                <Plus size={12} />
-                شبیه‌سازی دستگاه جدید
-              </button>
+            <div className="mb-4 pb-3 border-b border-slate-100 text-right">
+              <p className="text-[11px] text-slate-500 leading-relaxed">
+                لیست مرورگرها و دستگاه‌هایی که به حساب کاربری شما متصل هستند. شما می‌توانید هر زمان مایل بودید، اتصال دستگاه‌های دیگر را قطع کنید.
+              </p>
             </div>
 
             {sessionsLoading ? (
@@ -692,9 +1132,20 @@ export const Settings = () => {
                             <span className="bg-blue-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded-md">همین دستگاه</span>
                           )}
                         </div>
-                        <span className="text-[9px] text-slate-400 block mt-0.5">
-                          آخرین فعالیت: {new Intl.DateTimeFormat('fa-IR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(session.last_active))}
-                        </span>
+                        <div className="flex flex-wrap items-center gap-2 mt-1">
+                          <span className="text-[9px] text-slate-400">
+                            آخرین فعالیت: {new Intl.DateTimeFormat('fa-IR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(session.last_active))}
+                          </span>
+                          {session.ip_address && (
+                            <>
+                              <span className="text-slate-300 text-[10px] hidden sm:inline">•</span>
+                              <span className="text-[9px] font-mono font-bold text-blue-600 bg-blue-50/50 px-1.5 py-0.5 rounded-md flex items-center gap-1">
+                                <Globe size={9} className="text-blue-500" />
+                                {session.ip_address}
+                              </span>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
 

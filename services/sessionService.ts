@@ -9,8 +9,38 @@ export interface DeviceSession {
   id: string; // unique session ID / device ID
   user_id: string;
   device_name: string;
+  ip_address?: string;
   last_active: string;
   is_current: boolean;
+}
+
+// Get client public IP address with fast timeout fallback
+async function getClientIp(): Promise<string> {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 1800);
+    const res = await fetch('https://api.ipify.org?format=json', { signal: controller.signal });
+    clearTimeout(timeoutId);
+    if (res.ok) {
+      const data = await res.json();
+      return data.ip || '127.0.0.1';
+    }
+  } catch (e) {
+    console.warn('[Session Service] Failed to get public IP via ipify, trying backup:', e);
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 1800);
+      const res = await fetch('https://api.db-ip.com/v2/free/self', { signal: controller.signal });
+      clearTimeout(timeoutId);
+      if (res.ok) {
+        const data = await res.json();
+        return data.ipAddress || '127.0.0.1';
+      }
+    } catch (err2) {
+      console.warn('[Session Service] Failed to get public IP via backup:', err2);
+    }
+  }
+  return '127.0.0.1';
 }
 
 // Get or create unique persistent device ID
@@ -79,6 +109,7 @@ export async function fetchActiveSessions(userId: string): Promise<DeviceSession
         id: currentDevId,
         user_id: userId,
         device_name: `${getDeviceName()} (همین دستگاه)`,
+        ip_address: '127.0.0.1',
         last_active: new Date().toISOString(),
         is_current: true
       }
@@ -108,6 +139,7 @@ export async function fetchActiveSessions(userId: string): Promise<DeviceSession
         id: item.id,
         user_id: item.user_id,
         device_name: item.device_name,
+        ip_address: item.ip_address || '127.0.0.1',
         last_active: item.last_active || new Date().toISOString(),
         is_current: item.id === currentDevId
       }));
@@ -146,6 +178,7 @@ function fetchLocalFallbackSessions(userId: string): DeviceSession[] {
       id: currentDevId,
       user_id: userId,
       device_name: `${getDeviceName()} (همین دستگاه)`,
+      ip_address: '127.0.0.1',
       last_active: new Date().toISOString(),
       is_current: true
     }
@@ -159,6 +192,7 @@ export async function registerCurrentSession(userId: string): Promise<boolean> {
   const currentDevId = getOrCreateDeviceId();
   const currentDevName = getDeviceName();
   const now = new Date().toISOString();
+  const clientIp = await getClientIp();
 
   if (!isSupabaseActive()) {
     const sessions = fetchLocalFallbackSessions(userId);
@@ -167,6 +201,7 @@ export async function registerCurrentSession(userId: string): Promise<boolean> {
         id: currentDevId,
         user_id: userId,
         device_name: `${currentDevName} (همین دستگاه)`,
+        ip_address: clientIp,
         last_active: now,
         is_current: true
       });
@@ -190,25 +225,26 @@ export async function registerCurrentSession(userId: string): Promise<boolean> {
         id: currentDevId,
         user_id: userId,
         device_name: currentDevName,
+        ip_address: clientIp,
         last_active: now
       })
     });
 
     if (res.status === 404) {
       // Table doesn't exist, use fallback
-      registerLocalSession(userId);
+      registerLocalSession(userId, clientIp);
       return true;
     }
 
     return res.ok;
   } catch (err) {
     console.error('Failed to register session on Supabase:', err);
-    registerLocalSession(userId);
+    registerLocalSession(userId, clientIp);
     return true;
   }
 }
 
-function registerLocalSession(userId: string) {
+function registerLocalSession(userId: string, ip: string) {
   const currentDevId = getOrCreateDeviceId();
   const sessions = fetchLocalFallbackSessions(userId);
   if (!sessions.some(s => s.id === currentDevId)) {
@@ -216,6 +252,7 @@ function registerLocalSession(userId: string) {
       id: currentDevId,
       user_id: userId,
       device_name: `${getDeviceName()} (همین دستگاه)`,
+      ip_address: ip,
       last_active: new Date().toISOString(),
       is_current: true
     });

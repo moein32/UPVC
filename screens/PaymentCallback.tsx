@@ -74,6 +74,16 @@ export function PaymentCallback() {
       const pendingSignup = JSON.parse(pendingSignupStr);
       setAmount(pendingSignup.amountTomans);
       
+      const existingUserStr = localStorage.getItem('nexwin_user');
+      let existingUser: AppUser | null = null;
+      if (existingUserStr) {
+        try {
+          existingUser = JSON.parse(existingUserStr);
+        } catch (e) {
+          console.error('Failed to parse existing user in PaymentCallback:', e);
+        }
+      }
+      
       const tierMap: Record<string, string> = {
         bronze: 'نقشه پایه برنزی (Bronze)',
         silver: 'بهینه‌برش خط تولید نقره‌ای (Silver)',
@@ -94,21 +104,30 @@ export function PaymentCallback() {
       if (verification.success) {
         setRefId(verification.refId || '123456');
 
-        // تولید لایسنس دائمی تجاری
-        const generatedId = 'NW-' + Math.floor(10000 + Math.random() * 90000);
+        // تولید لایسنس دائمی تجاری یا استفاده از اطلاعات لایسنس فعلی جهت ارتقا
+        const userIdToUse = pendingSignup.isUpgrade ? pendingSignup.userId : ('NW-' + Math.floor(10000 + Math.random() * 90000));
         
+        let expiryDateStr = 'بدون منقضی (تجاری ۳ ساله دائم)';
+        let calculatedExpiryTimestamp: number | undefined = undefined;
+
+        if (pendingSignup.newDurationDays) {
+          calculatedExpiryTimestamp = Date.now() + pendingSignup.newDurationDays * 24 * 60 * 60 * 1000;
+          expiryDateStr = new Intl.DateTimeFormat('fa-IR', { dateStyle: 'medium' }).format(new Date(calculatedExpiryTimestamp));
+        }
+
         const activeUser: AppUser = {
-          id: generatedId,
+          id: userIdToUse,
           owner_name: pendingSignup.ownerName,
           company_name: pendingSignup.companyName,
           phone_number: pendingSignup.phoneDigits,
           tier: pendingSignup.tier,
           status: 'active',
-          register_date: new Intl.DateTimeFormat('fa-IR', { dateStyle: 'medium' }).format(new Date()),
-          expiry_date: 'بدون منقضی (تجاری ۳ ساله دائم)',
+          register_date: pendingSignup.isUpgrade ? (existingUser?.register_date || new Intl.DateTimeFormat('fa-IR', { dateStyle: 'medium' }).format(new Date())) : new Intl.DateTimeFormat('fa-IR', { dateStyle: 'medium' }).format(new Date()),
+          expiry_date: expiryDateStr,
           max_devices: pendingSignup.tier === 'gold' ? 3 : pendingSignup.tier === 'silver' ? 2 : 1,
-          total_paid: pendingSignup.amountTomans,
-          is_trial: false
+          total_paid: pendingSignup.isUpgrade ? ((existingUser?.total_paid || 0) + pendingSignup.amountTomans) : pendingSignup.amountTomans,
+          is_trial: false,
+          ...(calculatedExpiryTimestamp ? { expiry_timestamp: calculatedExpiryTimestamp } : {})
         };
 
         // ذخیره در بانک لوکال سیستم (جهت دمو و آفلاین)

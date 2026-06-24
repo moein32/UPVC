@@ -191,4 +191,5 @@ export interface AppUser {
   total_paid: number;
   is_trial?: boolean;
   trial_start_date?: string;
+  expiry_timestamp?: number;
 }

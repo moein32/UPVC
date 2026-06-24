@@ -178,12 +178,11 @@ export async function initiateZibalPayment(data: PaymentRequestData): Promise<{ 
       console.error('AllOrigins failed as well:', aoError);
     }
 
-    // اگر کاملا خطای شبکه وجود داشت، جهت مسدود نشدن روند اجرای دمو به عنوان فال‌بک نهایی زیبال تستی را شبیه‌سازی می‌کنیم
-    console.warn('[Zibal Backup] Falling back to browser local simulation.');
+    // اگر کاملا خطای شبکه وجود داشت، پیغام خطا بازمی‌گردانیم
+    console.error('[Zibal API] All connection attempts failed.');
     return {
-      success: true,
-      message: 'اتصال به صورت شبیه‌سازی شده هدایت شد.',
-      authority: 'ZBL-TRACK-' + Math.floor(10000000 + Math.random() * 90000000),
+      success: false,
+      message: 'عدم امکان برقراری ارتباط با درگاه پرداخت زیبال. لطفاً اتصال اینترنت خود را بررسی کرده یا بعداً تلاش کنید.'
     };
   }
 }
@@ -192,12 +191,10 @@ export async function initiateZibalPayment(data: PaymentRequestData): Promise<{ 
  * متد تایید و وریفای نهایی تراکنش پس از بازگشت کاربر از درگاه زیبال
  */
 export async function verifyZibalPayment(trackId: string, amountTomans: number): Promise<{ success: boolean; refId?: string; message: string }> {
-  const isSimulated = trackId.startsWith('ZBL-TRACK');
-  if (isSimulated) {
+  if (!trackId || isNaN(Number(trackId))) {
     return {
-      success: true,
-      refId: 'ZBL-REF-' + Math.floor(1000000 + Math.random() * 9000000),
-      message: 'تراکنش تستی زیبال با موفقیت تایید و لایسنس کاربری صادر شد.'
+      success: false,
+      message: 'شناسه تراکنش نامعتبر است یا پرداخت منقضی گردیده است.'
     };
   }
 
@@ -300,15 +297,6 @@ export async function verifyZibalPayment(trackId: string, amountTomans: number):
       }
     } catch (aoErr) {
       console.error('AllOrigins verify failed:', aoErr);
-    }
-
-    // اگر روی حالت آزمایشی (zibal) باشیم، برای بالا نگه داشتن دسترسی دمو تأیید لوکال صادر می‌کنیم
-    if (ZIBAL_CONFIG.USE_SANDBOX) {
-      return {
-        success: true,
-        refId: 'ZBL-REF-' + Math.floor(1000000 + Math.random() * 9000000),
-        message: 'تراکنش تستی زیبال به عنوان مد آزمایشی با موفقیت تایید لوکال شد.'
-      };
     }
 
     return {
