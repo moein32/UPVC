@@ -39,6 +39,32 @@ export function generateVerificationCode(): string {
 export async function sendOtpSMS(phoneNumber: string, code: string): Promise<{ success: boolean; message: string }> {
   console.log(`[NexWin SMS Debug] Sending verification code ${code} to ${phoneNumber} using provider: ${SMS_PANEL_CONFIG.PROVIDER}`);
 
+  // ابتدا تلاش برای فراخوانی از طریق API ایمن و بدون CORS ورسل (سرورلس فرانت به بک‌اند)
+  try {
+    const localApiUrl = '/api/send-sms';
+    const apiRes = await fetch(localApiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ phoneNumber, code })
+    });
+
+    if (apiRes.ok) {
+      const apiData = await apiRes.json();
+      if (apiData.success) {
+        console.log('[SMS Service] Serverless API call succeeded:', apiData);
+        return { success: true, message: apiData.message || 'کد فعال‌سازی با موفقیت ارسال شد.' };
+      } else {
+        console.warn('[SMS Service] Serverless API returned success=false:', apiData.message);
+      }
+    } else if (apiRes.status !== 404) {
+      console.warn('[SMS Service] Serverless API failed with status:', apiRes.status);
+    }
+  } catch (apiErr) {
+    console.warn('[SMS Service] Serverless API call exception, falling back:', apiErr);
+  }
+
   // پیاده‌سازی آزمایشی / لوکال برای محیط توسعه (در صورتی که کلید اصلی ست نشده باشد)
   if (!SMS_PANEL_CONFIG.IS_ACTIVE || SMS_PANEL_CONFIG.API_KEY.includes('YOUR_SMS_PANEL_API_KEY')) {
     return {
