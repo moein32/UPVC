@@ -60,6 +60,14 @@ export async function sendOtpSMS(phoneNumber: string, code: string): Promise<{ s
         templateId: templateId,
         parameters: [
           {
+            name: 'OTP',
+            value: code
+          },
+          {
+            name: 'otp',
+            value: code
+          },
+          {
             name: 'Code',
             value: code
           },
