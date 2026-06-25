@@ -69,6 +69,7 @@ export const Settings = () => {
   const [editOwnerName, setEditOwnerName] = useState('');
   const [editTier, setEditTier] = useState<'bronze' | 'silver' | 'gold'>('bronze');
   const [isProfileSaving, setIsProfileSaving] = useState(false);
+  const [paymentRedirectUrl, setPaymentRedirectUrl] = useState<string | null>(null);
   const [showSimulatedPortal, setShowSimulatedPortal] = useState(false);
   const [simOtpTimer, setSimOtpTimer] = useState(60);
   const [simOtpRequested, setSimOtpRequested] = useState(false);
@@ -226,7 +227,10 @@ export const Settings = () => {
         setFinalPayableAmount(finalPayable);
         if (res.success) {
           if (res.redirectUrl) {
-            window.location.href = res.redirectUrl;
+            // ذخیره کردن آدرس درگاه پرداخت زیبال جهت نمایش کارت انتقال امن
+            setPaymentRedirectUrl(res.redirectUrl);
+            // تلاش جهت باز کردن مستقیم در پنجره جدید به عنوان سهولت کاربری
+            window.open(res.redirectUrl, '_blank');
           } else if (res.authority) {
             localStorage.setItem('nexwin_pending_authority', res.authority);
             setShowSimulatedPortal(true);
@@ -1411,6 +1415,71 @@ export const Settings = () => {
                   <span>پرداخت موفقیت‌آمیز آزمایشی (سریع)</span>
                   <Check size={16} />
                 </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* صفحه هوشمند انتقال امن و مستقیم به درگاه رسمی زیبال */}
+      <AnimatePresence>
+        {paymentRedirectUrl && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[130] flex items-center justify-center p-4 font-['Vazirmatn'] text-slate-800"
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 15 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 15 }}
+              className="bg-white rounded-[2.5rem] w-full max-w-md shadow-[0_25px_60px_rgba(0,0,0,0.5)] overflow-hidden text-right p-8 relative flex flex-col items-center border border-slate-100"
+            >
+              {/* انیمیشن یا آیکون تپنده */}
+              <div className="relative mb-6 flex justify-center items-center">
+                <span className="absolute inline-flex h-16 w-16 rounded-full bg-blue-400 opacity-20 animate-ping"></span>
+                <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center text-3xl font-bold shadow-sm relative z-10">
+                  💳
+                </div>
+              </div>
+
+              <h3 className="text-lg font-black text-slate-900 text-center mb-2">در حال انتقال به درگاه پرداخت زیبال</h3>
+              <p className="text-xs text-slate-500 text-center leading-relaxed mb-6 font-medium">
+                در حال اتصال امن به شبکه شاپرک... شما موقتاً جهت واریز وجه به سامانه رسمی زیبال هدایت میشوید و پس از پرداخت، به صورت خودکار به نکسوین بازخواهید گشت تا لایسنس شما فعال شود.
+              </p>
+
+              <div className="w-full space-y-3">
+                <a
+                  href={paymentRedirectUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={() => {
+                    // بعد از باز شدن لینک، پنجره انتقال را می‌بندیم تا روند از سمت کاربر قابل کنترل باشد
+                    setPaymentRedirectUrl(null);
+                  }}
+                  className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-2xl text-xs font-black transition-all shadow-lg flex items-center justify-center gap-2 hover:shadow-indigo-500/20 text-center select-none"
+                >
+                  <span>ورود به درگاه پرداخت رسمی زیبال</span>
+                  <Check size={16} />
+                </a>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    // انصراف
+                    setPaymentRedirectUrl(null);
+                  }}
+                  className="w-full py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl text-xs font-bold transition-all border-none cursor-pointer text-center"
+                >
+                  انصراف و بازگشت
+                </button>
+              </div>
+
+              <div className="mt-6 pt-5 border-t border-slate-100 w-full text-center">
+                <span className="text-[10px] text-slate-400 font-extrabold flex items-center justify-center gap-1.5">
+                  🛡️ اتصال ۱۰۰٪ امن و مستقیم به درگاه پرداخت تحت پروتکل SSL بانکی
+                </span>
               </div>
             </motion.div>
           </motion.div>

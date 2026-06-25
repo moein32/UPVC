@@ -17,8 +17,8 @@ export interface PaymentRequestData {
 
 // تنظیمات رسمی درگاه پرداخت زیبال (از سمت کلاینت)
 export const ZIBAL_CONFIG = {
-  // شناسه درگاه تستی آنلاین رسمی زیبال
-  MERCHANT_ID: 'zibal',
+  // شناسه درگاه تستی یا حقیقی رسمی زیبال خریدار
+  MERCHANT_ID: '6a2da1bf87adc92a530c787c',
 
   // آدرس بازگشت پس از تراکنش پرداخت (Callback URL)
   get CALLBACK_URL(): string {

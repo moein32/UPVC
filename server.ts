@@ -25,7 +25,7 @@ async function startServer() {
       }
 
       const amountRials = Number(amountTomans) * 10;
-      const merchant = process.env.ZIBAL_MERCHANT_ID || 'zibal';
+      const merchant = process.env.ZIBAL_MERCHANT_ID || '6a2da1bf87adc92a530c787c';
       
       // Determine callback URL based on environment or host header
       const host = req.get('host') || 'localhost:3000';
@@ -65,6 +65,11 @@ async function startServer() {
           redirectUrl: `https://gateway.zibal.ir/start/${trackId}`,
           message: 'تراکنش با موفقیت ایجاد شد.'
         });
+      } else if (resData.result === 115) {
+        return res.status(200).json({
+          success: false,
+          message: `خطای درگاه زیبال: کد ۱۱۵ (آی‌پی نامعتبر). آی‌پی سرور فعلی برنامه (34.34.225.224) در پنل زیبال شما ثبت نشده است. لطفاً برای استفاده از مرچنت آیدی اختصاصی خود، آی‌پی "34.34.225.224" را در تنظیمات درگاه پنل کاربری زیبال (zibal.ir) ثبت نمایید، یا برای تست‌های لوکال و بدون محدودیت آی‌پی از مرچنت تستی "zibal" استفاده کنید.`
+        });
       } else {
         return res.status(200).json({
           success: false,
@@ -86,7 +91,7 @@ async function startServer() {
         return res.status(400).json({ success: false, message: 'شناسه تراکنش (trackId) الزامی است.' });
       }
 
-      const merchant = process.env.ZIBAL_MERCHANT_ID || 'zibal';
+      const merchant = process.env.ZIBAL_MERCHANT_ID || '6a2da1bf87adc92a530c787c';
       console.log(`[Zibal Server Gateway] Verifying trackId=${trackId}, merchant=${merchant}`);
 
       const response = await fetch('https://gateway.zibal.ir/v1/verify', {
