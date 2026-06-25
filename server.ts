@@ -65,11 +65,6 @@ async function startServer() {
           redirectUrl: `https://gateway.zibal.ir/start/${trackId}`,
           message: 'تراکنش با موفقیت ایجاد شد.'
         });
-      } else if (resData.result === 115) {
-        return res.status(200).json({
-          success: false,
-          message: `خطای درگاه زیبال: کد ۱۱۵ (آی‌پی نامعتبر). آی‌پی سرور فعلی برنامه (34.34.225.224) در پنل زیبال شما ثبت نشده است. لطفاً برای استفاده از مرچنت آیدی اختصاصی خود، آی‌پی "34.34.225.224" را در تنظیمات درگاه پنل کاربری زیبال (zibal.ir) ثبت نمایید، یا برای تست‌های لوکال و بدون محدودیت آی‌پی از مرچنت تستی "zibal" استفاده کنید.`
-        });
       } else {
         return res.status(200).json({
           success: false,
