@@ -296,6 +296,34 @@ export async function revokeSession(userId: string, sessionId: string): Promise<
   }
 }
 
+// Safely revoke current session from Supabase and clear local storage user
+export async function logoutUser(): Promise<void> {
+  const userStr = localStorage.getItem('nexwin_user');
+  if (userStr) {
+    try {
+      const user = JSON.parse(userStr);
+      if (user && user.id) {
+        const currentDevId = getOrCreateDeviceId();
+        // Wait at most 2 seconds for Supabase revocation so we don't hang the UI if connection is extremely slow
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2000);
+        
+        try {
+          await revokeSession(user.id, currentDevId);
+        } catch (e) {
+          console.warn('[Session Service] Failed to revoke session during logout:', e);
+        } finally {
+          clearTimeout(timeoutId);
+        }
+      }
+    } catch (e) {
+      console.warn('[Session Service] Failed to parse user string during logout:', e);
+    }
+  }
+  // Clear the user from local storage
+  localStorage.removeItem('nexwin_user');
+}
+
 // Add a mock device session (for user testing of the limits and list)
 export function addMockDeviceSession(userId: string, name: string): void {
   const sessions = fetchLocalFallbackSessions(userId);

@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Lock, Phone, LogOut, X, Share } from 'lucide-react';
 import { Login } from './screens/Login';
 import { PwaInstallManager } from './components/PwaInstallManager';
+import { logoutUser } from './services/sessionService';
 
 // Lazy loading sub-screens for ultra-fast startup and split bundling on mobile
 const Onboarding = React.lazy(() => import('./screens/Onboarding').then(m => ({ default: m.Onboarding })));
@@ -80,7 +81,7 @@ const GlobalUserStatusGuard = () => {
           if (!data || data.length === 0) {
             // کاربر در دیتابیس ابری وجود ندارد (حذف شده است)
             console.warn('[Security Guard] User deleted from database. Logging out...');
-            localStorage.removeItem('nexwin_user');
+            await logoutUser();
             window.location.reload();
             return;
           }
@@ -89,7 +90,7 @@ const GlobalUserStatusGuard = () => {
           if (onlineUser.status !== 'active') {
             // کاربر تعلیق شده است
             console.warn('[Security Guard] User suspended or inactive. Logging out...');
-            localStorage.removeItem('nexwin_user');
+            await logoutUser();
             window.location.reload();
             return;
           }
@@ -145,8 +146,8 @@ const ProtectedRoute = ({ children, allowedTiers }: ProtectedRouteProps) => {
 
 // کامپوننت پایان دسترسی آزمایشی نکس‌وین
 const TrialExpiredScreen = ({ user }: { user: any }) => {
-  const handleLogout = () => {
-    localStorage.removeItem('nexwin_user');
+  const handleLogout = async () => {
+    await logoutUser();
     window.location.reload();
   };
 

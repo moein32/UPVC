@@ -8,7 +8,7 @@ import { toPersianDigits } from '../utils/formatting';
 import { pricingStore } from '../services/pricingStore';
 import { AppSettings, InvoiceLayoutType, AppUser } from '../types';
 import { InputField } from '../components/UIComponents';
-import { fetchActiveSessions, revokeSession, getDeviceLimit, DeviceSession } from '../services/sessionService';
+import { fetchActiveSessions, revokeSession, getDeviceLimit, DeviceSession, logoutUser, getOrCreateDeviceId } from '../services/sessionService';
 import { initiateZibalPayment } from '../services/paymentService';
 
 const SettingItem = ({ icon: Icon, label, value, children, className }: any) => (
@@ -1202,8 +1202,8 @@ export const Settings = () => {
           <p className="text-[10px] text-red-500 mt-1">حساب کارگاه از مرورگر پاک شده و به صفحه ورود هدایت می‌شوید.</p>
         </div>
         <button 
-          onClick={() => {
-            localStorage.removeItem('nexwin_user');
+          onClick={async () => {
+            await logoutUser();
             window.location.href = '#/login';
             window.location.reload();
           }}
