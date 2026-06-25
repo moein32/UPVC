@@ -15,6 +15,37 @@ const rawSupaUrl = (import.meta.env.VITE_SUPABASE_URL || '').trim();
 const VITE_SUPABASE_URL = rawSupaUrl.endsWith('/') ? rawSupaUrl.slice(0, -1) : rawSupaUrl;
 const VITE_SUPABASE_ANON_KEY = (import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim();
 
+export const PRICING_PLANS = {
+  '1month': {
+    label: 'اشتراک ۱ ماهه (تست و ورود سریع)',
+    days: 30,
+    bronze: { price: 390000, originalPrice: 550000, discount: '۲۹٪', saving: null },
+    silver: { price: 690000, originalPrice: 980000, discount: '۲۹٪', saving: null },
+    gold: { price: 990000, originalPrice: 1450000, discount: '۳۱٪', saving: null },
+  },
+  '3month': {
+    label: 'اشتراک ۳ ماهه (اقتصادی و پرطرفدار)',
+    days: 90,
+    bronze: { price: 1050000, originalPrice: 1650000, discount: '۳۶٪', saving: '۶۰۰ هزار تومان' },
+    silver: { price: 1860000, originalPrice: 2940000, discount: '۳۶٪', saving: '۱ میلیون و ۸۰ هزار تومان' },
+    gold: { price: 2670000, originalPrice: 4350000, discount: '۳۸٪', saving: '۱ میلیون و ۶۸۰ هزار تومان' },
+  },
+  '6month': {
+    label: 'اشتراک ۶ ماهه (پیشنهاد ویژه کارگاه‌ها ⭐️)',
+    days: 180,
+    bronze: { price: 1870000, originalPrice: 3300000, discount: '۴۳٪', saving: '۱ میلیون و ۴۳۰ هزار تومان' },
+    silver: { price: 3310000, originalPrice: 5880000, discount: '۴۳٪', saving: '۲ میلیون و ۵۷۰ هزار تومان' },
+    gold: { price: 4750000, originalPrice: 8700000, discount: '۴۵٪', saving: '۳ میلیون و ۹۵۰ هزار تومان' },
+  },
+  '1year': {
+    label: 'اشتراک ۱ ساله (بمب مارکتینگ - حداکثر تخفیف)',
+    days: 365,
+    bronze: { price: 3040000, originalPrice: 6600000, discount: '۵۳٪', saving: '۳ میلیون و ۵۶۰ هزار تومان' },
+    silver: { price: 5380000, originalPrice: 11760000, discount: '۵۴٪', saving: '۶ میلیون و ۳۸۰ هزار تومان' },
+    gold: { price: 7720000, originalPrice: 17400000, discount: '۵۵٪', saving: '۹ میلیون و ۶۸۰ هزار تومان' },
+  },
+};
+
 export const Login = () => {
   const navigate = useNavigate();
 
@@ -38,6 +69,7 @@ export const Login = () => {
   const [signupOwnerName, setSignupOwnerName] = useState('');
   const [signupCompanyName, setSignupCompanyName] = useState('');
   const [signupTier, setSignupTier] = useState<'bronze' | 'silver' | 'gold'>('bronze');
+  const [signupDuration, setSignupDuration] = useState<'1month' | '3month' | '6month' | '1year'>('1month');
   const [hasClickedTier, setHasClickedTier] = useState(false);
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [paymentRedirectUrl, setPaymentRedirectUrl] = useState<string | null>(null);
@@ -258,17 +290,13 @@ export const Login = () => {
     }
 
     const cleanPhone = toEnglishDigits(signupPhone.trim());
-    const amountMap = {
-      bronze: 200000,
-      silver: 450000,
-      gold: 790000
-    };
+    const selectedPlan = PRICING_PLANS[signupDuration];
+    const amountTomans = selectedPlan[signupTier].price;
     
-    const amountTomans = amountMap[signupTier];
     const tierLabels = {
-      bronze: 'برنزی پایه نکس‌وین',
-      silver: 'نقره‌ای تولیدی نکس‌وین',
-      gold: 'طلایی فول کنترل نکس‌وین'
+      bronze: 'پلان فروشگاهی (برنز)',
+      silver: 'پلان کارگاهی (نقره‌ای)',
+      gold: 'پلان مدیریتی (طلایی)'
     };
 
     setPaymentLoading(true);
@@ -279,7 +307,8 @@ export const Login = () => {
       companyName: signupCompanyName.trim(),
       phoneDigits: cleanPhone,
       tier: signupTier,
-      amountTomans: amountTomans
+      amountTomans: amountTomans,
+      newDurationDays: selectedPlan.days
     };
     localStorage.setItem('nexwin_pending_signup', JSON.stringify(pendingData));
 
@@ -287,7 +316,7 @@ export const Login = () => {
       const res = await initiateZibalPayment({
         amountTomans,
         phoneNumber: cleanPhone,
-        description: `خرید لایسنس تجاری ۳ ساله ${tierLabels[signupTier]}`,
+        description: `خرید لایسنس تجاری ${tierLabels[signupTier]} (${selectedPlan.label})`,
         userTier: signupTier,
         ownerName: signupOwnerName.trim(),
         companyName: signupCompanyName.trim()
@@ -1044,93 +1073,185 @@ export const Login = () => {
                       </div>
                     </div>
 
+                    {/* انتخاب مدت زمان اشتراک */}
+                    <div className="space-y-2">
+                      <label className="text-xs font-black text-slate-700 block px-1 select-none">
+                        ۱. مدت زمان اشتراک را انتخاب کنید:
+                      </label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {(Object.keys(PRICING_PLANS) as Array<keyof typeof PRICING_PLANS>).map((durKey) => {
+                          const plan = PRICING_PLANS[durKey];
+                          const isActive = signupDuration === durKey;
+                          return (
+                            <div
+                              key={durKey}
+                              onClick={() => {
+                                setSignupDuration(durKey);
+                                setHasClickedTier(true);
+                              }}
+                              className={`p-2.5 rounded-2xl border cursor-pointer text-center transition-all ${
+                                isActive
+                                  ? 'border-indigo-600 bg-indigo-50 text-indigo-900 shadow-sm'
+                                  : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:border-slate-300'
+                              }`}
+                            >
+                              <div className="text-[11px] font-black">{plan.label.split(' ')[1] + ' ' + plan.label.split(' ')[2]}</div>
+                              <div className="text-[9px] text-slate-400 mt-0.5 font-bold">
+                                {durKey === '1month' && 'ورود سریع'}
+                                {durKey === '3month' && 'اقتصادی و پرطرفدار'}
+                                {durKey === '6month' && '⭐️ پیشنهاد ویژه'}
+                                {durKey === '1year' && '🔥 بمب مارکتینگ'}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
                     {/* انتخاب سطح شروع اشتراک و قیمت‌ها */}
                     <div className="space-y-2">
                       <label className="text-xs font-black text-slate-700 block px-1 select-none">
-                        بخش اشتراک مورد نظر را انتخاب کنید:
+                        ۲. پلان اشتراک مورد نظر را انتخاب کنید:
                       </label>
                       
                       <div className="grid grid-cols-1 gap-2.5">
                         {/* برنزی */}
-                        <div
-                          onClick={() => {
-                            setSignupTier('bronze');
-                            setHasClickedTier(true);
-                          }}
-                          className={`p-3.5 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between ${
-                            signupTier === 'bronze' && hasClickedTier
-                              ? 'border-orange-500 bg-orange-50 text-orange-700 shadow-[0_4px_20px_rgba(249,115,22,0.08)]' 
-                              : 'border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200 hover:bg-slate-100'
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 bg-orange-100 text-orange-600 rounded-xl">
-                              <Sparkles size={18} />
+                        {(() => {
+                          const bronzeDetails = PRICING_PLANS[signupDuration].bronze;
+                          return (
+                            <div
+                              onClick={() => {
+                                setSignupTier('bronze');
+                                setHasClickedTier(true);
+                              }}
+                              className={`p-3.5 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between ${
+                                signupTier === 'bronze' && hasClickedTier
+                                  ? 'border-orange-500 bg-orange-50/70 text-orange-700 shadow-[0_4px_20px_rgba(249,115,22,0.08)]' 
+                                  : 'border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200 hover:bg-slate-100'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2.5">
+                                <div className="p-2 bg-orange-100 text-orange-600 rounded-xl">
+                                  <Sparkles size={16} />
+                                </div>
+                                <div className="text-right">
+                                  <h4 className="text-[12px] font-black text-slate-900">پلان فروشگاهی (برنز)</h4>
+                                  <p className="text-[9px] text-slate-500 mt-0.5">محاسبه و طراحی پایه درب و پنجره دوجداره</p>
+                                </div>
+                              </div>
+                              <div className="text-left flex flex-col items-end">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-[10px] line-through text-slate-400 font-bold">
+                                    {toPersianDigits(bronzeDetails.originalPrice.toLocaleString())}
+                                  </span>
+                                  <span className="text-[9px] bg-red-100 text-red-600 px-1 py-0.5 rounded font-black">
+                                    {toPersianDigits(bronzeDetails.discount)}
+                                  </span>
+                                </div>
+                                <span className="text-xs font-black text-orange-600 mt-0.5">
+                                  {toPersianDigits(bronzeDetails.price.toLocaleString())} تومان
+                                </span>
+                                {bronzeDetails.saving && (
+                                  <span className="text-[8px] text-emerald-600 mt-0.5 font-bold">
+                                    سود شما: {toPersianDigits(bronzeDetails.saving)}
+                                  </span>
+                                )}
+                              </div>
                             </div>
-                            <div className="text-right">
-                              <h4 className="text-[12px] font-black text-slate-900">اشتراک پایه</h4>
-                              <p className="text-[9px] text-slate-500 mt-0.5">محاسبه و طراحی پایه درب و پنجره دوجداره</p>
-                            </div>
-                          </div>
-                          <div className="text-left">
-                            <span className="text-xs font-black text-orange-600">۲۰۰,۰۰۰ تومان</span>
-                            <span className="text-[9px] block text-slate-400">ماهیانه</span>
-                          </div>
-                        </div>
+                          );
+                        })()}
 
                         {/* نقره‌ای */}
-                        <div
-                          onClick={() => {
-                            setSignupTier('silver');
-                            setHasClickedTier(true);
-                          }}
-                          className={`p-3.5 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between ${
-                            signupTier === 'silver' && hasClickedTier
-                              ? 'border-indigo-500 bg-indigo-50 text-indigo-700 shadow-[0_4px_20px_rgba(99,102,241,0.08)]' 
-                              : 'border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200 hover:bg-slate-100'
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 bg-indigo-100 text-indigo-600 rounded-xl">
-                              <ShieldCheck size={18} />
+                        {(() => {
+                          const silverDetails = PRICING_PLANS[signupDuration].silver;
+                          return (
+                            <div
+                              onClick={() => {
+                                setSignupTier('silver');
+                                setHasClickedTier(true);
+                              }}
+                              className={`p-3.5 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between ${
+                                signupTier === 'silver' && hasClickedTier
+                                  ? 'border-indigo-500 bg-indigo-50/70 text-indigo-700 shadow-[0_4px_20px_rgba(99,102,241,0.08)]' 
+                                  : 'border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200 hover:bg-slate-100'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2.5">
+                                <div className="p-2 bg-indigo-100 text-indigo-600 rounded-xl">
+                                  <ShieldCheck size={16} />
+                                </div>
+                                <div className="text-right">
+                                  <h4 className="text-[12px] font-black text-slate-900">پلان کارگاهی (نقره‌ای)</h4>
+                                  <p className="text-[9px] text-slate-500 mt-0.5">بهینه‌ساز برش خط تولید و خروجی پروفیل</p>
+                                </div>
+                              </div>
+                              <div className="text-left flex flex-col items-end">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-[10px] line-through text-slate-400 font-bold">
+                                    {toPersianDigits(silverDetails.originalPrice.toLocaleString())}
+                                  </span>
+                                  <span className="text-[9px] bg-red-100 text-red-600 px-1 py-0.5 rounded font-black">
+                                    {toPersianDigits(silverDetails.discount)}
+                                  </span>
+                                </div>
+                                <span className="text-xs font-black text-indigo-600 mt-0.5">
+                                  {toPersianDigits(silverDetails.price.toLocaleString())} تومان
+                                </span>
+                                {silverDetails.saving && (
+                                  <span className="text-[8px] text-emerald-600 mt-0.5 font-bold">
+                                    سود شما: {toPersianDigits(silverDetails.saving)}
+                                  </span>
+                                )}
+                              </div>
                             </div>
-                            <div className="text-right">
-                              <h4 className="text-[12px] font-black text-slate-900">اشتراک نقره‌ای</h4>
-                              <p className="text-[9px] text-slate-500 mt-0.5">بهینه‌ساز برش خط تولید و خروجی پروفیل</p>
-                            </div>
-                          </div>
-                          <div className="text-left">
-                            <span className="text-xs font-black text-indigo-600">۴۵۰,۰۰۰ تومان</span>
-                            <span className="text-[9px] block text-slate-400">ماهیانه</span>
-                          </div>
-                        </div>
+                          );
+                        })()}
 
                         {/* طلایی */}
-                        <div
-                          onClick={() => {
-                            setSignupTier('gold');
-                            setHasClickedTier(true);
-                          }}
-                          className={`p-3.5 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between ${
-                            signupTier === 'gold' && hasClickedTier
-                              ? 'border-amber-500 bg-amber-50 text-amber-700 shadow-[0_4px_20px_rgba(234,179,8,0.08)]' 
-                              : 'border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200 hover:bg-slate-100'
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 bg-amber-100 text-amber-600 rounded-xl">
-                              <Award size={18} />
+                        {(() => {
+                          const goldDetails = PRICING_PLANS[signupDuration].gold;
+                          return (
+                            <div
+                              onClick={() => {
+                                setSignupTier('gold');
+                                setHasClickedTier(true);
+                              }}
+                              className={`p-3.5 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between ${
+                                signupTier === 'gold' && hasClickedTier
+                                  ? 'border-amber-500 bg-amber-50/70 text-amber-700 shadow-[0_4px_20px_rgba(234,179,8,0.08)]' 
+                                  : 'border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200 hover:bg-slate-100'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2.5">
+                                <div className="p-2 bg-amber-100 text-amber-600 rounded-xl">
+                                  <Award size={16} />
+                                </div>
+                                <div className="text-right">
+                                  <h4 className="text-[12px] font-black text-slate-900">پلان مدیریتی (طلایی) ⭐</h4>
+                                  <p className="text-[9px] text-slate-500 mt-0.5">مالی پیشرفته، سیستم انبار و قراردادها</p>
+                                </div>
+                              </div>
+                              <div className="text-left flex flex-col items-end">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-[10px] line-through text-slate-400 font-bold">
+                                    {toPersianDigits(goldDetails.originalPrice.toLocaleString())}
+                                  </span>
+                                  <span className="text-[9px] bg-red-100 text-red-600 px-1 py-0.5 rounded font-black">
+                                    {toPersianDigits(goldDetails.discount)}
+                                  </span>
+                                </div>
+                                <span className="text-xs font-black text-amber-600 mt-0.5">
+                                  {toPersianDigits(goldDetails.price.toLocaleString())} تومان
+                                </span>
+                                {goldDetails.saving && (
+                                  <span className="text-[8px] text-emerald-600 mt-0.5 font-bold">
+                                    سود شما: {toPersianDigits(goldDetails.saving)}
+                                  </span>
+                                )}
+                              </div>
                             </div>
-                            <div className="text-right">
-                              <h4 className="text-[12px] font-black text-slate-900">اشتراک طلایی ⭐</h4>
-                              <p className="text-[9px] text-slate-500 mt-0.5">مالی پیشرفته، سیستم انبار و قراردادها</p>
-                            </div>
-                          </div>
-                          <div className="text-left">
-                            <span className="text-xs font-black text-amber-600">۷۹۰,۰۰۰ تومان</span>
-                            <span className="text-[9px] block text-slate-400">ماهیانه</span>
-                          </div>
-                        </div>
+                          );
+                        })()}
                       </div>
                     </div>
 
@@ -1276,14 +1397,14 @@ export const Login = () => {
                   <div className="flex justify-between">
                     <span className="text-slate-500">بسته اشتراکی:</span>
                     <span className="text-blue-700 font-black">
-                      {signupTier === 'gold' ? 'طلایی نامحدود' : signupTier === 'silver' ? 'نقره‌ای خط تولید' : 'برنزی محاسباتی'}
+                      {signupTier === 'gold' ? 'طلایی مدیریتی' : signupTier === 'silver' ? 'نقره‌ای کارگاهی' : 'برنزی فروشگاهی'} ({PRICING_PLANS[signupDuration].label})
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-500">مجموع کل فاکتور:</span>
                     <span className="text-emerald-600 font-black text-sm">
-                      {signupTier === 'gold' ? '۷,۹۰۰,۰۰۰' : signupTier === 'silver' ? '۴,۵۰۰,۰۰۰' : '۲,۰۰۰,۰۰۰'} ریال (
-                      {signupTier === 'gold' ? '۷۹۰,۰۰۰' : signupTier === 'silver' ? '۴۵۰,۰۰۰' : '۲۰۰,۰۰۰'} تومان)
+                      {toPersianDigits((PRICING_PLANS[signupDuration][signupTier].price * 10).toLocaleString())} ریال (
+                      {toPersianDigits(PRICING_PLANS[signupDuration][signupTier].price.toLocaleString())} تومان)
                     </span>
                   </div>
                 </div>

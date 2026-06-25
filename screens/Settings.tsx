@@ -148,9 +148,9 @@ export const Settings = () => {
   };
 
   const getTierPrice = (tier: 'bronze' | 'silver' | 'gold'): number => {
-    if (tier === 'gold') return 790000;
-    if (tier === 'silver') return 450000;
-    return 200000;
+    if (tier === 'gold') return 990000;
+    if (tier === 'silver') return 690000;
+    return 390000;
   };
 
   const getTierDailyPrice = (tier: 'bronze' | 'silver' | 'gold'): number => {
