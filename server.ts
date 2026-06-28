@@ -32,23 +32,51 @@ async function startServer() {
       const protocol = req.secure || req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http';
       const callbackUrl = `${protocol}://${host}/#/payment-callback`;
 
-      console.log(`[Zibal Server Gateway] Creating payment: amount=${amountRials} Rials, phone=${phoneNumber}, merchant=${merchant}`);
+      const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+      const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+      const useSupabaseProxy = !!(supabaseUrl && supabaseKey && 
+                                 supabaseUrl !== 'zibal' && 
+                                 !supabaseUrl.includes('YOUR_SUPABASE') && 
+                                 supabaseUrl.trim() !== '');
 
-      const response = await fetch('https://gateway.zibal.ir/v1/request', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          merchant,
-          amount: amountRials,
-          callbackUrl,
-          description: description || 'خرید اشتراک نکس‌وین',
-          mobile: phoneNumber || '',
-          orderId: 'NW-' + Date.now()
-        })
-      });
+      let response;
+      if (useSupabaseProxy) {
+        const cleanSupabaseUrl = supabaseUrl!.replace(/\/$/, '');
+        console.log(`[Zibal Server Gateway] Proxying payment request via Supabase Edge Function: ${cleanSupabaseUrl}/functions/v1/zibal`);
+        response = await fetch(`${cleanSupabaseUrl}/functions/v1/zibal`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseKey}`
+          },
+          body: JSON.stringify({
+            action: 'request',
+            merchant,
+            amount: amountRials,
+            callbackUrl,
+            description: description || 'خرید اشتراک نکس‌وین',
+            mobile: phoneNumber || '',
+            orderId: 'NW-' + Date.now()
+          })
+        });
+      } else {
+        console.log(`[Zibal Server Gateway] Creating payment directly: amount=${amountRials} Rials, phone=${phoneNumber}, merchant=${merchant}`);
+        response = await fetch('https://gateway.zibal.ir/v1/request', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({
+            merchant,
+            amount: amountRials,
+            callbackUrl,
+            description: description || 'خرید اشتراک نکس‌وین',
+            mobile: phoneNumber || '',
+            orderId: 'NW-' + Date.now()
+          })
+        });
+      }
 
       if (!response.ok) {
         throw new Error(`خطای ارتباط با درگاه پرداخت زیبال (کد وضعیت: ${response.status})`);
@@ -87,19 +115,44 @@ async function startServer() {
       }
 
       const merchant = process.env.ZIBAL_MERCHANT_ID || '6a2da1bf87adc92a530c787c';
-      console.log(`[Zibal Server Gateway] Verifying trackId=${trackId}, merchant=${merchant}`);
+      
+      const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+      const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+      const useSupabaseProxy = !!(supabaseUrl && supabaseKey && 
+                                 supabaseUrl !== 'zibal' && 
+                                 !supabaseUrl.includes('YOUR_SUPABASE') && 
+                                 supabaseUrl.trim() !== '');
 
-      const response = await fetch('https://gateway.zibal.ir/v1/verify', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          merchant,
-          trackId: Number(trackId)
-        })
-      });
+      let response;
+      if (useSupabaseProxy) {
+        const cleanSupabaseUrl = supabaseUrl!.replace(/\/$/, '');
+        console.log(`[Zibal Server Gateway] Proxying verification via Supabase Edge Function: ${cleanSupabaseUrl}/functions/v1/zibal`);
+        response = await fetch(`${cleanSupabaseUrl}/functions/v1/zibal`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseKey}`
+          },
+          body: JSON.stringify({
+            action: 'verify',
+            merchant,
+            trackId: Number(trackId)
+          })
+        });
+      } else {
+        console.log(`[Zibal Server Gateway] Verifying trackId=${trackId} directly, merchant=${merchant}`);
+        response = await fetch('https://gateway.zibal.ir/v1/verify', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({
+            merchant,
+            trackId: Number(trackId)
+          })
+        });
+      }
 
       if (!response.ok) {
         throw new Error(`خطای تایید تراکنش در وب‌سرویس زیبال (کد وضعیت: ${response.status})`);

@@ -49,29 +49,57 @@ export default async function handler(req: any, res: any) {
       return;
     }
 
+    const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+    const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+    const useSupabaseProxy = !!(supabaseUrl && supabaseKey && 
+                                 supabaseUrl !== 'zibal' && 
+                                 !supabaseUrl.includes('YOUR_SUPABASE') && 
+                                 supabaseUrl.trim() !== '');
+
     if (action === 'request') {
       if (!merchant || !amount || !callbackUrl) {
         res.status(400).json({ success: false, message: 'اطلاعات ارسالی برای درخواست پرداخت ناقص است.' });
         return;
       }
 
-      console.log(`[Zibal Server Proxy] Sending request to Zibal: merchant=${merchant}, amount=${amount}`);
-
-      const response = await fetch('https://gateway.zibal.ir/v1/request', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          merchant,
-          amount,
-          callbackUrl,
-          description,
-          mobile,
-          orderId
-        })
-      });
+      let response;
+      if (useSupabaseProxy) {
+        const cleanSupabaseUrl = supabaseUrl!.replace(/\/$/, '');
+        console.log(`[Zibal Server Proxy] Proxying payment request via Supabase Edge Function: ${cleanSupabaseUrl}/functions/v1/zibal`);
+        response = await fetch(`${cleanSupabaseUrl}/functions/v1/zibal`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseKey}`
+          },
+          body: JSON.stringify({
+            action: 'request',
+            merchant,
+            amount,
+            callbackUrl,
+            description,
+            mobile,
+            orderId
+          })
+        });
+      } else {
+        console.log(`[Zibal Server Proxy] Sending request directly to Zibal: merchant=${merchant}, amount=${amount}`);
+        response = await fetch('https://gateway.zibal.ir/v1/request', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({
+            merchant,
+            amount,
+            callbackUrl,
+            description,
+            mobile,
+            orderId
+          })
+        });
+      }
 
       if (response.ok) {
         const resData = await response.json();
@@ -88,19 +116,36 @@ export default async function handler(req: any, res: any) {
         return;
       }
 
-      console.log(`[Zibal Server Proxy] Verifying trackId=${trackId} with merchant=${merchant}`);
-
-      const response = await fetch('https://gateway.zibal.ir/v1/verify', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          merchant,
-          trackId
-        })
-      });
+      let response;
+      if (useSupabaseProxy) {
+        const cleanSupabaseUrl = supabaseUrl!.replace(/\/$/, '');
+        console.log(`[Zibal Server Proxy] Proxying verification via Supabase Edge Function: ${cleanSupabaseUrl}/functions/v1/zibal`);
+        response = await fetch(`${cleanSupabaseUrl}/functions/v1/zibal`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseKey}`
+          },
+          body: JSON.stringify({
+            action: 'verify',
+            merchant,
+            trackId
+          })
+        });
+      } else {
+        console.log(`[Zibal Server Proxy] Verifying trackId=${trackId} directly with merchant=${merchant}`);
+        response = await fetch('https://gateway.zibal.ir/v1/verify', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({
+            merchant,
+            trackId
+          })
+        });
+      }
 
       if (response.ok) {
         const resData = await response.json();

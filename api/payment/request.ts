@@ -57,23 +57,51 @@ export default async function handler(req: any, res: any) {
     const protocol = req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http';
     const callbackUrl = `${protocol}://${host}/#/payment-callback`;
 
-    console.log(`[Vercel Zibal Gateway] Creating payment: amount=${amountRials} Rials, phone=${phoneNumber}, merchant=${merchant}`);
+    const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+    const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+    const useSupabaseProxy = !!(supabaseUrl && supabaseKey && 
+                                 supabaseUrl !== 'zibal' && 
+                                 !supabaseUrl.includes('YOUR_SUPABASE') && 
+                                 supabaseUrl.trim() !== '');
 
-    const response = await fetch('https://gateway.zibal.ir/v1/request', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify({
-        merchant,
-        amount: amountRials,
-        callbackUrl,
-        description: description || 'خرید لایسنس نکس‌وین',
-        mobile: phoneNumber || '',
-        orderId: 'NW-' + Date.now()
-      })
-    });
+    let response;
+    if (useSupabaseProxy) {
+      const cleanSupabaseUrl = supabaseUrl!.replace(/\/$/, '');
+      console.log(`[Vercel Zibal Gateway] Proxying payment request via Supabase Edge Function: ${cleanSupabaseUrl}/functions/v1/zibal`);
+      response = await fetch(`${cleanSupabaseUrl}/functions/v1/zibal`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseKey}`
+        },
+        body: JSON.stringify({
+          action: 'request',
+          merchant,
+          amount: amountRials,
+          callbackUrl,
+          description: description || 'خرید لایسنس نکس‌وین',
+          mobile: phoneNumber || '',
+          orderId: 'NW-' + Date.now()
+        })
+      });
+    } else {
+      console.log(`[Vercel Zibal Gateway] Creating payment directly: amount=${amountRials} Rials, phone=${phoneNumber}, merchant=${merchant}`);
+      response = await fetch('https://gateway.zibal.ir/v1/request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          merchant,
+          amount: amountRials,
+          callbackUrl,
+          description: description || 'خرید لایسنس نکس‌وین',
+          mobile: phoneNumber || '',
+          orderId: 'NW-' + Date.now()
+        })
+      });
+    }
 
     if (!response.ok) {
       throw new Error(`خطای ارتباط با درگاه پرداخت زیبال (کد وضعیت: ${response.status})`);
