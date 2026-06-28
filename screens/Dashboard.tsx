@@ -26,6 +26,7 @@ import { GlassCard } from '../components/UIComponents';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { BeforeInstallPromptEvent, AppUser } from '../types';
+import newProjectBg from '../src/assets/images/photo-1600607687920-4e2a09cf159d.jpeg';
 
 export const Dashboard = () => {
   const navigate = useNavigate();
@@ -207,7 +208,7 @@ export const Dashboard = () => {
         >
           <div className="absolute inset-0 z-0">
             <img 
-              src="https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=1200&q=80" 
+              src={newProjectBg} 
               alt="Modern Window Architecture" 
               className="w-full h-full object-cover opacity-60 group-hover:scale-110 transition-transform duration-1000 ease-out"
             />
