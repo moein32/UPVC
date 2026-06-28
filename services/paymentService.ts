@@ -1,9 +1,9 @@
 /**
- * NexWin Payment Gateway Integration & Verification Service (Zibal / زیبال) - Standard Client Gateway
+ * NexWin Payment Gateway Integration & Verification Service (Zarinpal / زرین‌پال) - Standard Client Gateway
  * ------------------------------------------------------------------------------------------------
  * این سرویس جهت دور زدن محدودیت‌های CORS مرورگر، درخواست‌ها را به صورت امن به گیت‌وی بک‌اند اختصاصی
  * اپلیکیشن (/api/payment/request و /api/payment/verify) ارسال می‌کند. بک‌اند نیز به صورت کاملاً استاندارد،
- * مستقیم و با پروتکل رسمی به سرورهای زیبال متصل می‌شود و تراکنش‌ها را برقرار می‌کند.
+ * مستقیم و با پروتکل رسمی به سرورهای زرین‌پال متصل می‌شود و تراکنش‌ها را برقرار می‌کند.
  */
 
 export interface PaymentRequestData {
@@ -15,10 +15,10 @@ export interface PaymentRequestData {
   companyName: string;
 }
 
-// تنظیمات رسمی درگاه پرداخت زیبال (از سمت کلاینت)
-export const ZIBAL_CONFIG = {
-  // شناسه درگاه تستی یا حقیقی رسمی زیبال خریدار
-  MERCHANT_ID: '6a2da1bf87adc92a530c787c',
+// تنظیمات رسمی درگاه پرداخت زرین‌پال (از سمت کلاینت)
+export const ZARINPAL_CONFIG = {
+  // شناسه درگاه حقیقی رسمی زرین‌پال خریدار
+  MERCHANT_ID: 'c7c38578-79ef-42e4-a05f-7f77caa534cb',
 
   // آدرس بازگشت پس از تراکنش پرداخت (Callback URL)
   get CALLBACK_URL(): string {
@@ -27,10 +27,10 @@ export const ZIBAL_CONFIG = {
 };
 
 /**
- * ارسال درخواست تراکنش خرید به گیت‌وی بک‌اند جهت ثبت تراکنش مستقیم در زیبال
+ * ارسال درخواست تراکنش خرید به گیت‌وی بک‌اند جهت ثبت تراکنش مستقیم در زرین‌پال
  */
-export async function initiateZibalPayment(data: PaymentRequestData): Promise<{ success: boolean; redirectUrl?: string; authority?: string; message: string }> {
-  console.log(`[Zibal Client] Initiating payment request for ${data.amountTomans} Tomans...`);
+export async function initiateZarinpalPayment(data: PaymentRequestData): Promise<{ success: boolean; redirectUrl?: string; authority?: string; message: string }> {
+  console.log(`[Zarinpal Client] Initiating payment request for ${data.amountTomans} Tomans...`);
 
   try {
     const response = await fetch('/api/payment/request', {
@@ -51,23 +51,23 @@ export async function initiateZibalPayment(data: PaymentRequestData): Promise<{ 
     }
 
     const resData = await response.json();
-    console.log('[Zibal Client] Request response:', resData);
+    console.log('[Zarinpal Client] Request response:', resData);
 
     if (resData.success) {
       return {
         success: true,
-        authority: resData.trackId,
+        authority: resData.authority,
         redirectUrl: resData.redirectUrl,
         message: resData.message || 'درخواست پرداخت با موفقیت ثبت شد.'
       };
     } else {
       return {
         success: false,
-        message: resData.message || 'خطا در فرآیند آغاز پرداخت زیبال'
+        message: resData.message || 'خطا در فرآیند آغاز پرداخت زرین‌پال'
       };
     }
   } catch (error: any) {
-    console.error('[Zibal Client Request Error]', error);
+    console.error('[Zarinpal Client Request Error]', error);
     return {
       success: false,
       message: error.message || 'خطا در ارتباط با سرور میانی پرداخت نکس‌وین'
@@ -76,15 +76,15 @@ export async function initiateZibalPayment(data: PaymentRequestData): Promise<{ 
 }
 
 /**
- * استعلام وضعیت پرداخت و وریفای از طریق گیت‌وی بک‌اند زیبال
+ * استعلام وضعیت پرداخت و وریفای از طریق گیت‌وی بک‌اند زرین‌پال
  */
-export async function verifyZibalPayment(trackId: string, amountTomans: number): Promise<{ success: boolean; refId?: string; message: string }> {
-  console.log(`[Zibal Client] Verifying payment for trackId=${trackId}, Amount=${amountTomans} Tomans...`);
+export async function verifyZarinpalPayment(authority: string, amountTomans: number): Promise<{ success: boolean; refId?: string; message: string }> {
+  console.log(`[Zarinpal Client] Verifying payment for authority=${authority}, Amount=${amountTomans} Tomans...`);
 
-  if (!trackId) {
+  if (!authority) {
     return {
       success: false,
-      message: 'شناسه تراکنش نامعتبر است.'
+      message: 'شناسه مرجع تراکنش نامعتبر است.'
     };
   }
 
@@ -96,7 +96,8 @@ export async function verifyZibalPayment(trackId: string, amountTomans: number):
         'Accept': 'application/json'
       },
       body: JSON.stringify({
-        trackId: trackId
+        authority: authority,
+        amountTomans: amountTomans
       })
     });
 
@@ -105,12 +106,12 @@ export async function verifyZibalPayment(trackId: string, amountTomans: number):
     }
 
     const resData = await response.json();
-    console.log('[Zibal Client] Verify response:', resData);
+    console.log('[Zarinpal Client] Verify response:', resData);
 
     if (resData.success) {
       return {
         success: true,
-        refId: resData.refNumber,
+        refId: resData.refId || resData.refNumber,
         message: resData.message || 'پرداخت با موفقیت تایید شد.'
       };
     } else {
@@ -120,23 +121,10 @@ export async function verifyZibalPayment(trackId: string, amountTomans: number):
       };
     }
   } catch (error: any) {
-    console.error('[Zibal Client Verify Error]', error);
+    console.error('[Zarinpal Client Verify Error]', error);
     return {
       success: false,
       message: error.message || 'خطا در استعلام وضعیت تراکنش از سرور میانی پرداخت'
     };
   }
-}
-
-// -------------------------------------------------------------------------
-// لایه‌های همخوانی با توابع قدیمی درگاه زرین‌پال
-// -------------------------------------------------------------------------
-export const ZARINPAL_CONFIG = ZIBAL_CONFIG;
-
-export async function initiateZarinpalPayment(data: PaymentRequestData) {
-  return initiateZibalPayment(data);
-}
-
-export async function verifyZarinpalPayment(authority: string, amountTomans: number) {
-  return verifyZibalPayment(authority, amountTomans);
 }

@@ -25,27 +25,11 @@ export function PaymentCallback() {
       let status = urlObj.searchParams.get('Status') || '';
       let authority = urlObj.searchParams.get('Authority') || '';
 
-      const zibalTrackId = urlObj.searchParams.get('trackId') || '';
-      const zibalSuccess = urlObj.searchParams.get('success') || '';
-
-      if (zibalTrackId) {
-        authority = zibalTrackId;
-        status = (zibalSuccess === '1' || zibalSuccess === 'true' || zibalSuccess === '') ? 'OK' : 'NOK';
-      }
-
       if (!status || !authority) {
         // روش دوم: استفاده از سرچ عمومی پنجره
         const mainSearch = new URLSearchParams(window.location.search);
-        const mzibalTrackId = mainSearch.get('trackId') || '';
-        const mzibalSuccess = mainSearch.get('success') || '';
-
-        if (mzibalTrackId) {
-          authority = mzibalTrackId;
-          status = (mzibalSuccess === '1' || mzibalSuccess === 'true' || mzibalSuccess === '') ? 'OK' : 'NOK';
-        } else {
-          status = status || mainSearch.get('Status') || '';
-          authority = authority || mainSearch.get('Authority') || '';
-        }
+        status = status || mainSearch.get('Status') || '';
+        authority = authority || mainSearch.get('Authority') || '';
       }
 
       // اگر در شبیه‌ساز یا Sandbox هستیم و پارامتری نیست، شبیه‌سازی انجام شود

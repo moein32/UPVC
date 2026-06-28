@@ -6,7 +6,7 @@ import { toEnglishDigits, toPersianDigits } from '../utils/formatting';
 import { AppUser } from '../types';
 import { NexWinLogo } from '../src/components/icons/NexWinLogo';
 import { generateVerificationCode, sendOtpSMS, SMS_PANEL_CONFIG } from '../services/smsService';
-import { initiateZibalPayment, ZARINPAL_CONFIG } from '../services/paymentService';
+import { initiateZarinpalPayment, ZARINPAL_CONFIG } from '../services/paymentService';
 
 // ==========================================
 // تنظیمات اتصال مستقیم به لایسنس‌سرور سوپابیس
@@ -301,7 +301,7 @@ export const Login = () => {
 
     setPaymentLoading(true);
 
-    // ذخیره موقت سبد خرید خریدار برای اعتبارسنجی در بازگشت از به پرداخت یا زیبال
+    // ذخیره موقت سبد خرید خریدار برای اعتبارسنجی در بازگشت از زرین‌پال
     const pendingData = {
       ownerName: signupOwnerName.trim(),
       companyName: signupCompanyName.trim(),
@@ -313,7 +313,7 @@ export const Login = () => {
     localStorage.setItem('nexwin_pending_signup', JSON.stringify(pendingData));
 
     try {
-      const res = await initiateZibalPayment({
+      const res = await initiateZarinpalPayment({
         amountTomans,
         phoneNumber: cleanPhone,
         description: `خرید لایسنس تجاری ${tierLabels[signupTier]} (${selectedPlan.label})`,
@@ -324,7 +324,7 @@ export const Login = () => {
 
       if (res.success) {
         if (res.redirectUrl) {
-          // ذخیره کردن آدرس درگاه پرداخت زیبال جهت نمایش کارت انتقال امن
+          // ذخیره کردن آدرس درگاه پرداخت زرین‌پال جهت نمایش کارت انتقال امن
           setPaymentRedirectUrl(res.redirectUrl);
           // تلاش جهت باز کردن مستقیم در پنجره جدید به عنوان سهولت کاربری
           window.open(res.redirectUrl, '_blank');
@@ -417,7 +417,7 @@ export const Login = () => {
     setLoading(true);
 
     // ۱. بررسی ست نبودن متغیرهای محیطی سوپابیس (حالت آفلاین/دلیوری محلی)
-    if (!VITE_SUPABASE_URL || !VITE_SUPABASE_ANON_KEY || VITE_SUPABASE_URL.includes('YOUR_SUPABASE') || VITE_SUPABASE_URL === 'zibal') {
+    if (!VITE_SUPABASE_URL || !VITE_SUPABASE_ANON_KEY || VITE_SUPABASE_URL.includes('YOUR_SUPABASE') || VITE_SUPABASE_URL === 'zarinpal') {
       console.log('No valid Supabase credentials. Executing secure local fallback session.');
       const trialUser: AppUser = {
         id: 'NW-LOCAL',

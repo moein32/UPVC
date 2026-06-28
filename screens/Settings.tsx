@@ -9,7 +9,7 @@ import { pricingStore } from '../services/pricingStore';
 import { AppSettings, InvoiceLayoutType, AppUser } from '../types';
 import { InputField } from '../components/UIComponents';
 import { fetchActiveSessions, revokeSession, getDeviceLimit, DeviceSession, logoutUser, getOrCreateDeviceId } from '../services/sessionService';
-import { initiateZibalPayment } from '../services/paymentService';
+import { initiateZarinpalPayment } from '../services/paymentService';
 
 const SettingItem = ({ icon: Icon, label, value, children, className }: any) => (
   <div className={`flex items-center justify-between p-4 bg-white rounded-xl shadow-sm border border-slate-100 mb-3 ${className}`}>
@@ -213,9 +213,9 @@ export const Settings = () => {
         };
         localStorage.setItem('nexwin_pending_signup', JSON.stringify(pendingData));
 
-        showBackupMessage('در حال اتصال به درگاه پرداخت ایمن زیبال جهت ارتقای حساب...', 'info');
+        showBackupMessage('در حال اتصال به درگاه پرداخت ایمن زرین‌پال جهت ارتقای حساب...', 'info');
 
-        const res = await initiateZibalPayment({
+        const res = await initiateZarinpalPayment({
           amountTomans: finalPayable,
           phoneNumber: currentUser.phone_number,
           description: `ارتقای لایسنس نکس‌وین به ${editTier === 'gold' ? 'طلایی' : 'نقره‌ای'} (${totalDurationDays} روز)`,
@@ -227,7 +227,7 @@ export const Settings = () => {
         setFinalPayableAmount(finalPayable);
         if (res.success) {
           if (res.redirectUrl) {
-            // ذخیره کردن آدرس درگاه پرداخت زیبال جهت نمایش کارت انتقال امن
+            // ذخیره کردن آدرس درگاه پرداخت زرین‌پال جهت نمایش کارت انتقال امن
             setPaymentRedirectUrl(res.redirectUrl);
             // تلاش جهت باز کردن مستقیم در پنجره جدید به عنوان سهولت کاربری
             window.open(res.redirectUrl, '_blank');
@@ -260,7 +260,7 @@ export const Settings = () => {
       setCurrentUser(updatedUser);
 
       // ۲. هماهنگ‌سازی با سوپابیس (در صورت فعال بودن)
-      if (VITE_SUPABASE_URL && VITE_SUPABASE_ANON_KEY && !VITE_SUPABASE_URL.includes('YOUR_SUPABASE') && VITE_SUPABASE_URL !== 'zibal' && VITE_SUPABASE_URL.trim() !== '') {
+      if (VITE_SUPABASE_URL && VITE_SUPABASE_ANON_KEY && !VITE_SUPABASE_URL.includes('YOUR_SUPABASE') && VITE_SUPABASE_URL !== 'zarinpal' && VITE_SUPABASE_URL.trim() !== '') {
         const cleanUrl = VITE_SUPABASE_URL.endsWith('/') ? VITE_SUPABASE_URL.slice(0, -1) : VITE_SUPABASE_URL;
         const res = await fetch(`${cleanUrl}/rest/v1/app_users?id=eq.${encodeURIComponent(currentUser.id)}`, {
           method: 'PATCH',

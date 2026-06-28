@@ -115,7 +115,7 @@ export function getSupabaseClient(): SupabaseClient | null {
   const url = import.meta.env.VITE_SUPABASE_URL;
   const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-  if (!url || !anonKey || url === 'YOUR_SUPABASE_PROJECT_URL' || url === 'zibal' || url.trim() === '') {
+  if (!url || !anonKey || url === 'YOUR_SUPABASE_PROJECT_URL' || url === 'zarinpal' || url.trim() === '') {
     console.warn(
       '[SyncService Warning] Supabase environment variables are missing or use placeholders. Utilizing Sandbox mock database mode.'
     );

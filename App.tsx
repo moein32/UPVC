@@ -59,7 +59,7 @@ const GlobalUserStatusGuard = () => {
         const supaKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
         // در صورتی که دیتابیس سوپابیس ست نشده باشد، لایسنس آفلاین تایید شده است
-        if (!supaUrl || !supaKey || supaUrl.includes('YOUR_SUPABASE') || supaUrl === 'zibal' || supaUrl.trim() === '') {
+        if (!supaUrl || !supaKey || supaUrl.includes('YOUR_SUPABASE') || supaUrl === 'zarinpal' || supaUrl.trim() === '') {
           return;
         }
 

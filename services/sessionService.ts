@@ -84,7 +84,7 @@ export function getDeviceLimit(tier: 'bronze' | 'silver' | 'gold' | string): num
 
 // Helper to check if Supabase is active
 function isSupabaseActive(): boolean {
-  return !!(VITE_SUPABASE_URL && VITE_SUPABASE_ANON_KEY && !VITE_SUPABASE_URL.includes('YOUR_SUPABASE') && VITE_SUPABASE_URL !== 'zibal');
+  return !!(VITE_SUPABASE_URL && VITE_SUPABASE_ANON_KEY && !VITE_SUPABASE_URL.includes('YOUR_SUPABASE') && VITE_SUPABASE_URL !== 'zarinpal');
 }
 
 // Fetch active sessions from Supabase with localStorage fallback
