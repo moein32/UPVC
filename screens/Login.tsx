@@ -686,7 +686,7 @@ export const Login = () => {
             animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
             exit={{ opacity: 0, scale: 1.05 }}
             transition={{ duration: 0.6 }}
-            className="w-full max-w-xl bg-white/90 backdrop-blur-3xl rounded-[3rem] border border-slate-200/60 p-8 md:p-12 shadow-[0_30px_70px_rgba(15,23,42,0.06)] relative text-right text-slate-800 z-50 overflow-hidden"
+            className="w-full max-w-xl bg-white rounded-[3rem] border border-slate-200/60 p-8 md:p-12 shadow-[0_30px_70px_rgba(15,23,42,0.06)] relative text-right text-slate-800 z-50 overflow-hidden"
           >
             {/* بار پیشرفت افقی لودینگ بالا */}
             <div className="absolute top-0 left-0 right-0 h-1.5 bg-slate-100">
@@ -711,7 +711,7 @@ export const Login = () => {
               <p className="text-slate-500 text-xs md:text-sm font-semibold mt-1">خوش‌آمدید به پورتال هوشمند NexWin</p>
             </div>
 
-            <div className="bg-slate-50/80 backdrop-blur-md rounded-2xl p-6 border border-slate-100 space-y-4 mb-8">
+            <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100 space-y-4 mb-8">
               {/* نام کارفرما */}
               <div className="flex items-center justify-between border-b border-slate-200/50 pb-3">
                 <div className="flex items-center gap-2.5 text-slate-600">
@@ -767,7 +767,7 @@ export const Login = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.5, type: 'spring' }}
-            className="w-full max-w-md bg-white/95 backdrop-blur-2xl rounded-[2.5rem] border border-slate-200/70 p-6 md:p-8 shadow-[0_20px_60px_rgba(15,23,42,0.08)] relative z-50 text-right text-slate-800"
+            className="w-full max-w-md bg-white rounded-[2.5rem] border border-slate-200/70 p-6 md:p-8 shadow-[0_20px_60px_rgba(15,23,42,0.08)] relative z-50 text-right text-slate-800"
           >
             {/* سربرگ */}
             <div className="text-center mb-6">
@@ -1563,7 +1563,7 @@ export const Login = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[130] flex items-center justify-center p-4 font-['Vazirmatn'] text-slate-800"
+            className="fixed inset-0 bg-slate-950/90 z-[130] flex items-center justify-center p-4 font-['Vazirmatn'] text-slate-800"
           >
             <motion.div
               initial={{ scale: 0.95, y: 15 }}
@@ -1629,7 +1629,7 @@ export const Login = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setShowSupportModal(false)}
-            className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4"
+            className="fixed inset-0 bg-slate-950/60 z-[100] flex items-center justify-center p-4"
           >
             <motion.div
               initial={{ scale: 0.9, y: 20 }}

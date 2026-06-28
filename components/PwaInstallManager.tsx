@@ -56,9 +56,9 @@ export const PwaInstallManager = () => {
       setDeviceType('other');
     }
 
-    const isInStandalone = ('standalone' in window.navigator && (window.navigator as any).standalone === true) || 
-                          window.matchMedia('(display-mode: standalone)').matches;
-    setIsStandalone(isInStandalone);
+    const isInStandalone = (window.navigator && 'standalone' in window.navigator && (window.navigator as any).standalone === true) || 
+                          (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+    setIsStandalone(!!isInStandalone);
 
     // 2. Let's decide if we show the installation banner
     const isDismissed = localStorage.getItem('pwa_install_banner_dismissed_v2');
@@ -149,9 +149,9 @@ export const PwaInstallManager = () => {
               exit={{ opacity: 0, y: -20, scale: 0.9 }}
               className={`pointer-events-auto flex items-center gap-3 px-5 py-3.5 rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.3)] border ${
                 networkToastType === 'online' 
-                  ? 'bg-slate-950/90 text-emerald-400 border-emerald-500/30' 
-                  : 'bg-rose-950/95 text-rose-300 border-rose-500/30'
-              } backdrop-blur-md max-w-sm w-full`}
+                  ? 'bg-slate-950 text-emerald-400 border-emerald-500/30' 
+                  : 'bg-slate-950 text-rose-300 border-rose-500/30'
+              } max-w-sm w-full`}
             >
               <div className={`p-1.5 rounded-full ${networkToastType === 'online' ? 'bg-emerald-500/10' : 'bg-rose-500/10'}`}>
                 {networkToastType === 'online' ? <Wifi size={18} /> : <WifiOff size={18} className="animate-pulse" />}
@@ -178,14 +178,14 @@ export const PwaInstallManager = () => {
         {showInstallBanner && !showGuideModal && !isStandalone && (
           <div className="fixed bottom-4 left-4 right-4 z-[999] flex justify-center font-['Vazirmatn'] select-none" dir="rtl">
             <motion.div 
-              initial={{ opacity: 0, y: 100 }}
+              initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 100 }}
-              transition={{ type: 'spring', stiffness: 260, damping: 24 }}
-              className="w-full max-w-lg bg-slate-900/90 backdrop-blur-2xl rounded-[2rem] border border-blue-500/20 p-5 md:p-6 shadow-[0_30px_70px_rgba(0,0,0,0.6)] flex flex-col md:flex-row items-center gap-4 text-white relative overflow-hidden"
+              exit={{ opacity: 0, y: 30 }}
+              transition={{ type: 'tween', ease: 'easeOut', duration: 0.3 }}
+              className="w-full max-w-lg bg-slate-950 rounded-[2rem] border border-slate-800 p-5 md:p-6 shadow-[0_30px_70px_rgba(0,0,0,0.6)] flex flex-col md:flex-row items-center gap-4 text-white relative overflow-hidden"
             >
-              {/* Highlight background shine */}
-              <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/10 rounded-full blur-[40px] pointer-events-none"></div>
+              {/* Subtle background gradient highlight instead of heavy blur */}
+              <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/5 rounded-full pointer-events-none"></div>
 
               {/* Close Button */}
               <button 
@@ -226,14 +226,14 @@ export const PwaInstallManager = () => {
       {/* 3. DETAILED INTERACTIVE GUIDE MODAL (Mimicking Blu Bank PWA Onboarding) */}
       <AnimatePresence>
         {showGuideModal && (
-          <div className="fixed inset-0 z-[10000] flex items-end justify-center bg-transparent backdrop-blur-lg/40 font-['Vazirmatn'] select-none" dir="rtl">
+          <div className="fixed inset-0 z-[10000] flex items-end justify-center bg-transparent font-['Vazirmatn'] select-none" dir="rtl">
             {/* Backdrop cover */}
             <motion.div 
               initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
+              animate={{ opacity: 0.7 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowGuideModal(false)}
-              className="absolute inset-0 bg-slate-950/60 pointer-events-auto"
+              className="absolute inset-0 bg-slate-950 pointer-events-auto"
             />
 
             {/* iOS Bottom Sheet Container */}
@@ -241,7 +241,7 @@ export const PwaInstallManager = () => {
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 28, stiffness: 220 }}
+              transition={{ type: 'tween', ease: 'easeOut', duration: 0.35 }}
               className="relative w-full max-w-lg bg-slate-900 border-t border-slate-800 rounded-t-[2.5rem] shadow-[0_-20px_60px_rgba(0,0,0,0.5)] z-10 overflow-hidden flex flex-col max-h-[92vh] pb-[env(safe-area-inset-bottom,20px)]"
             >
               {/* Top Drag Indicator Line */}
