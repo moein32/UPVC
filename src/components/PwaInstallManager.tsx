@@ -17,7 +17,7 @@ import {
   PlusSquare,
   Compass
 } from 'lucide-react';
-import { NexWinLogo } from '../src/components/icons/NexWinLogo';
+import { NexWinLogo } from './icons/NexWinLogo';
 
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: string[];
