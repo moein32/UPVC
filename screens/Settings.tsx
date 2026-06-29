@@ -70,24 +70,8 @@ export const Settings = () => {
   const [editTier, setEditTier] = useState<'bronze' | 'silver' | 'gold'>('bronze');
   const [isProfileSaving, setIsProfileSaving] = useState(false);
   const [paymentRedirectUrl, setPaymentRedirectUrl] = useState<string | null>(null);
-  const [showSimulatedPortal, setShowSimulatedPortal] = useState(false);
-  const [simOtpTimer, setSimOtpTimer] = useState(60);
-  const [simOtpRequested, setSimOtpRequested] = useState(false);
-  const [simCardNo, setSimCardNo] = useState('');
-  const [simCvv, setSimCvv] = useState('');
-  const [simPin, setSimPin] = useState('');
   const [finalPayableAmount, setFinalPayableAmount] = useState(0);
-
-  // شمارش معکوس رمز پویای آزمایشی درگاه شبیه‌ساز زیبال در صفحه تنظیمات
-  useEffect(() => {
-    let interval: any;
-    if (showSimulatedPortal && simOtpTimer > 0) {
-      interval = setInterval(() => {
-        setSimOtpTimer((prev) => prev - 1);
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [showSimulatedPortal, simOtpTimer]);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
 
   useEffect(() => {
     if (currentUser) {
@@ -213,6 +197,7 @@ export const Settings = () => {
         };
         localStorage.setItem('nexwin_pending_signup', JSON.stringify(pendingData));
 
+        setPaymentError(null);
         showBackupMessage('در حال اتصال به درگاه پرداخت ایمن زرین‌پال جهت ارتقای حساب...', 'info');
 
         const res = await initiateZarinpalPayment({
@@ -231,16 +216,15 @@ export const Settings = () => {
             setPaymentRedirectUrl(res.redirectUrl);
             // تلاش جهت باز کردن مستقیم در پنجره جدید به عنوان سهولت کاربری
             window.open(res.redirectUrl, '_blank');
-          } else if (res.authority) {
-            localStorage.setItem('nexwin_pending_authority', res.authority);
-            setShowSimulatedPortal(true);
+          } else {
+            setPaymentError('تراکنش با موفقیت ایجاد شد، اما لینک پرداخت معتبری یافت نشد.');
           }
         } else {
-          showBackupMessage(res.message || 'اتصال به درگاه پرداخت با خطا مواجه شد. لطفاً دوباره تلاش کنید.', 'error');
+          setPaymentError(res.message || 'اتصال به درگاه پرداخت با خطا مواجه شد. لطفاً دوباره تلاش کنید.');
         }
       } catch (err: any) {
         console.error('Failed to initiate upgrade payment:', err);
-        showBackupMessage('خطایی در اتصال به درگاه رخ داد.', 'error');
+        setPaymentError(`خطا در ارتباط با بانک: ${err.message || 'خطای شبکه'}`);
       } finally {
         setIsProfileSaving(false);
       }
@@ -883,6 +867,12 @@ export const Settings = () => {
                   );
                 })()}
 
+                {paymentError && (
+                  <div className="p-3 bg-red-50 text-red-700 text-[11px] font-bold rounded-xl border border-red-100 leading-normal text-right mt-3 mb-2">
+                    ⚠️ خطای درگاه پرداخت: {paymentError}
+                  </div>
+                )}
+
                 {/* دکمه ذخیره */}
                 <div className="flex justify-end pt-2">
                   <button
@@ -900,7 +890,7 @@ export const Settings = () => {
                         {currentUser && editTier !== currentUser.tier && getTierWeight(editTier) > getTierWeight(currentUser.tier) ? (
                           <>
                             <CreditCard size={14} />
-                            <span>انتقال به درگاه زیبال و ارتقای لایسنس 💳</span>
+                            <span>انتقال به درگاه زرین‌پال و ارتقای لایسنس 💳</span>
                           </>
                         ) : (
                           <>
@@ -1064,137 +1054,120 @@ export const Settings = () => {
             </div>
           </div>
 
-          {/* گرید راست: همگام‌سازی ابری امن زنده با Supabase */}
-          <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-col justify-between">
-            <div className="text-right mb-4">
-              <span className="inline-flex px-2 py-0.5 rounded-md text-[9px] bg-emerald-50 border border-emerald-100 text-emerald-600 font-black mb-2">بانک ابری امن (Supabase)</span>
-              <h4 className="font-extrabold text-xs text-slate-800 flex items-center gap-1.5">
-                <Database size={16} className="text-emerald-500" />
-                همگام‌سازی و همسان‌سازی زنده ابری
-              </h4>
-              <p className="text-[10px] text-slate-400 mt-1.5 leading-relaxed">
-                بروزرسانی زنده پرونده پروژه‌ها بر روی مخزن اصلی دیتابیس Supabase جهت بازیابی اتوماتیک پروژه‌ها در صورت فرمت دستگاه یا تغییر ابزارهای کاری.
-              </p>
-              
-              <div className="mt-3.5 flex items-center gap-1.5 justify-end text-[9px] text-slate-400">
-                <span className="font-bold flex items-center gap-1">⏱️ آخرین همگام‌سازی موفق با ابر:</span>
-                <span className="font-mono text-emerald-600 font-extrabold">
-                  {lastSync ? new Intl.DateTimeFormat('fa-IR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(lastSync)) : 'هرگز هماهنگ نشده'}
-                </span>
+          {/* گرید راست: همگام‌سازی ابری امن زنده و مدیریت فعال نشست‌ها */}
+          {currentUser && (
+            <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 flex flex-col justify-between">
+              <div>
+                <div className="text-right mb-4">
+                  <span className="inline-flex px-2 py-0.5 rounded-md text-[9px] bg-blue-50 border border-blue-100 text-blue-600 font-black mb-2">همگام‌سازی ابری امن زنده</span>
+                  <h4 className="font-extrabold text-xs text-slate-800 flex items-center gap-1.5">
+                    <Globe size={16} className="text-blue-500" />
+                    پشتیبان‌گیری ابری و مدیریت دستگاه‌ها
+                  </h4>
+                  <p className="text-[10px] text-slate-400 mt-1.5 leading-relaxed">
+                    با همگام‌سازی ابری، کارهای خود را در سرورهای امن نکس‌وین ذخیره کنید تا از هر سیستم دیگری به آن‌ها دسترسی داشته باشید. همچنین نشست‌های فعال خود را مدیریت کنید.
+                  </p>
+                </div>
+
+                {/* دکمه‌های همگام‌سازی ابری */}
+                <div className="flex gap-2.5 mb-4">
+                  <button 
+                    onClick={handleCloudBackupSync}
+                    disabled={isSyncing}
+                    className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 active:scale-95 text-white rounded-xl text-[10px] font-black transition-all flex items-center justify-center gap-1.5 border-none cursor-pointer"
+                  >
+                    <CloudLightning size={13} className={isSyncing ? 'animate-spin' : ''} />
+                    {isSyncing ? 'در حال همگام‌سازی...' : 'پشتیبان‌گیری ابری زنده'}
+                  </button>
+                  
+                  <button 
+                    onClick={handleCloudRestore}
+                    disabled={isRestoring}
+                    className="flex-1 py-3 bg-blue-50 hover:bg-blue-100 disabled:bg-blue-100/50 active:scale-95 text-blue-700 rounded-xl text-[10px] font-black transition-all flex items-center justify-center gap-1.5 border border-blue-200 cursor-pointer"
+                  >
+                    <RefreshCw size={13} className={isRestoring ? 'animate-spin' : ''} />
+                    {isRestoring ? 'در حال بازیابی...' : 'بازیابی از فضای ابری'}
+                  </button>
+                </div>
+
+                {lastSync && (
+                  <div className="text-[9px] text-emerald-600 font-bold mb-4 bg-emerald-50/50 p-2 rounded-lg border border-emerald-100 text-right">
+                    ✓ آخرین همگام‌سازی موفق ابری: {new Intl.DateTimeFormat('fa-IR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(lastSync))}
+                  </div>
+                )}
+
+                <div className="border-t border-slate-100 my-4 pt-4">
+                  <h5 className="font-extrabold text-[10px] text-slate-600 mb-3 text-right">دستگاه‌ها و نشست‌های فعال شما</h5>
+                  {sessionsLoading ? (
+                    <div className="py-4 flex justify-center items-center gap-2">
+                      <RefreshCw size={14} className="text-blue-500 animate-spin" />
+                      <span className="text-[10px] text-slate-400">در حال دریافت لیست نشست‌های فعال...</span>
+                    </div>
+                  ) : activeSessionsList.length === 0 ? (
+                    <div className="py-4 text-center text-[10px] text-slate-400">هیچ نشستی یافت نشد.</div>
+                  ) : (
+                    <div className="space-y-2.5 max-h-[140px] overflow-y-auto pr-1">
+                      {activeSessionsList.map((session) => (
+                        <div 
+                          key={session.id} 
+                          className={`flex items-center justify-between p-2.5 rounded-xl border transition-all ${
+                            session.is_current 
+                              ? 'border-blue-100 bg-blue-50/20' 
+                              : 'border-slate-100 bg-slate-50/50 hover:bg-slate-50'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <div className={`p-1.5 rounded-lg ${session.is_current ? 'bg-blue-100 text-blue-600' : 'bg-slate-200 text-slate-500'}`}>
+                              {session.device_name.toLowerCase().includes('windows') || session.device_name.toLowerCase().includes('mac') ? (
+                                <Monitor size={16} />
+                              ) : (
+                                <Smartphone size={16} />
+                              )}
+                            </div>
+                            <div className="text-right">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-[10px] font-black text-slate-800">{session.device_name}</span>
+                                {session.is_current && (
+                                  <span className="bg-blue-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded-md">همین دستگاه</span>
+                                )}
+                              </div>
+                              <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
+                                <span className="text-[8px] text-slate-400">
+                                  {new Intl.DateTimeFormat('fa-IR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(session.last_active))}
+                                </span>
+                                {session.ip_address && (
+                                  <>
+                                    <span className="text-slate-300 text-[8px]">•</span>
+                                    <span className="text-[8px] font-mono font-bold text-blue-600 bg-blue-50/50 px-1.5 py-0.5 rounded-md flex items-center gap-0.5">
+                                      <Globe size={8} className="text-blue-500" />
+                                      {session.ip_address}
+                                    </span>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => handleRevokeSession(session.id)}
+                            className={`p-1.5 rounded-lg hover:bg-red-50 hover:text-red-600 transition-colors cursor-pointer border-none ${
+                              session.is_current ? 'text-slate-300 hover:text-slate-400' : 'text-slate-400'
+                            }`}
+                            title={session.is_current ? "خروج از حساب" : "قطع اتصال دستگاه"}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-
-            <div className="flex gap-2.5">
-              <button 
-                onClick={handleCloudBackupSync}
-                disabled={isSyncing}
-                className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 active:scale-95 text-white rounded-xl text-[11px] font-black transition-all flex items-center justify-center gap-2 border-none cursor-pointer"
-              >
-                <CloudLightning size={13} className={isSyncing ? "animate-spin" : ""} />
-                {isSyncing ? "در حال انتقال..." : "پشتیبان‌گیری در ابر"}
-              </button>
-              
-              <button 
-                onClick={handleCloudRestore}
-                disabled={isRestoring}
-                className="flex-1 py-3 bg-emerald-50 hover:bg-emerald-100 disabled:bg-slate-100 text-emerald-700 disabled:text-slate-400 rounded-xl text-[11px] font-black transition-all flex items-center justify-center gap-2 border border-emerald-200 cursor-pointer"
-              >
-                <RefreshCw size={13} className={isRestoring ? "animate-spin" : ""} />
-                {isRestoring ? "در حال دریافت..." : "بازیابی مجدد از ابر"}
-              </button>
-            </div>
-          </div>
+          )}
         </div>
       </div>
-
-      {/* بخش مدیریت دستگاه‌ها و نشست‌های فعال */}
-      {currentUser && (
-        <div className="mb-8 font-['Vazirmatn'] border-t border-slate-100 pt-8">
-          <div className="flex justify-between items-center mb-4 px-1">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">دستگاه‌ها و نشست‌های فعال</h3>
-            <span className="text-[10px] font-bold text-slate-500">
-              حد مجاز: {toPersianDigits(getDeviceLimit(currentUser.tier))} دستگاه
-              {currentUser.tier === 'bronze' && ' (فروشگاهی)'}
-              {currentUser.tier === 'silver' && ' (کارگاهی)'}
-              {currentUser.tier === 'gold' && ' (مدیریتی)'}
-            </span>
-          </div>
-
-          <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
-            <div className="mb-4 pb-3 border-b border-slate-100 text-right">
-              <p className="text-[11px] text-slate-500 leading-relaxed">
-                لیست مرورگرها و دستگاه‌هایی که به حساب کاربری شما متصل هستند. شما می‌توانید هر زمان مایل بودید، اتصال دستگاه‌های دیگر را قطع کنید.
-              </p>
-            </div>
-
-            {sessionsLoading ? (
-              <div className="py-6 flex justify-center items-center gap-2">
-                <RefreshCw size={16} className="text-blue-500 animate-spin" />
-                <span className="text-xs text-slate-400">در حال دریافت لیست نشست‌های فعال...</span>
-              </div>
-            ) : activeSessionsList.length === 0 ? (
-              <div className="py-6 text-center text-xs text-slate-400">هیچ نشستی یافت نشد.</div>
-            ) : (
-              <div className="space-y-3">
-                {activeSessionsList.map((session) => (
-                  <div 
-                    key={session.id} 
-                    className={`flex items-center justify-between p-3.5 rounded-xl border transition-all ${
-                      session.is_current 
-                        ? 'border-blue-100 bg-blue-50/20' 
-                        : 'border-slate-100 bg-slate-50/50 hover:bg-slate-50'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg ${session.is_current ? 'bg-blue-100 text-blue-600' : 'bg-slate-200 text-slate-500'}`}>
-                        {session.device_name.toLowerCase().includes('windows') || session.device_name.toLowerCase().includes('mac') ? (
-                          <Monitor size={18} />
-                        ) : (
-                          <Smartphone size={18} />
-                        )}
-                      </div>
-                      <div className="text-right">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-black text-slate-800">{session.device_name}</span>
-                          {session.is_current && (
-                            <span className="bg-blue-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded-md">همین دستگاه</span>
-                          )}
-                        </div>
-                        <div className="flex flex-wrap items-center gap-2 mt-1">
-                          <span className="text-[9px] text-slate-400">
-                            آخرین فعالیت: {new Intl.DateTimeFormat('fa-IR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(session.last_active))}
-                          </span>
-                          {session.ip_address && (
-                            <>
-                              <span className="text-slate-300 text-[10px] hidden sm:inline">•</span>
-                              <span className="text-[9px] font-mono font-bold text-blue-600 bg-blue-50/50 px-1.5 py-0.5 rounded-md flex items-center gap-1">
-                                <Globe size={9} className="text-blue-500" />
-                                {session.ip_address}
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => handleRevokeSession(session.id)}
-                      className={`p-2 rounded-lg hover:bg-red-50 hover:text-red-600 transition-colors cursor-pointer border-none ${
-                        session.is_current ? 'text-slate-300 hover:text-slate-400' : 'text-slate-400'
-                      }`}
-                      title={session.is_current ? "خروج از حساب" : "قطع اتصال دستگاه"}
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
 
       <div className="mt-10 bg-red-50/50 rounded-2xl p-4 border border-red-100 flex items-center justify-between">
         <div className="text-right">
@@ -1218,210 +1191,7 @@ export const Settings = () => {
         <p className="text-slate-400 text-sm">{t('version')} {toPersianDigits("1.2.0")} {t('app_name')}</p>
       </div>
 
-      {/* درگاه شبکه‌ای شبیه‌ساز پرداخت شتاب زیبال و شاپرک */}
-      <AnimatePresence>
-        {showSimulatedPortal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-[#0a0f1d]/95 z-[120] flex items-center justify-center p-4 overflow-y-auto font-['Vazirmatn'] select-none text-slate-800"
-          >
-            <motion.div
-              initial={{ scale: 0.95, y: 15 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.95, y: 15 }}
-              className="bg-white rounded-[2rem] w-full max-w-2xl shadow-[0_30px_70px_rgba(0,0,0,0.6)] overflow-hidden text-right"
-            >
-              {/* هدر شاپرک */}
-              <div className="bg-gradient-to-r from-teal-700 via-slate-800 to-sky-800 p-5 px-6 text-white flex justify-between items-center border-b border-white/10">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center font-black text-white text-base">💳</div>
-                  <div>
-                    <h2 className="text-sm font-black tracking-tight">دروازه پرداخت الکترونیکی زیبال</h2>
-                    <p className="text-[10px] text-teal-200 mt-0.5">شبکه تبادل اطلاعات بانکی ایران (شاپرک)</p>
-                  </div>
-                </div>
-                <div className="text-left">
-                  <span className="text-xs bg-black/20 text-teal-300 font-bold px-3 py-1.5 rounded-full border border-teal-500/20">اتصال امن (SSL)</span>
-                </div>
-              </div>
-
-              {/* خلاصه فاکتور */}
-              <div className="bg-slate-50 p-5 px-6 border-b border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-bold leading-normal">
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">پذیرنده دیجیتال:</span>
-                    <span className="text-slate-900 font-black">پلتفرم محاسباتی دوجداره نکس‌وین (NexWin)</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">مجموعه خریدار:</span>
-                    <span className="text-slate-900 font-black">{editCompanyName || 'کارگاه صنعتی جدید'}</span>
-                  </div>
-                </div>
-                <div className="space-y-2 border-r border-slate-200 pr-0 md:pr-4">
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">بسته اشتراکی:</span>
-                    <span className="text-blue-700 font-black">
-                      {editTier === 'gold' ? 'طلایی نامحدود' : editTier === 'silver' ? 'نقره‌ای خط تولید' : 'برنزی محاسباتی'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">مجموع کل فاکتور:</span>
-                    <span className="text-emerald-600 font-black text-sm">
-                      {toPersianDigits(finalPayableAmount * 10)} ریال ({toPersianDigits(finalPayableAmount)} تومان)
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* فرم مشخصات کارت شتاب */}
-              <div className="p-6 md:p-8 grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-                {/* قسمت چپ: کارت شتاب فیزیکی دمو */}
-                <div className="md:col-span-5 flex flex-col items-center">
-                  <div className="w-full max-w-[240px] aspect-[1.58] bg-gradient-to-tr from-sky-700 via-indigo-700 to-indigo-900 rounded-2xl p-4 text-white relative shadow-lg overflow-hidden flex flex-col justify-between">
-                    <div className="absolute top-0 right-0 left-0 bottom-0 bg-[radial-gradient(circle_at_80%_20%,rgba(255,255,255,0.1),transparent_40%)]"></div>
-                    <div className="flex justify-between items-center z-10">
-                      <span className="text-[10px] font-black tracking-widest opacity-80">عضو شبکه شتاب IRAN</span>
-                      <span className="text-yellow-400 font-black text-xs">نکس‌بانک ★</span>
-                    </div>
-
-                    <div className="my-3 z-10 text-center font-mono text-base font-bold tracking-widest leading-none drop-shadow-md text-slate-100 select-all">
-                      {simCardNo ? toPersianDigits(simCardNo.replace(/(\d{4})/g, '$1 ').trim()) : '۶۲۷۴  ۱۲۳۴  ۵۶۷۸  ۹۰۱۲'}
-                    </div>
-
-                    <div className="flex justify-between items-end z-10 leading-none">
-                      <div className="text-right">
-                        <span className="text-[7px] text-slate-300 block">صاحب کارت:</span>
-                        <span className="text-[10px] font-bold mt-0.5 block">{editOwnerName || 'مدیر محترم کارگاه'}</span>
-                      </div>
-                      <div className="text-left font-mono">
-                        <span className="text-[7px] text-slate-300 block">CVV2:</span>
-                        <span className="text-[10px] font-bold mt-0.5 block">{simCvv || '***'}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="mt-4 text-center bg-slate-100 p-3 rounded-xl border border-slate-200 max-w-[240px]">
-                    <p className="text-[10px] text-slate-500 font-bold leading-relaxed text-justify">
-                      💡 این درگاه برای شبیه‌سازی دقیق زیبال تعبیه شده است. اطلاعات ورودی الزامی به کارت واقعی نداشته و شما می‌توانید دکمه پرداخت موفق آزمایشی را مستقیماً بزنید.
-                    </p>
-                  </div>
-                </div>
-
-                {/* سمت راست: ورودی‌ها */}
-                <div className="md:col-span-7 space-y-4">
-                  {/* شماره کارت */}
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-black text-slate-600 block">شماره کارت ۱۶ رقمی</label>
-                    <input
-                      type="text"
-                      className="w-full text-center px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl font-mono text-sm tracking-widest font-black focus:outline-none focus:border-indigo-500 focus:bg-white text-slate-800 transition-all"
-                      placeholder="6274-XXXX-XXXX-XXXX"
-                      maxLength={16}
-                      value={simCardNo}
-                      onChange={(e) => setSimCardNo(e.target.value.replace(/\D/g, ''))}
-                    />
-                  </div>
-
-                  {/* CVV2  و تاریخ انقضاء */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <label className="text-[11px] font-black text-slate-600 block">کد امنیتی CVV2</label>
-                      <input
-                        type="password"
-                        className="w-full text-center px-3 py-3 bg-slate-50 border border-slate-300 rounded-xl font-mono font-black focus:outline-none focus:border-indigo-500 focus:bg-white text-slate-800 transition-all text-sm"
-                        placeholder="***"
-                        maxLength={4}
-                        value={simCvv}
-                        onChange={(e) => setSimCvv(e.target.value.replace(/\D/g, ''))}
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-[11px] font-black text-slate-600 block">تاریخ انقضاء (ماه/سال)</label>
-                      <div className="flex gap-1">
-                        <input
-                          type="text"
-                          className="w-full text-center py-2.5 bg-slate-50 border border-slate-300 rounded-xl font-mono focus:outline-none focus:border-indigo-500 focus:bg-white text-xs font-bold"
-                          placeholder="ماه"
-                          maxLength={2}
-                        />
-                        <input
-                          type="text"
-                          className="w-full text-center py-2.5 bg-slate-50 border border-slate-300 rounded-xl font-mono focus:outline-none focus:border-indigo-500 focus:bg-white text-xs font-bold"
-                          placeholder="سال"
-                          maxLength={2}
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* رمز دوم پویا شتاب */}
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-black text-slate-600 block">رمز دوم اینترنتی (پویا)</label>
-                    <div className="flex gap-2.5">
-                      <input
-                        type="password"
-                        className="flex-1 text-center px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl font-mono font-black focus:outline-none focus:border-indigo-500 focus:bg-white text-slate-800 tracking-wider transition-all text-sm"
-                        placeholder="رمز پویا"
-                        maxLength={8}
-                        value={simPin}
-                        onChange={(e) => setSimPin(e.target.value.replace(/\D/g, ''))}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSimOtpRequested(true);
-                          setSimOtpTimer(60);
-                          setSimPin('98320'); // کلمه پیش‌فرض اتوماتیک
-                          alert('کد شبیه‌ساز رمز یکبار مصرف به گوشی شما پیامک شد: 98320');
-                        }}
-                        disabled={simOtpRequested && simOtpTimer > 0}
-                        className={`px-4.5 rounded-xl text-[10px] font-black transition-all border cursor-pointer border-indigo-600 whitespace-nowrap ${
-                          simOtpRequested && simOtpTimer > 0
-                            ? 'bg-slate-100 text-slate-400 border-slate-200'
-                            : 'bg-indigo-50 hover:bg-indigo-100 text-indigo-700'
-                        }`}
-                      >
-                        {simOtpRequested && simOtpTimer > 0 ? `ارسال مجدد (${simOtpTimer} ثانیه)` : 'درخواست رمز پویا'}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* اکشن بار نهایی زیرگاه پرداخت شتاب */}
-              <div className="bg-slate-100 p-5 px-6 flex flex-col md:flex-row gap-3 justify-between items-center border-t border-slate-200">
-                <button
-                  type="button"
-                  onClick={() => {
-                    // انصراف از به پرداخت
-                    const auth = localStorage.getItem('nexwin_pending_authority') || 'SIM-AUTH';
-                    window.location.href = `${window.location.origin}/#/payment-callback?Status=NOK&Authority=${auth}`;
-                  }}
-                  className="w-full md:w-auto px-6 py-3 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs rounded-xl border border-rose-200 transition-all cursor-pointer"
-                >
-                  انصراف و ابطال فاکتور پرداخت ✕
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    // پرداخت موفق با موفقیت
-                    const auth = localStorage.getItem('nexwin_pending_authority') || 'SIM-AUTH';
-                    window.location.href = `${window.location.origin}/#/payment-callback?Status=OK&Authority=${auth}`;
-                  }}
-                  className="w-full md:w-auto px-10 py-3.5 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-black text-xs rounded-xl shadow-lg transition-all border-none cursor-pointer flex items-center justify-center gap-2"
-                >
-                  <span>پرداخت موفقیت‌آمیز آزمایشی (سریع)</span>
-                  <Check size={16} />
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* صفحه هوشمند انتقال امن و مستقیم به درگاه رسمی زیبال */}
+      {/* صفحه هوشمند انتقال امن و مستقیم به درگاه رسمی زرین‌پال */}
       <AnimatePresence>
         {paymentRedirectUrl && (
           <motion.div
@@ -1444,9 +1214,9 @@ export const Settings = () => {
                 </div>
               </div>
 
-              <h3 className="text-lg font-black text-slate-900 text-center mb-2">در حال انتقال به درگاه پرداخت زیبال</h3>
+              <h3 className="text-lg font-black text-slate-900 text-center mb-2">در حال انتقال به درگاه پرداخت زرین‌پال</h3>
               <p className="text-xs text-slate-500 text-center leading-relaxed mb-6 font-medium">
-                در حال اتصال امن به شبکه شاپرک... شما موقتاً جهت واریز وجه به سامانه رسمی زیبال هدایت میشوید و پس از پرداخت، به صورت خودکار به نکسوین بازخواهید گشت تا لایسنس شما فعال شود.
+                در حال اتصال امن به شبکه شاپرک... شما موقتاً جهت واریز وجه به سامانه رسمی زرین‌پال هدایت میشوید و پس از پرداخت، به صورت خودکار به نکسوین بازخواهید گشت تا لایسنس شما فعال شود.
               </p>
 
               <div className="w-full space-y-3">
@@ -1460,7 +1230,7 @@ export const Settings = () => {
                   }}
                   className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-2xl text-xs font-black transition-all shadow-lg flex items-center justify-center gap-2 hover:shadow-indigo-500/20 text-center select-none"
                 >
-                  <span>ورود به درگاه پرداخت رسمی زیبال</span>
+                  <span>ورود به درگاه پرداخت رسمی زرین‌پال</span>
                   <Check size={16} />
                 </a>
 
