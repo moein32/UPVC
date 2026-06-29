@@ -332,7 +332,9 @@ export async function syncProjectToCloud(rawProject: any): Promise<{
       expiry_date: localUser?.expiry_date || new Intl.DateTimeFormat('fa-IR', { dateStyle: 'medium' }).format(new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)),
       max_devices: localUser?.max_devices || 3,
       total_paid: localUser?.total_paid || 0,
-      is_trial: localUser?.is_trial || false
+      is_trial: localUser?.is_trial || false,
+      trial_start_date: localUser?.trial_start_date,
+      expiry_timestamp: localUser?.expiry_timestamp
     };
 
     const { error: userError } = await supabase
@@ -725,7 +727,9 @@ async function uploadSingleProjectDirect(supabase: SupabaseClient, rawProject: a
     expiry_date: localUser?.expiry_date || new Intl.DateTimeFormat('fa-IR', { dateStyle: 'medium' }).format(new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)),
     max_devices: localUser?.max_devices || 3,
     total_paid: localUser?.total_paid || 0,
-    is_trial: localUser?.is_trial || false
+    is_trial: localUser?.is_trial || false,
+    trial_start_date: localUser?.trial_start_date,
+    expiry_timestamp: localUser?.expiry_timestamp
   };
 
   const { error: userError } = await supabase

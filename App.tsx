@@ -40,86 +40,160 @@ interface ProtectedRouteProps {
   allowedTiers?: ('bronze' | 'silver' | 'gold')[];
 }
 
-// سرویس بررسی برخط تعلیق یا حذف لایسنس کاربری جهت خروج آنی و خودکار
-const GlobalUserStatusGuard = () => {
-  const location = useLocation();
+// مبدل تقویم میلادی به شمسی (فال‌بک در زمان عدم پشتیبانی محیط کاربری از Intl)
+function gregorianToJalali(gy: number, gm: number, gd: number) {
+  const g_d_m = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
+  let jy = (gy <= 1600) ? 0 : gy - 1600;
+  let gd_count = g_d_m[gm - 1] + gd;
+  if (gm > 2 && ((gy % 4 === 0 && gy % 100 !== 0) || (gy % 400 === 0))) {
+    gd_count++;
+  }
+  let jy_day = gd_count + 79;
+  let j_np = Math.floor(jy / 33) * 8 + Math.floor(((jy % 33) + 3) / 4);
+  let j_day_no = jy * 365 + j_np + jy_day;
+  jy = Math.floor(j_day_no / 12053) * 33;
+  j_day_no %= 12053;
+  jy += Math.floor(j_day_no / 1461) * 4;
+  j_day_no %= 1461;
+  jy += Math.floor((j_day_no - 1) / 365);
+  if (j_day_no > 365) {
+    j_day_no = (j_day_no - 1) % 365;
+  }
+  let jm = 0, jd = 0;
+  if (j_day_no < 186) {
+    jm = 1 + Math.floor(j_day_no / 31);
+    jd = 1 + (j_day_no % 31);
+  } else {
+    jm = 7 + Math.floor((j_day_no - 186) / 30);
+    jd = 1 + ((j_day_no - 186) % 30);
+  }
+  return { jy: jy + 979, jm, jd };
+}
 
-  useEffect(() => {
-    let active = true;
-
-    const checkUserStatus = async () => {
-      const userStr = localStorage.getItem('nexwin_user');
-      if (!userStr) return;
-
-      try {
-        const user = JSON.parse(userStr);
-        if (!user || !user.id) return;
-
-        const supaUrl = import.meta.env.VITE_SUPABASE_URL;
-        const supaKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-        // در صورتی که دیتابیس سوپابیس ست نشده باشد، لایسنس آفلاین تایید شده است
-        if (!supaUrl || !supaKey || supaUrl.includes('YOUR_SUPABASE') || supaUrl === 'zarinpal' || supaUrl.trim() === '') {
-          return;
-        }
-
-        const cleanUrl = supaUrl.endsWith('/') ? supaUrl.slice(0, -1) : supaUrl;
-        const queryUrl = `${cleanUrl}/rest/v1/app_users?id=eq.${encodeURIComponent(user.id)}&select=*`;
-        
-        const response = await fetch(queryUrl, {
-          method: 'GET',
-          headers: {
-            'apikey': supaKey,
-            'Authorization': `Bearer ${supaKey}`
-          }
-        });
-
-        if (!active) return;
-
-        if (response.ok) {
-          const data = await response.json();
-          if (!data || data.length === 0) {
-            // کاربر در دیتابیس ابری وجود ندارد (حذف شده است)
-            console.warn('[Security Guard] User deleted from database. Logging out...');
-            await logoutUser();
-            window.location.reload();
-            return;
-          }
-
-          const onlineUser = data[0];
-          if (onlineUser.status !== 'active') {
-            // کاربر تعلیق شده است
-            console.warn('[Security Guard] User suspended or inactive. Logging out...');
-            await logoutUser();
-            window.location.reload();
-            return;
-          }
-
-          // هماهنگ‌سازی خودکار سطح اشتراک در صورتی که به صورت آنلاین ارتقا یافته باشد
-          if (onlineUser.tier !== user.tier) {
-            const updated = { 
-              ...user, 
-              tier: onlineUser.tier, 
-              max_devices: onlineUser.max_devices 
-            };
-            localStorage.setItem('nexwin_user', JSON.stringify(updated));
-          }
-        }
-      } catch (err) {
-        console.warn('[Security Guard] Offline check bypass:', err);
+// تابع تجزیه و استخراج سال، ماه و روز شمسی از هر فرمت متنی (عددی یا با حروف ماه)
+function parsePersianDate(dateStr: string): { year: number; month: number; day: number } | null {
+  if (!dateStr) return null;
+  try {
+    const farsiDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+    let clean = dateStr;
+    for (let i = 0; i < 10; i++) {
+      clean = clean.replace(new RegExp(farsiDigits[i], 'g'), String(i));
+    }
+    
+    const monthsMap: Record<string, string> = {
+      'فروردین': '1', 'اردیبهشت': '2', 'خرداد': '3',
+      'تیر': '4', 'مرداد': '5', 'شهریور': '6',
+      'مهر': '7', 'آبان': '8', 'آذر': '9',
+      'دی': '10', 'بهمن': '11', 'اسفند': '12'
+    };
+    for (const [name, num] of Object.entries(monthsMap)) {
+      if (clean.includes(name)) {
+        clean = clean.replace(name, `/${num}/`);
+        break;
       }
-    };
+    }
+    
+    const numbers = clean.match(/\d+/g);
+    if (!numbers || numbers.length < 3) return null;
+    
+    const parsedNums = numbers.map(n => parseInt(n, 10));
+    const yearIdx = parsedNums.findIndex(n => n >= 1300 && n <= 1500);
+    if (yearIdx === -1) return null;
+    
+    let year = parsedNums[yearIdx];
+    let month = 1;
+    let day = 1;
+    
+    if (yearIdx === 0) {
+      month = parsedNums[1];
+      day = parsedNums[2];
+    } else if (yearIdx === 2) {
+      day = parsedNums[0];
+      month = parsedNums[1];
+    } else {
+      return null;
+    }
+    
+    return { year, month, day };
+  } catch (e) {
+    console.warn('[Parse Persian Date] Error:', dateStr, e);
+    return null;
+  }
+}
 
-    checkUserStatus();
-    const interval = setInterval(checkUserStatus, 8000);
+// تابع کمکی بررسی انقضای تاریخ شمسی لایسنس
+function isPersianDateExpired(expiryDateStr: string): boolean {
+  if (!expiryDateStr) return false;
+  if (expiryDateStr.includes('بدون منقضی') || expiryDateStr.includes('۳ ساله') || expiryDateStr.includes('3 ساله')) {
+    return false;
+  }
+  
+  const parsedExpiry = parsePersianDate(expiryDateStr);
+  if (!parsedExpiry) return false;
+  
+  let curYear = 0, curMonth = 0, curDay = 0;
+  try {
+    const parts = new Intl.DateTimeFormat('fa-IR', { calendar: 'persian', numberingSystem: 'latn' }).formatToParts(new Date());
+    curYear = parseInt(parts.find(p => p.type === 'year')?.value || '0', 10);
+    curMonth = parseInt(parts.find(p => p.type === 'month')?.value || '0', 10);
+    curDay = parseInt(parts.find(p => p.type === 'day')?.value || '0', 10);
+  } catch (e) {
+    const gy = new Date().getFullYear();
+    const gm = new Date().getMonth() + 1;
+    const gd = new Date().getDate();
+    const j = gregorianToJalali(gy, gm, gd);
+    curYear = j.jy;
+    curMonth = j.jm;
+    curDay = j.jd;
+  }
 
-    return () => {
-      active = false;
-      clearInterval(interval);
-    };
-  }, [location.pathname]);
+  if (curYear === 0 || curMonth === 0 || curDay === 0) return false;
 
-  return null;
+  if (curYear > parsedExpiry.year) return true;
+  if (curYear < parsedExpiry.year) return false;
+  
+  if (curMonth > parsedExpiry.month) return true;
+  if (curMonth < parsedExpiry.month) return false;
+  
+  return curDay > parsedExpiry.day;
+}
+
+// بررسی وضعیت کلی و انقضای کاربر به صورت محلی
+const checkExpiry = (user: any): { isExpired: boolean; reason: 'trial' | 'subscription' | 'suspended' | null } => {
+  if (!user) return { isExpired: false, reason: null };
+  
+  if (user.status === 'expired') {
+    return { isExpired: true, reason: 'subscription' };
+  }
+  if (user.status === 'suspended') {
+    return { isExpired: true, reason: 'suspended' };
+  }
+
+  // ۱. بررسی بر اساس فیلد متنی تاریخ شمسی انقضا (برای کلیه کاربران اعم از آزمایشی و تجاری)
+  if (user.expiry_date) {
+    if (isPersianDateExpired(user.expiry_date)) {
+      return { isExpired: true, reason: user.is_trial ? 'trial' : 'subscription' };
+    }
+  }
+
+  // ۲. بررسی دوره آزمایشی (7 روزه)
+  if (user.is_trial && user.trial_start_date) {
+    const start = new Date(user.trial_start_date).getTime();
+    const now = Date.now();
+    const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+    if (now - start >= sevenDaysMs) {
+      return { isExpired: true, reason: 'trial' };
+    }
+  }
+
+  // ۳. بررسی بر اساس برچسب زمانی انقضا در صورت وجود
+  if (user.expiry_timestamp) {
+    if (Date.now() >= user.expiry_timestamp) {
+      return { isExpired: true, reason: user.is_trial ? 'trial' : 'subscription' };
+    }
+  }
+
+  return { isExpired: false, reason: null };
 };
 
 const ProtectedRoute = ({ children, allowedTiers }: ProtectedRouteProps) => {
@@ -144,19 +218,48 @@ const ProtectedRoute = ({ children, allowedTiers }: ProtectedRouteProps) => {
   return <>{children}</>;
 };
 
-// کامپوننت پایان دسترسی آزمایشی نکس‌وین
-const TrialExpiredScreen = ({ user }: { user: any }) => {
+// کامپوننت پایان دسترسی و انقضای حساب کاربری نکس‌وین
+const AccountExpiredScreen = ({ user, reason }: { user: any; reason: 'trial' | 'subscription' | 'suspended' | null }) => {
   const handleLogout = async () => {
     await logoutUser();
     window.location.reload();
   };
 
-  const startDateStr = user.trial_start_date 
+  const getTrialEnd = (startDate: string) => {
+    if (!startDate) return 'نامشخص';
+    return new Intl.DateTimeFormat('fa-IR', { dateStyle: 'long' }).format(new Date(new Date(startDate).getTime() + 7 * 24 * 60 * 60 * 1000));
+  };
+
+  const startDateStr = user?.trial_start_date 
     ? new Intl.DateTimeFormat('fa-IR', { dateStyle: 'long' }).format(new Date(user.trial_start_date))
     : 'نامشخص';
-  const endDateStr = user.trial_start_date
-    ? new Intl.DateTimeFormat('fa-IR', { dateStyle: 'long' }).format(new Date(new Date(user.trial_start_date).getTime() + 7 * 24 * 60 * 60 * 1000))
-    : 'نامشخص';
+
+  const endDateStr = user?.is_trial
+    ? getTrialEnd(user.trial_start_date || '')
+    : (user?.expiry_date || 'نامشخص');
+
+  const getTitle = () => {
+    if (reason === 'trial') return 'پایان مهلت حساب آزمایشی ⏳';
+    if (reason === 'suspended') return 'حساب کاربری غیرفعال یا تعلیق شده 🔒';
+    return 'پایان دوره اشتراک نکس‌وین ⚠️';
+  };
+
+  const getDescription = () => {
+    if (reason === 'trial') {
+      return 'امروز مدت ۷ روز استفاده آزمایشی (ورود آفلاین دمو) شما از پلتفرم محاسباتی نکس‌وین خاتمه یافته است.';
+    }
+    if (reason === 'suspended') {
+      return 'دسترسی شما به سیستم یکپارچه نکس‌وین بنا به دستور مدیریت مالی یا نقض شرایط استفاده موقتاً مسدود گردیده است.';
+    }
+    return 'اعتبار لایسنس تجاری/اشتراکی شما بر روی پلتفرم نکس‌وین خاتمه یافته است. برای ادامه کار لازم است اشتراک خود را تمدید فرمایید.';
+  };
+
+  const getTierLabel = () => {
+    const tier = user?.tier || 'bronze';
+    if (tier === 'gold') return 'طلایی (ماژول‌ها و خط تولید)';
+    if (tier === 'silver') return 'نقره‌ای (کارگاهی استاندارد)';
+    return 'برنزی (فروشگاهی)';
+  };
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-[#0f172a] relative overflow-hidden font-['Vazirmatn'] px-4 py-8 select-none">
@@ -164,45 +267,47 @@ const TrialExpiredScreen = ({ user }: { user: any }) => {
       <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-red-600/10 rounded-full blur-[120px] pointer-events-none"></div>
       <div className="absolute bottom-[-15%] right-[-10%] w-[600px] h-[600px] bg-amber-500/15 rounded-full blur-[140px] pointer-events-none"></div>
 
-      <div className="w-full max-w-lg bg-slate-900/60 backdrop-blur-3xl rounded-[3rem] border border-red-500/20 p-8 md:p-12 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] relative text-right text-white z-50">
+      <div className="w-full max-w-lg bg-slate-900/60 backdrop-blur-3xl rounded-[3rem] border border-red-500/20 p-8 md:p-12 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] relative text-right text-white z-50 animate-fade-in">
         <div className="text-center mb-8">
           <div className="inline-flex p-5 bg-red-500/10 text-red-500 rounded-full mb-5 shadow-[0_0_50px_rgba(239,68,68,0.2)] border border-red-500/20 animate-bounce">
             <Lock size={48} strokeWidth={1.5} />
           </div>
           <h1 className="text-2xl md:text-3xl font-black text-rose-500 tracking-tight leading-normal">
-            پایان مهلت حساب آزمایشی ⏳
+            {getTitle()}
           </h1>
           <p className="text-slate-400 text-xs md:text-sm font-bold mt-2 leading-relaxed">
-            امروز مدت ۷ روز استفاده آزمایشی (ورود آفلاین دمو) شما از پلتفرم محاسباتی نکس‌وین خاتمه یافته است.
+            {getDescription()}
           </p>
         </div>
 
         <div className="bg-slate-950/60 rounded-2xl p-6 border border-white/5 space-y-4 mb-8">
           <div className="flex items-center justify-between border-b border-white/5 pb-3">
-            <span className="text-xs text-slate-400 font-bold">سطح دسترسی آزمایشی:</span>
-            <span className="text-sm font-black text-yellow-500">تمامی ماژول‌ها و خط تولید (GOLD)</span>
+            <span className="text-xs text-slate-400 font-bold">سطح دسترسی کاربری:</span>
+            <span className="text-sm font-black text-yellow-500">{getTierLabel()}</span>
           </div>
           <div className="flex items-center justify-between border-b border-white/5 pb-3">
-            <span className="text-xs text-slate-400 font-bold">صاحب کارگاه:</span>
-            <span className="text-sm font-black text-slate-200">{user.owner_name || 'کاربر سیستم دمو'}</span>
+            <span className="text-xs text-slate-400 font-bold">صاحب کارگاه/کاربر:</span>
+            <span className="text-sm font-black text-slate-200">{user?.owner_name || 'کاربر سیستم'}</span>
           </div>
           <div className="flex items-center justify-between border-b border-white/5 pb-3">
             <span className="text-xs text-slate-400 font-bold">نام مجموعه:</span>
-            <span className="text-sm font-black text-slate-200">{user.company_name || 'کارگاه نکس‌وین دمو'}</span>
+            <span className="text-sm font-black text-slate-200">{user?.company_name || 'مجموعه ثبت نشده'}</span>
           </div>
-          <div className="flex items-center justify-between border-b border-white/5 pb-3">
-            <span className="text-xs text-slate-400 font-bold">شروع لایسنس آزمایشی:</span>
-            <span className="text-sm font-medium text-slate-300 font-mono">{startDateStr}</span>
-          </div>
+          {user?.is_trial && (
+            <div className="flex items-center justify-between border-b border-white/5 pb-3">
+              <span className="text-xs text-slate-400 font-bold">شروع لایسنس آزمایشی:</span>
+              <span className="text-sm font-medium text-slate-300 font-mono">{startDateStr}</span>
+            </div>
+          )}
           <div className="flex items-center justify-between">
-            <span className="text-xs text-slate-400 font-bold">پایان مهلت لایسنس آزمایشی:</span>
+            <span className="text-xs text-slate-400 font-bold">پایان مهلت لایسنس:</span>
             <span className="text-sm font-black text-rose-400 font-mono">{endDateStr}</span>
           </div>
         </div>
 
         <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-5 mb-8 text-right">
           <p className="text-xs text-amber-400 leading-relaxed font-bold">
-            ⚠️ کاربر گرامی کارگاه؛ جهت ثبت و بهره‌مندی همیشگی از بوم طراحی فوق‌پیشرفته و تمدید لایسنس به صورت دائم تجاری، لطفا با بخش مانیتورینگ و ارتقای لایسنس‌های نکس‌وین تماس حاصل فرمایید.
+            ⚠️ کاربر گرامی کارگاه؛ جهت ثبت، فعال‌سازی و تمدید لایسنس به صورت دائم تجاری و دسترسی کامل به بوم طراحی فوق‌پیشرفته، لطفا با بخش پشتیبانی و تمدید لایسنس‌های نکس‌وین تماس حاصل فرمایید.
           </p>
         </div>
 
@@ -220,15 +325,13 @@ const TrialExpiredScreen = ({ user }: { user: any }) => {
             className="flex items-center justify-center gap-2.5 w-full py-3.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-black rounded-2xl text-xs transition-all border border-slate-700 cursor-pointer"
           >
             <LogOut size={16} />
-            خروج و ورود مجدد با لایسنس دائمی
+            خروج از حساب کاربری
           </button>
         </div>
       </div>
     </div>
   );
 };
-
-// ProtectedRoute guards based on verified subscription tier
 
 function App() {
   const { i18n } = useTranslation();
@@ -239,36 +342,130 @@ function App() {
     document.documentElement.lang = i18n.language;
   }, [i18n.language]);
 
-  const userStr = localStorage.getItem('nexwin_user');
-  let isTrialExpired = false;
-  let trialUserObj: any = null;
-
-  if (userStr) {
+  // کنترل وضعیت انقضای اشتراک/آزمایشی و همگام‌سازی دایمی با دیتابیس آنلاین
+  const [expiredState, setExpiredState] = useState<{
+    isExpired: boolean;
+    user: any;
+    reason: 'trial' | 'subscription' | 'suspended' | null;
+  }>(() => {
+    const userStr = localStorage.getItem('nexwin_user');
+    if (!userStr) return { isExpired: false, user: null, reason: null };
     try {
       const user = JSON.parse(userStr);
-      if (user.is_trial && user.trial_start_date) {
-        trialUserObj = user;
-        const start = new Date(user.trial_start_date).getTime();
-        const now = Date.now();
-        const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
-        if (now - start >= sevenDaysMs) {
-          isTrialExpired = true;
-        }
+      const check = checkExpiry(user);
+      if (check.isExpired) {
+        return { isExpired: true, user, reason: check.reason };
       }
     } catch (e) {
-      console.error(e);
+      console.error('[Initial Expiry Check Error]:', e);
     }
+    return { isExpired: false, user: null, reason: null };
+  });
+
+  useEffect(() => {
+    let active = true;
+
+    const syncAndCheckStatus = async () => {
+      const userStr = localStorage.getItem('nexwin_user');
+      if (!userStr) {
+        if (expiredState.isExpired) {
+          setExpiredState({ isExpired: false, user: null, reason: null });
+        }
+        return;
+      }
+
+      try {
+        const user = JSON.parse(userStr);
+        if (!user || !user.id) return;
+
+        // ۱. بررسی و تطابق محلی در وهله اول
+        const localCheck = checkExpiry(user);
+        if (localCheck.isExpired) {
+          if (!expiredState.isExpired || expiredState.reason !== localCheck.reason) {
+            setExpiredState({ isExpired: true, user, reason: localCheck.reason });
+          }
+        } else {
+          if (expiredState.isExpired) {
+            setExpiredState({ isExpired: false, user: null, reason: null });
+          }
+        }
+
+        // ۲. تطابق برخط دایم با جدول دیتابیس Supabase
+        const supaUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supaKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+        if (!supaUrl || !supaKey || supaUrl.includes('YOUR_SUPABASE') || supaUrl === 'zarinpal' || supaUrl.trim() === '') {
+          return;
+        }
+
+        const cleanUrl = supaUrl.endsWith('/') ? supaUrl.slice(0, -1) : supaUrl;
+        const queryUrl = `${cleanUrl}/rest/v1/app_users?id=eq.${encodeURIComponent(user.id)}&select=*`;
+        
+        const response = await fetch(queryUrl, {
+          method: 'GET',
+          headers: {
+            'apikey': supaKey,
+            'Authorization': `Bearer ${supaKey}`
+          }
+        });
+
+        if (!active) return;
+
+        if (response.ok) {
+          const data = await response.json();
+          if (!data || data.length === 0) {
+            // کاربر در دیتابیس ابری حذف شده است
+            console.warn('[Security Sync] User not found in remote DB. Suspended.');
+            const updated = { ...user, status: 'suspended' as const };
+            localStorage.setItem('nexwin_user', JSON.stringify(updated));
+            setExpiredState({ isExpired: true, user: updated, reason: 'suspended' });
+            return;
+          }
+
+          const onlineUser = data[0];
+          
+          // همگام‌سازی و اعمال اطلاعات جدید دیتابیس در حافظه دستگاه
+          const updated = {
+            ...user,
+            status: onlineUser.status,
+            expiry_date: onlineUser.expiry_date,
+            tier: onlineUser.tier,
+            max_devices: onlineUser.max_devices,
+            is_trial: onlineUser.is_trial,
+            trial_start_date: onlineUser.trial_start_date,
+            expiry_timestamp: onlineUser.expiry_timestamp
+          };
+          localStorage.setItem('nexwin_user', JSON.stringify(updated));
+
+          const onlineCheck = checkExpiry(onlineUser);
+          if (onlineCheck.isExpired) {
+            setExpiredState({ isExpired: true, user: updated, reason: onlineCheck.reason });
+          } else {
+            setExpiredState({ isExpired: false, user: null, reason: null });
+          }
+        }
+      } catch (err) {
+        console.warn('[Security Sync] Error checking user subscription state remotely:', err);
+      }
+    };
+
+    syncAndCheckStatus();
+    const interval = setInterval(syncAndCheckStatus, 8000);
+
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, [expiredState.isExpired]);
+
+  if (expiredState.isExpired && expiredState.user) {
+    return <AccountExpiredScreen user={expiredState.user} reason={expiredState.reason} />;
   }
 
-  if (isTrialExpired && trialUserObj) {
-    return <TrialExpiredScreen user={trialUserObj} />;
-  }
-
-  const hasSession = !!userStr;
+  const hasSession = !!localStorage.getItem('nexwin_user');
 
   return (
     <HashRouter>
-      <GlobalUserStatusGuard />
       <Suspense fallback={<LoadingSpinner />}>
         <Routes>
           <Route path="/" element={<Navigate to={hasSession ? "/dashboard" : "/login"} replace />} />

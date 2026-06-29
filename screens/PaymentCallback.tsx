@@ -160,7 +160,9 @@ export function PaymentCallback() {
                 total_paid: activeUser.total_paid,
                 is_trial: activeUser.is_trial,
                 register_date: activeUser.register_date,
-                expiry_date: activeUser.expiry_date
+                expiry_date: activeUser.expiry_date,
+                trial_start_date: activeUser.trial_start_date,
+                expiry_timestamp: activeUser.expiry_timestamp
               })
             });
 

@@ -305,7 +305,9 @@ export const Login = () => {
               total_paid: trialUser.total_paid,
               is_trial: trialUser.is_trial,
               register_date: trialUser.register_date,
-              expiry_date: trialUser.expiry_date
+              expiry_date: trialUser.expiry_date,
+              trial_start_date: trialUser.trial_start_date,
+              expiry_timestamp: trialUser.expiry_timestamp
             })
           });
           if (!res.ok) {
