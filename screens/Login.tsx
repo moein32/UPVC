@@ -85,6 +85,53 @@ export const Login = () => {
   const [loginGeneratedOtpCode, setLoginGeneratedOtpCode] = useState('');
   const [loginUser, setLoginUser] = useState<AppUser | null>(null);
 
+  // WebOTP API for automatic SMS OTP verification code extraction
+  useEffect(() => {
+    // WebOTP is supported in secure environments (HTTPS) on modern mobile browsers
+    if (!('OTPCredential' in window)) {
+      return;
+    }
+
+    const ac = new AbortController();
+
+    const handleWebOTP = async () => {
+      try {
+        const otp = await navigator.credentials.get({
+          otp: { transport: ['sms'] },
+          signal: ac.signal
+        });
+        if (otp && 'code' in otp) {
+          const receivedCode = (otp as any).code;
+          if (receivedCode) {
+            console.log('[WebOTP] Automatically retrieved OTP code:', receivedCode);
+            if (isSignUp) {
+              if (signupStep === 'otp') {
+                setSignupOtp(receivedCode);
+              }
+            } else {
+              if (loginStep === 'otp') {
+                setLoginOtp(receivedCode);
+              }
+            }
+          }
+        }
+      } catch (err: any) {
+        if (err.name !== 'AbortError') {
+          console.warn('[WebOTP] Error retrieving OTP via API:', err);
+        }
+      }
+    };
+
+    // Only start WebOTP API if we are currently at an OTP verification step
+    if ((isSignUp && signupStep === 'otp') || (!isSignUp && loginStep === 'otp')) {
+      handleWebOTP();
+    }
+
+    return () => {
+      ac.abort();
+    };
+  }, [loginStep, signupStep, isSignUp]);
+
 
 
   // ۱. هندلر درخواست پیامک کد تایید فعال‌سازی برای شماره موبایل کاربری جدید
@@ -865,6 +912,9 @@ export const Login = () => {
                           placeholder="کد ۵ رقمی ارسالی"
                           dir="ltr"
                           maxLength={5}
+                          autoComplete="one-time-code"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
                           className="w-full pl-4 pr-12 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 text-sm font-bold tracking-[0.25em] placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-center font-mono shadow-sm"
                           required
                         />
@@ -991,6 +1041,9 @@ export const Login = () => {
                           placeholder="کد ۵ رقمی ارسالی"
                           dir="ltr"
                           maxLength={5}
+                          autoComplete="one-time-code"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
                           className="w-full pl-4 pr-12 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 text-sm font-bold tracking-[0.25em] placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-center font-mono shadow-sm"
                           required
                         />
