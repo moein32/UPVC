@@ -58,74 +58,47 @@ export default async function handler(req: any, res: any) {
     const merchant = process.env.VITE_ZARINPAL_MERCHANT_ID || 'c7c38578-79ef-42e4-a05f-7f77caa534cb';
     const useSandbox = process.env.VITE_ZARINPAL_USE_SANDBOX === 'true';
 
-    // Check if it is a mock authority (from our simulated sandbox fallback)
-    if (String(actualAuthority).startsWith('MOCK-') || String(actualAuthority).startsWith('ZP-SIM')) {
-      console.log(`[Vercel Zarinpal Gateway] Simulating verification for mock authority: ${actualAuthority}`);
-      res.status(200).json({
-        success: true,
-        refId: 'ZP-SIM-' + Math.floor(10000000 + Math.random() * 90000000),
-        refNumber: 'ZP-SIM-' + Math.floor(10000000 + Math.random() * 90000000),
-        message: 'پرداخت شبیه‌سازی‌شده کارگاهی با موفقیت تایید و ثبت شد.'
-      });
-      return;
-    }
-
     console.log(`[Vercel Zarinpal Gateway] Verifying authority=${actualAuthority}, amount=${amountTomans} Tomans, merchant=${merchant}, sandbox=${useSandbox}`);
 
     const gatewayUrl = useSandbox
       ? 'https://sandbox.zarinpal.com/pg/v4/payment/verify.json'
       : 'https://api.zarinpal.com/pg/v4/payment/verify.json';
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 6500);
+    const response = await fetch(gatewayUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        merchant_id: merchant,
+        amount: Number(amountTomans),
+        authority: actualAuthority
+      })
+    });
 
-    try {
-      const response = await fetch(gatewayUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          merchant_id: merchant,
-          amount: Number(amountTomans),
-          authority: actualAuthority
-        }),
-        signal: controller.signal
-      });
+    if (!response.ok) {
+      throw new Error(`خطای تایید تراکنش در وب‌سرویس زرین‌پال (کد وضعیت: ${response.status})`);
+    }
 
-      clearTimeout(timeoutId);
+    const resData = await response.json();
+    console.log('[Vercel Zarinpal Gateway] Verification response:', resData);
 
-      if (!response.ok) {
-        throw new Error(`خطای تایید تراکنش در وب‌سرویس زرین‌پال (کد وضعیت: ${response.status})`);
-      }
-
-      const resData = await response.json();
-      console.log('[Vercel Zarinpal Gateway] Verification response:', resData);
-
-      if (resData.data && (resData.data.code === 100 || resData.data.code === 101)) {
-        res.status(200).json({
-          success: true,
-          refId: String(resData.data.ref_id || ''),
-          refNumber: String(resData.data.ref_id || ''), // For backward compatibility
-          message: 'پرداخت با موفقیت تایید و نهایی شد.'
-        });
-      } else {
-        const errorMsg = resData.errors && resData.errors.message
-          ? resData.errors.message
-          : (resData.errors && Object.keys(resData.errors).length > 0 ? JSON.stringify(resData.errors) : 'تایید تراکنش مورد تایید قرار نگرفت');
-        
-        throw new Error(`تایید تراکنش ناموفق بود: ${errorMsg}`);
-      }
-    } catch (fetchErr: any) {
-      clearTimeout(timeoutId);
-      console.warn('[Vercel Zarinpal Gateway] Zarinpal verification failed or unreachable. Completing with Simulated Success:', fetchErr.message);
-      
+    if (resData.data && (resData.data.code === 100 || resData.data.code === 101)) {
       res.status(200).json({
         success: true,
-        refId: 'ZP-SIM-CONN-' + Math.floor(10000000 + Math.random() * 90000000),
-        refNumber: 'ZP-SIM-CONN-' + Math.floor(10000000 + Math.random() * 90000000),
-        message: 'پرداخت با شبیه‌ساز گیت‌وی به دلیل خطای اتصال تایید گردید.'
+        refId: String(resData.data.ref_id || ''),
+        refNumber: String(resData.data.ref_id || ''), // For backward compatibility
+        message: 'پرداخت با موفقیت تایید و نهایی شد.'
+      });
+    } else {
+      const errorMsg = resData.errors && resData.errors.message
+        ? resData.errors.message
+        : (resData.errors && Object.keys(resData.errors).length > 0 ? JSON.stringify(resData.errors) : 'تایید تراکنش مورد تایید قرار نگرفت');
+      
+      res.status(200).json({
+        success: false,
+        message: `تایید تراکنش ناموفق بود: ${errorMsg}`
       });
     }
   } catch (err: any) {

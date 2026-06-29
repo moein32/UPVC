@@ -64,71 +64,52 @@ export default async function handler(req: any, res: any) {
       ? 'https://sandbox.zarinpal.com/pg/v4/payment/request.json'
       : 'https://api.zarinpal.com/pg/v4/payment/request.json';
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 6500);
+    const response = await fetch(gatewayUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        merchant_id: merchant,
+        amount: amount,
+        currency: 'IRT', // IRT is Tomans
+        callback_url: callbackUrl,
+        description: description || 'خرید لایسنس نکس‌وین',
+        metadata: {
+          mobile: phoneNumber || ''
+        }
+      })
+    });
 
-    try {
-      const response = await fetch(gatewayUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          merchant_id: merchant,
-          amount: amount,
-          currency: 'IRT', // IRT is Tomans
-          callback_url: callbackUrl,
-          description: description || 'خرید لایسنس نکس‌وین',
-          metadata: {
-            mobile: phoneNumber || ''
-          }
-        }),
-        signal: controller.signal
-      });
+    if (!response.ok) {
+      throw new Error(`خطای ارتباط با درگاه پرداخت زرین‌پال (کد وضعیت: ${response.status})`);
+    }
 
-      clearTimeout(timeoutId);
+    const resData = await response.json();
+    console.log('[Vercel Zarinpal Gateway] Response:', resData);
 
-      if (!response.ok) {
-        throw new Error(`خطای ارتباط با درگاه پرداخت زرین‌پال (کد وضعیت: ${response.status})`);
-      }
-
-      const resData = await response.json();
-      console.log('[Vercel Zarinpal Gateway] Response:', resData);
-
-      if (resData.data && resData.data.authority) {
-        const authority = resData.data.authority;
-        const startPayUrl = useSandbox
-          ? `https://sandbox.zarinpal.com/pg/StartPay/${authority}`
-          : `https://www.zarinpal.com/pg/StartPay/${authority}`;
-
-        res.status(200).json({
-          success: true,
-          authority: authority,
-          trackId: authority, // For backward compatibility if needed
-          redirectUrl: startPayUrl,
-          message: 'تراکنش با موفقیت در زرین‌پال ایجاد شد.'
-        });
-      } else {
-        const errorMsg = resData.errors && resData.errors.message
-          ? resData.errors.message
-          : (resData.errors && Object.keys(resData.errors).length > 0 ? JSON.stringify(resData.errors) : 'خطا در ایجاد تراکنش');
-        
-        throw new Error(`خطای درگاه زرین‌پال: ${errorMsg}`);
-      }
-    } catch (fetchErr: any) {
-      clearTimeout(timeoutId);
-      console.warn('[Vercel Zarinpal Gateway] Zarinpal API unreachable. Activating safe Simulated Sandbox Fallback:', fetchErr.message);
-      
-      const mockAuthority = 'MOCK-ZARINPAL-AUT-' + Math.floor(10000000 + Math.random() * 90000000);
-      const simulatedRedirectUrl = `${callbackUrl}?Status=OK&Authority=${mockAuthority}`;
+    if (resData.data && resData.data.authority) {
+      const authority = resData.data.authority;
+      const startPayUrl = useSandbox
+        ? `https://sandbox.zarinpal.com/pg/StartPay/${authority}`
+        : `https://www.zarinpal.com/pg/StartPay/${authority}`;
 
       res.status(200).json({
         success: true,
-        authority: mockAuthority,
-        trackId: mockAuthority,
-        redirectUrl: simulatedRedirectUrl,
-        message: 'اتصال به زرین‌پال به دلیل محدودیت‌های شبکه سرور برقرار نشد؛ تراکنش شبیه‌سازی‌شده فعال گردید.'
+        authority: authority,
+        trackId: authority, // For backward compatibility if needed
+        redirectUrl: startPayUrl,
+        message: 'تراکنش با موفقیت در زرین‌پال ایجاد شد.'
+      });
+    } else {
+      const errorMsg = resData.errors && resData.errors.message
+        ? resData.errors.message
+        : (resData.errors && Object.keys(resData.errors).length > 0 ? JSON.stringify(resData.errors) : 'خطا در ایجاد تراکنش');
+      
+      res.status(200).json({
+        success: false,
+        message: `خطای درگاه زرین‌پال: ${errorMsg}`
       });
     }
   } catch (err: any) {

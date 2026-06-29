@@ -39,72 +39,51 @@ async function startServer() {
         ? 'https://sandbox.zarinpal.com/pg/v4/payment/request.json'
         : 'https://api.zarinpal.com/pg/v4/payment/request.json';
 
-      // Use a controller to abort if zarinpal is slow or blocked (6.5s timeout)
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 6500);
+      const response = await fetch(gatewayUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          merchant_id: merchant,
+          amount: amount,
+          currency: 'IRT', // IRT is Tomans
+          callback_url: callbackUrl,
+          description: description || 'خرید لایسنس نکس‌وین',
+          metadata: {
+            mobile: phoneNumber || ''
+          }
+        })
+      });
 
-      try {
-        const response = await fetch(gatewayUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify({
-            merchant_id: merchant,
-            amount: amount,
-            currency: 'IRT', // IRT is Tomans
-            callback_url: callbackUrl,
-            description: description || 'خرید لایسنس نکس‌وین',
-            metadata: {
-              mobile: phoneNumber || ''
-            }
-          }),
-          signal: controller.signal
-        });
+      if (!response.ok) {
+        throw new Error(`خطای ارتباط با درگاه پرداخت زرین‌پال (کد وضعیت: ${response.status})`);
+      }
 
-        clearTimeout(timeoutId);
+      const resData = await response.json();
+      console.log('[Zarinpal Server Gateway] Response:', resData);
 
-        if (!response.ok) {
-          throw new Error(`خطای ارتباط با درگاه پرداخت زرین‌پال (کد وضعیت: ${response.status})`);
-        }
-
-        const resData = await response.json();
-        console.log('[Zarinpal Server Gateway] Response:', resData);
-
-        if (resData.data && resData.data.authority) {
-          const authority = resData.data.authority;
-          const startPayUrl = useSandbox
-            ? `https://sandbox.zarinpal.com/pg/StartPay/${authority}`
-            : `https://www.zarinpal.com/pg/StartPay/${authority}`;
-
-          return res.status(200).json({
-            success: true,
-            authority: authority,
-            trackId: authority, // For backward compatibility
-            redirectUrl: startPayUrl,
-            message: 'تراکنش با موفقیت ایجاد شد.'
-          });
-        } else {
-          const errorMsg = resData.errors && resData.errors.message
-            ? resData.errors.message
-            : (resData.errors && Object.keys(resData.errors).length > 0 ? JSON.stringify(resData.errors) : 'خطا در ایجاد تراکنش');
-          throw new Error(`خطای درگاه: ${errorMsg}`);
-        }
-      } catch (fetchErr: any) {
-        clearTimeout(timeoutId);
-        console.warn('[Zarinpal Server Gateway] Zarinpal API unreachable. Activating safe Simulated Sandbox Fallback:', fetchErr.message);
-        
-        // Return a mock success response so users can sign up/upgrade successfully in AI Studio sandbox!
-        const mockAuthority = 'MOCK-ZARINPAL-AUT-' + Math.floor(10000000 + Math.random() * 90000000);
-        const simulatedRedirectUrl = `${callbackUrl}?Status=OK&Authority=${mockAuthority}`;
+      if (resData.data && resData.data.authority) {
+        const authority = resData.data.authority;
+        const startPayUrl = useSandbox
+          ? `https://sandbox.zarinpal.com/pg/StartPay/${authority}`
+          : `https://www.zarinpal.com/pg/StartPay/${authority}`;
 
         return res.status(200).json({
           success: true,
-          authority: mockAuthority,
-          trackId: mockAuthority,
-          redirectUrl: simulatedRedirectUrl,
-          message: 'اتصال به زرین‌پال به دلیل محدودیت‌های شبکه سرور برقرار نشد؛ تراکنش شبیه‌سازی‌شده فعال گردید.'
+          authority: authority,
+          trackId: authority, // For backward compatibility
+          redirectUrl: startPayUrl,
+          message: 'تراکنش با موفقیت ایجاد شد.'
+        });
+      } else {
+        const errorMsg = resData.errors && resData.errors.message
+          ? resData.errors.message
+          : (resData.errors && Object.keys(resData.errors).length > 0 ? JSON.stringify(resData.errors) : 'خطا در ایجاد تراکنش');
+        return res.status(200).json({
+          success: false,
+          message: `خطای درگاه زرین‌پال: ${errorMsg}`
         });
       }
     } catch (err: any) {
@@ -127,17 +106,6 @@ async function startServer() {
         return res.status(400).json({ success: false, message: 'مبلغ تراکنش نامعتبر یا نامشخص است.' });
       }
 
-      // Check if it is a mock authority (from our simulated sandbox fallback)
-      if (String(actualAuthority).startsWith('MOCK-') || String(actualAuthority).startsWith('ZP-SIM')) {
-        console.log(`[Zarinpal Server Gateway] Simulating verification for mock authority: ${actualAuthority}`);
-        return res.status(200).json({
-          success: true,
-          refId: 'ZP-SIM-' + Math.floor(10000000 + Math.random() * 90000000),
-          refNumber: 'ZP-SIM-' + Math.floor(10000000 + Math.random() * 90000000),
-          message: 'پرداخت شبیه‌سازی‌شده کارگاهی با موفقیت تایید و ثبت شد.'
-        });
-      }
-
       const merchant = process.env.VITE_ZARINPAL_MERCHANT_ID || 'c7c38578-79ef-42e4-a05f-7f77caa534cb';
       const useSandbox = process.env.VITE_ZARINPAL_USE_SANDBOX === 'true';
 
@@ -147,55 +115,40 @@ async function startServer() {
         ? 'https://sandbox.zarinpal.com/pg/v4/payment/verify.json'
         : 'https://api.zarinpal.com/pg/v4/payment/verify.json';
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 6500);
+      const response = await fetch(gatewayUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          merchant_id: merchant,
+          amount: Number(amountTomans),
+          authority: actualAuthority
+        })
+      });
 
-      try {
-        const response = await fetch(gatewayUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify({
-            merchant_id: merchant,
-            amount: Number(amountTomans),
-            authority: actualAuthority
-          }),
-          signal: controller.signal
-        });
+      if (!response.ok) {
+        throw new Error(`خطای تایید تراکنش در وب‌سرویس زرین‌پال (کد وضعیت: ${response.status})`);
+      }
 
-        clearTimeout(timeoutId);
+      const resData = await response.json();
+      console.log('[Zarinpal Server Gateway] Verification response:', resData);
 
-        if (!response.ok) {
-          throw new Error(`خطای تایید تراکنش در وب‌سرویس زرین‌پال (کد وضعیت: ${response.status})`);
-        }
-
-        const resData = await response.json();
-        console.log('[Zarinpal Server Gateway] Verification response:', resData);
-
-        if (resData.data && (resData.data.code === 100 || resData.data.code === 101)) {
-          return res.status(200).json({
-            success: true,
-            refId: String(resData.data.ref_id || ''),
-            refNumber: String(resData.data.ref_id || ''), // For backward compatibility
-            message: 'پرداخت با موفقیت تایید و نهایی شد.'
-          });
-        } else {
-          const errorMsg = resData.errors && resData.errors.message
-            ? resData.errors.message
-            : (resData.errors && Object.keys(resData.errors).length > 0 ? JSON.stringify(resData.errors) : 'تایید تراکنش مورد تایید قرار نگرفت');
-          throw new Error(`خطا: ${errorMsg}`);
-        }
-      } catch (fetchErr: any) {
-        clearTimeout(timeoutId);
-        console.warn('[Zarinpal Server Gateway] Zarinpal verification failed or unreachable. Completing with Simulated Success:', fetchErr.message);
-        
+      if (resData.data && (resData.data.code === 100 || resData.data.code === 101)) {
         return res.status(200).json({
           success: true,
-          refId: 'ZP-SIM-CONN-' + Math.floor(10000000 + Math.random() * 90000000),
-          refNumber: 'ZP-SIM-CONN-' + Math.floor(10000000 + Math.random() * 90000000),
-          message: 'پرداخت با شبیه‌ساز گیت‌وی به دلیل خطای اتصال تایید گردید.'
+          refId: String(resData.data.ref_id || ''),
+          refNumber: String(resData.data.ref_id || ''), // For backward compatibility
+          message: 'پرداخت با موفقیت تایید و نهایی شد.'
+        });
+      } else {
+        const errorMsg = resData.errors && resData.errors.message
+          ? resData.errors.message
+          : (resData.errors && Object.keys(resData.errors).length > 0 ? JSON.stringify(resData.errors) : 'تایید تراکنش مورد تایید قرار نگرفت');
+        return res.status(200).json({
+          success: false,
+          message: `تایید تراکنش ناموفق بود: ${errorMsg}`
         });
       }
     } catch (err: any) {
