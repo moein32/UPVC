@@ -48,7 +48,19 @@
   ],
   "rewrites": [
     {
-      "source": "/(apple-touch-icon|favicon|android-chrome|logo|sw|manifest|icons|assets|fonts)(.*)",
+      "source": "/fonts/:path*",
+      "destination": "/fonts/:path*"
+    },
+    {
+      "source": "/assets/:path*",
+      "destination": "/assets/:path*"
+    },
+    {
+      "source": "/icons/:path*",
+      "destination": "/icons/:path*"
+    },
+    {
+      "source": "/(apple-touch-icon|favicon|android-chrome|logo|sw|manifest)(.*)",
       "destination": "/$1$2"
     },
     {
