@@ -33,7 +33,7 @@
       ]
     },
     {
-      "source": "/(.*).(png|ico|svg|jpg|jpeg|webp)",
+      "source": "/(.*).(png|ico|svg|jpg|jpeg|webp|woff|woff2)",
       "headers": [
         {
           "key": "Cache-Control",
@@ -48,7 +48,7 @@
   ],
   "rewrites": [
     {
-      "source": "/(apple-touch-icon|favicon|android-chrome|logo|sw|manifest|icons|assets)(.*)",
+      "source": "/(apple-touch-icon|favicon|android-chrome|logo|sw|manifest|icons|assets|fonts)(.*)",
       "destination": "/$1$2"
     },
     {
