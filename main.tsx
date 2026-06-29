@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
-import './index.css';
+import './src/index.css';
 import './i18n'; // Corrected path to root
 
 const rootElement = document.getElementById('root');

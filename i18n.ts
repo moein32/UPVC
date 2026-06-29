@@ -1,3 +1,4 @@
+
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
@@ -47,6 +48,8 @@ const resources = {
       "split_h_2": "برش افقی (۲)",
       "split_v_3": "برش عمودی (۳)",
       "split_h_3": "برش افقی (۳)",
+      "sash_split_v": "وادار عمودی در سش",
+      "sash_split_h": "وادار افقی در سش",
       "clear_split": "پاکسازی برش",
       "delete_item": "حذف",
       "select": "انتخاب",
@@ -106,6 +109,8 @@ const resources = {
       "split_h_2": "Split Horz (2)",
       "split_v_3": "Split Vert (3)",
       "split_h_3": "Split Horz (3)",
+      "sash_split_v": "Sash Mullion (V)",
+      "sash_split_h": "Sash Mullion (H)",
       "clear_split": "Clear Split",
       "delete_item": "Delete",
       "select": "Select",
