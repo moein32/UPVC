@@ -454,6 +454,9 @@ export const ProductionControl = () => {
                             className={`min-w-[260px] p-6 rounded-[2.5rem] border-2 transition-all text-right relative overflow-hidden group ${selectedProjectId === p.id ? 'bg-slate-900 text-white border-slate-900 shadow-xl' : 'bg-white text-slate-600 border-slate-100 hover:border-blue-200'}`}
                         >
                             <h4 className="font-black text-base mb-1">{p.customerName}</h4>
+                            {p.customerPhone && (
+                                <p className="text-[10px] font-bold opacity-80 mb-1" dir="ltr" style={{ textAlign: 'right' }}>📞 {toPersianDigits(p.customerPhone)}</p>
+                            )}
                             <p className="text-[10px] font-bold opacity-60 mb-4 truncate">{p.address || 'بدون آدرس'}</p>
                             <div className="flex items-center justify-between">
                                 <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded ${p.status === 'Production' ? 'bg-amber-100 text-amber-600' : p.status === 'Produced' ? 'bg-emerald-100 text-emerald-600' : 'bg-blue-100 text-blue-600'}`}>

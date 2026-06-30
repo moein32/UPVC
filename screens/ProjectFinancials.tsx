@@ -91,6 +91,10 @@ export const ProjectFinancials = () => {
         </div>
 
         <div className="text-center mb-8">
+           <h2 className="text-lg font-black text-white mb-1">{project.customerName}</h2>
+           {project.customerPhone && (
+              <p className="text-xs text-slate-400 mb-4" dir="ltr">📞 {toPersianDigits(project.customerPhone)}</p>
+           )}
            <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-2">باقیمانده کل بدهی</p>
            <h2 className={`text-4xl font-black ${isSettled ? 'text-emerald-400' : 'text-white'}`}>
              {isSettled ? 'تسویه کامل' : formatPrice(balance)}

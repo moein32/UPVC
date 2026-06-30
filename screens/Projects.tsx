@@ -70,6 +70,11 @@ export const Projects = () => {
             </div>
             <div>
               <h3 className="font-black text-slate-900 leading-none mb-1">{p.customerName}</h3>
+              {p.customerPhone && (
+                <p className="text-[10px] text-slate-500 font-bold mb-0.5" dir="ltr" style={{ textAlign: 'right' }}>
+                  📞 {toPersianDigits(p.customerPhone)}
+                </p>
+              )}
               <p className="text-[10px] text-slate-400 font-bold">{p.address || 'بدون آدرس'}</p>
             </div>
           </div>

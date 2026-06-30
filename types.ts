@@ -101,6 +101,7 @@ export interface WindowConfig {
 export interface ProjectDetails {
   id: string;
   customerName: string;
+  customerPhone?: string;
   address: string;
   installPercent: number;
   companyName: string; 
