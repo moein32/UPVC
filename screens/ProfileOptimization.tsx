@@ -101,7 +101,8 @@ export const ProfileOptimization = () => {
 
     project.items.forEach((unit, idx) => {
       const uId = (idx + 1).toString();
-      const cuts = calculateDetailedCuts(unit.config.layout || {} as any, unit.config.width, unit.config.height, unit.config.frameType);
+      const unitBrand = pricingStore.getBrands().find(b => b.id === unit.config.profileId);
+      const cuts = calculateDetailedCuts(unit.config.layout || {} as any, unit.config.width, unit.config.height, unit.config.frameType, unitBrand);
       
       cuts.forEach((cut, cIdx) => {
         const itemQuantity = cut.quantity * unit.quantity;

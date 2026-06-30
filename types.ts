@@ -107,6 +107,7 @@ export interface ProjectDetails {
   date: string;
   status: 'Draft' | 'Contract' | 'Production' | 'Produced';
   defaultProfileId?: string; 
+  profitPercent?: number;
 }
 
 export interface Payment {
@@ -129,6 +130,7 @@ export interface InvoiceDetail {
   quantity: number;
   unitPrice: number;
   totalPrice: number;
+  purchaseUnitPrice?: number;
 }
 
 export interface InvoiceItem {

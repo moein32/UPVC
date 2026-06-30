@@ -676,7 +676,7 @@ export const UnitDesigner = () => {
     let panelArea = 0;
 
     cuts.forEach(c => {
-      const lenM = c.length / 1000;
+      const lenM = (c.length / 1000) * (c.quantity || 1);
       if (c.type === 'Frame') {
         if (c.name.includes('کشویی') || c.name.includes('تک‌ریل')) {
           slidingFrameMeters += lenM;
@@ -698,14 +698,14 @@ export const UnitDesigner = () => {
       } else if (c.type === 'Bead') {
         beadMeters += lenM;
       } else if (c.type === 'Glass' && c.width && c.height) {
-        glassArea += (c.width * c.height) / 1000000;
+        glassArea += ((c.width * c.height) / 1000000) * (c.quantity || 1);
       } else if (c.type === 'Panel' && c.width && c.height && c.unit === 'm2') {
-        panelArea += (c.width * c.height) / 1000000;
+        panelArea += ((c.width * c.height) / 1000000) * (c.quantity || 1);
       }
     });
 
     galvCuts.forEach(c => {
-      galvanizedMeters += c.length / 1000;
+      galvanizedMeters += (c.length / 1000) * (c.quantity || 1);
     });
 
     const countHardware = (node: WindowNode): Record<string, number> => {
@@ -735,7 +735,8 @@ export const UnitDesigner = () => {
           unit: u,
           quantity: Number(q.toFixed(2)),
           unitPrice: up,
-          totalPrice: Math.round(q * up)
+          totalPrice: Math.round(q * up),
+          purchaseUnitPrice: up
         });
       }
     };

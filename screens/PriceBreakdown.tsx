@@ -22,6 +22,7 @@ export const PriceBreakdown = () => {
   // Modal State
   const [showPriceReview, setShowPriceReview] = useState(false);
   const [editingMaterials, setEditingMaterials] = useState<InvoiceDetail[]>([]);
+  const [profitPercent, setProfitPercent] = useState<number>(20);
 
   useEffect(() => {
      setSettings(pricingStore.getSettings());
@@ -30,6 +31,9 @@ export const PriceBreakdown = () => {
          if (saved) {
              setItems(saved.items);
              setProjectDetails(saved);
+             if (saved.profitPercent !== undefined) {
+                 setProfitPercent(saved.profitPercent);
+             }
          }
      }
   }, [projectDetails?.id]);
@@ -54,15 +58,18 @@ export const PriceBreakdown = () => {
     const allDetails: InvoiceDetail[] = [];
     items.forEach(unit => {
         unit.calculations.details.forEach(detail => {
+            const pPrice = detail.purchaseUnitPrice !== undefined ? detail.purchaseUnitPrice : detail.unitPrice;
             const existing = allDetails.find(d => d.name === detail.name);
             if (existing) {
                 existing.quantity += (detail.quantity * unit.quantity);
-                existing.totalPrice = Math.round(existing.quantity * existing.unitPrice);
+                existing.totalPrice = Math.round(existing.quantity * pPrice);
             } else {
                 allDetails.push({
                     ...detail,
+                    unitPrice: pPrice,
+                    purchaseUnitPrice: pPrice,
                     quantity: detail.quantity * unit.quantity,
-                    totalPrice: Math.round((detail.quantity * unit.quantity) * detail.unitPrice)
+                    totalPrice: Math.round((detail.quantity * unit.quantity) * pPrice)
                 });
             }
         });
@@ -74,6 +81,7 @@ export const PriceBreakdown = () => {
   const handleUpdateUnitPrice = (index: number, newPrice: number) => {
     const updated = [...editingMaterials];
     updated[index].unitPrice = newPrice;
+    updated[index].purchaseUnitPrice = newPrice;
     updated[index].totalPrice = Math.round(updated[index].quantity * newPrice);
     setEditingMaterials(updated);
   };
@@ -85,10 +93,12 @@ export const PriceBreakdown = () => {
         const newDetails = unit.calculations.details.map(d => {
             const matchingReview = editingMaterials.find(rm => rm.name === d.name);
             if (matchingReview) {
+                const sellingUnitPrice = Math.round(matchingReview.unitPrice * (1 + profitPercent / 100));
                 return {
                     ...d,
-                    unitPrice: matchingReview.unitPrice,
-                    totalPrice: Math.round(d.quantity * matchingReview.unitPrice)
+                    purchaseUnitPrice: matchingReview.unitPrice,
+                    unitPrice: sellingUnitPrice,
+                    totalPrice: Math.round(d.quantity * sellingUnitPrice)
                 };
             }
             return d;
@@ -107,8 +117,21 @@ export const PriceBreakdown = () => {
         };
     });
 
+    const updatedSubtotal = updatedItems.reduce((acc, i) => acc + (i.calculations.totalPrice * i.quantity), 0);
+    const updatedInstall = Math.round(updatedSubtotal * (projectDetails.installPercent / 100));
+    const finalProjectPrice = updatedSubtotal + updatedInstall;
+    
+    const projectToSave = { 
+        ...projectDetails, 
+        items: updatedItems, 
+        totalPrice: finalProjectPrice,
+        profitPercent: profitPercent
+    };
+    
+    pricingStore.saveProject(projectToSave);
+
     navigate('/print-invoice', { 
-        state: { projectDetails, items: updatedItems, fromProjectsList: locationState?.fromProjectsList } 
+        state: { projectDetails: projectToSave, items: updatedItems, fromProjectsList: locationState?.fromProjectsList } 
     });
   };
 
@@ -299,64 +322,151 @@ export const PriceBreakdown = () => {
                         <button onClick={() => setShowPriceReview(false)} className="p-2 bg-white rounded-full text-slate-400 shadow-sm"><X size={20}/></button>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-4 no-scrollbar">
-                        <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100 flex gap-3 mb-4">
+                    <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 no-scrollbar">
+                        <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100 flex gap-3">
                             <AlertCircle size={20} className="text-blue-600 shrink-0 mt-0.5" />
                             <p className="text-[10px] md:text-xs text-blue-800 font-bold leading-relaxed">
-                                در این بخش می‌توانید قیمت واحد هر قطعه را برای کل پروژه تغییر دهید. با کلیک بر روی عدد قیمت، مقدار جدید را وارد کنید. محاسبات فاکتور نهایی بر اساس این مقادیر خواهد بود.
+                                قیمت‌های زیر به عنوان <strong>قیمت خرید متریال</strong> در نظر گرفته می‌شوند. سود خالص دلخواه خود را تعیین کنید تا قیمت نهایی فروش محاسبه شود. مشتری فقط قیمت‌های فروش نهایی را در فاکتور خواهد دید.
                             </p>
                         </div>
 
+                        {/* Interactive Profit Margin Selector */}
+                        <div className="bg-slate-50 p-5 rounded-3xl border border-slate-100 space-y-4">
+                            <div className="flex justify-between items-center">
+                                <div>
+                                    <h3 className="text-xs md:text-sm font-black text-slate-800">تعیین درصد سود کارگاه (تولیدکننده)</h3>
+                                    <p className="text-[9px] text-slate-400 font-bold mt-0.5">Adjust Workshop Profit Margin</p>
+                                </div>
+                                <div className="flex items-baseline gap-1 bg-blue-50 text-blue-600 px-3 py-1 rounded-xl font-black text-sm">
+                                    <span>{toPersianDigits(profitPercent)}</span>
+                                    <span className="text-[10px]">٪</span>
+                                </div>
+                            </div>
+                            
+                            <div className="flex items-center gap-1.5">
+                                {[10, 15, 20, 25, 30].map((p) => (
+                                    <button
+                                        key={p}
+                                        type="button"
+                                        onClick={() => setProfitPercent(p)}
+                                        className={`flex-1 py-1.5 rounded-xl text-[11px] font-black transition-all ${
+                                            profitPercent === p 
+                                            ? 'bg-blue-600 text-white shadow-md shadow-blue-100' 
+                                            : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+                                        }`}
+                                    >
+                                        {toPersianDigits(p)}٪
+                                    </button>
+                                ))}
+                            </div>
+                            
+                            <div className="flex flex-col sm:flex-row items-center gap-4 pt-1">
+                                <input 
+                                    type="range" 
+                                    min="0" 
+                                    max="100" 
+                                    value={profitPercent}
+                                    onChange={(e) => setProfitPercent(Number(e.target.value))}
+                                    className="w-full sm:flex-1 accent-blue-600 h-1.5 bg-slate-200 rounded-lg cursor-pointer"
+                                />
+                                <div className="flex items-center gap-2 shrink-0">
+                                    <span className="text-[10px] text-slate-500 font-bold">درصد سفارشی:</span>
+                                    <input 
+                                        type="number"
+                                        min="0"
+                                        max="500"
+                                        value={profitPercent}
+                                        onChange={(e) => setProfitPercent(Math.max(0, Number(e.target.value)))}
+                                        className="w-16 bg-white border border-slate-200 rounded-xl px-2 py-1 text-xs font-black text-slate-700 text-center focus:ring-1 focus:ring-blue-500"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Materials List */}
                         <div className="space-y-2">
-                            {editingMaterials.map((material, idx) => (
-                                <div key={idx} className="bg-white p-4 rounded-2xl border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-3 group hover:border-blue-200 transition-colors">
-                                    <div className="flex-1">
-                                        <h4 className="text-sm font-black text-slate-800">{material.name}</h4>
-                                        <div className="flex items-center gap-3 mt-1">
-                                            <span className="text-[10px] font-black text-slate-400 bg-slate-50 px-2 py-0.5 rounded-lg">مقدار کل: {toPersianDigits(material.quantity.toFixed(2))} {material.unit}</span>
+                            {editingMaterials.map((material, idx) => {
+                                const sellingPrice = Math.round(material.unitPrice * (1 + profitPercent / 100));
+                                const totalSellingPrice = Math.round(material.quantity * sellingPrice);
+
+                                return (
+                                    <div key={idx} className="bg-white p-4 rounded-2xl border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-3 group hover:border-blue-100 transition-colors">
+                                        <div className="flex-1">
+                                            <h4 className="text-xs md:text-sm font-black text-slate-800">{material.name}</h4>
+                                            <div className="flex items-center gap-3 mt-1">
+                                                <span className="text-[9px] font-black text-slate-400 bg-slate-50 px-2 py-0.5 rounded-lg">مقدار کل: {toPersianDigits(material.quantity.toFixed(2))} {material.unit}</span>
+                                            </div>
                                         </div>
-                                    </div>
-                                    
-                                    <div className="flex items-center gap-4 justify-between md:justify-end">
-                                        <div className="flex flex-col items-end">
-                                            <span className="text-[8px] font-black text-slate-300 uppercase mb-0.5">قیمت واحد (تومان)</span>
-                                            <div className="relative">
+                                        
+                                        <div className="grid grid-cols-3 gap-3 items-center justify-end">
+                                            <div className="flex flex-col items-end">
+                                                <span className="text-[7px] font-black text-slate-400 uppercase mb-0.5">خرید واحد (تومان)</span>
                                                 <input 
                                                     type="number"
                                                     value={material.unitPrice}
                                                     onChange={(e) => handleUpdateUnitPrice(idx, Number(e.target.value))}
-                                                    className="bg-slate-100 border-none rounded-xl px-3 py-2 text-sm font-black text-slate-900 w-32 text-center focus:ring-2 focus:ring-blue-500 transition-all"
+                                                    className="bg-slate-50 border border-slate-100 rounded-xl px-2 py-1 text-xs font-black text-slate-700 w-22 text-center focus:ring-1 focus:ring-blue-500 transition-all"
                                                 />
                                             </div>
-                                        </div>
-                                        <div className="flex flex-col items-end min-w-[100px]">
-                                            <span className="text-[8px] font-black text-slate-300 uppercase mb-0.5">جمع ردیف</span>
-                                            <span className="text-sm font-black text-slate-900">{formatPrice(material.totalPrice)}</span>
+                                            <div className="flex flex-col items-end">
+                                                <span className="text-[7px] font-black text-slate-400 uppercase mb-0.5">فروش واحد (+سود)</span>
+                                                <span className="text-[11px] font-bold text-slate-600 bg-slate-100/50 px-2 py-1.5 rounded-xl border border-slate-50">{formatPrice(sellingPrice)}</span>
+                                            </div>
+                                            <div className="flex flex-col items-end min-w-[85px]">
+                                                <span className="text-[7px] font-black text-slate-400 uppercase mb-0.5">جمع فروش ردیف</span>
+                                                <span className="text-[11px] font-black text-blue-600">{formatPrice(totalSellingPrice)}</span>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </div>
 
-                    <div className="p-6 md:p-8 bg-slate-900 text-white flex flex-col md:flex-row items-center justify-between gap-6">
-                        <div className="grid grid-cols-2 gap-8 w-full md:w-auto">
-                            <div>
-                                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-1">جمع متریال</span>
-                                <div className="text-xl font-black">{formatPrice(reviewSubtotal)} <span className="text-[8px] opacity-40">تومان</span></div>
+                    {/* Financial Summary & Action */}
+                    {(() => {
+                        const sellingSubtotal = Math.round(reviewSubtotal * (1 + profitPercent / 100));
+                        const netProfitValue = Math.round(reviewSubtotal * (profitPercent / 100));
+                        const reviewInstallValue = Math.round(sellingSubtotal * (projectDetails.installPercent / 100));
+                        const finalSellingPrice = sellingSubtotal + reviewInstallValue;
+
+                        return (
+                            <div className="p-6 md:p-8 bg-slate-900 text-white flex flex-col gap-6">
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full text-right border-b border-white/10 pb-4">
+                                    <div>
+                                        <span className="text-[8px] md:text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-1">هزینه خرید متریال</span>
+                                        <div className="text-xs md:text-sm font-bold text-slate-300">{formatPrice(reviewSubtotal)} <span className="text-[8px] opacity-40">تومان</span></div>
+                                    </div>
+                                    <div className="bg-blue-950/50 p-2.5 rounded-xl border border-blue-900/40">
+                                        <span className="text-[8px] md:text-[9px] font-black text-blue-400 uppercase tracking-widest block mb-1">سود خالص شما ({toPersianDigits(profitPercent)}٪)</span>
+                                        <div className="text-xs md:text-sm font-black text-blue-300">{formatPrice(netProfitValue)} <span className="text-[8px] opacity-60">تومان</span></div>
+                                    </div>
+                                    <div>
+                                        <span className="text-[8px] md:text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-1">فروش متریال با سود</span>
+                                        <div className="text-xs md:text-sm font-bold text-slate-300">{formatPrice(sellingSubtotal)} <span className="text-[8px] opacity-40">تومان</span></div>
+                                    </div>
+                                    <div>
+                                        <span className="text-[8px] md:text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-1">نصب ({toPersianDigits(projectDetails.installPercent)}٪)</span>
+                                        <div className="text-xs md:text-sm font-bold text-emerald-400">{formatPrice(reviewInstallValue)} <span className="text-[8px] opacity-40 text-white">تومان</span></div>
+                                    </div>
+                                </div>
+                                
+                                <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+                                    <div className="text-right">
+                                        <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest block mb-1">مبلغ نهایی فاکتور (چاپ پیش‌فاکتور مشتری)</span>
+                                        <div className="text-xl md:text-2xl font-black text-white">{formatPrice(finalSellingPrice)} <span className="text-xs opacity-60">تومان</span></div>
+                                        <p className="text-[8px] text-slate-400 mt-1 font-bold">⚠️ توجه: مبالغ خرید و سود خالص تولیدکننده به هیچ وجه در فاکتور مشتری نمایش داده نمی‌شوند.</p>
+                                    </div>
+                                    <button 
+                                        onClick={handleConfirmFinalPrint}
+                                        className="w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black text-xs flex items-center justify-center gap-2 shadow-xl active:scale-95 transition-all"
+                                    >
+                                        <Save size={18} /> تایید نهایی و فاکتور
+                                    </button>
+                                </div>
                             </div>
-                            <div>
-                                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-1">هزینه نصب ({toPersianDigits(projectDetails.installPercent)}٪)</span>
-                                <div className="text-xl font-black text-emerald-400">{formatPrice(reviewInstall)} <span className="text-[8px] opacity-40 text-white">تومان</span></div>
-                            </div>
-                        </div>
-                        <button 
-                            onClick={handleConfirmFinalPrint}
-                            className="w-full md:w-auto px-10 py-5 bg-blue-600 rounded-2xl font-black text-sm flex items-center justify-center gap-3 shadow-xl active:scale-95 transition-all hover:bg-blue-500"
-                        >
-                            <Save size={20} /> تایید نهایی و صدور فاکتور
-                        </button>
-                    </div>
+                        );
+                    })()}
                 </motion.div>
             </div>
         )}
