@@ -50,7 +50,7 @@ export default async function handler(req: any, res: any) {
     }
 
     const amount = Number(amountTomans);
-    const isSandbox = process.env.ZARINPAL_SANDBOX !== 'false';
+    const isSandbox = process.env.ZARINPAL_SANDBOX === 'true';
     const merchant = process.env.ZARINPAL_MERCHANT_ID || process.env.VITE_ZARINPAL_MERCHANT_ID || (isSandbox ? '00000000-0000-0000-0000-000000000000' : 'afd57d04-0629-49e2-ae20-6b8dc7e75ca2');
     
     // Determine callback URL based on headers

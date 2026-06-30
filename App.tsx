@@ -121,6 +121,25 @@ function parsePersianDate(dateStr: string): { year: number; month: number; day: 
   }
 }
 
+// مبدل بسیار دقیق تقویم شمسی به میلادی با استفاده از سیستم نیتیو مرورگر جهت برطرف‌سازی خطاهای محاسبه روزها
+function jalaliToGregorianSearch(jy: number, jm: number, jd: number): Date {
+  let gYear = jy + 621;
+  let searchDate = new Date(gYear, 2, 1);
+  for (let k = 0; k < 450; k++) {
+    try {
+      const parts = new Intl.DateTimeFormat('fa-IR', { calendar: 'persian', numberingSystem: 'latn' }).formatToParts(searchDate);
+      const curY = parseInt(parts.find(p => p.type === 'year')?.value || '0', 10);
+      const curM = parseInt(parts.find(p => p.type === 'month')?.value || '0', 10);
+      const curD = parseInt(parts.find(p => p.type === 'day')?.value || '0', 10);
+      if (curY === jy && curM === jm && curD === jd) {
+        return searchDate;
+      }
+    } catch (e) {}
+    searchDate = new Date(searchDate.getTime() + 24 * 60 * 60 * 1000);
+  }
+  return new Date(jy + 621, jm - 1, jd);
+}
+
 // تابع کمکی بررسی انقضای تاریخ شمسی لایسنس
 function isPersianDateExpired(expiryDateStr: string): boolean {
   if (!expiryDateStr) return false;
@@ -131,31 +150,9 @@ function isPersianDateExpired(expiryDateStr: string): boolean {
   const parsedExpiry = parsePersianDate(expiryDateStr);
   if (!parsedExpiry) return false;
   
-  let curYear = 0, curMonth = 0, curDay = 0;
-  try {
-    const parts = new Intl.DateTimeFormat('fa-IR', { calendar: 'persian', numberingSystem: 'latn' }).formatToParts(new Date());
-    curYear = parseInt(parts.find(p => p.type === 'year')?.value || '0', 10);
-    curMonth = parseInt(parts.find(p => p.type === 'month')?.value || '0', 10);
-    curDay = parseInt(parts.find(p => p.type === 'day')?.value || '0', 10);
-  } catch (e) {
-    const gy = new Date().getFullYear();
-    const gm = new Date().getMonth() + 1;
-    const gd = new Date().getDate();
-    const j = gregorianToJalali(gy, gm, gd);
-    curYear = j.jy;
-    curMonth = j.jm;
-    curDay = j.jd;
-  }
-
-  if (curYear === 0 || curMonth === 0 || curDay === 0) return false;
-
-  if (curYear > parsedExpiry.year) return true;
-  if (curYear < parsedExpiry.year) return false;
-  
-  if (curMonth > parsedExpiry.month) return true;
-  if (curMonth < parsedExpiry.month) return false;
-  
-  return curDay > parsedExpiry.day;
+  const expiryDateObj = jalaliToGregorianSearch(parsedExpiry.year, parsedExpiry.month, parsedExpiry.day);
+  const expiryTime = expiryDateObj.getTime() + 24 * 60 * 60 * 1000 - 1; // پایان روز انقضا
+  return Date.now() >= expiryTime;
 }
 
 // بررسی وضعیت کلی و انقضای کاربر به صورت محلی
@@ -169,11 +166,13 @@ const checkExpiry = (user: any): { isExpired: boolean; reason: 'trial' | 'subscr
     return { isExpired: true, reason: 'suspended' };
   }
 
-  // ۱. بررسی بر اساس فیلد متنی تاریخ شمسی انقضا (برای کلیه کاربران اعم از آزمایشی و تجاری)
-  if (user.expiry_date) {
-    if (isPersianDateExpired(user.expiry_date)) {
+  // ۱. بررسی بر اساس برچسب زمانی دقیق انقضا (در صورت وجود اولویت دارد)
+  if (user.expiry_timestamp) {
+    if (Date.now() >= user.expiry_timestamp) {
       return { isExpired: true, reason: user.is_trial ? 'trial' : 'subscription' };
     }
+    // اگر برچسب زمانی انقضا معتبر است و منقضی نشده، کاربر قطعا فعال است و نیاز به بررسی فیلد متنی تاریخ نیست
+    return { isExpired: false, reason: null };
   }
 
   // ۲. بررسی دوره آزمایشی (7 روزه)
@@ -186,9 +185,9 @@ const checkExpiry = (user: any): { isExpired: boolean; reason: 'trial' | 'subscr
     }
   }
 
-  // ۳. بررسی بر اساس برچسب زمانی انقضا در صورت وجود
-  if (user.expiry_timestamp) {
-    if (Date.now() >= user.expiry_timestamp) {
+  // ۳. بررسی بر اساس فیلد متنی تاریخ شمسی انقضا (به عنوان بک‌آپ در صورتی که تایم‌استمپ نبود)
+  if (user.expiry_date) {
+    if (isPersianDateExpired(user.expiry_date)) {
       return { isExpired: true, reason: user.is_trial ? 'trial' : 'subscription' };
     }
   }

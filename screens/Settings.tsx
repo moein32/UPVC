@@ -132,40 +132,21 @@ export const Settings = () => {
   };
 
   const jalaliToGregorian = (jy: number, jm: number, jd: number): Date => {
-    const sal_a = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
-    let jy2 = jy - 979;
-    let j_day_no = jy2 * 365 + Math.floor(jy2 / 33) * 8 + Math.floor(((jy2 % 33) + 3) / 4);
-    for (let i = 0; i < jm - 1; ++i) {
-      j_day_no += (i < 6) ? 31 : 30;
+    let gYear = jy + 621;
+    let searchDate = new Date(gYear, 2, 1);
+    for (let k = 0; k < 450; k++) {
+      try {
+        const parts = new Intl.DateTimeFormat('fa-IR', { calendar: 'persian', numberingSystem: 'latn' }).formatToParts(searchDate);
+        const curY = parseInt(parts.find(p => p.type === 'year')?.value || '0', 10);
+        const curM = parseInt(parts.find(p => p.type === 'month')?.value || '0', 10);
+        const curD = parseInt(parts.find(p => p.type === 'day')?.value || '0', 10);
+        if (curY === jy && curM === jm && curD === jd) {
+          return searchDate;
+        }
+      } catch (e) {}
+      searchDate = new Date(searchDate.getTime() + 24 * 60 * 60 * 1000);
     }
-    j_day_no += jd - 1;
-    let g_day_no = j_day_no + 79;
-    let gy = 1600 + 400 * Math.floor(g_day_no / 146097);
-    g_day_no %= 146097;
-    let leap = true;
-    if (g_day_no >= 36525) {
-      g_day_no--;
-      gy += 100 * Math.floor(g_day_no / 36524);
-      g_day_no %= 36524;
-      if (g_day_no >= 365) {
-        g_day_no++;
-      } else {
-        leap = false;
-      }
-    }
-    gy += 4 * Math.floor(g_day_no / 1461);
-    g_day_no %= 1461;
-    if (g_day_no >= 366) {
-      leap = false;
-      g_day_no--;
-      gy += Math.floor(g_day_no / 365);
-      g_day_no %= 365;
-    }
-    let i = 0;
-    for (i = 0; g_day_no >= sal_a[i] + (i > 1 && leap ? 1 : 0); i++);
-    const gd = g_day_no - sal_a[i - 1] - (i > 2 && leap ? 1 : 0) + 1;
-    const gm = i;
-    return new Date(gy, gm - 1, gd);
+    return new Date(jy + 621, jm - 1, jd);
   };
 
   const getRemainingDays = (user: AppUser): number => {
