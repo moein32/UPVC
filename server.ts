@@ -25,16 +25,18 @@ async function startServer() {
       }
 
       const amount = Number(amountTomans);
-      const merchant = process.env.ZARINPAL_MERCHANT_ID || process.env.VITE_ZARINPAL_MERCHANT_ID || 'afd57d04-0629-49e2-ae20-6b8dc7e75ca2';
+      const isSandbox = process.env.ZARINPAL_SANDBOX !== 'false';
+      const merchant = process.env.ZARINPAL_MERCHANT_ID || process.env.VITE_ZARINPAL_MERCHANT_ID || (isSandbox ? '00000000-0000-0000-0000-000000000000' : 'afd57d04-0629-49e2-ae20-6b8dc7e75ca2');
       
       // Determine callback URL based on environment or host header
       const host = req.get('host') || 'localhost:3000';
       const protocol = req.secure || req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http';
       const callbackUrl = `${protocol}://${host}/#/payment-callback`;
 
-      console.log(`[Zarinpal Server Gateway] Creating real payment: amount=${amount} Tomans, phone=${phoneNumber}, merchant=${merchant}`);
+      console.log(`[Zarinpal Server Gateway] Creating payment (Sandbox=${isSandbox}): amount=${amount} Tomans, phone=${phoneNumber}, merchant=${merchant}`);
 
-      const gatewayUrl = 'https://api.zarinpal.com/pg/v4/payment/request.json';
+      const zarinpalHost = isSandbox ? 'sandbox.zarinpal.com' : 'api.zarinpal.com';
+      const gatewayUrl = `https://${zarinpalHost}/pg/v4/payment/request.json`;
 
       // Build metadata dynamically to avoid empty/invalid phone number failures
       const metadata: Record<string, string> = {};
@@ -69,7 +71,9 @@ async function startServer() {
 
         if (resData.data && resData.data.authority) {
           const authority = resData.data.authority;
-          const startPayUrl = `https://www.zarinpal.com/pg/StartPay/${authority}`;
+          const startPayUrl = isSandbox 
+            ? `https://sandbox.zarinpal.com/pg/StartPay/${authority}`
+            : `https://www.zarinpal.com/pg/StartPay/${authority}`;
 
           return res.status(200).json({
             success: true,
@@ -111,11 +115,13 @@ async function startServer() {
         return res.status(400).json({ success: false, message: 'مبلغ تراکنش نامعتبر یا نامشخص است.' });
       }
 
-      const merchant = process.env.ZARINPAL_MERCHANT_ID || process.env.VITE_ZARINPAL_MERCHANT_ID || 'afd57d04-0629-49e2-ae20-6b8dc7e75ca2';
+      const isSandbox = process.env.ZARINPAL_SANDBOX !== 'false';
+      const merchant = process.env.ZARINPAL_MERCHANT_ID || process.env.VITE_ZARINPAL_MERCHANT_ID || (isSandbox ? '00000000-0000-0000-0000-000000000000' : 'afd57d04-0629-49e2-ae20-6b8dc7e75ca2');
 
-      console.log(`[Zarinpal Server Gateway] Verifying real payment: authority=${actualAuthority}, amount=${amountTomans} Tomans, merchant=${merchant}`);
+      console.log(`[Zarinpal Server Gateway] Verifying payment (Sandbox=${isSandbox}): authority=${actualAuthority}, amount=${amountTomans} Tomans, merchant=${merchant}`);
 
-      const gatewayUrl = 'https://api.zarinpal.com/pg/v4/payment/verify.json';
+      const zarinpalHost = isSandbox ? 'sandbox.zarinpal.com' : 'api.zarinpal.com';
+      const gatewayUrl = `https://${zarinpalHost}/pg/v4/payment/verify.json`;
 
       try {
         const response = await fetch(gatewayUrl, {

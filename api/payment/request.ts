@@ -50,16 +50,18 @@ export default async function handler(req: any, res: any) {
     }
 
     const amount = Number(amountTomans);
-    const merchant = process.env.ZARINPAL_MERCHANT_ID || process.env.VITE_ZARINPAL_MERCHANT_ID || 'afd57d04-0629-49e2-ae20-6b8dc7e75ca2';
+    const isSandbox = process.env.ZARINPAL_SANDBOX !== 'false';
+    const merchant = process.env.ZARINPAL_MERCHANT_ID || process.env.VITE_ZARINPAL_MERCHANT_ID || (isSandbox ? '00000000-0000-0000-0000-000000000000' : 'afd57d04-0629-49e2-ae20-6b8dc7e75ca2');
     
     // Determine callback URL based on headers
     const host = req.headers.host || 'localhost:3000';
     const protocol = req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http';
     const callbackUrl = `${protocol}://${host}/#/payment-callback`;
 
-    console.log(`[Vercel Zarinpal Gateway] Creating real payment: amount=${amount} Tomans, phone=${phoneNumber}, merchant=${merchant}`);
+    console.log(`[Vercel Zarinpal Gateway] Creating payment (Sandbox=${isSandbox}): amount=${amount} Tomans, phone=${phoneNumber}, merchant=${merchant}`);
 
-    const gatewayUrl = 'https://api.zarinpal.com/pg/v4/payment/request.json';
+    const zarinpalHost = isSandbox ? 'sandbox.zarinpal.com' : 'api.zarinpal.com';
+    const gatewayUrl = `https://${zarinpalHost}/pg/v4/payment/request.json`;
 
     // Build metadata dynamically to avoid empty/invalid phone number failures
     const metadata: Record<string, string> = {};
@@ -94,7 +96,9 @@ export default async function handler(req: any, res: any) {
 
       if (resData.data && resData.data.authority) {
         const authority = resData.data.authority;
-        const startPayUrl = `https://www.zarinpal.com/pg/StartPay/${authority}`;
+        const startPayUrl = isSandbox 
+          ? `https://sandbox.zarinpal.com/pg/StartPay/${authority}`
+          : `https://www.zarinpal.com/pg/StartPay/${authority}`;
 
         res.status(200).json({
           success: true,

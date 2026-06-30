@@ -81,6 +81,93 @@ export const Settings = () => {
     }
   }, [currentUser]);
 
+  const parsePersianDate = (dateStr: string): { year: number; month: number; day: number } | null => {
+    if (!dateStr) return null;
+    try {
+      const farsiDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+      let clean = dateStr;
+      for (let i = 0; i < 10; i++) {
+        clean = clean.replace(new RegExp(farsiDigits[i], 'g'), String(i));
+      }
+      
+      const monthsMap: Record<string, string> = {
+        'فروردین': '1', 'اردیبهشت': '2', 'خرداد': '3',
+        'تیر': '4', 'مرداد': '5', 'شهریور': '6',
+        'مهر': '7', 'آبان': '8', 'آذر': '9',
+        'دی': '10', 'بهمن': '11', 'اسفند': '12'
+      };
+      for (const [name, num] of Object.entries(monthsMap)) {
+        if (clean.includes(name)) {
+          clean = clean.replace(name, `/${num}/`);
+          break;
+        }
+      }
+      
+      const numbers = clean.match(/\d+/g);
+      if (!numbers || numbers.length < 3) return null;
+      
+      const parsedNums = numbers.map(n => parseInt(n, 10));
+      const yearIdx = parsedNums.findIndex(n => n >= 1300 && n <= 1500);
+      if (yearIdx === -1) return null;
+      
+      let year = parsedNums[yearIdx];
+      let month = 1;
+      let day = 1;
+      
+      if (yearIdx === 0) {
+        month = parsedNums[1];
+        day = parsedNums[2];
+      } else if (yearIdx === 2) {
+        day = parsedNums[0];
+        month = parsedNums[1];
+      } else {
+        return null;
+      }
+      
+      return { year, month, day };
+    } catch (e) {
+      console.warn('[Settings Parse Persian Date] Error:', dateStr, e);
+      return null;
+    }
+  };
+
+  const jalaliToGregorian = (jy: number, jm: number, jd: number): Date => {
+    const sal_a = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
+    let jy2 = jy - 979;
+    let j_day_no = jy2 * 365 + Math.floor(jy2 / 33) * 8 + Math.floor(((jy2 % 33) + 3) / 4);
+    for (let i = 0; i < jm - 1; ++i) {
+      j_day_no += (i < 6) ? 31 : 30;
+    }
+    j_day_no += jd - 1;
+    let g_day_no = j_day_no + 79;
+    let gy = 1600 + 400 * Math.floor(g_day_no / 146097);
+    g_day_no %= 146097;
+    let leap = true;
+    if (g_day_no >= 36525) {
+      g_day_no--;
+      gy += 100 * Math.floor(g_day_no / 36524);
+      g_day_no %= 36524;
+      if (g_day_no >= 365) {
+        g_day_no++;
+      } else {
+        leap = false;
+      }
+    }
+    gy += 4 * Math.floor(g_day_no / 1461);
+    g_day_no %= 1461;
+    if (g_day_no >= 366) {
+      leap = false;
+      g_day_no--;
+      gy += Math.floor(g_day_no / 365);
+      g_day_no %= 365;
+    }
+    let i = 0;
+    for (i = 0; g_day_no >= sal_a[i] + (i > 1 && leap ? 1 : 0); i++);
+    const gd = g_day_no - sal_a[i - 1] - (i > 2 && leap ? 1 : 0) + 1;
+    const gm = i;
+    return new Date(gy, gm - 1, gd);
+  };
+
   const getRemainingDays = (user: AppUser): number => {
     if (user.is_trial && user.trial_start_date) {
       const start = new Date(user.trial_start_date);
@@ -96,32 +183,24 @@ export const Settings = () => {
     
     if (user.expiry_date) {
       if (user.expiry_date.includes('بدون منقضی') || user.expiry_date.includes('۳ ساله') || user.expiry_date.includes('3 ساله')) {
-        return 30;
+        if (user.register_date) {
+          const parsedReg = parsePersianDate(user.register_date);
+          if (parsedReg) {
+            const expiryJYear = parsedReg.year + 3;
+            const expiryDateObj = jalaliToGregorian(expiryJYear, parsedReg.month, parsedReg.day);
+            const diffMs = expiryDateObj.getTime() - Date.now();
+            return Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+          }
+        }
+        return 1095;
       }
       
       try {
-        const farsiDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
-        let clean = user.expiry_date;
-        for (let i = 0; i < 10; i++) {
-          clean = clean.replace(new RegExp(farsiDigits[i], 'g'), String(i));
-        }
-        
-        const match = clean.match(/(\d{4})[/-](\d{1,2})[/-](\d{1,2})/);
-        if (match) {
-          const jYear = parseInt(match[1], 10);
-          const jMonth = parseInt(match[2], 10);
-          const jDay = parseInt(match[3], 10);
-          
-          const currentJYear = 1405;
-          const currentJMonth = 4;
-          const currentJDay = 4;
-          
-          const totalDaysTarget = jYear * 365 + jMonth * 30 + jDay;
-          const totalDaysCurrent = currentJYear * 365 + currentJMonth * 30 + currentJDay;
-          const diff = totalDaysTarget - totalDaysCurrent;
-          if (diff > 0 && diff < 150) {
-            return diff;
-          }
+        const parsedExpiry = parsePersianDate(user.expiry_date);
+        if (parsedExpiry) {
+          const expiryDateObj = jalaliToGregorian(parsedExpiry.year, parsedExpiry.month, parsedExpiry.day);
+          const diffMs = expiryDateObj.getTime() - Date.now();
+          return Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
         }
       } catch (err) {
         console.warn('Failed to parse Farsi expiry_date:', err);

@@ -55,11 +55,13 @@ export default async function handler(req: any, res: any) {
       return;
     }
 
-    const merchant = process.env.ZARINPAL_MERCHANT_ID || process.env.VITE_ZARINPAL_MERCHANT_ID || 'afd57d04-0629-49e2-ae20-6b8dc7e75ca2';
+    const isSandbox = process.env.ZARINPAL_SANDBOX !== 'false';
+    const merchant = process.env.ZARINPAL_MERCHANT_ID || process.env.VITE_ZARINPAL_MERCHANT_ID || (isSandbox ? '00000000-0000-0000-0000-000000000000' : 'afd57d04-0629-49e2-ae20-6b8dc7e75ca2');
 
-    console.log(`[Vercel Zarinpal Gateway] Verifying real payment: authority=${actualAuthority}, amount=${amountTomans} Tomans, merchant=${merchant}`);
+    console.log(`[Vercel Zarinpal Gateway] Verifying payment (Sandbox=${isSandbox}): authority=${actualAuthority}, amount=${amountTomans} Tomans, merchant=${merchant}`);
 
-    const gatewayUrl = 'https://api.zarinpal.com/pg/v4/payment/verify.json';
+    const zarinpalHost = isSandbox ? 'sandbox.zarinpal.com' : 'api.zarinpal.com';
+    const gatewayUrl = `https://${zarinpalHost}/pg/v4/payment/verify.json`;
 
     try {
       const response = await fetch(gatewayUrl, {
