@@ -18,7 +18,7 @@ export interface PaymentRequestData {
 // تنظیمات رسمی درگاه پرداخت زرین‌پال (از سمت کلاینت)
 export const ZARINPAL_CONFIG = {
   // شناسه درگاه حقیقی رسمی زرین‌پال خریدار
-  MERCHANT_ID: 'c7c38578-79ef-42e4-a05f-7f77caa534cb',
+  MERCHANT_ID: 'afd57d04-0629-49e2-ae20-6b8dc7e75ca2',
 
   // آدرس بازگشت پس از تراکنش پرداخت (Callback URL)
   get CALLBACK_URL(): string {
@@ -47,7 +47,16 @@ export async function initiateZarinpalPayment(data: PaymentRequestData): Promise
     });
 
     if (!response.ok) {
-      throw new Error(`پاسخ ناپایدار از سرور گیت‌وی بک‌اند (کد وضعیت: ${response.status})`);
+      let errorMsg = `پاسخ ناپایدار از سرور گیت‌وی بک‌اند (کد وضعیت: ${response.status})`;
+      try {
+        const errorData = await response.json();
+        if (errorData && errorData.message) {
+          errorMsg = errorData.message;
+        }
+      } catch (e) {
+        // ignore JSON parse error
+      }
+      throw new Error(errorMsg);
     }
 
     const resData = await response.json();
@@ -102,7 +111,16 @@ export async function verifyZarinpalPayment(authority: string, amountTomans: num
     });
 
     if (!response.ok) {
-      throw new Error(`خطای پاسخ گیت‌وی بک‌اند در تایید پرداخت (کد وضعیت: ${response.status})`);
+      let errorMsg = `خطای پاسخ گیت‌وی بک‌اند در تایید پرداخت (کد وضعیت: ${response.status})`;
+      try {
+        const errorData = await response.json();
+        if (errorData && errorData.message) {
+          errorMsg = errorData.message;
+        }
+      } catch (e) {
+        // ignore JSON parse error
+      }
+      throw new Error(errorMsg);
     }
 
     const resData = await response.json();
