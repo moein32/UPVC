@@ -20,8 +20,32 @@ export const ZARINPAL_CONFIG = {
   // شناسه درگاه حقیقی رسمی زرین‌پال خریدار
   MERCHANT_ID: 'afd57d04-0629-49e2-ae20-6b8dc7e75ca2',
 
+  // تشخیص محیط نیتیو (اندروید/کاپازیتور)
+  get isNative(): boolean {
+    const isCapacitor = !!(window as any).Capacitor;
+    const isLocalOrigin = window.location.origin.includes('capacitor://') || 
+                         window.location.origin.includes('http://localhost');
+    return isCapacitor || isLocalOrigin || window.location.protocol === 'file:';
+  },
+
+  // آدرس پایه API - در اندروید باید آدرس کامل سرور (مثلاً ورسل) باشد
+  get API_BASE_URL(): string {
+    const configuredUrl = import.meta.env.VITE_API_BASE_URL;
+    if (this.isNative && configuredUrl) {
+      // حذف اسلش انتهایی در صورت وجود برای جلوگیری از دو برابر شدن اسلش در مسیر
+      return configuredUrl.replace(/\/$/, '');
+    }
+    return ''; // در وب از مسیر نسبی استفاده می‌کنیم
+  },
+
   // آدرس بازگشت پس از تراکنش پرداخت (Callback URL)
   get CALLBACK_URL(): string {
+    const configuredUrl = import.meta.env.VITE_API_BASE_URL;
+    // در اندروید آدرس بازگشت باید حتماً آدرس وب باشد (زرین‌پال آدرس لوکال اندروید را قبول نمی‌کند)
+    if (this.isNative && configuredUrl) {
+      const baseUrl = configuredUrl.endsWith('/') ? configuredUrl.slice(0, -1) : configuredUrl;
+      return baseUrl + '/#/payment-callback';
+    }
     return window.location.origin + '/#/payment-callback';
   }
 };
@@ -33,7 +57,8 @@ export async function initiateZarinpalPayment(data: PaymentRequestData): Promise
   console.log(`[Zarinpal Client] Initiating payment request for ${data.amountTomans} Tomans...`);
 
   try {
-    const response = await fetch('/api/payment/request', {
+    const apiUrl = `${ZARINPAL_CONFIG.API_BASE_URL}/api/payment/request`;
+    const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -98,7 +123,8 @@ export async function verifyZarinpalPayment(authority: string, amountTomans: num
   }
 
   try {
-    const response = await fetch('/api/payment/verify', {
+    const apiUrl = `${ZARINPAL_CONFIG.API_BASE_URL}/api/payment/verify`;
+    const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
